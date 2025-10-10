@@ -2,8 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Jadikan halaman login sebagai halaman utama
+Route::get('/login', function () {
+    return view('auth.login');
+})->name('login');
+
+// Arahkan route utama ke halaman login untuk sementara
 Route::get('/', function () {
-    // Kita akan menempatkan view di dalam folder 'auth' agar rapi
-    return view('auth.login-delisa');
+    return redirect()->route('login');
 });
