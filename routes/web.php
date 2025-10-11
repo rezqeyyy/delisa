@@ -1,9 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 
-// Jadikan halaman login sebagai halaman utama
 Route::get('/', function () {
-    // Kita akan menempatkan view di dalam folder 'auth' agar rapi
-    return view('auth.login-delisa');
+    return redirect('/login');
 });
+
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
