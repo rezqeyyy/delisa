@@ -14,15 +14,12 @@
 
         <div class="w-full max-w-5xl flex bg-white shadow-2xl overflow-hidden rounded-2xl">
 
-            <!-- Panel kiri (tanpa rounded) -->
             <div class="hidden lg:block relative lg:w-1/2 bg-white rounded-none">
                 <div class="absolute inset-0 p-10 flex items-center justify-center">
                     <img class="h-full w-full object-contain" src="{{ asset('images/gradient-bg v2.png') }}"
                         alt="DeLISA Panel">
                 </div>
             </div>
-
-
 
             <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12">
                 <div class="w-full max-w-md">
@@ -65,10 +62,10 @@
                     </form>
 
                     <div class="mt-6 flex justify-between text-sm">
-                        <a href="#" class="font-medium text-gray-600 hover:text-gray-900">
+                        <a href="{{ route('password.request') }}" class="font-medium text-gray-600 hover:text-gray-900">
                             Lupa Password? <span class="text-[#D91A8B] font-semibold">Klik disini</span>
                         </a>
-                        <a href="#" class="font-medium text-gray-600 hover:text-gray-900">
+                        <a href="{{ route('register') }}" class="font-medium text-gray-600 hover:text-gray-900">
                             Belum Punya Akun? <span class="text-[#D91A8B] font-semibold">Ajukan disini</span>
                         </a>
                     </div>
