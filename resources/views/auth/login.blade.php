@@ -12,12 +12,12 @@
 
     <div class="min-h-screen flex items-center justify-center p-4">
 
-        <div class="w-full max-w-5xl flex bg-white shadow-2xl overflow-hidden">
+        <div class="w-full max-w-5xl flex bg-white shadow-2xl overflow-hidden rounded-2xl">
 
             <!-- Panel kiri (tanpa rounded) -->
             <div class="hidden lg:block relative lg:w-1/2 bg-white rounded-none">
                 <div class="absolute inset-0 p-10 flex items-center justify-center">
-                    <img class="h-full w-full object-contain" src="{{ asset('images/gradient-bg v3.png') }}"
+                    <img class="h-full w-full object-contain" src="{{ asset('images/gradient-bg v2.png') }}"
                         alt="DeLISA Panel">
                 </div>
             </div>
