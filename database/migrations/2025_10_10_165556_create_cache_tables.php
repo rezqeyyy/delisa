@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cache_tables', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+            $table->string('key', 255)->primary();
+            $table->text('value');
+            $table->integer('expiration');
         });
     }
 

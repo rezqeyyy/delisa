@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
@@ -17,10 +18,32 @@ Route::middleware('guest')->group(function () {
 
     Route::post('register', [RegisteredUserController::class, 'store']);
 
+    Route::get('register-pasien', function () {
+        return view('auth.register-pasien');
+    })->name('pasien.register');
+
+    Route::get('register-puskesmas', function () {
+        return view('auth.register-puskesmas');
+    })->name('puskesmas.register');
+
+    Route::get('register-rs', function () {
+        return view('auth.register-rs');
+    })->name('rs.register');
+
+    Route::get('register-bidanMandiri', function () {
+        return view('auth.register-bidanMandiri');
+    })->name('bidanMandiri.register');
+
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    Route::get('login-pasien', [AuthenticatedSessionController::class, 'createPasien'])
+        ->name('pasien.login');
+
+    Route::post('login-pasien', [AuthenticatedSessionController::class, 'storePasien'])
+        ->name('pasien.login.store');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');

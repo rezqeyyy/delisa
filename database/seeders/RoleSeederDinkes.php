@@ -10,7 +10,7 @@ class RoleSeederDinkes extends Seeder
     public function run(): void
     {
         DB::table('roles')->insertOrIgnore([
-            ['id' => 2, 'nama_role' => 'bidan']
+            ['id' => 1, 'nama_role' => 'dinkes']
         ]);
     }
 }
