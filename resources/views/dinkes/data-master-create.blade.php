@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DINKES – Tambah Akun</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#F5F5F5] font-[Poppins] text-[#000000cc]">
+    <div class="flex min-h-screen">
+        {{-- Sidebar --}}
+        <aside class="fixed top-0 left-0 h-full w-[260px] bg-white shadow-lg flex flex-col justify-between rounded-r-2xl">
+            <div>
+                <div class="flex items-center gap-3 p-6 border-b border-[#CAC7C7]">
+                    <img src="{{ asset('images/logo_fulltext 2.png') }}" alt="DeLISA"
+                        class="w-28 h-auto object-contain">
+                </div>
+
+                <nav class="mt-6 space-y-1">
+                    <a href="{{ route('dinkes.dashboard') }}"
+                        class="flex items-center gap-3 px-6 py-3 text-[#4B4B4B] hover:bg-[#F5F5F5] rounded-r-full transition">
+                        <img src="{{ asset('icons/Group 36729.svg') }}" class="w-4 h-4" alt="Dashboard">
+                        <span>Dashboard</span>
+                    </a>
+
+                    <a href="{{ route('dinkes.data-master') }}"
+                        class="flex items-center gap-3 px-6 py-3 bg-[#B9257F] text-white rounded-r-full font-medium">
+                        <img src="{{ asset('icons/Group 36805.svg') }}" class="w-4 h-4" alt="Data Master">
+                        <span>Data Master</span>
+                    </a>
+
+                    <a href="#"
+                        class="flex items-center gap-3 px-6 py-3 text-[#4B4B4B] hover:bg-[#F5F5F5] rounded-r-full transition">
+                        <img src="{{ asset('icons/Iconly/Regular/Light/Message.svg') }}" class="w-4 h-4"
+                            alt="Akun Baru">
+                        <span>Akun Baru</span>
+                    </a>
+
+                    <a href="#"
+                        class="flex items-center gap-3 px-6 py-3 text-[#4B4B4B] hover:bg-[#F5F5F5] rounded-r-full transition">
+                        <img src="{{ asset('icons/Iconly/Regular/Light/2 User.svg') }}" class="w-4 h-4"
+                            alt="Pasien Nifas">
+                        <span>Pasien Nifas</span>
+                    </a>
+                </nav>
+            </div>
+
+            <div class="p-6 border-t border-[#CAC7C7] text-sm text-[#7C7C7C]">
+                <p class="uppercase text-xs font-semibold mb-1">Account</p>
+            </div>
+        </aside>
+
+        <main class="ml-[260px] flex-1 p-8 space-y-8">
+            <header>
+                <h1 class="text-[28px] font-bold leading-tight text-[#000000]">List Daftar Akun</h1>
+                <p class="text-sm text-[#7C7C7C]">Manage the Details of Your Menu Account</p>
+            </header>
+
+            {{-- Tabs --}}
+            <section class="flex items-center gap-3">
+                <a href="{{ route('dinkes.data-master', ['tab' => 'bidan']) }}"
+                    class="px-4 py-2 rounded-full text-sm font-medium {{ $tab === 'bidan' ? 'bg-[#B9257F] text-white' : 'bg-white border border-[#D9D9D9] text-[#4B4B4B]' }}">
+                    Bidan PKM
+                </a>
+                <a href="{{ route('dinkes.data-master', ['tab' => 'rs']) }}"
+                    class="px-4 py-2 rounded-full text-sm font-medium {{ $tab === 'rs' ? 'bg-[#B9257F] text-white' : 'bg-white border border-[#D9D9D9] text-[#4B4B4B]' }}">
+                    Rumah Sakit
+                </a>
+                <a href="{{ route('dinkes.data-master', ['tab' => 'puskesmas']) }}"
+                    class="px-4 py-2 rounded-full text-sm font-medium {{ $tab === 'puskesmas' ? 'bg-[#B9257F] text-white' : 'bg-white border border-[#D9D9D9] text-[#4B4B4B]' }}">
+                    Puskesmas
+                </a>
+            </section>
+
+            {{-- Alerts --}}
+            @if ($errors->any())
+                <div class="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700">
+                    <ul class="list-disc pl-5">
+                        @foreach ($errors->all() as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @if (session('ok'))
+                <div class="mb-4 rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-700">
+                    {{ session('ok') }}
+                </div>
+            @endif
+
+            {{-- Form Section --}}
+            <section class="bg-[#FFF0F5] p-8 rounded-2xl">
+
+                {{-- FORM RUMAH SAKIT --}}
+                @if ($tab === 'rs')
+                    <h2 class="text-2xl font-bold mb-6">Tambah Data Rumah Sakit</h2>
+                    <form method="POST" action="{{ route('dinkes.data-master.store-rs') }}"
+                          class="grid grid-cols-2 gap-6 text-sm">
+                        @csrf
+                        <div>
+                            <label>Nama Lengkap PIC</label>
+                            <input name="pic_name" value="{{ old('pic_name') }}" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Nomor Telepon PIC</label>
+                            <input name="phone" value="{{ old('phone') }}"
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Email PIC</label>
+                            <input type="email" name="email" value="{{ old('email') }}" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Nama Rumah Sakit</label>
+                            <input name="nama" value="{{ old('nama') }}" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Password</label>
+                            <input type="password" name="password" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Kecamatan</label>
+                            <input name="kecamatan" value="{{ old('kecamatan') }}" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Kelurahan</label>
+                            <input name="kelurahan" value="{{ old('kelurahan') }}" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div class="col-span-2">
+                            <label>Alamat/Lokasi</label>
+                            <textarea name="lokasi" rows="3" class="w-full border border-pink-400 rounded-lg px-4 py-2 mt-1">{{ old('lokasi') }}</textarea>
+                        </div>
+                        <div class="col-span-2">
+                            <button class="w-full bg-[#B9257F] text-white rounded-full py-3 font-semibold">SUBMIT</button>
+                        </div>
+                    </form>
+
+                {{-- FORM PUSKESMAS --}}
+                @elseif ($tab === 'puskesmas')
+                    <h2 class="text-2xl font-bold mb-6">Tambah Data Puskesmas</h2>
+                    <form method="POST" action="{{ route('dinkes.data-master.store-puskesmas') }}"
+                          class="grid grid-cols-2 gap-6 text-sm">
+                        @csrf
+                        <div>
+                            <label>Nama Lengkap PIC</label>
+                            <input name="pic_name" value="{{ old('pic_name') }}" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Nomor Telepon PIC</label>
+                            <input name="phone" value="{{ old('phone') }}"
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Email PIC</label>
+                            <input type="email" name="email" value="{{ old('email') }}" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Nama Puskesmas</label>
+                            <input name="nama" value="{{ old('nama') }}" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Password</label>
+                            <input type="password" name="password" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Kecamatan</label>
+                            <input name="kecamatan" value="{{ old('kecamatan') }}" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div class="col-span-2">
+                            <label>Alamat/Lokasi</label>
+                            <textarea name="lokasi" rows="3" class="w-full border border-pink-400 rounded-lg px-4 py-2 mt-1">{{ old('lokasi') }}</textarea>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="inline-flex items-center gap-2">
+                                <input type="checkbox" name="is_mandiri" value="1" class="rounded"
+                                       {{ old('is_mandiri') ? 'checked' : '' }}> Mandiri
+                            </label>
+                        </div>
+                        <div class="col-span-2">
+                            <button class="w-full bg-[#B9257F] text-white rounded-full py-3 font-semibold">SUBMIT</button>
+                        </div>
+                    </form>
+
+                {{-- FORM BIDAN --}}
+                @else
+                    <h2 class="text-2xl font-bold mb-6">Tambah Akun Bidan PKM</h2>
+                    <form method="POST" action="{{ route('dinkes.data-master.store-bidan') }}"
+                          class="grid grid-cols-2 gap-6 text-sm">
+                        @csrf
+                        <div>
+                            <label>Nama Lengkap</label>
+                            <input name="name" value="{{ old('name') }}" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Nomor Izin Praktek</label>
+                            <input name="nomor_izin_praktek" value="{{ old('nomor_izin_praktek') }}" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Email</label>
+                            <input type="email" name="email" value="{{ old('email') }}" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>No Telepon</label>
+                            <input name="phone" value="{{ old('phone') }}"
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Password</label>
+                            <input type="password" name="password" required
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div>
+                            <label>Pilih Puskesmas</label>
+                            <select name="puskesmas_id" required
+                                    class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                                <option value="">-- Pilih --</option>
+                                @foreach ($puskesmasList as $p)
+                                    <option value="{{ $p->id }}"
+                                            {{ old('puskesmas_id') == $p->id ? 'selected' : '' }}>
+                                        {{ $p->nama_puskesmas }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label>Alamat</label>
+                            <input name="address" value="{{ old('address') }}"
+                                   class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                        </div>
+                        <div class="col-span-2">
+                            <button class="w-full bg-[#B9257F] text-white rounded-full py-3 font-semibold">SUBMIT</button>
+                        </div>
+                    </form>
+                @endif
+            </section>
+        </main>
+    </div>
+</body>
+</html>

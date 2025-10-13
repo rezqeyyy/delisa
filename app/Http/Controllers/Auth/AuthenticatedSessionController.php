@@ -3,45 +3,74 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
+use Illuminate\Support\Facades\Log;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Display the login view.
-     */
-    public function create(): View
+    // GET /login
+    public function create()
     {
+        // tampilkan halaman login
         return view('auth.login');
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
-    public function store(LoginRequest $request): RedirectResponse
+    // POST /login
+    public function store(Request $request)
     {
-        $request->authenticate();
+        Log::info('LOGIN_ATTEMPT_START', ['email' => $request->email]);
+
+        $credentials = $request->validate([
+            'email'    => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+        if (!Auth::attempt($credentials, $request->boolean('remember'))) {
+            Log::warning('LOGIN_FAILED', ['email' => $request->email]);
+            return back()->withErrors(['email' => 'Kredensial salah.'])->onlyInput('email');
+        }
 
         $request->session()->regenerate();
+        $user = $request->user();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        Log::info('LOGIN_ATTEMPT_OK', [
+            'user_id' => $user->id,
+            'email'   => $user->email,
+            'role'    => optional($user->role)->nama_role,
+            'session' => $request->session()->getId(),
+        ]);
+
+        return redirect()->to($this->redirectPathByRole($user));
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
-    public function destroy(Request $request): RedirectResponse
+    // POST /logout
+    public function destroy(Request $request)
     {
-        Auth::guard('web')->logout();
+        // hapus auth
+        Auth::guard()->logout();
 
+        // invalidasi semua data session & regen CSRF
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // opsional: clear cookie session browser (biasanya cukup invalidate())
+        // cookie()->queue(cookie()->forget(config('session.cookie')));
+
+        return redirect()->route('login');
+    }
+
+    protected function redirectPathByRole($user)
+    {
+        $role = optional($user->role)->nama_role;
+
+        return match ($role) {
+            'dinkes'      => route('dinkes.dashboard'),
+            'puskesmas'   => route('puskesmas.dashboard'),
+            'bidan'       => route('bidan.dashboard'),
+            'rumah_sakit' => route('rs.dashboard'),
+            'pasien'      => route('pasien.dashboard'),
+            default       => route('login'),
+        };
     }
 }

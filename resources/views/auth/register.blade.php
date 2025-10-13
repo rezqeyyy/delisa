@@ -12,7 +12,7 @@
 
     <div class="min-h-screen flex items-center justify-center p-4">
 
-        <div class="w-full max-w-5xl flex bg-white shadow-2xl overflow-hidden rounded-2xl">
+        <div class="w-full max-w-5xl flex bg-white shadow-2xl overflow-hidden rounded-2xl" style="height: 620px;"> <!-- <- sesuaikan angka -->
 
             <div class="hidden lg:block relative lg:w-1/2 bg-white rounded-none">
                 <div class="absolute inset-0 p-10 flex items-center justify-center">
@@ -24,10 +24,10 @@
             <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12">
                 <div class="w-full max-w-md">
                     <p class="text-7xl font-bold text-[#D91A8B]">*</p>
-                    <h1 class="text-3xl font-bold text-gray-900 mt-4">Login Delisa</h1>
+                    <h1 class="text-3xl font-bold text-gray-900 mt-4">Register Pasien Delisa</h1>
                     <p class="text-gray-600 mt-1">Masukan Email dan Password</p>
 
-                    <form action="{{ route('login') }}" method="POST" class="mt-8 space-y-5">
+                    <form action="{{ route('register') }}" method="POST" class="mt-8 space-y-5">
                         @csrf
                         <div>
                             <label for="email" class="block text-sm font-medium text-gray-700">e-mail</label>
@@ -44,29 +44,14 @@
                         <div class="pt-2">
                             <button type="submit"
                                 class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-medium text-white bg-[#D91A8B] hover:bg-[#c4177c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D91A8B]">
-                                Login
-                            </button>
-                        </div>
-
-                        <div class="relative flex items-center justify-center">
-                            <span class="absolute inset-x-0 h-px bg-gray-300"></span>
-                            <span class="relative bg-white px-4 text-sm text-gray-500">Atau</span>
-                        </div>
-
-                        <div>
-                            <button type="button"
-                                class="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">
-                                Login Pasien
+                                Register
                             </button>
                         </div>
                     </form>
 
                     <div class="mt-6 flex justify-between text-sm">
-                        <a href="{{ route('password.request') }}" class="font-medium text-gray-600 hover:text-gray-900">
-                            Lupa Password? <span class="text-[#D91A8B] font-semibold">Klik disini</span>
-                        </a>
-                        <a href="{{ route('register') }}" class="font-medium text-gray-600 hover:text-gray-900">
-                            Belum Punya Akun? <span class="text-[#D91A8B] font-semibold">Ajukan disini</span>
+                        <a href="{{ route('login') }}" class="font-medium text-gray-600 hover:text-gray-900">
+                            Mau login? <span class="text-[#D91A8B] font-semibold">Klik disini</span>
                         </a>
                     </div>
                 </div>

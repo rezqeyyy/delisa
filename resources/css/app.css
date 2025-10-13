@@ -1,3 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Komponen kecil dari Figma */
+@layer components {
+  .pill {@apply px-3 py-1 rounded-full bg-sheet text-ink82 border border-stroke;}
+  .chip {@apply inline-flex items-center gap-2 px-3 py-1 rounded-full border border-stroke bg-white;}
+  .tag  {@apply px-3 py-1 text-xs rounded-full font-medium;}
+  @layer components {
+  .card {@apply bg-white rounded-xl2 shadow-card;}
+  .card-pad {@apply p-5;}           /* padding 20px seperti Figma */
+  .icon-btn {@apply h-8 w-8 grid place-content-center rounded-full border border-stroke text-grayA0;}
+}
+
+}
+
+/* Scrollbar manis biar rapi seperti mockup */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 999px; }

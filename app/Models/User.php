@@ -2,47 +2,38 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    protected $table = 'users';
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'name','email','password','photo','phone','address','status','role_id','remember_token'
     ];
+    protected $hidden = ['password','remember_token'];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    public function role()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function bidan()
+    {
+        return $this->hasOne(Bidan::class, 'user_id');
+    }
+
+    public function rumahSakit()
+    {
+        return $this->hasOne(RumahSakit::class, 'user_id');
+    }
+
+    // scope pencarian umum
+    public function scopeSearch($q, $keyword)
+    {
+        if (!$keyword) return;
+        $q->where(function($qq) use ($keyword) {
+            $qq->where('name','like',"%{$keyword}%")
+               ->orWhere('email','like',"%{$keyword}%");
+        });
     }
 }
