@@ -10,7 +10,9 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\RoleRegistrationController;
 use Illuminate\Support\Facades\DB;
+
 
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
@@ -31,8 +33,23 @@ Route::middleware('guest')->group(function () {
     })->name('rs.register');
 
     Route::get('register-bidanMandiri', function () {
-        return view('auth.register-bidanMandiri');
+        $puskesmasList = DB::table('puskesmas')
+            ->join('users', 'users.id', '=', 'puskesmas.user_id')
+            ->where('users.status', true) // hanya yang sudah di-approve Dinkes
+            ->orderBy('puskesmas.nama_puskesmas')
+            ->select('puskesmas.id', 'puskesmas.nama_puskesmas')
+            ->get();
+        return view('auth.register-bidanMandiri', compact('puskesmasList'));
     })->name('bidanMandiri.register');
+
+    Route::post('register-puskesmas', [RoleRegistrationController::class, 'storePuskesmas'])
+        ->name('puskesmas.register.store');
+
+    Route::post('register-rs', [RoleRegistrationController::class, 'storeRs'])
+        ->name('rs.register.store');
+
+    Route::post('register-bidanMandiri', [RoleRegistrationController::class, 'storeBidan'])
+        ->name('bidanMandiri.register.store');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');

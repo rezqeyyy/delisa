@@ -12,47 +12,8 @@
 <body class="bg-[#F5F5F5] font-[Poppins] text-[#000000cc]">
     <div class="flex min-h-screen">
         {{-- Sidebar --}}
-        <aside
-            class="fixed top-0 left-0 h-full w-[260px] bg-white shadow-lg flex flex-col justify-between rounded-r-2xl">
-            <div>
-                <div class="flex items-center gap-3 p-6 border-b border-[#CAC7C7]">
-                    <img src="{{ asset('images/logo_fulltext 2.png') }}" alt="DeLISA"
-                        class="w-28 h-auto object-contain">
-                </div>
 
-                <nav class="mt-6 space-y-1">
-                    <a href="{{ route('dinkes.dashboard') }}"
-                        class="flex items-center gap-3 px-6 py-3 text-[#4B4B4B] hover:bg-[#F5F5F5] rounded-r-full transition">
-                        <img src="{{ asset('icons/Group 36729.svg') }}" class="w-4 h-4" alt="Dashboard">
-                        <span>Dashboard</span>
-                    </a>
-
-                    <a href="{{ route('dinkes.data-master') }}"
-                        class="flex items-center gap-3 px-6 py-3 bg-[#B9257F] text-white rounded-r-full font-medium">
-                        <img src="{{ asset('icons/Group 36805.svg') }}" class="w-4 h-4" alt="Data Master">
-                        <span>Data Master</span>
-                    </a>
-
-                    <a href="#"
-                        class="flex items-center gap-3 px-6 py-3 text-[#4B4B4B] hover:bg-[#F5F5F5] rounded-r-full transition">
-                        <img src="{{ asset('icons/Iconly/Regular/Light/Message.svg') }}" class="w-4 h-4"
-                            alt="Akun Baru">
-                        <span>Akun Baru</span>
-                    </a>
-
-                    <a href="#"
-                        class="flex items-center gap-3 px-6 py-3 text-[#4B4B4B] hover:bg-[#F5F5F5] rounded-r-full transition">
-                        <img src="{{ asset('icons/Iconly/Regular/Light/2 User.svg') }}" class="w-4 h-4"
-                            alt="Pasien Nifas">
-                        <span>Pasien Nifas</span>
-                    </a>
-                </nav>
-            </div>
-
-            <div class="p-6 border-t border-[#CAC7C7] text-sm text-[#7C7C7C]">
-                <p class="uppercase text-xs font-semibold mb-1">Account</p>
-            </div>
-        </aside>
+        <x-dinkes.sidebar />
 
         <main class="ml-[260px] flex-1 p-8 space-y-8">
             <header>
@@ -194,7 +155,7 @@
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
                         <div class="col-span-2">
-                            <label>Alamat/Lokasi</label>
+                            <label>Alamat</label>
                             <textarea name="lokasi" rows="3" class="w-full border border-pink-400 rounded-lg px-4 py-2 mt-1">{{ old('lokasi') }}</textarea>
                         </div>
                         <div class="col-span-2">

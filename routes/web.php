@@ -6,7 +6,6 @@ use App\Http\Controllers\Puskesmas\DashboardController as PuskesmasDashboardCont
 use App\Http\Controllers\Bidan\DashboardController as BidanDashboardController;
 use App\Http\Controllers\Rs\DashboardController as RsDashboardController;
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
-use App\Http\Controllers\Dinkes\DataMasterController; // ⬅️ tambahkan ini
 
 
 Route::get('/', fn() => view('auth.login'));
@@ -16,7 +15,9 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:dinkes')
         ->prefix('dinkes')->as('dinkes.')
         ->group(function () {
+            // Dashboard
             Route::get('/dashboard', [DinkesDashboardController::class, 'index'])->name('dashboard');
+
             // Data Master
             Route::get('/data-master', [\App\Http\Controllers\Dinkes\DataMasterController::class, 'index'])
                 ->name('data-master');
@@ -46,6 +47,23 @@ Route::middleware(['auth'])->group(function () {
                 ->name('data-master.update');
             Route::delete('/data-master/{user}', [\App\Http\Controllers\Dinkes\DataMasterController::class, 'destroy'])
                 ->name('data-master.destroy');
+
+            // List Pengajuan Akun (Akun Baru)
+            Route::get('/akun-baru', [\App\Http\Controllers\Dinkes\AkunBaruController::class, 'index'])
+                ->name('akun-baru');
+
+            Route::post('/akun-baru', [\App\Http\Controllers\Dinkes\AkunBaruController::class, 'store'])
+                ->name('akun-baru.store');
+
+            Route::post('/akun-baru/{id}/approve', [\App\Http\Controllers\Dinkes\AkunBaruController::class, 'approve'])
+                ->name('akun-baru.approve');
+
+            Route::delete('/akun-baru/{id}', [\App\Http\Controllers\Dinkes\AkunBaruController::class, 'reject'])
+                ->name('akun-baru.reject');
+
+            // Pasien Nifas
+            route::get('/pasien-nifas', [\App\Http\Controllers\Dinkes\PasienNifasController::class, 'index'])
+                ->name('pasien-nifas');
         });
 
     Route::middleware('role:puskesmas')

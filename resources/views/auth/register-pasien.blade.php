@@ -23,6 +23,7 @@
 
             <div class="w-full lg:w-1/2 flex p-8 sm:p-12">
                 <div class="w-full max-w-md mx-auto flex flex-col justify-between">
+                    <x-back-link />
                     <div>
                         <p class="text-7xl font-bold text-[#D91A8B]">*</p>
                         <h1 class="text-3xl font-bold text-gray-900 mt-4">Registrasi Pasien</h1>
@@ -31,13 +32,17 @@
                         <form action="{{ route('register') }}" method="POST" class="mt-8 space-y-5">
                             @csrf
                             <div>
-                                <label for="nik" class="block text-sm font-medium text-gray-700">Nomor Induk Kependudukan (NIK)</label>
-                                <input type="text" name="nik" id="nik" maxlength="16" placeholder="16 digit NIK" required
+                                <label for="nik" class="block text-sm font-medium text-gray-700">Nomor Induk
+                                    Kependudukan (NIK)</label>
+                                <input type="text" name="nik" id="nik" maxlength="16"
+                                    placeholder="16 digit NIK" required
                                     class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#D91A8B] focus:border-[#D91A8B]">
                             </div>
                             <div>
-                                <label for="nama_lengkap" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                                <input type="text" name="nama_lengkap" id="nama_lengkap" placeholder="Nama sesuai KTP" required
+                                <label for="nama_lengkap" class="block text-sm font-medium text-gray-700">Nama
+                                    Lengkap</label>
+                                <input type="text" name="nama_lengkap" id="nama_lengkap"
+                                    placeholder="Nama sesuai KTP" required
                                     class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#D91A8B] focus:border-[#D91A8B]">
                             </div>
 
@@ -55,11 +60,11 @@
                             </a>
                         </div>
 
+                    </div>
                 </div>
-            </div>
 
+            </div>
         </div>
-    </div>
 </body>
 
 </html>

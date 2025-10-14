@@ -4,97 +4,35 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DINKES – Dashboard</title>
-    @vite([
-        'resources/css/app.css',
-        'resources/js/app.js',
-        'resources/js/dropdown.js', // ⬅️ tambahkan ini
-    ])
+    <title>DINKES – Dasbor</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js'])
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-[#F5F5F5] font-[Poppins] text-[#000000cc]">
-    <div class="flex min-h-screen">
-        <!-- Sidebar -->
-        <aside
-            class="fixed top-0 left-0 h-full w-[260px] bg-white shadow-lg flex flex-col justify-between rounded-r-2xl">
-            <div>
-                <div class="flex items-center gap-3 p-6 border-b border-[#CAC7C7]">
-                    <!-- Logo dari ZIP -->
-                    <img src="{{ asset('images/logo_fulltext 2.png') }}" alt="DeLISA"
-                        class="w-28 h-auto object-contain">
-                </div>
-
-                <nav class="mt-6 space-y-1">
-                    <a href="#"
-                        class="flex items-center gap-3 px-6 py-3 bg-[#B9257F] text-white rounded-r-full font-medium">
-                        <img src="{{ asset('icons/Group 36729.svg') }}" class="w-4 h-4" alt="Dashboard">
-                        <span>Dashboard</span>
-                    </a>
-
-                    <a href="{{ route('dinkes.data-master') }}"
-                        class="flex items-center gap-3 px-6 py-3 text-[#4B4B4B] hover:bg-[#F5F5F5] rounded-r-full transition">
-                        <img src="{{ asset('icons/Group 36805.svg') }}" class="w-4 h-4" alt="Data Master">
-                        <span>Data Master</span>
-                    </a>
-
-                    <a href="#"
-                        class="flex items-center gap-3 px-6 py-3 text-[#4B4B4B] hover:bg-[#F5F5F5] rounded-r-full transition">
-                        <img src="{{ asset('icons/Iconly/Regular/Light/Message.svg') }}" class="w-4 h-4"
-                            alt="Akun Baru">
-                        <span>Akun Baru</span>
-                    </a>
-
-                    <a href="#"
-                        class="flex items-center gap-3 px-6 py-3 text-[#4B4B4B] hover:bg-[#F5F5F5] rounded-r-full transition">
-                        <img src="{{ asset('icons/Iconly/Regular/Light/2 User.svg') }}" class="w-4 h-4"
-                            alt="Pasien Nifas">
-                        <span>Pasien Nifas</span>
-                    </a>
-                </nav>
-            </div>
-
-            <div class="p-6 border-t border-[#CAC7C7] text-sm text-[#7C7C7C]">
-                <p class="uppercase text-xs font-semibold mb-1">Account</p>
-            </div>
-        </aside>
+    <div class="flex flex-col min-h-screen">
+        <x-dinkes.sidebar />
 
         <!-- Konten utama -->
         <main class="ml-[260px] flex-1 p-8 space-y-8">
-            <!-- Header (disesuaikan seperti figma) -->
+            <!-- Header -->
             <div class="flex items-center justify-between bg-white px-5 py-4 rounded-2xl shadow-md">
-                <!-- Search -->
                 <div class="relative w-[520px] max-w-[58%]">
                     <span class="absolute inset-y-0 left-3 flex items-center">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60"
                             alt="Search">
                     </span>
-                    <input type="text" placeholder="Search.."
-                        class="w-full pl-9 pr-4 py-2 border border-[#E6E6E6] rounded-full text-sm outline-none focus:ring-1 focus:ring-[#B9257F]/30 focus:border-[#B9257F]/40" />
+                    <input type="text" placeholder="Search data..."
+                        class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
                 </div>
 
-                <!-- Right cluster -->
                 <div class="flex items-center gap-3">
-                    <!-- Icon 1: Lokasi (bubble magenta) -->
-                    <button
-                        class="w-10 h-10 rounded-lg flex items-center justify-center bg-[#B9257F] shadow-[0_1px_0_#EDEDED]">
-                        <img src="{{ asset('icons/lightbulb.svg') }}" class="w-4 h-4 invert-[1] brightness-0"
-                            alt="mode terang">
-                    </button>
-
-                    <!-- Icon 2: Edit (bubble abu-abu) -->
-                    <button class="w-10 h-10 rounded-lg flex items-center justify-center bg-[#EFEFEF]">
-                        <img src="{{ asset('icons/lightbulb-off.svg') }}" class="w-4 h-4 opacity-80" alt="mode gelap">
-                    </button>
-
-                    <!-- Icon 3: Settings (bubble putih ber-border) -->
                     <button
                         class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90"
                             alt="Setting">
                     </button>
 
-                    <!-- Notification + dot -->
                     <button
                         class="relative w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Notification.svg') }}" class="w-4 h-4 opacity-90"
@@ -110,21 +48,19 @@
                             <img src="{{ asset('images/4e350a7a-ceec-4c5e-b445-e40cc38fa39b 1.png') }}"
                                 class="w-8 h-8 rounded-full object-cover" alt="Admin" />
                             <div class="leading-tight pr-1 text-left">
-                                <p class="text-[13px] font-semibold text-[#1D1D1D]">Nama Dinkes</p>
-                                <p class="text-[11px] text-[#7C7C7C] -mt-0.5">email Dinkes</p>
+                                <p class="text-[13px] font-semibold text-[#1D1D1D]">{{ auth()->user()->name ?? 'Nama Dinkes' }}</p>
+                                <p class="text-[11px] text-[#7C7C7C] -mt-0.5">{{ auth()->user()->email ?? 'email Dinkes' }}</p>
                             </div>
                             <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Down 2.svg') }}"
                                 class="w-4 h-4 opacity-70" alt="More" />
                         </button>
 
-                        <!-- Dropdown menu -->
                         <div id="profileMenu"
                             class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
                             <div class="px-4 py-3 border-b border-[#F0F0F0]">
-                                <p class="text-sm font-medium text-[#1D1D1D]">Nama Dinkes</p>
-                                <p class="text-xs text-[#7C7C7C] truncate">email Dinkes</p>
+                                <p class="text-sm font-medium text-[#1D1D1D]">{{ auth()->user()->name ?? 'Nama Dinkes' }}</p>
+                                <p class="text-xs text-[#7C7C7C] truncate">{{ auth()->user()->email ?? 'email Dinkes' }}</p>
                             </div>
-
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit"
@@ -134,90 +70,253 @@
                             </form>
                         </div>
                     </div>
-
-
-
                 </div>
             </div>
 
-            <!-- GRID KPI -->
-            <section class="grid grid-cols-12 gap-6">
-                <!-- KIRI ATAS -->
-                <div
-                    class="col-span-12 lg:col-span-7 lg:col-start-1 lg:row-start-1 bg-white rounded-2xl p-5 shadow-md h-[260px] flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center gap-2">
-                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
-                                    <img src="{{ asset('icons/Iconly/Sharp/Light/Location.svg') }}" class="w-3.5 h-3.5"
-                                        alt="Lokasi">
-                                </span>
-                                <h2 class="font-semibold text-lg">Daerah Asal Pasien</h2>
-                            </div>
-                            <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}"
-                                class="w-3.5 h-3.5 opacity-60" alt="Go">
-                        </div>
-                        <div class="grid grid-cols-2 divide-x divide-[#CAC7C7] text-center">
-                            <div>
-                                <p class="text-sm text-[#7C7C7C]">Depok</p>
-                                <h1 class="text-5xl font-bold">0</h1>
-                            </div>
-                            <div>
-                                <p class="text-sm text-[#7C7C7C]">Non Depok</p>
-                                <h1 class="text-5xl font-bold">0</h1>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- GRID KPI: baris grid tinggi tetap -->
+            <section class="grid grid-cols-12 gap-6 lg:auto-rows-[260px]">
 
-                <!-- KANAN ATAS -->
+                <!-- KIRI ATAS: Daerah Asal Pasien (tanpa fixed height, overflow aman) -->
                 <div
-                    class="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-1 bg-white rounded-2xl p-5 shadow-md">
-                    <div class="flex items-center justify-between mb-4">
+                    class="col-span-12 lg:col-span-7 bg-white rounded-2xl p-5 pb-6 shadow-md
+                    grid grid-rows-[auto_1fr_auto] gap-4 overflow-hidden">
+                    <!-- header -->
+                    <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
-                                <img src="{{ asset('icons/Iconly/Sharp/Light/Group 36721.svg') }}"
-                                    class="w-3.5 h-3.5" alt="Resiko">
+                            <span class="inline-flex w-6 h-6 items-center justify-center rounded-full bg-[#F5F5F5]">
+                                <img src="{{ asset('icons/Iconly/Sharp/Light/Location.svg') }}" class="w-3.5 h-3.5"
+                                    alt="">
                             </span>
-                            <h2 class="font-semibold text-lg">Resiko Eklampsia</h2>
+                            <h2 class="font-semibold text-lg">Daerah Asal Pasien</h2>
                         </div>
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}"
-                            class="w-3.5 h-3.5 opacity-60" alt="Go">
+                            class="w-3.5 h-3.5 opacity-60" alt="">
                     </div>
-                    <p class="text-sm flex justify-between">Pasien Normal <span>0</span></p>
-                    <p class="text-sm flex justify-between">Pasien Beresiko Eklampsia <span>0</span></p>
+
+                    <!-- isi -->
+                    @php
+                        $depok = $depok ?? 0;
+                        $non = $non ?? 0;
+                        $total = max(($depok ?? 0) + ($non ?? 0), 1);
+                        $pDepok = round(($depok / $total) * 100);
+                        $pNon = 100 - $pDepok;
+                        // pastikan 12 item
+                        $seriesBulanan = $seriesBulanan ?? [];
+                        if (count($seriesBulanan) < 12) { $seriesBulanan = array_pad($seriesBulanan, 12, 0); }
+                    @endphp
+                    <div class="flex flex-col justify-center gap-4">
+                        <div class="flex items-baseline gap-3">
+                            <span class="text-4xl font-bold tabular-nums">{{ $depok + $non }}</span>
+                            <span class="text-sm text-[#7C7C7C]">total pasien</span>
+                        </div>
+
+                        <div class="h-3 w-full rounded-full bg-[#F1F1F1] overflow-hidden">
+                            <div class="h-full bg-[#B9257F] inline-block" style="width: {{ $pDepok }}%"></div>
+                            <div class="h-full bg-[#E9A9CD] inline-block" style="width: {{ $pNon }}%"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2"><span
+                                        class="w-3 h-3 rounded-sm bg-[#B9257F]"></span>Depok</div>
+                                <div class="font-semibold tabular-nums">{{ $depok }}
+                                    <span class="text-[#7C7C7C] font-normal">({{ $pDepok }}%)</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2"><span
+                                        class="w-3 h-3 rounded-sm bg-[#E9A9CD]"></span>Non Depok</div>
+                                <div class="font-semibold tabular-nums">{{ $non }}
+                                    <span class="text-[#7C7C7C] font-normal">({{ $pNon }}%)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- spark bars (aman dari overflow) -->
+                    <div class="relative grid grid-cols-12 gap-2 items-end h-20 px-1 overflow-hidden">
+                        @foreach ($seriesBulanan as $v)
+                            @php $h = 8 + min(100, (int) $v); @endphp
+                            <div class="rounded-[8px] bg-[#B9257F]" style="height: {{ $h }}%"></div>
+                        @endforeach
+                    </div>
                 </div>
 
-                <!-- KIRI BAWAH: row-span-2 -->
-                <div
-                    class="col-span-12 lg:col-span-7 lg:col-start-1 lg:row-start-2 lg:row-span-2 bg-white rounded-2xl p-5 shadow-md">
-                    <div class="flex items-center justify-between mb-4">
+                <!-- KANAN ATAS: Risiko Pre-Eklampsia -->
+                <div class="col-span-12 lg:col-span-5 bg-white rounded-2xl p-5 shadow-md grid grid-rows-[auto_1fr]">
+                    <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-2">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
+                            <span class="inline-flex w-6 h-6 items-center justify-center rounded-full bg-[#F5F5F5]">
+                                <img src="{{ asset('icons/Iconly/Sharp/Light/Group 36721.svg') }}" class="w-3.5 h-3.5"
+                                    alt="">
+                            </span>
+                            <h2 class="font-semibold text-lg">Risiko Pre-Eklampsia</h2>
+                        </div>
+                        <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}"
+                            class="w-3.5 h-3.5 opacity-60" alt="">
+                    </div>
+
+                    @php
+                        $normal = $normal ?? 0;
+                        $risk = $risk ?? 0;
+                        $sum = max(($normal ?? 0) + ($risk ?? 0), 1);
+                        $pRisk = round(($risk / $sum) * 100);
+                    @endphp
+
+                    <div class="grid grid-cols-2 gap-4 items-center">
+                        <div class="relative w-32 h-32 place-self-center">
+                            <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
+                                <circle cx="18" cy="18" r="16" fill="none" stroke="#F0F0F0"
+                                    stroke-width="4"></circle>
+                                <circle cx="18" cy="18" r="16" fill="none" stroke="#B9257F"
+                                    stroke-width="4" stroke-dasharray="{{ $pRisk }},100"
+                                    stroke-linecap="round"></circle>
+                            </svg>
+                            <div class="absolute inset-0 grid place-content-center">
+                                <span class="text-2xl font-bold tabular-nums">{{ $pRisk }}%</span>
+                                <span class="text-xs text-[#7C7C7C] -mt-1">Beresiko</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2"><span
+                                        class="w-3 h-3 rounded-sm bg-[#F0F0F0]"></span>Normal</div>
+                                <span class="font-semibold tabular-nums">{{ $normal }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2"><span
+                                        class="w-3 h-3 rounded-sm bg-[#B9257F]"></span>Beresiko</div>
+                                <span class="font-semibold tabular-nums">{{ $risk }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm text-[#7C7C7C] border-t pt-2">
+                                <span>Total</span><span class="tabular-nums">{{ $normal + $risk }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KIRI BAWAH: Data Pasien Nifas (isi penuh & proporsional) -->
+                <div
+                    class="col-span-12 lg:col-span-7 lg:row-span-2 bg-white rounded-2xl p-5 shadow-md
+            grid grid-rows-[auto_1fr_auto] gap-4">
+                    <!-- header -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex w-6 h-6 items-center justify-center rounded-full bg-[#F5F5F5]">
                                 <img src="{{ asset('icons/Iconly/Regular/Light/3 User.svg') }}" class="w-3.5 h-3.5"
-                                    alt="Nifas">
+                                    alt="">
                             </span>
                             <h2 class="font-semibold text-lg">Data Pasien Nifas</h2>
                         </div>
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}"
-                            class="w-3.5 h-3.5 opacity-60" alt="Go">
+                            class="w-3.5 h-3.5 opacity-60" alt="">
                     </div>
-                    <div class="space-y-3">
-                        <div class="flex justify-between text-sm border-b border-[#CAC7C7] pb-2">
-                            <span>Total Pasien Nifas</span>
-                            <span>0</span>
+
+                    @php
+                        $totalNifas = $totalNifas ?? 0;
+                        $kf1 = $kf1 ?? 0; $kf2 = $kf2 ?? 0; $kf3 = $kf3 ?? 0; $kf4 = $kf4 ?? 0;
+                        $sum = max($totalNifas, 1);
+                        $p1 = round(($kf1 / $sum) * 100); $p2 = round(($kf2 / $sum) * 100);
+                        $p3 = round(($kf3 / $sum) * 100); $p4 = round(($kf4 / $sum) * 100);
+                        $coverage = round((($kf1 + $kf2 + $kf3 + $kf4) / max(1, $totalNifas * 4)) * 100);
+                        $coverage = max(0, min(100, $coverage));
+                    @endphp
+
+                    <!-- AREA TENGAH: 2 baris => atas (waffle + batang), bawah (legend + label KF) -->
+                    <div class="grid grid-cols-12 gap-6 grid-rows-[1fr_auto]">
+                        <!-- Waffle -->
+                        <div class="col-span-12 lg:col-span-7 row-span-2 flex flex-col">
+                            <div class="flex items-baseline gap-3 mb-3">
+                                <span class="text-4xl font-bold tabular-nums">{{ $totalNifas }}</span>
+                                <span class="text-sm text-[#7C7C7C]">total pasien nifas</span>
+                            </div>
+                            <div class="grid grid-cols-10 auto-rows-[1fr] gap-1 h-full">
+                                @for ($i = 1; $i <= 100; $i++)
+                                    <div
+                                        class="rounded-[4px] {{ $i <= $coverage ? 'bg-[#B9257F]' : 'bg-[#F1F1F1]' }}">
+                                    </div>
+                                @endfor
+                            </div>
                         </div>
-                        <div class="flex justify-between text-sm pt-2">
-                            <span>Sudah KF1</span>
-                            <span>0</span>
+
+                        <!-- Batang KF1–KF4 -->
+                        <div class="col-span-12 lg:col-span-5 flex items-end">
+                            <div class="grid grid-cols-4 gap-3 w-full translate-y-[24px]">
+                                @foreach ([['KF1',$p1],['KF2',$p2],['KF3',$p3],['KF4',$p4]] as [$label,$p])
+                                <div class="flex justify-center">
+                                    <div class="w-8 h-40 bg-[#F1F1F1] rounded-lg overflow-hidden flex items-end">
+                                        <div class="w-full bg-[#B9257F]" style="height: {{ $p }}%"></div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <!-- Legend cakupan -->
+                        <div class="col-span-12 lg:col-span-7 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-sm bg-[#B9257F]"></span>
+                                <span class="text-sm">Cakupan kunjungan (KF1–KF4)</span>
+                            </div>
+                            <span class="text-sm font-semibold tabular-nums">{{ $coverage }}%</span>
+                        </div>
+
+                        <!-- Label & angka KF -->
+                        <div class="col-span-12 lg:col-span-5">
+                            <div class="grid grid-cols-4 gap-3 text-center">
+                                <div>
+                                    <div class="text-xs text-[#7C7C7C]">KF1</div>
+                                    <div class="text-sm font-semibold tabular-nums">{{ $kf1 }}</div>
+                                    <div class="text-[11px] text-[#7C7C7C] tabular-nums">{{ $p1 }}%</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-[#7C7C7C]">KF2</div>
+                                    <div class="text-sm font-semibold tabular-nums">{{ $kf2 }}</div>
+                                    <div class="text-[11px] text-[#7C7C7C] tabular-nums">{{ $p2 }}%</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-[#7C7C7C]">KF3</div>
+                                    <div class="text-sm font-semibold tabular-nums">{{ $kf3 }}</div>
+                                    <div class="text-[11px] text-[#7C7C7C] tabular-nums">{{ $p3 }}%</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-[#7C7C7C]">KF4</div>
+                                    <div class="text-sm font-semibold tabular-nums">{{ $kf4 }}</div>
+                                    <div class="text-[11px] text-[#7C7C7C] tabular-nums">{{ $p4 }}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- progress segmented + angka per KF -->
+                    <div class="space-y-4">
+                        <div class="h-4 w-full rounded-full overflow-hidden bg-[#F1F1F1]">
+                            <div class="h-full bg-[#B9257F]/90 inline-block" style="width: {{ $p1 }}%"></div>
+                            <div class="h-full bg-[#B9257F]/75 inline-block" style="width: {{ $p2 }}%"></div>
+                            <div class="h-full bg-[#B9257F]/60 inline-block" style="width: {{ $p3 }}%"></div>
+                            <div class="h-full bg-[#B9257F]/45 inline-block" style="width: {{ $p4 }}%"></div>
+                        </div>
+                        <div class="grid grid-cols-4 gap-3 text-sm">
+                            <div class="flex items-center justify-between"><span>KF1</span><span
+                                    class="font-semibold tabular-nums">{{ $kf1 }}</span></div>
+                            <div class="flex items-center justify-between"><span>KF2</span><span
+                                    class="font-semibold tabular-nums">{{ $kf2 }}</span></div>
+                            <div class="flex items-center justify-between"><span>KF3</span><span
+                                    class="font-semibold tabular-nums">{{ $kf3 }}</span></div>
+                            <div class="flex items-center justify-between"><span>KF4</span><span
+                                    class="font-semibold tabular-nums">{{ $kf4 }}</span></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- KANAN TENGAH -->
+
+                <!-- KANAN TENGAH: Pasien Hadir (isi proporsional penuh) -->
                 <div
-                    class="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-2 bg-white rounded-2xl p-5 shadow-md">
-                    <div class="flex items-center justify-between mb-4">
+                    class="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-2 bg-white rounded-2xl p-5 shadow-md
+            grid grid-rows-[auto_1fr_auto]">
+                    <!-- header -->
+                    <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
                                 <img src="{{ asset('icons/Iconly/Regular/Light/Graph.svg') }}" class="w-3.5 h-3.5"
@@ -228,14 +327,73 @@
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}"
                             class="w-3.5 h-3.5 opacity-60" alt="Go">
                     </div>
-                    <p class="text-sm flex justify-between">Pasien Hadir <span>0</span></p>
-                    <p class="text-sm flex justify-between">Pasien Tidak Hadir <span>0</span></p>
+
+                    @php
+                        $hadir = $hadir ?? 0; $mangkir = $mangkir ?? 0; $totalA = max($hadir + $mangkir, 1);
+                        $pHadir = round(($hadir / $totalA) * 100); $pMangkir = 100 - $pHadir;
+                        $seriesAbsensi = $seriesAbsensi ?? array_fill(0, 12, 0);
+                        if (count($seriesAbsensi) < 12) { $seriesAbsensi = array_pad($seriesAbsensi, 12, 0); }
+                    @endphp
+
+                    <!-- isi utama (1fr): donut + panel progress -->
+                    <div class="grid grid-cols-2 gap-6 items-center">
+                        <!-- Donut besar -->
+                        <div class="relative w-full h-full grid place-content-center">
+                            <svg viewBox="0 0 36 36" class="w-40 h-40 -rotate-90 mx-auto">
+                                <circle cx="18" cy="18" r="16" fill="none" stroke="#F0F0F0"
+                                    stroke-width="4"></circle>
+                                <circle cx="18" cy="18" r="16" fill="none" stroke="#B9257F"
+                                    stroke-width="4" stroke-dasharray="{{ $pHadir }},100"
+                                    stroke-linecap="round"></circle>
+                            </svg>
+                            <div class="absolute inset-0 grid place-content-center">
+                                <span class="text-3xl font-bold tabular-nums">{{ $pHadir }}%</span>
+                                <span class="text-xs text-[#7C7C7C] -mt-1">Hadir</span>
+                            </div>
+                        </div>
+
+                        <!-- Progress & legend + spark bars -->
+                        <div class="flex flex-col justify-center gap-4">
+                            <div class="h-4 w-full rounded-full bg-[#F1F1F1] overflow-hidden">
+                                <div class="h-full bg-[#39E93F] inline-block" style="width: {{ $pHadir }}%"></div>
+                                <div class="h-full bg="#E20D0D] inline-block" style="width: {{ $pMangkir }}%"></div>
+                            </div>
+
+                            <div class="text-sm space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2"><span
+                                            class="w-3 h-3 rounded-sm bg-[#39E93F]"></span>Pasien Hadir</div>
+                                    <div class="font-semibold tabular-nums">{{ $hadir }}</div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2"><span
+                                            class="w-3 h-3 rounded-sm bg-[#E20D0D]"></span>Pasien Tidak Hadir</div>
+                                    <div class="font-semibold tabular-nums">{{ $mangkir }}</div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-12 gap-1 items-end h-14">
+                                @foreach ($seriesAbsensi as $v)
+                                    @php $h = 10 + min(100, (int) $v); @endphp
+                                    <div class="rounded-[6px] bg-[#B9257F]/60" style="height: {{ $h }}%"></div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-[#7C7C7C] flex justify-between">
+                        <span>Total</span>
+                        <span class="tabular-nums">{{ $hadir + $mangkir }}</span>
+                    </div>
                 </div>
 
-                <!-- KANAN BAWAH -->
+
+                <!-- KANAN BAWAH: Pemantauan (3 mini-donut, compact & rapi) -->
                 <div
-                    class="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-3 bg-white rounded-2xl p-5 shadow-md">
-                    <div class="flex items-center justify-between mb-4">
+                    class="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-3 bg-white rounded-2xl p-5 shadow-md
+                           grid grid-rows-[auto_1fr_auto]">
+                    <!-- header -->
+                    <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
                                 <img src="{{ asset('icons/Iconly/Sharp/Outline/Activity.svg') }}" class="w-3.5 h-3.5"
@@ -246,24 +404,51 @@
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}"
                             class="w-3.5 h-3.5 opacity-60" alt="Go">
                     </div>
-                    <div class="grid grid-cols-3 gap-4 text-center">
-                        <div class="border border-[#CAC7C7] rounded-lg p-2">
-                            <p class="text-sm text-[#7C7C7C]">Sehat</p>
-                            <p class="text-2xl font-bold">0</p>
+
+                    @php
+                        $sehat = $sehat ?? 0; $dirujuk = $dirujuk ?? 0; $meninggal = $meninggal ?? 0;
+                        $sumP = max($sehat + $dirujuk + $meninggal, 1);
+                        $pSehat = round(($sehat / $sumP) * 100);
+                        $pDirujuk = round(($dirujuk / $sumP) * 100);
+                        $pMeninggal = round(($meninggal / $sumP) * 100);
+                    @endphp
+
+                    <!-- isi utama -->
+                    <div class="grid grid-cols-3 gap-4 items-center justify-items-center">
+                        @foreach ([
+                            ['label' => 'Sehat', 'val' => $sehat, 'p' => $pSehat, 'color' => '#39E93F'],
+                            ['label' => 'Total Dirujuk', 'val' => $dirujuk, 'p' => $pDirujuk, 'color' => '#F5A524'],
+                            ['label' => 'Meninggal', 'val' => $meninggal, 'p' => $pMeninggal, 'color' => '#E20D0D'],
+                        ] as $i)
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="relative w-24 h-24">
+                                <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="#F0F0F0"
+                                        stroke-width="4"></circle>
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="{{ $i['color'] }}"
+                                        stroke-width="4" stroke-dasharray="{{ $i['p'] }},100"
+                                        stroke-linecap="round"></circle>
+                                </svg>
+                                <div class="absolute inset-0 grid place-content-center leading-tight text-center">
+                                    <span class="text-xl font-bold tabular-nums">{{ $i['val'] }}</span>
+                                    <span class="text-[9px] text-[#7C7C7C]">{{ $i['label'] }}</span>
+                                </div>
+                            </div>
+                            <span class="block w-24 text-center text-xs text-[#7C7C7C] tabular-nums">{{ $i['p'] }}%</span>
                         </div>
-                        <div class="border border-[#CAC7C7] rounded-lg p-2">
-                            <p class="text-sm text-[#7C7C7C]">Total Dirujuk</p>
-                            <p class="text-2xl font-bold">0</p>
-                        </div>
-                        <div class="border border-[#CAC7C7] rounded-lg p-2">
-                            <p class="text-sm text-[#7C7C7C]">Meninggal</p>
-                            <p class="text-2xl font-bold">0</p>
-                        </div>
+                        @endforeach
+                    </div>
+
+                    <!-- footer -->
+                    <div class="text-xs text-[#7C7C7C] flex justify-between">
+                        <span>Total</span>
+                        <span class="tabular-nums">{{ $sehat + $dirujuk + $meninggal }}</span>
                     </div>
                 </div>
+
             </section>
 
-            <!-- Chart -->
+            <!-- Chart contoh -->
             <section class="bg-white rounded-2xl p-5 shadow-md">
                 <div class="flex items-center gap-2 mb-4">
                     <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
@@ -273,25 +458,16 @@
                     <h2 class="font-semibold">Daerah Asal Pasien</h2>
                 </div>
                 <div class="grid grid-cols-12 gap-3 h-56 items-end">
-                    <div class="h-14 bg-[#B9257F] rounded-xl"></div>
-                    <div class="h-24 bg-[#B9257F] rounded-xl"></div>
-                    <div class="h-36 bg-[#B9257F] rounded-xl"></div>
-                    <div class="h-28 bg-[#B9257F] rounded-xl"></div>
-                    <div class="h-52 bg-[#B9257F] rounded-xl"></div>
-                    <div class="h-16 bg-[#B9257F] rounded-xl"></div>
-                    <div class="h-32 bg-[#B9257F] rounded-xl"></div>
-                    <div class="h-12 bg-[#B9257F] rounded-xl"></div>
-                    <div class="h-16 bg-[#B9257F] rounded-xl"></div>
-                    <div class="h-40 bg-[#B9257F] rounded-xl"></div>
-                    <div class="h-14 bg-[#B9257F] rounded-xl"></div>
-                    <div class="h-20 bg-[#B9257F] rounded-xl"></div>
+                    @foreach (range(1,12) as $i)
+                        <div class="h-{{ [14,24,36,28,52,16,32,12,16,40,14,20][$i-1] }} bg-[#B9257F] rounded-xl"></div>
+                    @endforeach
                 </div>
                 <div class="grid grid-cols-12 text-center text-xs text-[#7C7C7C] mt-3">
                     <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>Mei</span><span>Jun</span><span>Jul</span><span>Agu</span><span>Sep</span><span>Okt</span><span>Nov</span><span>Des</span>
                 </div>
             </section>
 
-            <!-- Table -->
+            <!-- Table: Data Pasien Pre-Eklampsia (dinamis jika $peList tersedia) -->
             <section class="bg-white rounded-2xl p-5 shadow-md">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2">
@@ -299,7 +475,7 @@
                             <img src="{{ asset('icons/Iconly/Regular/Light/Message.svg') }}" class="w-3.5 h-3.5"
                                 alt="">
                         </span>
-                        <h2 class="font-semibold">Data Pasien Pre Eklampsia</h2>
+                        <h2 class="font-semibold">Data Pasien Pre-Eklampsia</h2>
                     </div>
                     <button class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm">Filter</button>
                 </div>
@@ -318,32 +494,58 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-[#CAC7C7]">
-                        <tr>
-                            <td class="py-3">01</td>
-                            <td>Almira R</td>
-                            <td>3201•••8899</td>
-                            <td>26</td>
-                            <td>28 Minggu</td>
-                            <td>12/09/2025</td>
-                            <td><span class="px-3 py-1 bg-[#39E93F33] text-[#39E93F] rounded-full">Hadir</span></td>
-                            <td><span class="px-3 py-1 bg-[#E2D30D33] text-[#E2D30D] rounded-full">Sedang</span></td>
-                            <td><button
-                                    class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">Detail</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="py-3">02</td>
-                            <td>Nadia P</td>
-                            <td>3204•••1122</td>
-                            <td>30</td>
-                            <td>16 Minggu</td>
-                            <td>10/09/2025</td>
-                            <td><span class="px-3 py-1 bg-[#E20D0D33] text-[#E20D0D] rounded-full">Mangkir</span></td>
-                            <td><span class="px-3 py-1 bg-[#E20D0D33] text-[#E20D0D] rounded-full">Tinggi</span></td>
-                            <td><button
-                                    class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">Detail</button>
-                            </td>
-                        </tr>
+                        @forelse (($peList ?? []) as $i => $row)
+                            <tr>
+                                <td class="py-3 tabular-nums">{{ str_pad(($i+1), 2, '0', STR_PAD_LEFT) }}</td>
+                                <td>{{ $row->nama ?? '-' }}</td>
+                                <td>{{ $row->nik_masked ?? ($row->nik ?? '-') }}</td>
+                                <td class="tabular-nums">{{ $row->umur ?? '-' }}</td>
+                                <td>{{ $row->usia_kehamilan ? $row->usia_kehamilan.' Minggu' : '-' }}</td>
+                                <td>{{ $row->tanggal ?? '-' }}</td>
+                                <td>
+                                    @php $hadirClass = ($row->status_hadir ?? false) ? 'bg-[#39E93F33] text-[#39E93F]' : 'bg-[#E20D0D33] text-[#E20D0D]'; @endphp
+                                    <span class="px-3 py-1 rounded-full {{ $hadirClass }}">{{ ($row->status_hadir ?? false) ? 'Hadir' : 'Mangkir' }}</span>
+                                </td>
+                                <td>
+                                    @php
+                                        $mapRisk = [
+                                            'non-risk' => ['bg' => '#39E93F33','tx' => '#39E93F','label' => 'Normal'],
+                                            'sedang'   => ['bg' => '#E2D30D33','tx' => '#E2D30D','label' => 'Sedang'],
+                                            'tinggi'   => ['bg' => '#E20D0D33','tx' => '#E20D0D','label' => 'Tinggi'],
+                                        ];
+                                        $rk = $mapRisk[$row->resiko ?? 'non-risk'];
+                                    @endphp
+                                    <span class="px-3 py-1 rounded-full" style="background: {{ $rk['bg'] }}; color: {{ $rk['tx'] }};">{{ $rk['label'] }}</span>
+                                </td>
+                                <td>
+                                    <a href="#" class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">Detail</a>
+                                </td>
+                            </tr>
+                        @empty
+                            <!-- fallback demo rows jika $peList kosong -->
+                            <tr>
+                                <td class="py-3">01</td>
+                                <td>Almira R</td>
+                                <td>3201•••8899</td>
+                                <td>26</td>
+                                <td>28 Minggu</td>
+                                <td>12/09/2025</td>
+                                <td><span class="px-3 py-1 bg-[#39E93F33] text-[#39E93F] rounded-full">Hadir</span></td>
+                                <td><span class="px-3 py-1 bg-[#E2D30D33] text-[#E2D30D] rounded-full">Sedang</span></td>
+                                <td><button class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">Detail</button></td>
+                            </tr>
+                            <tr>
+                                <td class="py-3">02</td>
+                                <td>Nadia P</td>
+                                <td>3204•••1122</td>
+                                <td>30</td>
+                                <td>16 Minggu</td>
+                                <td>10/09/2025</td>
+                                <td><span class="px-3 py-1 bg-[#E20D0D33] text-[#E20D0D] rounded-full">Mangkir</span></td>
+                                <td><span class="px-3 py-1 bg-[#E20D0D33] text-[#E20D0D] rounded-full">Tinggi</span></td>
+                                <td><button class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">Detail</button></td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </section>
@@ -353,7 +555,6 @@
             </footer>
         </main>
     </div>
-
 </body>
 
 </html>
