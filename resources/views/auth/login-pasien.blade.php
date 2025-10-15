@@ -16,8 +16,8 @@
 </head>
 
 <body class="bg-gray-100">
-    <div class="min-h-screen flex items-center justify-center p-4">
-        <div class="w-full max-w-5xl flex bg-white shadow-2xl overflow-hidden rounded-2xl">
+    <div class="py-20 px-4">
+        <div class="w-full max-w-5xl mx-auto flex bg-white shadow-2xl overflow-hidden rounded-2xl">
 
             <div class="hidden lg:block lg:w-1/2">
                 <img class="h-full w-full object-cover" src="{{ asset('images/gradient-bg v2.png') }}" alt="DeLISA Panel">
