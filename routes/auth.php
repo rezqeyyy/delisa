@@ -24,6 +24,9 @@ Route::middleware('guest')->group(function () {
         return view('auth.register-pasien');
     })->name('pasien.register');
 
+    Route::post('register-pasien', [\App\Http\Controllers\Auth\RoleRegistrationController::class, 'storePasien'])
+        ->name('pasien.register.store');
+
     Route::get('register-puskesmas', function () {
         return view('auth.register-puskesmas');
     })->name('puskesmas.register');
@@ -97,4 +100,7 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->middleware('auth')
         ->name('logout');
+
+    Route::post('logout-pasien', [AuthenticatedSessionController::class, 'destroyPasien'])
+        ->name('logout.pasien');
 });

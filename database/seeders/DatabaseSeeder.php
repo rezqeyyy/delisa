@@ -22,25 +22,5 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        // 1) Seed roles
-        $this->call([
-            RoleSeederDinkes::class,
-            RoleSeederSelainDinkes::class,
-        ]);
-
-        // 2) Buat admin Dinkes (updateOrInsert untuk idempotent)
-        $roleId = DB::table('roles')->where('nama_role', 'dinkes')->value('id');
-
-        DB::table('users')->updateOrInsert(
-            ['email' => 'admin@gmail.com'],
-            [
-                'name'       => 'Test Dinkes',
-                'password'   => Hash::make('admin123'),
-                'role_id'    => $roleId,
-                'status'     => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        );
     }
 }

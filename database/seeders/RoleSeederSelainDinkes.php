@@ -13,6 +13,7 @@ class RoleSeederSelainDinkes extends Seeder
             ['id' => 2, 'nama_role' => 'bidan'],
             ['id' => 3, 'nama_role' => 'rs'],
             ['id' => 4, 'nama_role' => 'puskesmas'],
+            ['id' => 5, 'nama_role' => 'pasien'],
         ]);
     }
 }

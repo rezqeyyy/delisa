@@ -10,7 +10,22 @@ use App\Http\Controllers\Dinkes\ProfileController;
 
 
 
-Route::get('/', fn() => view('auth.login'));
+Route::get('/', fn() => view('auth.login-pasien'));
+
+Route::get('/', function () {
+    if (auth()->check()) {
+        $role = optional(auth()->user()->role)->nama_role;
+        return match ($role) {
+            'dinkes'      => redirect()->route('dinkes.dashboard'),
+            'puskesmas'   => redirect()->route('puskesmas.dashboard'),
+            'bidan'       => redirect()->route('bidan.dashboard'),
+            'rumah_sakit' => redirect()->route('rs.dashboard'),
+            'pasien'      => redirect()->route('pasien.dashboard'),
+            default       => redirect()->route('login'),
+        };
+    }
+    return view('auth.login-pasien');
+});
 
 Route::middleware(['auth'])->group(function () {
 

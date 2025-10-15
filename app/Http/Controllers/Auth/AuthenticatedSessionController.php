@@ -115,7 +115,7 @@ class AuthenticatedSessionController extends Controller
         return redirect()->to($this->redirectPathByRole($pasien->user));
     }
 
-    // POST /logout
+    // POST /logout petugas
     public function destroy(Request $request)
     {
         // hapus auth
@@ -129,6 +129,16 @@ class AuthenticatedSessionController extends Controller
         // cookie()->queue(cookie()->forget(config('session.cookie')));
 
         return redirect()->route('login');
+    }
+
+    // POST /logout pasien
+    public function destroyPasien(Request $request)
+    {
+        Auth::guard()->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('pasien.login');
     }
 
     protected function redirectPathByRole($user)

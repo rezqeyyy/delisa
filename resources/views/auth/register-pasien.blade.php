@@ -29,7 +29,7 @@
                         <h1 class="text-3xl font-bold text-gray-900 mt-4">Registrasi Pasien</h1>
                         <p class="text-gray-600 mt-1">Daftar dengan NIK dan Nama Lengkap</p>
 
-                        <form action="{{ route('register') }}" method="POST" class="mt-8 space-y-5">
+                        <form action="{{ route('pasien.register.store') }}" method="POST" class="mt-8 space-y-5">
                             @csrf
                             <div>
                                 <label for="nik" class="block text-sm font-medium text-gray-700">Nomor Induk

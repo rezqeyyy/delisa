@@ -142,4 +142,44 @@ class RoleRegistrationController extends Controller
         return redirect()->route('login')
             ->with('ok', 'Pengajuan akun Bidan terkirim. Menunggu persetujuan DINKES.');
     }
+
+    /** PASIEN **/
+    public function storePasien(\Illuminate\Http\Request $r)
+    {
+        $data = $r->validate([
+            'nik'          => 'required|string|size:16|unique:pasiens,nik',
+            'nama_lengkap' => 'required|string|min:3',
+        ]);
+
+        $roleId = $this->roleId('pasien');
+        if (!$roleId) {
+            $roleId = \Illuminate\Support\Facades\DB::table('roles')->insertGetId([
+                'nama_role'  => 'pasien',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($data, $roleId) {
+            $userId = \Illuminate\Support\Facades\DB::table('users')->insertGetId([
+                'name'       => $data['nama_lengkap'],
+                'email'      => null,
+                'password'   => null,
+                'role_id'    => $roleId,
+                'status'     => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            \Illuminate\Support\Facades\DB::table('pasiens')->insert([
+                'user_id'    => $userId,
+                'nik'        => $data['nik'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        return redirect()->route('pasien.login')
+            ->with('ok', 'Registrasi pasien berhasil. Silakan login dengan NIK & Nama Lengkap.');
+    }
 }
