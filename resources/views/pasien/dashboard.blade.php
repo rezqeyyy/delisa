@@ -12,7 +12,6 @@
     <x-pasien.sidebar />
     
     <main class="flex-1 xl:ml-[260px] p-6 lg:p-8 space-y-6">
-      
       <div class="-mx-6 lg:-mx-8 px-6 lg:px-8 flex flex-wrap items-center gap-3 bg-white py-4 rounded-2xl shadow-md">
         <div class="relative flex-1 min-w-0">
             <span class="absolute inset-y-0 left-3 flex items-center">
@@ -22,26 +21,18 @@
                 class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
         </div>
 
-        <div class="flex items-center gap-3">
-            <a
-                class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
-                <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90"
-                    alt="Setting">
+        <div class="flex items-center gap-3 w-full md:w-auto justify-end md:justify-start flex-shrink-0">
+            <a class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
+                <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90" alt="Setting">
             </a>
 
-
-            <button
-                class="relative w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
-                <img src="{{ asset('icons/Iconly/Sharp/Light/Notification.svg') }}" class="w-4 h-4 opacity-90"
-                    alt="Notif">
-                <span
-                    class="absolute top-1.5 right-1.5 inline-block w-2.5 h-2.5 bg-[#B9257F] rounded-full ring-2 ring-white"></span>
+            <button class="relative w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
+                <img src="{{ asset('icons/Iconly/Sharp/Light/Notification.svg') }}" class="w-4 h-4 opacity-90" alt="Notif">
+                <span class="absolute top-1.5 right-1.5 inline-block w-2.5 h-2.5 bg-[#B9257F] rounded-full ring-2 ring-white"></span>
             </button>
 
-            <!-- Profile dropdown -->
             <div id="profileWrapper" class="relative">
-                <button id="profileBtn"
-                    class="flex items-center gap-3 pl-2 pr-3 py-1.5 bg-white border border-[#E5E5E5] rounded-full hover:bg-[#F8F8F8]">
+                <button id="profileBtn" class="flex items-center gap-3 pl-2 pr-3 py-1.5 bg-white border border-[#E5E5E5] rounded-full hover:bg-[#F8F8F8]">
                     
                     @if (Auth::user()?->photo)
                         <img src="{{ Storage::url(Auth::user()->photo) . '?t=' . optional(Auth::user()->updated_at)->timestamp }}"
@@ -66,8 +57,7 @@
                         class="w-4 h-4 opacity-70" alt="More" />
                 </button>
 
-                <div id="profileMenu"
-                    class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
+                <div id="profileMenu" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
                     <div class="px-4 py-3 border-b border-[#F0F0F0]">
                         <p class="text-sm font-medium text-[#1D1D1D]">
                             {{ auth()->user()->name ?? 'Nama Pasien' }}
