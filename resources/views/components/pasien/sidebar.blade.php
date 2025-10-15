@@ -22,21 +22,21 @@
                 <span>Dashboard</span>
             </a>
             
-                <div class="px-4">
-        <div class="mt-6 text-[11px] text-[#7C7C7C] mb-2">ACCOUNT</div>
+            <div class="px-4">
+                <div class="mt-6 text-[11px] text-[#7C7C7C] mb-2">ACCOUNT</div>
 
-        @php
-            $logoutRoute = \Illuminate\Support\Facades\Route::has('logout.pasien') ? 'logout.pasien' : 'logout';
-        @endphp
-        <form method="POST" action="{{ route($logoutRoute) }}" class="mt-2">
-            @csrf
-            <button type="submit"
-                class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-[#7C7C7C] hover:bg-[#F3F3F3]">
-                <img src="{{ asset('icons/iconly/sharp/light/profile.svg') }}" alt="Logout" class="w-4 h-4">
-                Logout
-            </button>
-        </form>
-    </div>
+                @php
+                    $logoutRoute = \Illuminate\Support\Facades\Route::has('logout.pasien') ? 'logout.pasien' : 'logout';
+                @endphp
+                <form method="POST" action="{{ route($logoutRoute) }}" class="mt-2">
+                    @csrf
+                    <button type="submit"
+                        class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-[#7C7C7C] hover:bg-[#F3F3F3]">
+                        <img src="{{ asset('icons/iconly/sharp/light/profile.svg') }}" alt="Logout" class="w-4 h-4">
+                        Logout
+                    </button>
+                </form>
+            </div>
         </nav>
     </div>
 </aside>
