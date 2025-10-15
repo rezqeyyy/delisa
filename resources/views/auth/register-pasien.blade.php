@@ -6,14 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register Pasien - DeLISA</title>
     @vite('resources/css/app.css')
+    <style>
+        /* Mengimpor font Poppins dari Google Fonts agar visual teks 100% cocok dengan desain modern */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100">
-
     <div class="min-h-screen flex items-center justify-center p-4">
-
         <div class="w-full max-w-5xl flex bg-white shadow-2xl overflow-hidden rounded-2xl">
-
+            
             <div class="hidden lg:block lg:w-1/2">
                 <img class="h-full w-full object-cover" src="{{ asset('images/gradient-bg v2.png') }}" alt="DeLISA Panel">
             </div>
@@ -24,7 +29,7 @@
                     <div>
                         <p class="text-7xl font-bold text-[#D91A8B]">*</p>
                         <h1 class="text-3xl font-bold text-gray-900 mt-4">Registrasi Pasien</h1>
-                        <p class="text-gray-600 mt-1">Daftar dengan NIK dan Nama Lengkap</p>
+                        <p class="text-gray-600 mt-1">Daftar dengan Nomor Induk Kependudukan (NIK) dan Nama Lengkap</p>
 
                         <form action="{{ route('pasien.register.store') }}" method="POST" class="mt-8 space-y-5">
                             @csrf
