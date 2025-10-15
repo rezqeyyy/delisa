@@ -18,9 +18,9 @@
                 <img class="h-full w-full object-cover" src="{{ asset('images/gradient-bg v2.png') }}" alt="DeLISA Panel">
             </div>
 
-            <div class="w-full lg:w-1/2 flex p-8 sm:p-12">
-                <div class="w-full max-w-md mx-auto flex flex-col justify-between">
-                    <x-back-link />
+            <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12">
+                <div class="w-full max-w-md mx-auto">
+                    
                     <div>
                         <p class="text-7xl font-bold text-[#D91A8B]">*</p>
                         <h1 class="text-3xl font-bold text-gray-900 mt-4">Registrasi Pasien</h1>
@@ -62,6 +62,7 @@
 
             </div>
         </div>
+    </div>
 </body>
 
 </html>
