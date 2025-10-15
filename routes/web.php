@@ -6,6 +6,8 @@ use App\Http\Controllers\Puskesmas\DashboardController as PuskesmasDashboardCont
 use App\Http\Controllers\Bidan\DashboardController as BidanDashboardController;
 use App\Http\Controllers\Rs\DashboardController as RsDashboardController;
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
+use App\Http\Controllers\Dinkes\ProfileController;
+
 
 
 Route::get('/', fn() => view('auth.login'));
@@ -64,6 +66,12 @@ Route::middleware(['auth'])->group(function () {
             // Pasien Nifas
             route::get('/pasien-nifas', [\App\Http\Controllers\Dinkes\PasienNifasController::class, 'index'])
                 ->name('pasien-nifas');
+
+            // Profile
+            Route::get('/profile', [\App\Http\Controllers\Dinkes\ProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('/profile', [\App\Http\Controllers\Dinkes\ProfileController::class, 'update'])->name('profile.update');
+            Route::delete('/profile/photo', [\App\Http\Controllers\Dinkes\ProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
+
         });
 
     Route::middleware('role:puskesmas')

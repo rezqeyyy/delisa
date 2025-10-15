@@ -13,7 +13,7 @@
     <div>
         <!-- Logo -->
         <div class="flex items-center gap-3 p-6 border-b border-[#CAC7C7]">
-            <img src="{{ asset('images/logo_fulltext 2.png') }}" alt="DeLISA" class="w-42 h-auto object-contain">
+            <img src="{{ asset('images/logo_fulltext.png') }}" alt="DeLISA" class="w-42 h-auto object-contain">
         </div>
 
         <!-- Navigasi utama -->
