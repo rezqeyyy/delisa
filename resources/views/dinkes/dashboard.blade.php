@@ -193,7 +193,7 @@
                                 <img src="{{ asset('icons/Iconly/Sharp/Light/Group 36721.svg') }}"
                                     class="w-3.5 h-3.5" alt="">
                             </span>
-                            <h2 class="font-semibold text-lg">Risiko Pre-Eklampsia</h2>
+                            <h2 class="font-semibold text-lg">Resiko Pre-Eklampsia</h2>
                         </div>
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}"
                             class="w-3.5 h-3.5 opacity-60" alt="">
