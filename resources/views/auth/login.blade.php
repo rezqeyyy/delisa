@@ -6,19 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Petugas - DeLISA</title>
     @vite('resources/css/app.css')
+    <style>
+        /* Mengimpor font Poppins dari Google Fonts agar visual teks 100% cocok dengan desain modern */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100">
-
     <div class="min-h-screen flex items-center justify-center p-4">
-
         <div class="w-full max-w-5xl flex bg-white shadow-2xl overflow-hidden rounded-2xl">
 
-            <div class="hidden lg:block relative lg:w-1/2 bg-white rounded-none">
-                <div class="absolute inset-0 p-10 flex items-center justify-center">
-                    <img class="h-full w-full object-contain" src="{{ asset('images/gradient-bg v2.png') }}"
-                        alt="DeLISA Panel">
-                </div>
+            <div class="hidden lg:block lg:w-1/2">
+                <img class="h-full w-full object-cover" src="{{ asset('images/gradient-bg v2.png') }}" alt="DeLISA Panel">
             </div>
 
             <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12">
@@ -69,13 +71,13 @@
                         </div>
                     </form>
 
-                    <div class="mt-6 flex justify-between text-sm">
+                    <div class="mt-8 flex justify-between items-center text-sm">
                         <a href="{{ route('password.request') }}" class="font-medium text-gray-600 hover:text-gray-900">
-                            Lupa password? <span class="text-[#D91A8B] font-semibold">Klik disini</span>
+                            Lupa password? <span class="font-semibold text-[#D91A8B] hover:text-[#c4177c]">Klik disini</span>
                         </a>
                         <button id="openRoleModal"
                             class="font-medium text-gray-600 hover:text-gray-900">
-                            Belum punya akun? <span class="text-[#D91A8B] font-semibold">Ajukan disini</span>
+                            Belum punya akun? <span class="font-semibold text-[#D91A8B] hover:text-[#c4177c]">Ajukan disini</span>
                         </button>
                     </div>
                     

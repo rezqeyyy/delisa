@@ -32,7 +32,7 @@
                     @csrf
                     <button type="submit"
                         class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-[#7C7C7C] hover:bg-[#F3F3F3]">
-                        <img src="{{ asset('icons/iconly/sharp/light/profile.svg') }}" alt="Logout" class="w-4 h-4">
+                        <img src="{{ asset('icons/Iconly/Sharp/Light/Profile.svg') }}" alt="Logout" class="w-4 h-4">
                         Logout
                     </button>
                 </form>

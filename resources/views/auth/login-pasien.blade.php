@@ -26,9 +26,7 @@
             <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12">
                 <div class="w-full max-w-md">
                     <p class="text-6xl text-[#D91A8B]">*</p>
-
                     <h1 class="text-3xl font-bold text-gray-900 mt-2">Login Pasien</h1>
-
                     <p class="text-gray-600 mt-1">Masukkan Nomor Induk Kependudukan (NIK) dan Nama Lengkap Anda untuk
                         masuk</p>
 
