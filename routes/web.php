@@ -94,6 +94,7 @@ Route::middleware(['auth'])->group(function () {
         ->prefix('bidan')->as('bidan.')
         ->group(function () {
             Route::get('/dashboard', [BidanDashboardController::class, 'index'])->name('dashboard');
+            Route::get('/skrining', [\App\Http\Controllers\Bidan\SkriningController::class, 'index'])->name('skrining');
         });
 
     // ================== RUMAH SAKIT ==================
