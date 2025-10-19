@@ -12,7 +12,6 @@ class User extends Authenticatable
 
     protected $table = 'users';
 
-    // ✅ Izinkan kolom yang bisa diisi secara mass assignment
     protected $fillable = [
         'name',
         'email',
@@ -25,15 +24,42 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    // ✅ Hidden fields agar password tidak ikut dikirim ke response
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    // ✅ Relasi ke Role
+    /**
+     * Relasi ke Role
+     */
     public function role()
     {
         return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    // --- TAMBAHKAN INI ---
+
+    /**
+     * Relasi ke Bidan (jika user ini adalah Bidan)
+     */
+    public function bidan()
+    {
+        return $this->hasOne(Bidan::class, 'user_id');
+    }
+
+    /**
+     * Relasi ke Pasien (jika user ini adalah Pasien)
+     */
+    public function pasien()
+    {
+        return $this->hasOne(Pasien::class, 'user_id');
+    }
+
+    /**
+     * Relasi ke RumahSakit (jika user ini adalah admin RS)
+     */
+    public function rumahSakit()
+    {
+        return $this->hasOne(RumahSakit::class, 'user_id');
     }
 }
