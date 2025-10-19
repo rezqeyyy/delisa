@@ -103,6 +103,10 @@ Route::middleware(['auth'])->group(function () {
             // 2. Route untuk update status "checked" (saat "Ya" diklik)
             Route::post('/skrining/{skrining}/mark-as-viewed', [\App\Http\Controllers\Bidan\SkriningController::class, 'markAsViewed'])
                 ->name('skrining.markAsViewed');
+
+            // 3. Route untuk tombol "Sudah Diperiksa"
+            Route::post('/skrining/{skrining}/follow-up', [\App\Http\Controllers\Bidan\SkriningController::class, 'followUp'])
+                ->name('skrining.followUp');
         });
 
     // ================== RUMAH SAKIT ==================

@@ -77,4 +77,12 @@ class Skrining extends Model
         // Asumsi nama modelnya adalah RiwayatKehamilan
         return $this->hasMany(RiwayatKehamilan::class, 'skrining_id');
     }
+
+    /**
+     * Mendefinisikan relasi "hasOne" ke model RiwayatKehamilanGpa.
+     */
+    public function riwayatKehamilanGpa()
+    {
+        return $this->hasOne(RiwayatKehamilanGpa::class, 'skrining_id');
+    }
 }
