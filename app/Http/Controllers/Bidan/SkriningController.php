@@ -15,21 +15,56 @@ class SkriningController extends Controller
      */
     public function index()
     {
-        // 1. Dapatkan bidan yg login
+
         $bidan = Auth::user()->bidan;
         if (!$bidan) {
             abort(403, 'Anda tidak memiliki akses sebagai Bidan.');
         }
         $puskesmasId = $bidan->puskesmas_id;
 
-        // 2. Ambil data skrining di puskesmas tsb,
-        //    sertakan relasi ke pasien & user, urutkan terbaru, dan paginasi
         $skrinings = Skrining::where('puskesmas_id', $puskesmasId)
                             ->with(['pasien.user'])
                             ->latest()
-                            ->paginate(10); // Angka 10 ini nentuin jumlah data per halaman
+                            ->paginate(10); 
 
-        // 3. Kirim data ke view
         return view('bidan.skrining', compact('skrinings'));
+    }
+
+    /**
+     * Menampilkan halaman detail skrining (Placeholder).
+     */
+    public function show(Skrining $skrining)
+    {
+        // Pastikan bidan ini boleh melihat skrining ini (opsional tapi bagus)
+        $bidanPuskesmasId = Auth::user()->bidan->puskesmas_id;
+        if ($skrining->puskesmas_id != $bidanPuskesmasId) {
+            abort(404);
+        }
+
+        // Tampilkan view detailnya
+        // return view('bidan.skrining-detail', compact('skrining'));
+        
+        // Untuk sekarang, kita bisa return teks aja dulu
+        return "Ini adalah halaman detail untuk Skrining ID: " . $skrining->id;
+    }
+
+    /**
+     * Update status skrining menjadi "checked" (AJAX).
+     */
+    public function markAsViewed(Request $request, Skrining $skrining)
+    {
+        // Pastikan bidan ini boleh update skrining ini
+        $bidanPuskesmasId = Auth::user()->bidan->puskesmas_id;
+        if ($skrining->puskesmas_id != $bidanPuskesmasId) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Update statusnya
+        $skrining->update(['checked_status' => true]);
+
+        return response()->json([
+            'message' => 'Status updated successfully',
+            'redirect_url' => route('bidan.skrining.show', $skrining->id)
+        ]);
     }
 }

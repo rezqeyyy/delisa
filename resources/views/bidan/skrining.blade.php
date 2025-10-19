@@ -3,16 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Bidan — List Skrining</title>
     @vite('resources/css/app.css')
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-gray-100">
-    <div class="flex min-h-screen">
+    
+    <div class="flex min-h-screen" 
+         x-data="{
+             modalOpen: false,
+             selectedSkriningId: null,
+             selectedSkriningUrl: '',
+             isLoading: false,
+
+             // Fungsi untuk membuka modal
+             openModal(skriningId, skriningUrl) {
+                 this.selectedSkriningId = skriningId;
+                 this.selectedSkriningUrl = skriningUrl;
+                 this.modalOpen = true;
+             },
+
+             // Fungsi saat klik 'Ya'
+             async confirmView() {
+                 if (this.isLoading) return;
+                 this.isLoading = true;
+
+                 try {
+                     const response = await fetch(`/bidan/skrining/${this.selectedSkriningId}/mark-as-viewed`, {
+                         method: 'POST',
+                         headers: {
+                             'Content-Type': 'application/json',
+                             'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').content
+                         },
+                     });
+                     
+                     if (!response.ok) {
+                         throw new Error('Gagal update status');
+                     }
+
+                     const data = await response.json();
+                     
+                     // Pindahkan halaman ke URL detail
+                     window.location.href = data.redirect_url;
+
+                 } catch (error) {
+                     console.error(error);
+                     alert('Terjadi kesalahan. Silakan coba lagi.');
+                     this.isLoading = false;
+                     this.modalOpen = false;
+                 }
+             }
+         }">
         
         <x-bidan.sidebar />
 
-        <div class="flex-1 flex flex-col lg:pl-64"> <header class="sticky top-0 z-10 flex h-20 items-center justify-between border-b bg-white px-4 sm:px-6 lg:px-8">
+        <div class="flex-1 flex flex-col lg:pl-64">
+            
+            <header class="sticky top-0 z-10 flex h-20 items-center justify-between border-b bg-white px-4 sm:px-6 lg:px-8">
                 <div class="flex-1">
                     <div class="relative w-full max-w-md">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -21,12 +69,10 @@
                         <input type="search" placeholder="Search..." class="w-full rounded-full border-gray-300 pl-10 pr-4 py-2 text-sm focus:border-pink-500 focus:ring-pink-500">
                     </div>
                 </div>
-
                 <div class="flex items-center gap-4">
                     <button class="text-gray-500 hover:text-gray-700">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341A6.002 6.002 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     </button>
-
                     <div x-data="{ open: false }" class="relative">
                         <button @click="open = !open" class="flex items-center gap-2">
                             <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&color=F472B6&background=FCE7F3" alt="Avatar" class="h-10 w-10 rounded-full border-2 border-pink-100">
@@ -91,9 +137,21 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <a href="#" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                                        
+                                        @php
+                                            // Tentukan class pudar jika checked_status == true
+                                            $buttonClass = $skrining->checked_status
+                                                ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
+                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50';
+                                        @endphp
+                                        
+                                        <button type="button" 
+                                                class="px-3 py-1 border rounded-md text-sm transition-colors {{ $buttonClass }}"
+                                                @click="openModal({{ $skrining->id }}, '{{ route('bidan.skrining.show', $skrining->id) }}')"
+                                                {{ $skrining->checked_status ? 'disabled' : '' }} >
                                             View
-                                        </a>
+                                        </button>
+
                                     </td>
                                 </tr>
                             @empty
@@ -113,6 +171,43 @@
                 </div>
             </main>
         </div>
-    </div>
-</body>
+
+        <div x-show="modalOpen" 
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+             style="display: none;"> <div @click.away="modalOpen = false" 
+                 x-show="modalOpen"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-90"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-90"
+                 class="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl text-center">
+                
+                <h3 class="text-2xl font-bold text-gray-800">Ingin Melihat Detail Data Pasien?</h3>
+                <p class="mt-2 text-gray-600">Pilih "Ya" untuk melihat dan "Batal" untuk membatalkan</p>
+
+                <div class="mt-8 flex justify-center gap-4">
+                    <button @click="modalOpen = false"
+                            class="rounded-lg bg-red-500 px-8 py-3 text-base font-medium text-white shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2">
+                        Batal
+                    </button>
+                    
+                    <button @click="confirmView()"
+                            :disabled="isLoading"
+                            class="rounded-lg bg-green-500 px-8 py-3 text-base font-medium text-white shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 disabled:bg-gray-400">
+                        <span x-show="!isLoading">Ya</span>
+                        <span x-show="isLoading">Loading...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div> </body>
 </html>

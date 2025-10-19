@@ -95,6 +95,14 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
             Route::get('/dashboard', [BidanDashboardController::class, 'index'])->name('dashboard');
             Route::get('/skrining', [\App\Http\Controllers\Bidan\SkriningController::class, 'index'])->name('skrining');
+
+            // 1. Route untuk halaman detail (tujuan setelah klik "Ya")
+            Route::get('/skrining/{skrining}', [\App\Http\Controllers\Bidan\SkriningController::class, 'show'])
+                ->name('skrining.show');
+
+            // 2. Route untuk update status "checked" (saat "Ya" diklik)
+            Route::post('/skrining/{skrining}/mark-as-viewed', [\App\Http\Controllers\Bidan\SkriningController::class, 'markAsViewed'])
+                ->name('skrining.markAsViewed');
         });
 
     // ================== RUMAH SAKIT ==================
