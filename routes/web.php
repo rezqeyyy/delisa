@@ -8,6 +8,7 @@ use App\Http\Controllers\Puskesmas\DashboardController as PuskesmasDashboardCont
 use App\Http\Controllers\Bidan\DashboardController as BidanDashboardController;
 use App\Http\Controllers\Rs\DashboardController as RsDashboardController;
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
+use App\Http\Controllers\Pasien\SkriningController as PasienSkriningController;
 use App\Http\Controllers\Dinkes\DataMasterController;
 use App\Http\Controllers\Dinkes\AkunBaruController;
 use App\Http\Controllers\Dinkes\PasienNifasController;
@@ -121,6 +122,9 @@ Route::middleware(['auth'])->group(function () {
         ->prefix('pasien')->as('pasien.')
         ->group(function () {
             Route::get('/dashboard', [PasienDashboardController::class, 'index'])->name('dashboard');
+            Route::get('/skrining/ajukan', [PasienSkriningController::class, 'create'])->name('skrining.create');
+            Route::get('/skrining/{skrining}', [PasienSkriningController::class, 'show'])->name('skrining.show');
+            Route::get('/skrining/{skrining}/edit', [PasienSkriningController::class, 'edit'])->name('skrining.edit');
         });
 });
 
