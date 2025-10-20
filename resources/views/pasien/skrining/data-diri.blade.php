@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pasien — Ajukan Skrining</title>
+    <title>Data Diri — Delisa Skrining</title>
     @vite('resources/css/app.css')
     <style>
         /* Mengimpor font Poppins dari Google Fonts agar visual teks 100% cocok dengan desain modern */
@@ -225,7 +225,7 @@
                         class="rounded-full bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
                         Kembali
                     </a>
-                    <a href="{{ route('pasien.skrining.riwayat-kehamilan') }}"
+                    <a href="{{ route('pasien.riwayat-kehamilan') }}"
                         class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
                         Lanjut
                     </a>

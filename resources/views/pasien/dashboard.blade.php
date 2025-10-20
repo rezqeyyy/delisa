@@ -127,8 +127,8 @@
                         </form>
 
                         @php
-                        $ajukanUrl = \Illuminate\Support\Facades\Route::has('pasien.skrining.create')
-                            ? route('pasien.skrining.create')
+                        $ajukanUrl = \Illuminate\Support\Facades\Route::has('pasien.data-diri')
+                            ? route('pasien.data-diri')
                             : '#';
                         @endphp
                         <a href="{{ $ajukanUrl }}"

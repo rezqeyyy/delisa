@@ -14,12 +14,12 @@ class SkriningController extends Controller
     {
         $puskesmasId = (int) $request->query('puskesmas_id');
         $puskesmas   = $puskesmasId ? Puskesmas::find($puskesmasId) : null;
-        return view('pasien.skrining-create');
+        return view('pasien.skrining.data-diri');
     }
 
     public function riwayatKehamilan(Request $request)
     {
-        return view('pasien.skrining-riwayat-kehamilan');
+        return view('pasien.skrining.riwayat-kehamilan');
     }
 
     public function show(Skrining $skrining)

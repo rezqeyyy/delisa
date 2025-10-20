@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pasien — Riwayat Kehamilan & Persalinan</title>
+    <title>Riwayat Kehamilan & Persalinan — Delisa Skrining</title>
     @vite('resources/css/app.css')
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
@@ -37,7 +37,7 @@
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
             <div class="flex items-center">
-                <a href="{{ route('pasien.skrining.create') }}" class="text-[#1D1D1D] hover:text-[#000]">
+                <a href="{{ route('pasien.data-diri') }}" class="text-[#1D1D1D] hover:text-[#000]">
                     <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -100,13 +100,13 @@
                 </div>
 
                 <div class="mt-8 flex items-center justify-between">
-                    <a href="{{ route('pasien.skrining.create') }}"
+                    <a href="{{ route('pasien.data-diri') }}"
                         class="rounded-full bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
                         Kembali
                     </a>
                     <button type="button"
                             class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
-                        Simpan Data
+                        Lanjut
                     </button>
                 </div>
             </form>
