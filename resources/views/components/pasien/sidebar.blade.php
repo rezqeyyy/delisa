@@ -9,7 +9,7 @@
     $is = fn($pattern) => request()->routeIs($pattern);
 @endphp
 
-<aside class="fixed top-0 left-0 h-full w-[260px] bg-white shadow-lg flex flex-col justify-between">
+<aside {{ $attributes->merge(['class' => 'fixed top-0 left-0 h-full w-[260px] bg-white shadow-lg flex flex-col justify-between']) }}>
     <div>
         <div class="flex items-center gap-3 p-6 border-b border-[#CAC7C7]">
             <img src="{{ asset('images/logo_fulltext.png') }}" alt="DeLISA" class="w-42 h-auto object-contain">

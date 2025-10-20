@@ -122,6 +122,7 @@ Route::middleware(['auth'])->group(function () {
         ->prefix('pasien')->as('pasien.')
         ->group(function () {
             Route::get('/dashboard', [PasienDashboardController::class, 'index'])->name('dashboard');
+            Route::get('/puskesmas/search', [PasienSkriningController::class, 'puskesmasSearch'])->name('puskesmas.search');
             Route::get('/skrining/ajukan', [PasienSkriningController::class, 'create'])->name('skrining.create');
             Route::get('/skrining/{skrining}', [PasienSkriningController::class, 'show'])->name('skrining.show');
             Route::get('/skrining/{skrining}/edit', [PasienSkriningController::class, 'edit'])->name('skrining.edit');
