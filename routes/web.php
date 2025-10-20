@@ -125,6 +125,8 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/puskesmas/search', [PasienSkriningController::class, 'puskesmasSearch'])->name('puskesmas.search');
             Route::get('/skrining/ajukan', [PasienSkriningController::class, 'create'])->name('data-diri');
             Route::get('/skrining/riwayat-kehamilan', [PasienSkriningController::class, 'riwayatKehamilan'])->name('riwayat-kehamilan');
+            Route::get('/skrining/kondisi-kesehatan-pasien', [PasienSkriningController::class, 'kondisiKesehatanPasien'])
+                ->name('kondisi-kesehatan-pasien');
             Route::get('/skrining/{skrining}', [PasienSkriningController::class, 'show'])->name('skrining.show');
             Route::get('/skrining/{skrining}/edit', [PasienSkriningController::class, 'edit'])->name('skrining.edit');
         });

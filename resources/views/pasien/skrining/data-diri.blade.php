@@ -59,8 +59,8 @@
                 $stepItems = [
                     'Data Diri Pasien',
                     'Riwayat Kehamilan & Persalinan',
-                    'Kondisi Kesehatan Ibu',
-                    'Kesehatan Pasien',
+                    'Kondisi Kesehatan Pasien',
+                    'Riwayat Penyakit Pasien',
                     'Riwayat Penyakit Keluarga',
                     'Pre Eklampsia',
                 ];

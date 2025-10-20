@@ -50,8 +50,8 @@
                 $stepItems = [
                     'Data Diri Pasien',
                     'Riwayat Kehamilan & Persalinan',
-                    'Kondisi Kesehatan Ibu',
-                    'Kesehatan Pasien',
+                    'Kondisi Kesehatan Pasien',
+                    'Riwayat Penyakit Pasien',
                     'Riwayat Penyakit Keluarga',
                     'Pre Eklampsia',
                 ];
@@ -104,10 +104,10 @@
                         class="rounded-full bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
                         Kembali
                     </a>
-                    <button type="button"
-                            class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
+                    <a href="{{ route('pasien.kondisi-kesehatan-pasien') }}"
+                        class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
                         Lanjut
-                    </button>
+                    </a>
                 </div>
             </form>
         </main>
