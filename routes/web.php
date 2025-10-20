@@ -124,6 +124,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/dashboard', [PasienDashboardController::class, 'index'])->name('dashboard');
             Route::get('/puskesmas/search', [PasienSkriningController::class, 'puskesmasSearch'])->name('puskesmas.search');
             Route::get('/skrining/ajukan', [PasienSkriningController::class, 'create'])->name('skrining.create');
+            Route::get('/skrining/riwayat-kehamilan', [PasienSkriningController::class, 'riwayatKehamilan'])->name('skrining.riwayat-kehamilan');
             Route::get('/skrining/{skrining}', [PasienSkriningController::class, 'show'])->name('skrining.show');
             Route::get('/skrining/{skrining}/edit', [PasienSkriningController::class, 'edit'])->name('skrining.edit');
         });

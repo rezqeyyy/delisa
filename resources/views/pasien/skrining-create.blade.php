@@ -86,36 +86,36 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nama Pasien (tidak dapat diubah)</label>
-                        <input type="text" class="mt-2 w-full rounded-xl border border-gray-300 bg-gray-200 px-4 py-2 text-sm"
+                        <input type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] bg-gray-200 px-4 py-2 text-sm"
                                 value="{{ Auth::user()->name }}" disabled>
                         <div class="mt-1 text-xs text-[#B9257F]">* Nama tidak dapat diubah.</div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">NIK (tidak dapat diubah)</label>
-                        <input type="text" class="mt-2 w-full rounded-xl border border-gray-300 bg-gray-200 px-4 py-2 text-sm"
+                        <input type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] bg-gray-200 px-4 py-2 text-sm"
                                 value="{{ optional($pasien)->nik }}" disabled>
                         <div class="mt-1 text-xs text-[#B9257F]">* NIK tidak dapat diubah.</div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Tempat Lahir</label>
-                        <input name="tempat_lahir" type="text" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm"
+                        <input name="tempat_lahir" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
                                 value="{{ old('tempat_lahir', optional($pasien)->tempat_lahir) }}" placeholder="Contoh: Depok">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Tanggal Lahir</label>
-                        <input name="tanggal_lahir" type="date" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm"
+                        <input name="tanggal_lahir" type="date" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
                                 value="{{ old('tanggal_lahir', optional($pasien)->tanggal_lahir) }}">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
                         <input name="phone" type="text"
-                            class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm"
+                            class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
                             value="{{ old('phone', Auth::user()->phone) }}"
                             placeholder="08xxxxxxxxxx">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Status Perkawinan</label>
-                        <select name="status_perkawinan" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm">
+                        <select name="status_perkawinan" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm">
                             <option value="">Pilih status</option>
                             <option value="1" {{ (string)$statusPerkawinan === '1' ? 'selected' : '' }}>Menikah</option>
                             <option value="0" {{ (string)$statusPerkawinan === '0' ? 'selected' : '' }}>Belum Menikah</option>
@@ -124,7 +124,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Golongan Darah</label>
                         @php $gol = old('golongan_darah', optional($pasien)->golongan_darah); @endphp
-                        <select name="golongan_darah" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm">
+                        <select name="golongan_darah" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm">
                             <option value="">Pilih golongan darah</option>
                             @foreach(['A','B','AB','O'] as $opt)
                                 <option value="{{ $opt }}" {{ $gol === $opt ? 'selected' : '' }}>{{ $opt }}</option>
@@ -135,7 +135,7 @@
                         <label class="block text-sm font-medium text-gray-700">Pembiayaan Kesehatan</label>
                         @php $biaya = old('pembiayaan_kesehatan', optional($pasien)->pembiayaan_kesehatan); @endphp
                         <select name="pembiayaan_kesehatan" x-model="bayar"
-                                class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm">
+                                class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm">
                             <option value="">Pilih pembiayaan</option>
                             <option value="Pribadi" {{ $biaya === 'Pribadi' ? 'selected' : '' }}>Pribadi</option>
                             <option value="BPJS Kesehatan" {{ $biaya === 'BPJS Kesehatan' ? 'selected' : '' }}>
@@ -147,7 +147,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Pendidikan Terakhir</label>
                         @php $pend = old('pendidikan', optional($pasien)->pendidikan); @endphp
-                        <select name="pendidikan" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm">
+                        <select name="pendidikan" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm">
                             <option value="">Pilih pendidikan</option>
                             @foreach(['Tidak Sekolah','SD','SMP','SMA','D3','S1','S2','S3'] as $opt)
                                 <option value="{{ $opt }}" {{ $pend === $opt ? 'selected' : '' }}>{{ $opt }}</option>
@@ -157,7 +157,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Pekerjaan</label>
                         @php $pekerjaan = old('pekerjaan', optional($pasien)->pekerjaan); @endphp
-                        <select name="pekerjaan" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm">
+                        <select name="pekerjaan" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm">
                             <option value="">Pilih pekerjaan</option>
                             @foreach(['Ibu Rumah tangga','Pegawai Swasta','ASN/PNS/TNI/Polri','Wiraswasta','Pekerjaan Lainnya'] as $opt)
                                 <option value="{{ $opt }}" {{ $pekerjaan === $opt ? 'selected' : '' }}>{{ $opt }}</option>
@@ -166,7 +166,7 @@
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700">Domisili (Alamat)</label>
-                        <input name="address" type="text" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm"
+                        <input name="address" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
                                 value="{{ old('address', Auth::user()->address) }}" placeholder="Alamat tempat tinggal">
                     </div>
                 </div>
@@ -174,46 +174,46 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Provinsi</label>
-                        <input name="PProvinsi" type="text" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm"
-                            value="{{ old('PProvinsi', optional($pasien)->PProvinsi) }}" placeholder="Misal: Jawa Barat">
+                        <input name="PProvinsi" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
+                            value="{{ old('PProvinsi', optional($pasien)->PProvinsi) }}" placeholder="Pilih Provinsi">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Kota/Kabupaten</label>
-                        <input name="PKabupaten" type="text" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm"
-                            value="{{ old('PKabupaten', optional($pasien)->PKabupaten) }}" placeholder="Misal: Kota Depok">
+                        <input name="PKabupaten" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
+                            value="{{ old('PKabupaten', optional($pasien)->PKabupaten) }}" placeholder="">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Kecamatan</label>
-                        <input name="PKecamatan" type="text" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm"
-                            value="{{ old('PKecamatan', optional($pasien)->PKecamatan) }}" placeholder="Misal: Beji">
+                        <input name="PKecamatan" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
+                            value="{{ old('PKecamatan', optional($pasien)->PKecamatan) }}" placeholder="">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Kelurahan</label>
-                        <input name="PWilayah" type="text" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm"
-                            value="{{ old('PWilayah', optional($pasien)->PWilayah) }}" placeholder="Misal: Beji Timur">
+                        <input name="PWilayah" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
+                            value="{{ old('PWilayah', optional($pasien)->PWilayah) }}" placeholder="">
                     </div>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-6 gap-6 mt-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">RT</label>
-                        <input name="rt" type="text" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm"
-                            value="{{ old('rt', optional($pasien)->rt) }}" placeholder="Misal: 090">
+                        <input name="rt" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
+                            value="{{ old('rt', optional($pasien)->rt) }}" placeholder="000">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">RW</label>
-                        <input name="rw" type="text" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm"
-                            value="{{ old('rw', optional($pasien)->rw) }}" placeholder="Misal: 009">
+                        <input name="rw" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
+                            value="{{ old('rw', optional($pasien)->rw) }}" placeholder="000">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Kode Pos</label>
-                        <input name="kode_pos" type="text" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm"
-                            value="{{ old('kode_pos', optional($pasien)->kode_pos) }}" placeholder="Misal: 90909">
+                        <input name="kode_pos" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
+                            value="{{ old('kode_pos', optional($pasien)->kode_pos) }}" placeholder="00000">
                     </div>
                     <div x-cloak x-show="bayar === 'BPJS Kesehatan'">
                         <label class="block text-sm font-medium text-gray-700">Nomor Kartu JKN</label>
                         <input name="no_jkn" type="text"
-                            class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2 text-sm"
+                            class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
                             value="{{ old('no_jkn', optional($pasien)->no_jkn) }}"
                             placeholder="Masukkan nomor kartu JKN"
                             x-bind:disabled="bayar !== 'BPJS Kesehatan'">
@@ -225,10 +225,10 @@
                         class="rounded-full bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
                         Kembali
                     </a>
-                    <button type="button"
-                            class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
+                    <a href="{{ route('pasien.skrining.riwayat-kehamilan') }}"
+                        class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
                         Lanjut
-                    </button>
+                    </a>
                 </div>
             </form>
 
