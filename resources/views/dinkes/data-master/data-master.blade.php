@@ -6,8 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DINKES – Data Master</title>
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/dinkes-data-master.js'])
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
+    </head>
 
 <body class="bg-[#F5F5F5] font-[Poppins] text-[#000000cc]">
     {{-- Wrapper vertikal setinggi layar --}}
