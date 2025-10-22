@@ -4,9 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Configuration\Exceptions;
 
-// Aliases bawaan Laravel untuk auth & verified
-use Illuminate\Auth\Middleware\Authenticate;
-use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
+use App\Http\Middleware\SecurityHeaders; // <-- import
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,17 +13,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // ✅ daftar alias (tambahkan, tidak menghapus yang lain)
+        // alias lain punyamu tetap
         $middleware->alias([
-            'auth'     => Authenticate::class,
-            'verified' => EnsureEmailIsVerified::class,
+            'auth'     => \Illuminate\Auth\Middleware\Authenticate::class,
+            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
             'role'     => \App\Http\Middleware\EnsureRole::class,
         ]);
 
-        // (opsional) kalau suatu saat mau menambah web group middleware, taruh di sini:
-        // $middleware->web(append: [ ... ]);
+        // >>> tambahkan ke group web
+        $middleware->web(append: [
+            SecurityHeaders::class,
+        ]);
     })
-    ->withExceptions(function (Exceptions $exceptions) {
-        // biarkan default
-    })
+    ->withExceptions(function (Exceptions $exceptions) {})
     ->create();
