@@ -9,6 +9,7 @@
     <style>
         /* Mengimpor font Poppins dari Google Fonts agar visual teks 100% cocok dengan desain modern */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
         body {
             font-family: 'Poppins', sans-serif;
         }
@@ -65,7 +66,7 @@
 
                         <div>
                             <a href="{{ route('pasien.login') }}"
-                            class="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">
+                                class="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">
                                 Login Pasien
                             </a>
                         </div>
@@ -73,14 +74,17 @@
 
                     <div class="mt-8 flex justify-between items-center text-sm">
                         <a href="{{ route('password.request') }}" class="font-medium text-gray-600 hover:text-gray-900">
-                            Lupa password? <span class="font-semibold text-[#D91A8B] hover:text-[#c4177c]">Klik disini</span>
+                            Lupa password? <span class="font-semibold text-[#D91A8B] hover:text-[#c4177c]">Klik
+                                disini</span>
                         </a>
-                        <button id="openRoleModal"
-                            class="font-medium text-gray-600 hover:text-gray-900">
-                            Belum punya akun? <span class="font-semibold text-[#D91A8B] hover:text-[#c4177c]">Ajukan disini</span>
-                        </button>
+                        <a href="{{ route('pasien.register') }}" class="font-medium text-gray-600 hover:text-gray-900">
+
+                            <button id="openRoleModal" class="font-medium text-gray-600 hover:text-gray-900">
+                                Belum punya akun? <span class="font-semibold text-[#D91A8B] hover:text-[#c4177c]">Ajukan
+                                    disini</span>
+                            </button>
+                        </a>
                     </div>
-                    
                 </div>
             </div>
         </div>
@@ -96,15 +100,15 @@
 
                 <div class="mt-6 space-y-3">
                     <a href="{{ route('puskesmas.register') }}"
-                       class="block w-full text-center py-3 px-4 rounded-md border border-[#D91A8B] text-[#D91A8B] hover:bg-[#fdf1f7] font-medium">
+                        class="block w-full text-center py-3 px-4 rounded-md border border-[#D91A8B] text-[#D91A8B] hover:bg-[#fdf1f7] font-medium">
                         Puskesmas
                     </a>
                     <a href="{{ route('rs.register') }}"
-                       class="block w-full text-center py-3 px-4 rounded-md border border-[#D91A8B] text-[#D91A8B] hover:bg-[#fdf1f7] font-medium">
+                        class="block w-full text-center py-3 px-4 rounded-md border border-[#D91A8B] text-[#D91A8B] hover:bg-[#fdf1f7] font-medium">
                         Rumah Sakit
                     </a>
                     <a href="{{ route('bidanMandiri.register') }}"
-                       class="block w-full text-center py-3 px-4 rounded-md border border-[#D91A8B] text-[#D91A8B] hover:bg-[#fdf1f7] font-medium">
+                        class="block w-full text-center py-3 px-4 rounded-md border border-[#D91A8B] text-[#D91A8B] hover:bg-[#fdf1f7] font-medium">
                         Bidan Mandiri
                     </a>
                 </div>
