@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Petugas - DeLISA</title>
-    @vite('resources/css/app.css')
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/petugas/modal-role-petugas.js'])
     <style>
         /* Mengimpor font Poppins dari Google Fonts agar visual teks 100% cocok dengan desain modern */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
@@ -77,14 +77,12 @@
                             Lupa password? <span class="font-semibold text-[#D91A8B] hover:text-[#c4177c]">Klik
                                 disini</span>
                         </a>
-                        <a href="{{ route('pasien.register') }}" class="font-medium text-gray-600 hover:text-gray-900">
-
-                            <button id="openRoleModal" class="font-medium text-gray-600 hover:text-gray-900">
-                                Belum punya akun? <span class="font-semibold text-[#D91A8B] hover:text-[#c4177c]">Ajukan
-                                    disini</span>
-                            </button>
-                        </a>
+                        <button id="openRoleModal" class="font-medium text-gray-600 hover:text-gray-900">
+                            Belum punya akun? <span class="font-semibold text-[#D91A8B] hover:text-[#c4177c]">Ajukan
+                                disini</span>
+                        </button>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -121,17 +119,6 @@
             </div>
         </div>
     </div>
-
-    <script>
-        const openBtn = document.getElementById('openRoleModal');
-        const modal = document.getElementById('roleModal');
-        const closeBtn = document.getElementById('closeRoleModal');
-        const backdrop = document.getElementById('roleModalBackdrop');
-
-        openBtn?.addEventListener('click', () => modal.classList.remove('hidden'));
-        closeBtn?.addEventListener('click', () => modal.classList.add('hidden'));
-        backdrop?.addEventListener('click', () => modal.classList.add('hidden'));
-    </script>
 
 </body>
 
