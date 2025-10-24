@@ -68,45 +68,7 @@
                 Form ini diisi untuk data kesehatan ibu
             </p>
 
-            <form x-data="{ 
-                heightCm: 0, 
-                weightKg: 0, 
-                get imt() { 
-                    const m = this.heightCm / 100; 
-                    if (!m || m <= 0 || !this.weightKg) return null; 
-                    const v = this.weightKg / (m * m); 
-                    return isFinite(v) ? Number(v.toFixed(2)) : null; 
-                },
-
-                imtInfo() {
-                    const v = this.imt;
-                    if (v === null) return { label: '', range: '', color: 'bg-[#F8FAFB] text-[#B9257F] border-[#B9257F]' };
-                    if (v < 17) return {label: 'IMT Kurus Berat', range: '(IMT < 17)', color: 'bg-[#F1C40F] text-black'};
-                    if (v >= 17 && v <= 18.4) return {label: 'IMT Kurus Ringan', range: '(17 - 18.4)', color: 'bg-[#F1C40F] text-black'};
-                    if (v >= 18.5 && v <= 25) return { label: 'IMT Normal', range: '(18.5 - 25)', color: 'bg-green-100 text-black border-green-300' };
-                    if (v > 25 && v <= 27) return { label: 'Gemuk Ringan', range: '(IMT 25 - 27)', color: 'bg-[#F44336] text-black border-orange-300' };
-                    if (v > 27) return { label: 'Gemuk Berat', range: '(IMT > 27)', color: 'bg-[#F44336] text-black border-red-300' };
-                    return { label: '', range: '', color: 'bg-[#F8FAFB] text-[#B9257F] border-[#B9257F]' };
-                },
-
-                sdp: null,
-                dbp: null,
-                get map() {
-                    const s = this.sdp;
-                    const d = this.dbp;
-                    if (s === null || d === null || s <= 0 || d <= 0) return null;
-                    const v = d + (s - d) / 3;
-                    return isFinite(v) ? Number(v.toFixed(2)) : null; 
-                },
-                
-                mapCategory() {
-                    const v = this.map;
-                    if (v === null) return null;
-                    if (v < 70) return { label: 'Rendah', range: '(< 70 mmHg)' };
-                    if (v <= 100) return { label: 'Normal', range: '(70 - 100 mmHg)' };
-                    return { label: 'Tinggi', range: '(> 100 mmHg)' };
-                }
-            }">
+            <form>
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
                     <!-- Kolom kiri -->
@@ -115,9 +77,8 @@
                             <label class="block text-sm font-medium text-[#1D1D1D]">Tinggi Badan</label>
                             <div class="relative">
                                 <input type="number" min="0" inputmode="numeric" name="tinggi_badan"
-                                    x-model.number="heightCm"
-                                    class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                                    placeholder="0">
+                                       class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
+                                       placeholder="0">
                                 <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[#B9257F] font-medium">Cm</span>
                             </div>
                         </div>
@@ -126,9 +87,8 @@
                             <label class="block text-sm font-medium text-[#1D1D1D]">Berat Badan Sebelum Hamil Saat Ini</label>
                             <div class="relative">
                                 <input type="number" min="0" step="0.01" inputmode="decimal" name="berat_badan_saat_hamil"
-                                    x-model.number="weightKg"
-                                    class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                                    placeholder="0">
+                                       class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
+                                       placeholder="0">
                                 <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[#B9257F] font-medium">Kg</span>
                             </div>
                         </div>
@@ -136,12 +96,8 @@
                         <div>
                             <label class="block text-sm font-medium text-[#1D1D1D]">Indeks Masa Tubuh (IMT)</label>
                             <input type="text" disabled
-                                x-bind:value="imt !== null ? imt : 'Akan terisi otomatis oleh sistem'"
-                                :class="'mt-2 w-full rounded-full border px-5 py-3 text-sm ' + imtInfo().color">
-                            <div class="mt-2 text-xs text-[#B9257F]" x-show="imt !== null" x-cloak>
-                                <span x-text="'Kategori : ' + imtInfo().label + ' ' + imtInfo().range"></span>
-                            </div>
-                            <input type="hidden" name="status_imt" x-bind:value="imt !== null ? (imtInfo().label + ' ' + imtInfo().range) : ''">
+                                   class="mt-2 w-full rounded-full border border-[#B9257F] bg-[#F8FAFB] px-5 py-3 text-sm text-[#B9257F]"
+                                   value="Akan terisi otomatis oleh sistem">
                         </div>
 
                         <div>
@@ -149,17 +105,15 @@
                             <div class="mt-2 flex items-center gap-4">
                                 <div class="relative flex-1">
                                     <input type="number" min="0" inputmode="numeric" name="sdp"
-                                        x-model.number="sdp"
-                                        class="w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                                        placeholder="Sistolik">
+                                           class="w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
+                                           placeholder="Sistolik">
                                     <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[#B9257F] font-medium">mmHg</span>
                                 </div>
                                 <span class="text-[#1D1D1D]">/</span>
                                 <div class="relative flex-1">
                                     <input type="number" min="0" inputmode="numeric" name="dbp"
-                                        x-model.number="dbp"
-                                        class="w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                                        placeholder="Diastolik">
+                                           class="w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
+                                           placeholder="Diastolik">
                                     <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[#B9257F] font-medium">mmHg</span>
                                 </div>
                             </div>
@@ -168,12 +122,10 @@
                         <div>
                             <label class="block text-sm font-medium text-[#1D1D1D]">Mean Arterial Pressure (MAP)</label>
                             <input type="text" disabled
-                                x-bind:value="map !== null ? (map + ' mmHg') : 'Akan terisi otomatis oleh sistem'"
-                                class="mt-2 w-full rounded-full border border-[#B9257F] bg-[#F472B6] px-5 py-3 text-sm">
-                            <p class="mt-2 text-xs text-[#B9257F]"
-                            x-text="map !== null 
-                                    ? ('Kategori MAP: ' + mapCategory().label + ' ' + mapCategory().range)
-                                    : 'Note: Mean Arterial Pressure (MAP) adalah tekanan darah rata-rata di arteri selama satu siklus jantung.'">
+                                   class="mt-2 w-full rounded-full border border-[#B9257F] bg-[#F8FAFB] px-5 py-3 text-sm text-[#B9257F]"
+                                   value="Akan terisi otomatis oleh sistem">
+                            <p class="mt-2 text-xs text-[#B9257F]">
+                                Note: Mean Arterial Pressure (MAP) adalah tekanan darah rata-rata di arteri selama satu siklus jantung.
                             </p>
                         </div>
                     </div>
@@ -220,11 +172,15 @@
                     </div>
                 </div>
 
-                <div class="mt-8 flex items-center justify-end">
-                    <button type="button"
-                            class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
-                        Simpan Data
-                    </button>
+                <div class="mt-8 flex items-center justify-between">
+                    <a href="{{ route('pasien.riwayat-kehamilan') }}"
+                        class="rounded-full bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
+                        Kembali
+                    </a>
+                    <a href="{{ route('pasien.riwayat-penyakit-pasien') }}"
+                        class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
+                        Lanjut
+                    </a>
                 </div>
             </form>
         </main>

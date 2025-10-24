@@ -25,6 +25,16 @@ class SkriningController extends Controller
         return view('pasien.skrining.kondisi-kesehatan-pasien');
     }
 
+    public function riwayatPenyakitPasien(Request $request)
+    {
+        return view('pasien.skrining.riwayat-penyakit-pasien');
+    }
+
+    public function riwayatPenyakitKeluarga(Request $request)
+    {
+        return view('pasien.skrining.riwayat-penyakit-keluarga');
+    }
+
     public function show(Skrining $skrining)
     {
         $this->authorizeAccess($skrining);

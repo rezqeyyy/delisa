@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pasien extends Model
 {
+    //HasFactory digunakan untuk membuat data dummy
     use HasFactory;
 
     protected $table = 'pasiens';

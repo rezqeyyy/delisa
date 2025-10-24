@@ -127,6 +127,10 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/skrining/riwayat-kehamilan', [PasienSkriningController::class, 'riwayatKehamilan'])->name('riwayat-kehamilan');
             Route::get('/skrining/kondisi-kesehatan-pasien', [PasienSkriningController::class, 'kondisiKesehatanPasien'])
                 ->name('kondisi-kesehatan-pasien');
+            Route::get('/skrining/riwayat-penyakit-pasien', [PasienSkriningController::class, 'riwayatPenyakitPasien'])
+                ->name('riwayat-penyakit-pasien');
+            Route::get('/skrining/riwayat-penyakit-keluarga', [PasienSkriningController::class, 'riwayatPenyakitKeluarga'])
+                ->name('riwayat-penyakit-keluarga');
             Route::get('/skrining/{skrining}', [PasienSkriningController::class, 'show'])->name('skrining.show');
             Route::get('/skrining/{skrining}/edit', [PasienSkriningController::class, 'edit'])->name('skrining.edit');
         });
