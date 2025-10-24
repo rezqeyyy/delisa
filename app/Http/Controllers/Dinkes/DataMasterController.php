@@ -83,6 +83,140 @@ class DataMasterController extends Controller
         ]);
     }
 
+    // app/Http/Controllers/Dinkes/DataMasterController.php
+
+    public function storeRs(Request $request)
+    {
+        $payload = $request->validate([
+            'pic_name'  => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email',
+            'password'  => 'required|string|min:8',
+            'phone'     => 'nullable|string|max:50',
+            'nama'      => 'required|string|max:255',
+            'kecamatan' => 'required|string|max:255',
+            'kelurahan' => 'required|string|max:255',
+            'lokasi'    => 'nullable|string',
+        ]);
+
+        DB::transaction(function () use ($payload) {
+            $userId = DB::table('users')->insertGetId([
+                'name'       => $payload['pic_name'],
+                'email'      => $payload['email'],
+                'password'   => Hash::make($payload['password']),
+                'phone'      => $payload['phone'] ?? null,
+                'address'    => $payload['lokasi'] ?? null,
+                'status'     => 1,
+                'role_id'    => $this->roleId('rs'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('rumah_sakits')->insert([
+                'user_id'    => $userId,
+                'nama'       => $payload['nama'],
+                'lokasi'     => $payload['lokasi'] ?? '',
+                'kecamatan'  => $payload['kecamatan'],
+                'kelurahan'  => $payload['kelurahan'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        return back()->with('ok', 'Data RS berhasil ditambahkan.');
+    }
+
+    public function storePuskesmas(Request $request)
+    {
+        $payload = $request->validate([
+            'pic_name'   => 'required|string|max:255',
+            'email'      => 'required|email|unique:users,email',
+            'password'   => 'required|string|min:8',
+            'phone'      => 'nullable|string|max:50',
+            'nama'       => 'required|string|max:255',
+            'kecamatan'  => 'required|string|max:255',
+            'lokasi'     => 'nullable|string',
+            'is_mandiri' => 'nullable|boolean',
+        ]);
+
+        DB::transaction(function () use ($payload) {
+            $userId = DB::table('users')->insertGetId([
+                'name'       => $payload['pic_name'],
+                'email'      => $payload['email'],
+                'password'   => Hash::make($payload['password']),
+                'phone'      => $payload['phone'] ?? null,
+                'address'    => $payload['lokasi'] ?? null,
+                'status'     => 1,
+                'role_id'    => $this->roleId('puskesmas'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('puskesmas')->insert([
+                'user_id'        => $userId,
+                'nama_puskesmas' => $payload['nama'],
+                'lokasi'         => $payload['lokasi'] ?? '',
+                'kecamatan'      => $payload['kecamatan'],
+                'is_mandiri'     => !empty($payload['is_mandiri']) ? 1 : 0,
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
+        });
+
+        return back()->with('ok', 'Data Puskesmas berhasil ditambahkan.');
+    }
+
+    public function storeBidan(Request $request)
+    {
+        $payload = $request->validate([
+            'name'               => 'required|string|max:255',
+            'email'              => 'required|email|unique:users,email',
+            'password'           => 'required|string|min:8',
+            'phone'              => 'nullable|string|max:50',
+            'address'            => 'nullable|string',
+            'nomor_izin_praktek' => 'required|string|max:255',
+            'puskesmas_id'       => 'required|exists:puskesmas,id',
+        ]);
+
+        DB::transaction(function () use ($payload) {
+            $userId = DB::table('users')->insertGetId([
+                'name'       => $payload['name'],
+                'email'      => $payload['email'],
+                'password'   => Hash::make($payload['password']),
+                'phone'      => $payload['phone'] ?? null,
+                'address'    => $payload['address'] ?? null,
+                'status'     => 1,
+                'role_id'    => $this->roleId('bidan'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('bidans')->insert([
+                'user_id'            => $userId,
+                'nomor_izin_praktek' => $payload['nomor_izin_praktek'],
+                'puskesmas_id'       => $payload['puskesmas_id'],
+                'created_at'         => now(),
+                'updated_at'         => now(),
+            ]);
+        });
+
+        return back()->with('ok', 'Akun Bidan berhasil ditambahkan.');
+    }
+
+    public function resetPassword(Request $request, int $user)
+    {
+        $data = $request->validate([
+            'new_password' => 'nullable|string|min:8', // kalau kosong, pakai default
+        ]);
+
+        DB::table('users')->where('id', $user)->update([
+            'password'   => Hash::make($data['new_password'] ?? 'Delisa123!'),
+            'updated_at' => now(),
+        ]);
+
+        return back()->with('ok', 'Password berhasil direset.');
+    }
+
+
     /** =========================
      *  FORM CREATE (lama – tetap)
      *  =========================*/
