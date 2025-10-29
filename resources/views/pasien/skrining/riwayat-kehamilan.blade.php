@@ -37,7 +37,7 @@
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
             <div class="flex items-center">
-                <a href="{{ route('pasien.data-diri') }}" class="text-[#1D1D1D] hover:text-[#000]">
+                <a href="{{ route('pasien.dashboard') }}" class="text-[#1D1D1D] hover:text-[#000]">
                     <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -57,7 +57,18 @@
                 ];
             @endphp
 
-            <x-pasien.stepper :current="$stepCurrent" :items="$stepItems" />
+            <x-pasien.stepper 
+                :current="2" 
+                :urls="[
+                    route('pasien.data-diri'),
+                    route('pasien.riwayat-kehamilan'),
+                    route('pasien.kondisi-kesehatan-pasien'),
+                    route('pasien.riwayat-penyakit-pasien'),
+                    route('pasien.riwayat-penyakit-keluarga'),
+                    route('pasien.preeklampsia'),
+                ]" 
+            />
+
             <div class="mt-4 md:hidden">
                 <h2 class="text-base font-semibold text-[#1D1D1D]">
                     {{ $stepItems[$stepCurrent - 1] }}

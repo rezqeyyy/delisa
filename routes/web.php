@@ -13,6 +13,7 @@ use App\Http\Controllers\Dinkes\DataMasterController;
 use App\Http\Controllers\Dinkes\AkunBaruController;
 use App\Http\Controllers\Dinkes\PasienNifasController;
 use App\Http\Controllers\Dinkes\ProfileController;
+use App\Http\Controllers\WilayahController;
 
 /*
 |--------------------------------------------------------------------------
@@ -123,17 +124,50 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
             Route::get('/dashboard', [PasienDashboardController::class, 'index'])->name('dashboard');
             Route::get('/puskesmas/search', [PasienSkriningController::class, 'puskesmasSearch'])->name('puskesmas.search');
+
+            // Data Diri
             Route::get('/skrining/ajukan', [PasienSkriningController::class, 'create'])->name('data-diri');
+            Route::post('/skrining/ajukan', [PasienSkriningController::class, 'storeDataDiri'])->name('data-diri.store');
+
+            // Riwayat Kehamilan & Persalinan (GPA)
             Route::get('/skrining/riwayat-kehamilan', [PasienSkriningController::class, 'riwayatKehamilan'])->name('riwayat-kehamilan');
+            Route::post('/skrining/riwayat-kehamilan', [PasienSkriningController::class, 'storeRiwayatKehamilanGpa'])->name('riwayat-kehamilan.store');
+
+            // Kondisi Kesehatan Pasien
             Route::get('/skrining/kondisi-kesehatan-pasien', [PasienSkriningController::class, 'kondisiKesehatanPasien'])
                 ->name('kondisi-kesehatan-pasien');
+            Route::post('/skrining/kondisi-kesehatan-pasien', [PasienSkriningController::class, 'storeKondisiKesehatanPasien'])
+                ->name('kondisi-kesehatan-pasien.store');
+
+            // Riwayat Penyakit Pasien
             Route::get('/skrining/riwayat-penyakit-pasien', [PasienSkriningController::class, 'riwayatPenyakitPasien'])
                 ->name('riwayat-penyakit-pasien');
+            Route::post('/skrining/riwayat-penyakit-pasien', [PasienSkriningController::class, 'storeRiwayatPenyakitPasien'])
+                ->name('riwayat-penyakit-pasien.store');
+
+            // Riwayat Penyakit Keluarga
             Route::get('/skrining/riwayat-penyakit-keluarga', [PasienSkriningController::class, 'riwayatPenyakitKeluarga'])
                 ->name('riwayat-penyakit-keluarga');
+            Route::post('/skrining/riwayat-penyakit-keluarga', [PasienSkriningController::class, 'storeRiwayatPenyakitKeluarga'])
+                ->name('riwayat-penyakit-keluarga.store');
+
+            // Preeklampsia
+            Route::get('/skrining/preeklampsia', [PasienSkriningController::class, 'preEklampsia'])
+                ->name('preeklampsia');
+            Route::post('/skrining/preeklampsia', [PasienSkriningController::class, 'storePreEklampsia'])
+                ->name('preeklampsia.store');
+
+
             Route::get('/skrining/{skrining}', [PasienSkriningController::class, 'show'])->name('skrining.show');
             Route::get('/skrining/{skrining}/edit', [PasienSkriningController::class, 'edit'])->name('skrining.edit');
         });
+
+    Route::prefix('wilayah')->group(function () {
+        Route::get('provinces', [WilayahController::class, 'provinces'])->name('wilayah.provinces');
+        Route::get('regencies/{provId}', [WilayahController::class, 'regencies'])->name('wilayah.regencies');
+        Route::get('districts/{kabId}', [WilayahController::class, 'districts'])->name('wilayah.districts');
+        Route::get('villages/{kecId}', [WilayahController::class, 'villages'])->name('wilayah.villages');
+    });
 });
 
 require __DIR__ . '/auth.php';

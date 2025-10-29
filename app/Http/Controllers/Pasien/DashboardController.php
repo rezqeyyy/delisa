@@ -28,9 +28,30 @@ class DashboardController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        // Hitung total selesai/belum dan risiko preeklamsia 
+        $baseQuery = Skrining::where('pasien_id', $pasienId);
+
+        $totalAll     = (clone $baseQuery)->count();
+        $totalSelesai = (clone $baseQuery)->whereNotNull('kesimpulan')->count();
+        $totalBelum   = max(0, $totalAll - $totalSelesai);
+
+        // Ambil status preeklamsia dari skrining terbaru yang sudah diisi
+        $riskPreeklampsia = (clone $baseQuery)
+            ->whereNotNull('kesimpulan')
+            ->latest()
+            ->value('status_pre_eklampsia');
+
+        // Fallback jika kolom status_pre_eklampsia kosong: pakai kesimpulan
+        if (!$riskPreeklampsia) {
+            $riskPreeklampsia = (clone $baseQuery)->latest()->value('kesimpulan');
+        }
+
         return view('pasien.dashboard', [
             'skrinings' => $skrinings,
             'status'    => $status,
+            'totalSelesai'      => $totalSelesai,
+            'totalBelum'        => $totalBelum,
+            'riskPreeklampsia'  => $riskPreeklampsia,
         ]);
     }
     

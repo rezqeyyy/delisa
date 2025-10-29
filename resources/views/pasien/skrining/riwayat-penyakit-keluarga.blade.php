@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pasien — Riwayat Penyakit Keluarga</title>
+    <title>Riwayat Penyakit Keluarga - Delisa Skrining</title>
     @vite('resources/css/app.css')
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
@@ -37,12 +37,12 @@
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
             <div class="flex items-center">
-                <a href="{{ route('pasien.riwayat-penyakit-pasien') }}" class="text-[#1D1D1D] hover:text-[#000]">
+                <a href="{{ route('pasien.dashboard') }}" class="text-[#1D1D1D] hover:text-[#000]">
                     <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                 </a>
-                <h1 class="ml-3 text-3xl font-bold text-[#1D1D1D]">Edit Skrining</h1>
+                <h1 class="ml-3 text-3xl font-bold text-[#1D1D1D]">Riwayat Penyakit Keluarga</h1>
             </div>
 
             @php
@@ -57,7 +57,18 @@
                 ];
             @endphp
 
-            <x-pasien.stepper :current="$stepCurrent" :items="$stepItems" />
+            <x-pasien.stepper 
+                :current="5" 
+                :urls="[
+                    route('pasien.data-diri'),
+                    route('pasien.riwayat-kehamilan'),
+                    route('pasien.kondisi-kesehatan-pasien'),
+                    route('pasien.riwayat-penyakit-pasien'),
+                    route('pasien.riwayat-penyakit-keluarga'),
+                    route('pasien.preeklampsia'),
+                ]" 
+            />
+
             <div class="mt-4 md:hidden">
                 <h2 class="text-base font-semibold text-[#1D1D1D]">
                     {{ $stepItems[$stepCurrent - 1] }}
@@ -225,6 +236,9 @@
                                     </svg>
                                 </span>
                             </label>
+                            <div class="mt-2 hidden peer-checked:block">
+                                <input type="text" name="penyakit_keluarga_lainnya" placeholder="Sebutkan penyakit lainnya pada keluarga" class="w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm text-[#1D1D1D] placeholder-[#8C8C8C]" />
+                            </div>
                         </div>
                     </div>
 
@@ -232,9 +246,9 @@
                         <a href="{{ route('pasien.riwayat-penyakit-pasien') }}" class="px-6 py-3 rounded-full bg-[#F2F2F2] text-[#1D1D1D] font-medium">
                             Kembali
                         </a>
-                        <button type="submit" class="px-6 py-3 rounded-full bg-[#B9257F] text-white font-medium">
-                            Berikutnya
-                        </button>
+                        <a href="{{ route('pasien.preeklampsia') }}" class="px-6 py-3 rounded-full bg-[#B9257F] text-white font-medium">
+                            Lanjut
+                        </a>
                     </div>
                 </div>
             </form>

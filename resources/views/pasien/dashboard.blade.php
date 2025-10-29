@@ -218,6 +218,42 @@
                 @endif
             </section>
 
+            <!-- Ringkasan Total Skrining & Resiko Preeklamsia -->
+            @php
+                $risk = $riskPreeklampsia ?? null;
+                $riskBoxClass = match (strtolower($risk ?? '')) {
+                    'beresiko'          => 'bg-[#EB1D1D] text-white',
+                    'waspada'           => 'bg-[#FFC700] text-white',
+                    'aman', 'normal'    => 'bg-[#2EDB58] text-white',
+                    default             => 'bg-[#E9E9E9] text-[#1D1D1D]',
+                };
+            @endphp
+
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white rounded-2xl p-6 shadow-md">
+                    <h2 class="font-semibold text-[#1D1D1D] mb-3">Total Skrining</h2>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#1D1D1D]">Sudah Selesai</span>
+                            <span class="font-semibold tabular-nums">{{ $totalSelesai ?? 0 }}</span>
+                        </div>
+                        <div class="border-t border-[#E9E9E9]"></div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#1D1D1D]">Belum diisi</span>
+                            <span class="font-semibold tabular-nums">{{ $totalBelum ?? 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-md">
+                    <h2 class="font-semibold text-[#1D1D1D] mb-3">Resiko Preeklamsia</h2>
+                    <div class="rounded-xl {{ $riskBoxClass }} p-6 text-center">
+                        <span class="text-lg font-semibold">
+                            {{ $risk ? $risk : 'Belum ada' }}
+                        </span>
+                    </div>
+                </div>
+            </section>
 
             <footer class="text-center text-xs text-[#7C7C7C] py-6">
                 © 2025 Dinas Kesehatan Kota Depok — DeLISA

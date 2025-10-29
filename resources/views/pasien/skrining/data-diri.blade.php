@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Diri — Delisa Skrining</title>
-    @vite('resources/css/app.css')
+    <!-- Memuat stylesheet utama via Vite -->
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/pasien/wilayah.js'])
+
     <style>
         /* Mengimpor font Poppins dari Google Fonts agar visual teks 100% cocok dengan desain modern */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
@@ -14,8 +16,6 @@
 
         [x-cloak] { display: none !important; }
     </style>
-
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
@@ -77,6 +77,7 @@
                 * Langsung lanjut ke halaman selanjutnya jika tidak ada perubahan pada data diri pasien
             </p>
 
+            <!-- Form Data Diri: binding 'bayar' untuk mengontrol tampilan field JKN -->
             @php
                 $pasien = optional(Auth::user())->pasien;
                 $statusPerkawinan = old('status_perkawinan', optional($pasien)->status_perkawinan);
@@ -84,6 +85,8 @@
             <form x-data="{ bayar: '{{ old('pembiayaan_kesehatan', optional(optional(Auth::user())->pasien)->pembiayaan_kesehatan) }}' }">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Identitas dasar pasien -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nama Pasien (tidak dapat diubah)</label>
                         <input type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] bg-gray-200 px-4 py-2 text-sm"
@@ -113,6 +116,8 @@
                             value="{{ old('phone', Auth::user()->phone) }}"
                             placeholder="08xxxxxxxxxx">
                     </div>
+
+                    <!-- Status Perkawinan -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Status Perkawinan</label>
                         <select name="status_perkawinan" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm">
@@ -121,6 +126,8 @@
                             <option value="0" {{ (string)$statusPerkawinan === '0' ? 'selected' : '' }}>Belum Menikah</option>
                         </select>
                     </div>
+
+                    <!-- Golongan Darah -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Golongan Darah</label>
                         @php $gol = old('golongan_darah', optional($pasien)->golongan_darah); @endphp
@@ -131,6 +138,8 @@
                             @endforeach
                         </select>
                     </div>
+
+                    <!-- Pembiayaan Kesehatan -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Pembiayaan Kesehatan</label>
                         @php $biaya = old('pembiayaan_kesehatan', optional($pasien)->pembiayaan_kesehatan); @endphp
@@ -144,6 +153,8 @@
                             <option value="Asuransi Lain" {{ $biaya === 'Asuransi Lain' ? 'selected' : '' }}>Asuransi Lainnya</option>
                         </select>
                     </div>
+
+                    <!-- Pendidikan Terakhir -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Pendidikan Terakhir</label>
                         @php $pend = old('pendidikan', optional($pasien)->pendidikan); @endphp
@@ -154,6 +165,8 @@
                             @endforeach
                         </select>
                     </div>
+
+                    <!-- Pekerjaan -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Pekerjaan</label>
                         @php $pekerjaan = old('pekerjaan', optional($pasien)->pekerjaan); @endphp
@@ -171,26 +184,51 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
+                <!-- Grid dropdown wilayah: tambahkan id + data-old -->
+                <div id="wilayah-wrapper"
+                    class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6"
+                    data-prov="{{ old('PProvinsi', optional($pasien)->PProvinsi) }}"
+                    data-kab="{{ old('PKabupaten', optional($pasien)->PKabupaten) }}"
+                    data-kec="{{ old('PKecamatan', optional($pasien)->PKecamatan) }}"
+                    data-kel="{{ old('PWilayah',  optional($pasien)->PWilayah) }}"
+                    data-url-provinces="{{ url('/wilayah/provinces') }}"
+                    data-url-regencies="{{ url('/wilayah/regencies') }}"
+                    data-url-districts="{{ url('/wilayah/districts') }}"
+                    data-url-villages="{{ url('/wilayah/villages') }}">
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Provinsi</label>
-                        <input name="PProvinsi" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
-                            value="{{ old('PProvinsi', optional($pasien)->PProvinsi) }}" placeholder="Pilih Provinsi">
+                        <select id="provinsi" name="PProvinsi"
+                                class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm">
+                            <option value="">Pilih Provinsi</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Kota/Kabupaten</label>
-                        <input name="PKabupaten" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
-                            value="{{ old('PKabupaten', optional($pasien)->PKabupaten) }}" placeholder="">
+                        <select id="kabupaten" name="PKabupaten"
+                                class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
+                                disabled>
+                            <option value="">Pilih Kota/Kabupaten</option>
+                        </select>
+                        <div class="mt-1 text-xs text-[#B9257F]">* Pilih Provinsi dahulu.</div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Kecamatan</label>
-                        <input name="PKecamatan" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
-                            value="{{ old('PKecamatan', optional($pasien)->PKecamatan) }}" placeholder="">
+                        <select id="kecamatan" name="PKecamatan"
+                                class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
+                                disabled>
+                            <option value="">Pilih Kecamatan</option>
+                        </select>
+                        <div class="mt-1 text-xs text-[#B9257F]">* Pilih Kota/Kabupaten dahulu.</div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Kelurahan</label>
-                        <input name="PWilayah" type="text" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
-                            value="{{ old('PWilayah', optional($pasien)->PWilayah) }}" placeholder="">
+                        <select id="kelurahan" name="PWilayah"
+                                class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
+                                disabled>
+                            <option value="">Pilih Kelurahan</option>
+                        </select>
+                        <div class="mt-1 text-xs text-[#B9257F]">* Pilih Kecamatan dahulu.</div>
                     </div>
                 </div>
                 

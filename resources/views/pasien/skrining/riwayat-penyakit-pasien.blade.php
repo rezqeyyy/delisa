@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pasien — Riwayat Penyakit Pasien</title>
-    @vite('resources/css/app.css')
+    <title>Riwayat Penyakit Pasien - Delisa Skrining</title>
+
+    <!-- Memuat stylesheet utama via Vite -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
         body { font-family: 'Poppins', sans-serif; }
         [x-cloak] { display: none !important; }
     </style>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
@@ -37,12 +40,12 @@
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
             <div class="flex items-center">
-                <a href="{{ route('pasien.kondisi-kesehatan-pasien') }}" class="text-[#1D1D1D] hover:text-[#000]">
+                <a href="{{ route('pasien.dashboard') }}" class="text-[#1D1D1D] hover:text-[#000]">
                     <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                 </a>
-                <h1 class="ml-3 text-3xl font-bold text-[#1D1D1D]">Edit Skrining</h1>
+                <h1 class="ml-3 text-3xl font-bold text-[#1D1D1D]">Riwayat Penyakit Pasien</h1>
             </div>
 
             @php
@@ -57,7 +60,19 @@
                 ];
             @endphp
 
-            <x-pasien.stepper :current="$stepCurrent" :items="$stepItems" />
+            <x-pasien.stepper 
+                :current="4" 
+                :urls="[
+                    route('pasien.data-diri'),
+                    route('pasien.riwayat-kehamilan'),
+                    route('pasien.kondisi-kesehatan-pasien'),
+                    route('pasien.riwayat-penyakit-pasien'),
+                    route('pasien.riwayat-penyakit-keluarga'),
+                    route('pasien.preeklampsia'),
+                ]" 
+            />
+
+
             <div class="mt-4 md:hidden">
                 <h2 class="text-base font-semibold text-[#1D1D1D]">
                     {{ $stepItems[$stepCurrent - 1] }}
@@ -225,6 +240,9 @@
                                     </svg>
                                 </span>
                             </label>
+                            <div class="mt-2 hidden peer-checked:block">
+                                <input type="text" name="penyakit_lainnya" placeholder="Sebutkan penyakit lainnya" class="w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm text-[#1D1D1D] placeholder-[#8C8C8C]" />
+                            </div>
                         </div>
                     </div>
 
