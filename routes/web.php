@@ -7,6 +7,7 @@ use App\Http\Controllers\Dinkes\DashboardController as DinkesDashboardController
 use App\Http\Controllers\Puskesmas\DashboardController as PuskesmasDashboardController;
 use App\Http\Controllers\Bidan\DashboardController as BidanDashboardController;
 use App\Http\Controllers\Rs\DashboardController as RsDashboardController;
+use App\Http\Controllers\Rs\SkriningController as RsSkriningController;
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
 use App\Http\Controllers\Pasien\SkriningController as PasienSkriningController;
 use App\Http\Controllers\Dinkes\DataMasterController;
@@ -112,10 +113,12 @@ Route::middleware(['auth'])->group(function () {
 
     // ================== RUMAH SAKIT ==================
     Route::middleware('role:rumah_sakit')
-        ->prefix('rs')->as('rs.')
-        ->group(function () {
-            Route::get('/dashboard', [RsDashboardController::class, 'index'])->name('dashboard');
-        });
+    ->prefix('rs')->as('rs.')
+    ->group(function () {
+        Route::get('/dashboard', [RsDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/skrining', [RsSkriningController::class, 'index'])->name('skrining.index');
+        Route::get('/skrining/{id}', [RsSkriningController::class, 'show'])->name('skrining.show');
+    });
 
     // ================== PASIEN ==================
     Route::middleware('role:pasien')
