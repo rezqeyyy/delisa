@@ -1,4 +1,4 @@
-# 🩺 DeLISA -- Deteksi Dini Ibu Nifas Berbasis Laravel 12
+# 🩺 DeLISA -- Deteksi Dini Preeklampsia Berbasis Laravel 12
 
 ![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat-square&logo=laravel&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-Bundler-646CFF?style=flat-square&logo=vite&logoColor=white)
