@@ -1,4 +1,4 @@
-# 🩺 DeLISA -- Deteksi Dini Preeklampsia Berbasis Laravel 12
+# 🩺 DeLISA -- Depok Peduli Preeklampsia
 
 ![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat-square&logo=laravel&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-Bundler-646CFF?style=flat-square&logo=vite&logoColor=white)
@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Stable-success?style=flat-square)
 
-> **DeLISA** adalah sistem informasi berbasis web untuk deteksi dini dan
+> **DeLISA** adalah sistem informasi berbasis web untuk deteksi dini preeklampsia dan
 > pemantauan kesehatan ibu nifas, dikembangkan menggunakan **Laravel
 > 12** dan **Vite** dengan arsitektur modular, aman, dan terintegrasi
 > lintas fasilitas kesehatan.
