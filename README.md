@@ -20,11 +20,11 @@
 -   [Struktur Folder](#-struktur-folder)
 -   [Fitur Utama](#️-fitur-utama)
 -   [Kebutuhan Sistem](#️-kebutuhan-sistem)
--   [Instalasi dan Konfigurasi](#️-instalasi-dan-konfigurasi)
--   [Struktur Database](#️-struktur-database)
--   [Keamanan Aplikasi](#️-keamanan-aplikasi)
--   [Kontribusi](#️-kontribusi)
--   [Lisensi](#️-lisensi)
+-   [Instalasi dan Konfigurasi](#-instalasi-dan-konfigurasi)
+-   [Struktur Database](#-struktur-database)
+-   [Keamanan Aplikasi](#-keamanan-aplikasi)
+-   [Kontribusi](#-kontribusi)
+-   [Lisensi](#-lisensi)
 -   [Tim Pengembang](#‍-tim-pengembang)
 
 ------------------------------------------------------------------------
