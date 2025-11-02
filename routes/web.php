@@ -125,13 +125,19 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/dashboard', [PasienDashboardController::class, 'index'])->name('dashboard');
             Route::get('/puskesmas/search', [PasienSkriningController::class, 'puskesmasSearch'])->name('puskesmas.search');
 
+            // Pemilihan puskesmas via modal
+            Route::post('/skrining/ajukan/puskesmas', [PasienSkriningController::class, 'storePengajuan'])
+                ->name('skrining.pengajuan.store');
+
             // Data Diri
             Route::get('/skrining/ajukan', [PasienSkriningController::class, 'create'])->name('data-diri');
             Route::post('/skrining/ajukan', [PasienSkriningController::class, 'storeDataDiri'])->name('data-diri.store');
 
             // Riwayat Kehamilan & Persalinan (GPA)
-            Route::get('/skrining/riwayat-kehamilan', [PasienSkriningController::class, 'riwayatKehamilan'])->name('riwayat-kehamilan');
-            Route::post('/skrining/riwayat-kehamilan', [PasienSkriningController::class, 'storeRiwayatKehamilanGpa'])->name('riwayat-kehamilan.store');
+            Route::get('/skrining/riwayat-kehamilan-gpa', [PasienSkriningController::class, 'riwayatKehamilanGpa'])
+                ->name('riwayat-kehamilan-gpa');
+            Route::post('/skrining/riwayat-kehamilan-gpa', [PasienSkriningController::class, 'storeRiwayatKehamilanGpa'])
+                ->name('riwayat-kehamilan-gpa.store');
 
             // Kondisi Kesehatan Pasien
             Route::get('/skrining/kondisi-kesehatan-pasien', [PasienSkriningController::class, 'kondisiKesehatanPasien'])
@@ -160,6 +166,7 @@ Route::middleware(['auth'])->group(function () {
 
             Route::get('/skrining/{skrining}', [PasienSkriningController::class, 'show'])->name('skrining.show');
             Route::get('/skrining/{skrining}/edit', [PasienSkriningController::class, 'edit'])->name('skrining.edit');
+            Route::delete('/skrining/{skrining}', [PasienSkriningController::class, 'destroy'])->name('skrining.destroy');
         });
 
     Route::prefix('wilayah')->group(function () {

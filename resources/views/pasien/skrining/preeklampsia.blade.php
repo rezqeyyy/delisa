@@ -61,7 +61,7 @@
                 :current="6" 
                 :urls="[
                     route('pasien.data-diri'),
-                    route('pasien.riwayat-kehamilan'),
+                    route('pasien.riwayat-kehamilan-gpa'),
                     route('pasien.kondisi-kesehatan-pasien'),
                     route('pasien.riwayat-penyakit-pasien'),
                     route('pasien.riwayat-penyakit-keluarga'),

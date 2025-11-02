@@ -82,7 +82,7 @@
                 $pasien = optional(Auth::user())->pasien;
                 $statusPerkawinan = old('status_perkawinan', optional($pasien)->status_perkawinan);
             @endphp
-            <form x-data="{ bayar: '{{ old('pembiayaan_kesehatan', optional(optional(Auth::user())->pasien)->pembiayaan_kesehatan) }}' }">
+            <form x-data="{ bayar: '{{ old('pembiayaan_kesehatan', optional(optional(Auth::user())->pasien)->pembiayaan_kesehatan) }}' }" action="{{ route('pasien.data-diri.store') }}" method="POST">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -263,10 +263,10 @@
                         class="rounded-full bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
                         Kembali
                     </a>
-                    <a href="{{ route('pasien.riwayat-kehamilan') }}"
+                    <button type="submit"
                         class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
                         Lanjut
-                    </a>
+                    </button>
                 </div>
             </form>
 

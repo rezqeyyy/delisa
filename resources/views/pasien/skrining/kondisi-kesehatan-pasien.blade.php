@@ -71,7 +71,7 @@
                 :current="3" 
                 :urls="[
                     route('pasien.data-diri'),
-                    route('pasien.riwayat-kehamilan'),
+                    route('pasien.riwayat-kehamilan-gpa'),
                     route('pasien.kondisi-kesehatan-pasien'),
                     route('pasien.riwayat-penyakit-pasien'),
                     route('pasien.riwayat-penyakit-keluarga'),
@@ -89,7 +89,7 @@
                 Form ini diisi untuk data kesehatan ibu
             </p>
 
-            <form>
+            <form action="{{ route('pasien.kondisi-kesehatan-pasien.store') }}" method="POST">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
                     <!-- Kolom kiri -->
@@ -99,7 +99,7 @@
                             <div class="relative">
                                 <input type="number" min="0" step="0.1" inputmode="numeric" name="tinggi_badan" id="tinggi_badan"
                                     class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                                    placeholder="0">
+                                    placeholder="0" value="{{ old('tinggi_badan', optional($kk)->tinggi_badan) }}">
                                 <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[#B9257F] font-medium">Cm</span>
                             </div>
                         </div>
@@ -109,7 +109,7 @@
                             <div class="relative">
                                 <input type="number" min="0" step="0.01" inputmode="decimal" name="berat_badan_saat_hamil" id="berat_badan"
                                     class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                                    placeholder="0">
+                                    placeholder="0" value="{{ old('berat_badan_saat_hamil', optional($kk)->berat_badan_saat_hamil) }}">
                                 <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[#B9257F] font-medium">Kg</span>
                             </div>
                         </div>
@@ -118,8 +118,10 @@
                             <label class="block text-sm font-medium text-[#1D1D1D]">Indeks Masa Tubuh (IMT)</label>
                             <input type="text" id="imt_result" disabled
                                 class="mt-2 w-full rounded-full border px-5 py-3 text-sm bg-[#F8FAFB] text-[#B9257F] border-[#B9257F]"
-                                value="Akan terisi otomatis oleh sistem">
-                            <p id="imt_category" class="mt-2 text-sm font-medium hidden"></p>
+                                value="{{ optional($kk)->imt ? number_format(optional($kk)->imt, 2) : 'Akan terisi otomatis oleh sistem' }}">
+                            <p id="imt_category" class="mt-2 text-sm font-medium {{ optional($kk)->status_imt ? '' : 'hidden' }}">
+                                {{ optional($kk)->status_imt }}
+                            </p>
                         </div>
 
                         <div>
@@ -128,14 +130,14 @@
                                 <div class="relative flex-1">
                                     <input type="number" min="0" inputmode="numeric" name="sdp" id="sdp"
                                            class="w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                                           placeholder="Sistolik">
+                                           placeholder="Sistolik" value="{{ old('sdp', optional($kk)->sdp) }}">
                                     <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[#B9257F] font-medium">mmHg</span>
                                 </div>
                                 <span class="text-[#1D1D1D]">/</span>
                                 <div class="relative flex-1">
                                     <input type="number" min="0" inputmode="numeric" name="dbp" id="dbp"
                                            class="w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                                           placeholder="Diastolik">
+                                           placeholder="Diastolik" value="{{ old('dbp', optional($kk)->dbp) }}">
                                     <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[#B9257F] font-medium">mmHg</span>
                                 </div>
                             </div>
@@ -144,12 +146,10 @@
                         <div>
                             <label class="block text-sm font-medium text-[#1D1D1D]">Mean Arterial Pressure (MAP)</label>
                             <input type="text" id="map_result" disabled
-                                   class="mt-2 w-full rounded-full border border-[#B9257F] bg-[#F8FAFB] px-5 py-3 text-sm text-[#B9257F]"
-                                   value="Akan terisi otomatis oleh sistem">
-                            <input type="hidden" name="map" id="map_hidden" value="">
-                            <p class="mt-2 text-xs text-[#B9257F]">
-                                Note: Mean Arterial Pressure (MAP) adalah tekanan darah rata-rata di arteri selama satu siklus jantung.
-                            </p>
+                                class="mt-2 w-full rounded-full border border-[#B9257F] bg-[#F8FAFB] px-5 py-3 text-sm text-[#B9257F]"
+                                value="{{ optional($kk)->map ? number_format(optional($kk)->map, 2) . ' mmHg' : 'Akan terisi otomatis oleh sistem' }}">
+                            <input type="hidden" name="map" id="map_hidden" value="{{ old('map', optional($kk)->map) }}">
+                            <p class="mt-2 text-xs text-[#B9257F]">Note: Mean Arterial Pressure (MAP) adalah tekanan darah rata-rata di arteri selama satu siklus jantung.</p>
                         </div>
 
                     </div>
@@ -170,42 +170,43 @@
 
                         <div>
                             <label class="block text-sm font-medium text-[#1D1D1D]">HPHT (Hari Pertama Haid Terakhir)</label>
-                            <input type="date" name="hpht" id="hpht"
+                            <input type="date" name="hpht" id="hpht" value="{{ old('hpht', optional($kk)->hpht) }}"
                                    class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B9257F]" placeholder="dd/mm/yyyy">
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-[#1D1D1D]">Tanggal Skrining</label>
-                            <input type="date" name="tanggal_skrining" id="tanggal_skrining"
+                            <input type="date" name="tanggal_skrining" id="tanggal_skrining" value="{{ old('tanggal_skrining', optional($kk)->tanggal_skrining) }}"
                                    class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B9257F]" placeholder="dd/mm/yyyy">
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-[#1D1D1D]">Usia Kehamilan (Minggu)</label>
                             <input type="text" id="usia_kehamilan_result" disabled
-                                   class="mt-2 w-full rounded-full border border-[#B9257F] bg-[#F8FAFB] px-5 py-3 text-sm text-black"
-                                   value="Akan terisi otomatis oleh sistem">
-                            <input type="hidden" name="usia_kehamilan_minggu" id="usia_kehamilan_hidden" value="">
+                                class="mt-2 w-full rounded-full border border-[#B9257F] bg-[#F8FAFB] px-5 py-3 text-sm text-black"
+                                value="{{ optional($kk)->usia_kehamilan ? optional($kk)->usia_kehamilan . ' minggu' : 'Akan terisi otomatis oleh sistem' }}">
+                            <input type="hidden" name="usia_kehamilan_minggu" id="usia_kehamilan_hidden" value="{{ old('usia_kehamilan_minggu', optional($kk)->usia_kehamilan) }}">
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-[#1D1D1D]">Tanggal Perkiraan Persalinan</label>
                             <input type="date" disabled name="tanggal_perkiraan_persalinan" id="tpp_result"
-                                   class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B9257F]">
-                            <input type="hidden" name="tanggal_perkiraan_persalinan" id="tpp_hidden" value="">
+                                value="{{ old('tanggal_perkiraan_persalinan', optional($kk)->tanggal_perkiraan_persalinan) }}"
+                                class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B9257F]">
+                            <input type="hidden" name="tanggal_perkiraan_persalinan" id="tpp_hidden" value="{{ old('tanggal_perkiraan_persalinan', optional($kk)->tanggal_perkiraan_persalinan) }}">
                         </div>
                     </div>
                 </div>
 
                 <div class="mt-8 flex items-center justify-between">
-                    <a href="{{ route('pasien.riwayat-kehamilan') }}"
+                    <a href="{{ route('pasien.riwayat-kehamilan-gpa') }}"
                         class="rounded-full bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
                         Kembali
                     </a>
-                    <a href="{{ route('pasien.riwayat-penyakit-pasien') }}"
+                    <button type="submit"
                         class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
                         Lanjut
-                    </a>
+                    </button>
                 </div>
             </form>
         </main>

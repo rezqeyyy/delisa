@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pasien — Dashboard</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/pasien/puskesmas-picker.js'])
     <style>
         /* Mengimpor font Poppins dari Google Fonts agar visual teks 100% cocok dengan desain modern */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
@@ -132,7 +132,10 @@
                             : '#';
                         @endphp
                         <a href="{{ $ajukanUrl }}"
-                        class="w-full md:w-auto inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70]">
+                           id="btnAjukanSkrining"
+                           data-start-url="{{ route('pasien.data-diri') }}"
+                           data-search-url="{{ route('pasien.puskesmas.search') }}"
+                           class="w-full md:w-auto inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70]">
                             <span class="text-base leading-none">+</span>
                             <span class="leading-none">Ajukan Skrining</span>
                         </a>
@@ -202,8 +205,18 @@
                         <a href="{{ $viewUrl }}" class="px-3 py-1.5 rounded-full bg-white border border-[#E5E5E5] text-xs hover:bg-[#F0F0F0]">
                         View
                         </a>
+                        <form method="POST"
+                              action="{{ route('pasien.skrining.destroy', $skrining->id) }}"
+                              class="inline-block"
+                              onsubmit="return confirm('Yakin ingin menghapus skrining ini?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="px-3 py-1.5 rounded-full bg-white border border-[#E5E5E5] text-xs hover:bg-[#F0F0F0]">
+                                Delete
+                            </button>
+                        </form>
                     </div>
-                    </div>
+                </div>
                 @empty
                     <div class="text-center text-sm text-[#7C7C7C] py-8">
                     Belum ada data skrining.

@@ -10,7 +10,7 @@
         body { font-family: 'Poppins', sans-serif; }
         [x-cloak] { display: none !important; }
     </style>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
@@ -61,7 +61,7 @@
                 :current="2" 
                 :urls="[
                     route('pasien.data-diri'),
-                    route('pasien.riwayat-kehamilan'),
+                    route('pasien.riwayat-kehamilan-gpa'),
                     route('pasien.kondisi-kesehatan-pasien'),
                     route('pasien.riwayat-penyakit-pasien'),
                     route('pasien.riwayat-penyakit-keluarga'),
@@ -79,7 +79,7 @@
                 Form ini diisi untuk data riwayat kehamilan & persalinan dan kehamilan sebelumnya
             </p>
 
-            <form>
+            <form action="{{ route('pasien.riwayat-kehamilan-gpa.store') }}" method="POST">
                 @csrf
                 <div class="space-y-6 mt-6">
                     <div>
@@ -88,7 +88,7 @@
                         </label>
                         <input type="number" min="0" inputmode="numeric"
                                class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                               placeholder="Masukkan jumlah kehamilan" name="total_kehamilan">
+                               placeholder="Masukkan jumlah kehamilan" name="total_kehamilan" value="{{ old('total_kehamilan', optional($gpa)->total_kehamilan) }}">
                     </div>
 
                     <div>
@@ -97,7 +97,7 @@
                         </label>
                         <input type="number" min="0" inputmode="numeric"
                                class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                               placeholder="Masukkan jumlah persalinan" name="total_persalinan">
+                               placeholder="Masukkan jumlah persalinan" name="total_persalinan" value="{{ old('total_persalinan', optional($gpa)->total_persalinan) }}">
                     </div>
 
                     <div>
@@ -106,7 +106,7 @@
                         </label>
                         <input type="number" min="0" inputmode="numeric" value="0"
                                class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                               placeholder="0" name="total_abortus">
+                               placeholder="0" name="total_abortus" value="{{ old('total_abortus', optional($gpa)->total_abortus) }}">
                     </div>
                 </div>
 
@@ -115,10 +115,10 @@
                         class="rounded-full bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
                         Kembali
                     </a>
-                    <a href="{{ route('pasien.kondisi-kesehatan-pasien') }}"
+                    <button type="submit"
                         class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
                         Lanjut
-                    </a>
+                    </button>
                 </div>
             </form>
         </main>
