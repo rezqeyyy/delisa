@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\RiwayatKehamilanGpa;
 use App\Models\KondisiKesehatan;
 use Carbon\Carbon;
+use App\Models\JawabanKuisioner;
 
 class SkriningController extends Controller
 {
@@ -394,8 +395,6 @@ class SkriningController extends Controller
                     [
                         'jawaban'         => $isSelected,
                         'jawaban_lainnya' => ($code === 'lainnya' && $isSelected) ? $lainnyaText : null,
-                        'updated_at'      => now(),
-                        'created_at'      => DB::raw('COALESCE(created_at, NOW())'),
                     ]
                 );
             }
@@ -406,6 +405,11 @@ class SkriningController extends Controller
 
         return redirect()->route('pasien.riwayat-penyakit-keluarga')
             ->with('ok', 'Riwayat penyakit pasien berhasil disimpan.');
+    }
+
+    public function riwayatPenyakitKeluarga(Request $request)
+    {
+        return view('pasien.skrining.riwayat-penyakit-keluarga');
     }
 
     public function preEklampsia(Request $request)

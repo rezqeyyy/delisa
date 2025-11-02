@@ -79,7 +79,7 @@
                 </h2>
             </div>
 
-            <form>
+            <form method="POST" action="{{ route('pasien.riwayat-penyakit-pasien.store') }}">
                 @csrf
                 <div class="mt-6">
                     <h2 class="text-xl font-semibold text-[#B9257F]">Apakah Ibu memiliki riwayat penyakit?</h2>
@@ -88,7 +88,10 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                         <!-- Hipertensi Kronik -->
                         <div class="relative">
-                            <input type="checkbox" id="hipertensi_kronik" name="penyakit[]" value="hipertensi_kronik" class="peer absolute opacity-0 h-0 w-0">
+                            <input type="checkbox" id="hipertensi_kronik" name="penyakit[]"
+                                value="hipertensi_kronik"
+                                {{ in_array('hipertensi_kronik', old('penyakit', $selected ?? [])) ? 'checked' : '' }}
+                                class="peer absolute opacity-0 h-0 w-0">
                             <label for="hipertensi_kronik" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
                                 <span>Hipertensi Kronik</span>
                                 <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
@@ -101,7 +104,9 @@
 
                         <!-- Ginjal -->
                         <div class="relative">
-                            <input type="checkbox" id="ginjal" name="penyakit[]" value="ginjal" class="peer absolute opacity-0 h-0 w-0">
+                            <input type="checkbox" id="ginjal" name="penyakit[]" value="ginjal"
+                                {{ in_array('ginjal', old('penyakit', $selected ?? [])) ? 'checked' : '' }}
+                                class="peer absolute opacity-0 h-0 w-0">
                             <label for="ginjal" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
                                 <span>Ginjal</span>
                                 <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
@@ -114,7 +119,9 @@
 
                         <!--  Autoimun, SLE -->
                         <div class="relative">
-                            <input type="checkbox" id="autoimun_sle" name="penyakit[]" value="autoimun_sle" class="peer absolute opacity-0 h-0 w-0">
+                            <input type="checkbox" id="autoimun_sle" name="penyakit[]" value="autoimun_sle"
+                                {{ in_array('autoimun_sle', old('penyakit', $selected ?? [])) ? 'checked' : '' }}
+                                class="peer absolute opacity-0 h-0 w-0">
                             <label for="autoimun_sle" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
                                 <span>Autoimun, SLE</span>
                                 <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
@@ -127,7 +134,9 @@
 
                         <!--  Anti Phospholipid Syndrome -->
                         <div class="relative">
-                            <input type="checkbox" id="anti_phospholipid_syndrome" name="penyakit[]" value="anti_phospholipid_syndrome" class="peer absolute opacity-0 h-0 w-0">
+                            <input type="checkbox" id="anti_phospholipid_syndrome" name="penyakit[]" value="anti_phospholipid_syndrome"
+                                {{ in_array('anti_phospholipid_syndrome', old('penyakit', $selected ?? [])) ? 'checked' : '' }}
+                                class="peer absolute opacity-0 h-0 w-0">
                             <label for="anti_phospholipid_syndrome" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
                                 <span>Anti Phospholipid Syndrome</span>
                                 <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
@@ -161,10 +170,9 @@
                         <a href="{{ route('pasien.kondisi-kesehatan-pasien') }}" class="px-6 py-3 rounded-full bg-[#F2F2F2] text-[#1D1D1D] font-medium">
                             Kembali
                         </a>
-                        <a href="{{ route('pasien.riwayat-penyakit-keluarga') }}"
-                            class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
+                        <button type="submit" class="px-4 py-2 rounded-full bg-[#B9257F] text-white">
                             Lanjut
-                        </a>
+                        </button>
                     </div>
                 </div>
             </form>
