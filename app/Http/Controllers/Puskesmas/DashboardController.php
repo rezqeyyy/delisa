@@ -9,6 +9,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        return view('dinkes.dashboard'); // resources/views/dinkes/dashboard.blade.php
+        // Pastikan controller puskesmas menampilkan view puskesmas
+        return view('puskesmas.dashboard'); // resources/views/puskesmas/dashboard.blade.php
     }
 }
