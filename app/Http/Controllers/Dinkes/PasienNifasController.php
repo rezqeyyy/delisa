@@ -28,8 +28,13 @@ class PasienNifasController extends Controller
                             ELSE 'Puskesmas'
                          END as role_penanggung")
             )
+            // ❗ hanya pasien yang benar-benar nifas (punya record di salah satu tabel nifas)
+            ->where(function ($w) {
+                $w->whereNotNull('pnb.id')
+                  ->orWhereNotNull('pnr.id');
+            })
             ->when($q !== '', function ($qr) use ($q) {
-                // pakai ILIKE untuk Postgres (case-insensitive)
+                // untuk Postgres -> ILIKE; jika MySQL ganti ke LIKE
                 $qr->where(function ($w) use ($q) {
                     $w->where('u.name', 'ILIKE', "%{$q}%")
                       ->orWhere('p.nik', 'ILIKE', "%{$q}%");
@@ -43,5 +48,19 @@ class PasienNifasController extends Controller
             'rows' => $rows,
             'q'    => $q,
         ]);
+    }
+
+    public function destroy($pasienId)
+    {
+        DB::transaction(function () use ($pasienId) {
+            // Hapus keanggotaan nifas di kedua sumber (bidan / rs) jika ada
+            DB::table('pasien_nifas_bidan')->where('pasien_id', $pasienId)->delete();
+            DB::table('pasien_nifas_rs')->where('pasien_id', $pasienId)->delete();
+
+            // Opsional: juga bisa bersihkan data turunan nifas lain jika bergantung
+            // (mis. rujukan_nifas/kf/anak_pasien) – abaikan bila tidak diperlukan.
+        });
+
+        return back()->with('success', 'Pasien dihapus dari daftar nifas.');
     }
 }
