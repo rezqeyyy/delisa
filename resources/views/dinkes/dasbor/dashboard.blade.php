@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DINKES – Dasbor</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/dinkes/dashboard-filters.js'])
 </head>
 
 <body class="bg-[#F5F5F5] font-[Poppins] text-[#000000cc]">
@@ -45,7 +45,7 @@
                     <div id="profileWrapper" class="relative">
                         <button id="profileBtn"
                             class="flex items-center gap-3 pl-2 pr-3 py-1.5 bg-white border border-[#E5E5E5] rounded-full hover:bg-[#F8F8F8]">
-                            
+
                             @if (Auth::user()?->photo)
                                 <img src="{{ Storage::url(Auth::user()->photo) . '?t=' . optional(Auth::user()->updated_at)->timestamp }}"
                                     class="w-8 h-8 rounded-full object-cover" alt="{{ Auth::user()->name }}">
@@ -532,7 +532,10 @@
                         </span>
                         <h2 class="font-semibold">Data Pasien Pre-Eklampsia</h2>
                     </div>
-                    <button class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm">Filter</button>
+                    <button id="btnPeFilter" type="button"
+                        class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm">
+                        Filter
+                    </button>
                 </div>
                 <table class="w-full text-sm">
                     <thead class="text-[#7C7C7C] border-b border-[#CAC7C7]">
@@ -545,7 +548,7 @@
                             <th class="text-left">Tanggal</th>
                             <th class="text-left">Status</th>
                             <th class="text-left">Resiko</th>
-                            <th class="text-left">Aksi</th>
+                            <th class="text-left">Detail</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-[#CAC7C7]">
@@ -575,45 +578,84 @@
                                         style="background: {{ $rk['bg'] }}; color: {{ $rk['tx'] }};">{{ $rk['label'] }}</span>
                                 </td>
                                 <td>
-                                    <a href="#"
-                                        class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">Detail</a>
+                                    <a href="{{ route('dinkes.pasien.show', $row->pasien_id) }}"
+                                        class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">
+                                        View
+                                    </a>
                                 </td>
                             </tr>
                         @empty
-                            <!-- fallback demo rows jika $peList kosong -->
-                            <tr>
-                                <td class="py-3">01</td>
-                                <td>Almira R</td>
-                                <td>3201•••8899</td>
-                                <td>26</td>
-                                <td>28 Minggu</td>
-                                <td>12/09/2025</td>
-                                <td><span class="px-3 py-1 bg-[#39E93F33] text-[#39E93F] rounded-full">Hadir</span>
-                                </td>
-                                <td><span class="px-3 py-1 bg-[#E2D30D33] text-[#E2D30D] rounded-full">Sedang</span>
-                                </td>
-                                <td><button
-                                        class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">Detail</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="py-3">02</td>
-                                <td>Nadia P</td>
-                                <td>3204•••1122</td>
-                                <td>30</td>
-                                <td>16 Minggu</td>
-                                <td>10/09/2025</td>
-                                <td><span class="px-3 py-1 bg-[#E20D0D33] text-[#E20D0D] rounded-full">Mangkir</span>
-                                </td>
-                                <td><span class="px-3 py-1 bg-[#E20D0D33] text-[#E20D0D] rounded-full">Tinggi</span>
-                                </td>
-                                <td><button
-                                        class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">Detail</button>
-                                </td>
-                            </tr>
                         @endforelse
                     </tbody>
                 </table>
+
+                {{-- Backdrop --}}
+                <div id="peFilterBackdrop" class="hidden fixed inset-0 bg-black/30 z-40"></div>
+
+                {{-- Modal Filter --}}
+                <div id="peFilterModal" class="hidden fixed inset-0 z-50">
+                    <div class="grid place-items-center min-h-screen">
+                        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl border border-[#E9E9E9]">
+                            <div class="px-5 py-4 border-b flex items-center justify-between">
+                                <h3 class="font-semibold">Filter Data Pasien Pre-Eklampsia</h3>
+                                <button type="button" data-close class="p-1 rounded hover:bg-[#F5F5F5]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5"
+                                        fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M6 6l12 12M18 6l-12 12" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                    </svg>
+
+                                </button>
+                            </div>
+
+                            <form id="pe-filter-form" method="GET" action="{{ request()->url() }}"
+                                class="p-5 grid gap-4">
+                                <div>
+                                    <label class="block text-xs text-[#7C7C7C] mb-1">Dari Tanggal</label>
+                                    <input type="date" name="from" value="{{ request('from') }}"
+                                        class="w-full border rounded-md px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-[#7C7C7C] mb-1">Sampai Tanggal</label>
+                                    <input type="date" name="to" value="{{ request('to') }}"
+                                        class="w-full border rounded-md px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-[#7C7C7C] mb-1">Resiko</label>
+                                    <select name="resiko" class="w-full border rounded-md px-3 py-2 text-sm">
+                                        <option value="">Semua Resiko</option>
+                                        <option value="non-risk" @selected(request('resiko') === 'non-risk')>Normal</option>
+                                        <option value="sedang" @selected(request('resiko') === 'sedang')>Sedang</option>
+                                        <option value="tinggi" @selected(request('resiko') === 'tinggi')>Tinggi</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-[#7C7C7C] mb-1">Status</label>
+                                    <select name="status" class="w-full border rounded-md px-3 py-2 text-sm">
+                                        <option value="">Semua Status</option>
+                                        <option value="hadir" @selected(request('status') === 'hadir')>Hadir</option>
+                                        <option value="mangkir" @selected(request('status') === 'mangkir')>Mangkir</option>
+                                    </select>
+                                </div>
+
+
+                                {{-- (opsional) pertahankan q bila ada kolom search di header --}}
+                                <input type="hidden" name="q" value="{{ request('q') }}">
+
+                                <div class="flex items-center justify-end gap-2 pt-2 border-t">
+                                    <button type="button" data-reset
+                                        class="border border-[#CAC7C7] rounded-md px-3 py-2 text-sm">
+                                        Reset
+                                    </button>
+                                    <button class="bg-[#B9257F] text-white rounded-md px-4 py-2 text-sm">
+                                        Terapkan
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
             </section>
 
             <footer class="text-center text-xs text-[#7C7C7C] py-6">

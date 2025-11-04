@@ -13,6 +13,7 @@ use App\Http\Controllers\Dinkes\DataMasterController;
 use App\Http\Controllers\Dinkes\AkunBaruController;
 use App\Http\Controllers\Dinkes\PasienNifasController;
 use App\Http\Controllers\Dinkes\ProfileController;
+use App\Http\Controllers\Dinkes\PasienController;
 use App\Http\Controllers\WilayahController;
 
 /*
@@ -22,6 +23,7 @@ use App\Http\Controllers\WilayahController;
 | Satu saja. Jika sudah login, arahkan ke dashboard sesuai role.
 | Jika belum, tampilkan halaman login pasien (UI publik).
 */
+
 Route::get('/', function () {
     if (Auth::check()) {
         $role = optional(Auth::user()->role)->nama_role;
@@ -52,7 +54,8 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
             // Dashboard
             Route::get('/dashboard', [DinkesDashboardController::class, 'index'])->name('dashboard');
-
+            Route::get('/pasien/{pasien}', [PasienController::class, 'show'])
+                ->name('pasien.show');
             // Data Master
             Route::get('/data-master', [DataMasterController::class, 'index'])->name('data-master');
             Route::get('/data-master/create', [DataMasterController::class, 'create'])->name('data-master.create');
@@ -77,13 +80,15 @@ Route::middleware(['auth'])->group(function () {
 
             // Pasien Nifas
             Route::get('/pasien-nifas', [PasienNifasController::class, 'index'])->name('pasien-nifas');
+            Route::delete('/pasien-nifas/{pasien}', [PasienNifasController::class, 'destroy'])->name('pasien-nifas.destroy');
+
 
             // Profile
             Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
             Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
             Route::delete('/profile/photo', [ProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
         });
-        
+
 
     // ================== PUSKESMAS ==================
     Route::middleware('role:puskesmas')
