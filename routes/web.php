@@ -82,6 +82,8 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
             Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
             Route::delete('/profile/photo', [ProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
+
+            
         });
         
 
@@ -89,7 +91,10 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:puskesmas')
         ->prefix('puskesmas')->as('puskesmas.')
         ->group(function () {
-            Route::get('/dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/skrining', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'index'])->name('skrining');
+        Route::get('/laporan', [\App\Http\Controllers\Puskesmas\LaporanController::class, 'index'])->name('laporan');
+        Route::get('/pasien-nifas', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'index'])->name('pasien-nifas');
         });
 
     // ================== BIDAN ==================
