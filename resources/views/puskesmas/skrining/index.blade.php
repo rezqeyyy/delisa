@@ -135,7 +135,6 @@
                 </tbody>
             </table>
         </div>
-
         <!-- Pagination -->
         <div class="mt-6 flex items-center justify-between">
             <div class="text-sm text-gray-700">

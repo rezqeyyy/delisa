@@ -44,120 +44,168 @@
             </div>
         </header>
 
-        <!-- Stat Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <!-- Daerah Asal Pasien -->
-            <div class="bg-white rounded-xl shadow-sm p-5">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="font-semibold text-gray-700 flex items-center text-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.995 1.995 0 01-2.828 0l-4.244-4.244a8 8 0 1111.314 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Daerah Asal Pasien
-                    </h3>
-                    <button class="p-1 text-gray-400 hover:text-gray-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6m-11-5L21 18" />
-                        </svg>
-                    </button>
+        <!-- Main Dashboard Grid: Left Column + Right Column -->
+        <div class="flex flex-col md:flex-row gap-6 mb-6">
+
+        <!-- LEFT COLUMN -->
+        <div class="flex-1 space-y-6">
+                <!-- Daerah Asal Pasien -->
+        <div class="bg-white rounded-xl shadow-sm p-5 h-[237px]" style="width: 550px;">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-semibold text-gray-700 flex items-center text-sm">
+                    <!-- Ikon Lokasi dari Figma -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    Daerah Asal Pasien
+                </h3>
+                <!-- Ikon Panah ke Kanan Atas -->
+            <button class="text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+            </button>
+            </div>
+                    <!-- Content with Exact Pixel Dimensions -->
+                    <div class="flex justify-between items-center" style="height: 189px;">
+                        <!-- Depok Column -->
+                        <div class="text-center" style="width: 301px; height: 189px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <div class="text-gray-500 text-xs mb-1" style="width: 65px; height: 46px; display: flex; align-items: center; justify-content: center;">Depok</div>
+                            <div class="text-[5rem] font-black leading-none tracking-tight">0</div>
+                        </div>
+
+                        <!-- Vertical Line -->
+                        <div class="border-l border-gray-300" style="width: 11px; height: 46px;"></div>
+
+                        <!-- Non Depok Column -->
+                        <div class="text-center" style="width: 301px; height: 189px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <div class="text-gray-500 text-xs mb-1" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">Non Depok</div>
+                            <div class="text-[5rem] font-black leading-none tracking-tight">0</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex justify-between">
-                    <div class="text-center">
-                        <div class="text-gray-500 text-xs">Depok</div>
-                        <div class="text-2xl font-bold">0</div>
+
+                <!-- Data Pasien Nifas -->
+                <div class="bg-white rounded-xl shadow-sm p-5 h-[163px]" style="width: 550px;">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold text-gray-700 flex items-center text-sm">
+                            <!-- Ikon Orang dari Figma -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 00-5-5.7V4a4 4 0 00-8 0v10.3A12.02 12.02 0 0012 21z"></path>
+                            </svg>
+                            Data Pasien Nifas
+                        </h3>
+                        <!-- ❌ HAPUS tombol export di sini! -->
                     </div>
-                    <div class="border-l border-gray-300 mx-4"></div>
-                    <div class="text-center">
-                        <div class="text-gray-500 text-xs">Non Depok</div>
-                        <div class="text-2xl font-bold">0</div>
-                    </div>
+                <!-- Row 1: Total Pasien Nifas -->
+                <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                    <span class="text-gray-600 text-xs">Total Pasien Nifas</span>
+                    <span class="font-medium text-sm">0</span>
+                </div>
+
+                <!-- Row 2: Sudah KFI -->
+                <div class="flex justify-between items-center py-2">
+                    <span class="text-gray-600 text-xs">Sudah KFI</span>
+                    <span class="font-medium text-sm">0</span>
                 </div>
             </div>
-
-            <!-- Resiko Eklampsia -->
-            <div class="bg-white rounded-xl shadow-sm p-5">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="font-semibold text-gray-700 flex items-center text-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10v-2a3 3 0 00-5.356-1.857M7 3h10v3M7 6h10v3" />
-                        </svg>
-                        Resiko Eklampsia
-                    </h3>
-                    <button class="p-1 text-gray-400 hover:text-gray-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6m-11-5L21 18" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600 text-xs">Pasien Normal</span>
-                        <span class="font-medium text-sm">0</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600 text-xs">Pasien Beresiko Eklampsia</span>
-                        <span class="font-medium text-sm">0</span>
-                    </div>
-                </div>
             </div>
 
-            <!-- Pasien Hadir -->
-            <div class="bg-white rounded-xl shadow-sm p-5">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="font-semibold text-gray-700 flex items-center text-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h-2c1.1 0 2-.9 2-2v-6h2c1.1 0 2-.9 2-2s-.9-2-2-2h-2V6c0-1.1-.9-2-2-2s-2 .9-2 2v2H7c-1.1 0-2 .9-2 2s.9 2 2 2h2v6c0 1.1.9 2 2 2h2v2c0 1.1.9 2 2 2z" />
-                        </svg>
-                        Pasien Hadir
-                    </h3>
-                    <button class="p-1 text-gray-400 hover:text-gray-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6m-11-5L21 18" />
+            <!-- RIGHT COLUMN -->
+            <div class="flex-1 space-y-6">
+                <!-- Resiko Eklampsia -->
+                <div class="bg-white rounded-xl shadow-sm p-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-semibold text-gray-700 flex items-center text-sm">
+                            <!-- Ikon Jam Pasir dari Figma -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2v6M12 18v6M4.93 4.93l1.41 1.41M18.66 18.66l1.41 1.41M12 6v12M6 12H4M18 12h2M12 18v6M4.93 19.07l1.41-1.41M18.66 5.34l1.41-1.41"></path>
+                            </svg>
+                            Resiko Eklampsia
+                        </h3>
+                        <!-- Ikon Panah ke Kanan Atas -->
+                    <button class="text-gray-400 hover:text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
                     </button>
-                </div>
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600 text-xs">Pasien Hadir</span>
-                        <span class="font-medium text-sm">0</span>
+                    </div>    
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 text-xs">Pasien Normal</span>
+                            <span class="font-medium text-sm">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 text-xs">Pasien Beresiko Eklampsia</span>
+                            <span class="font-medium text-sm">0</span>
+                        </div>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600 text-xs">Pasien Tidak Hadir</span>
-                        <span class="font-medium text-sm">0</span>
-                    </div>
                 </div>
-            </div>
 
-            <!-- Pemantauan -->
-            <div class="bg-white rounded-xl shadow-sm p-5">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="font-semibold text-gray-700 flex items-center text-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10v-2a3 3 0 00-5.356-1.857M7 3h10v3M7 6h10v3" />
-                        </svg>
-                        Pemantauan
-                    </h3>
-                    <button class="p-1 text-gray-400 hover:text-gray-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6m-11-5L21 18" />
+                <!-- Pasien Hadir -->
+                <div class="bg-white rounded-xl shadow-sm p-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-semibold text-gray-700 flex items-center text-sm">
+                            <!-- Ikon Stetoskop dari Figma -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 6v6m0 0v6m0-6h6m-6 6h-6"></path>
+                                <circle cx="12" cy="12" r="10"></circle>
+                            </svg>
+                            Pasien Hadir
+                        </h3>
+                        <!-- Ikon Panah ke Kanan Atas -->
+                    <button class="text-gray-400 hover:text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
                     </button>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 text-xs">Pasien Hadir</span>
+                            <span class="font-medium text-sm">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 text-xs">Pasien Tidak Hadir</span>
+                            <span class="font-medium text-sm">0</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex justify-between">
-                    <div class="text-center">
-                        <div class="text-gray-500 text-xs">Sehat</div>
-                        <div class="text-xl font-bold">0</div>
+
+                <!-- Pemantauan -->
+                <div class="bg-white rounded-xl shadow-sm p-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-semibold text-gray-700 flex items-center text-sm">
+                            <!-- Ikon Grafik dari Figma -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 8v8m-4-4v8m-4-4v8"></path>
+                                <rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect>
+                            </svg>
+                            Pemantauan
+                        </h3>
+                        <!-- Ikon Panah ke Kanan Atas -->
+                    <button class="text-gray-400 hover:text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </button>
                     </div>
-                    <div class="border-l border-gray-300 mx-4"></div>
-                    <div class="text-center">
-                        <div class="text-gray-500 text-xs">Total Dirujuk</div>
-                        <div class="text-xl font-bold">0</div>
-                    </div>
-                    <div class="border-l border-gray-300 mx-4"></div>
-                    <div class="text-center">
-                        <div class="text-gray-500 text-xs">Meninggal</div>
-                        <div class="text-xl font-bold">0</div>
+                    <div class="flex justify-between">
+                        <div class="text-center">
+                            <div class="text-gray-500 text-xs">Sehat</div>
+                            <div class="text-xl font-bold">0</div>
+                        </div>
+                        <div class="border-l border-gray-300 mx-4"></div>
+                        <div class="text-center">
+                            <div class="text-gray-500 text-xs">Total Dirujuk</div>
+                            <div class="text-xl font-bold">0</div>
+                        </div>
+                        <div class="border-l border-gray-300 mx-4"></div>
+                        <div class="text-center">
+                            <div class="text-gray-500 text-xs">Meninggal</div>
+                            <div class="text-xl font-bold">0</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -184,13 +232,13 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead>
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID PASIEN</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NAMA PASIEN</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TANGGAL</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ALAMAT</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NO TELEPON</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">KASIMPULAN</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VIEW DETAIL</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID PASIEN</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NAMA PASIEN</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TANGGAL</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ALAMAT</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NO TELEPON</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">KASIMPULAN</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VIEW DETAIL</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -225,6 +273,34 @@
                     </tbody>
                 </table>
             </div>
+                <!-- Pagination Footer (Sama seperti halaman Skrining) -->
+                <div class="mt-6 flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Menampilkan <span class="font-medium">1</span> sampai <span class="font-medium">8</span> dari <span class="font-medium">24</span> pasien
+                    </div>
+
+                    <nav class="flex items-center space-x-1" aria-label="Pagination">
+                        <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                            Previous
+                        </a>
+
+                        <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">1</a>
+                        <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">2</a>
+                        <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">3</a>
+                        <span class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700">...</span>
+                        <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">8</a>
+
+                        <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50">
+                            Next
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    </nav>
+                </div>
         </div>
     </div>
 </div>
