@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DINKES – Data Master</title>
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/dinkes/dinkes-data-master.js'])
-    </head>
+</head>
 
 <body class="bg-[#F5F5F5] font-[Poppins] text-[#000000cc]">
     {{-- Wrapper vertikal setinggi layar --}}
@@ -67,11 +67,6 @@
                 </section>
 
                 {{-- ALERT (cadangan) --}}
-                @if (session('ok'))
-                    <div class="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-700 mb-4">
-                        {{ session('ok') }}
-                    </div>
-                @endif
 
                 @if ($errors->any())
                     <div class="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700 mb-4">
@@ -106,6 +101,31 @@
                     </div>
                 </section>
 
+                {{-- 🔐 PASSWORD BARU (akan auto-hide 3 detik) --}}
+                @if (session('new_password'))
+                    <div id="pwToast"
+                        class="mb-3 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 shadow transition-all duration-300"
+                        data-timeout="5000" {{-- ms --}} role="status">
+                        <div class="mt-0.5">🔐</div>
+                        <div class="flex-1">
+                            <div class="font-semibold">Password baru telah dibuat</div>
+                            <div class="mt-1">
+                                <span
+                                    class="inline-block font-mono px-2 py-1 rounded bg-white border border-amber-200 select-all"
+                                    id="pwValue">{{ session('new_password') }}</span>
+                                <button type="button" id="pwCopyBtn"
+                                    class="ml-2 inline-flex items-center h-7 px-2 rounded border border-amber-300 hover:bg-amber-100">
+                                    Salin
+                                </button>
+                            </div>
+                            <p class="mt-1 text-xs opacity-80">Simpan password ini dengan aman. Kotak ini akan hilang
+                                otomatis.</p>
+                        </div>
+                        <button type="button" id="pwToastClose" class="opacity-60 hover:opacity-100">✕</button>
+                    </div>
+                @endif
+
+
                 {{-- Tabel Data --}}
                 <section id="dataMasterContent">
                     <section class="bg-white rounded-2xl shadow-md overflow-hidden">
@@ -129,7 +149,7 @@
                                                 {{-- Reset Password --}}
                                                 <form method="POST"
                                                     action="{{ route('dinkes.data-master.reset', ['user' => $acc->id, 'tab' => $tab, 'q' => $q ?? '']) }}"
-                                                    onsubmit="return confirm('Reset password untuk {{ $acc->name }}?');">
+                                                    data-confirm="Reset password untuk {{ $acc->name }}?">
                                                     @csrf
                                                     <button
                                                         class="h-8 border border-[#D9D9D9] rounded-md px-3 text-xs hover:bg-[#F5F5F5]">
@@ -152,7 +172,7 @@
                                                 {{-- Delete --}}
                                                 <form method="POST"
                                                     action="{{ route('dinkes.data-master.destroy', ['user' => $acc->id, 'tab' => $tab, 'q' => $q ?? '']) }}"
-                                                    onsubmit="return confirm('Hapus akun {{ $acc->name }}? Tindakan ini tidak dapat dibatalkan.');">
+                                                    data-confirm="Hapus akun {{ $acc->name }}? Tindakan ini tidak dapat dibatalkan.">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button
