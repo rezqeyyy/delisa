@@ -121,7 +121,7 @@
                                     <option value="" {{ ($status ?? '') === '' ? 'selected' : '' }}>Semua</option>
                                     <option value="Normal" {{ $currentStatus === 'Normal' ? 'selected' : '' }}>Tidak Berisiko</option>
                                     <option value="Waspada" {{ $currentStatus === 'Waspada' ? 'selected' : '' }}>Waspada</option>
-                                    <option value="Beresiko" {{ $currentStatus === 'Beresiko' ? 'selected' : '' }}>Berisiko</option>
+                                    <option value="Berisiko" {{ $currentStatus === 'Berisiko' ? 'selected' : '' }}>Berisiko</option>
                                 </select>
                             </div>
                             <button type="submit"

@@ -35,17 +35,21 @@ class DashboardController extends Controller
                 ? 'Skrining belum selesai'
                 : (($resikoTinggi === 0 && $resikoSedang <= 1) ? 'Tidak berisiko' : 'Berisiko');
 
+            $key = strtolower(trim($conclusion));
+    
             $badgeClasses = [
-                'Berisiko'               => 'bg-[#FF3838] text-white',
-                'Tidak berisiko'         => 'bg-[#2EDB58] text-white',
-                'Waspada'                => 'bg-[#F3D334] text-[#1D1D1D]',
-                'Aman'                   => 'bg-[#2EDB58] text-white',
-                'Normal'                 => 'bg-[#2EDB58] text-white',
-                'Skrining belum selesai' => 'bg-[#E9E9E9] text-[#1D1D1D]',
+                'berisiko'               => 'bg-red-600 text-white',
+                'beresiko'               => 'bg-red-600 text-white',    // dukung ejaan lama
+                'tidak berisiko'         => 'bg-green-500 text-white',
+                'tidak beresiko'         => 'bg-green-500 text-white',  // dukung ejaan lama
+                'waspada'                => 'bg-yellow-400 text-black',
+                'aman'                   => 'bg-green-500 text-white',
+                'normal'                 => 'bg-green-500 text-white',
+                'skrining belum selesai' => 'bg-gray-200 text-gray-900',
             ];
 
             $s->conclusion_display = $conclusion;
-            $s->badge_class = $badgeClasses[$conclusion] ?? 'bg-[#2EDB58] text-white';
+            $s->badge_class = $badgeClasses[$key] ?? 'bg-[#E9E9E9] text-[#1D1D1D]';
             return $s;
         });
 
@@ -72,11 +76,10 @@ class DashboardController extends Controller
 
         $riskLower = strtolower($riskPreeklampsia ?? '');
         $riskBoxClass = match ($riskLower) {
-            'berisiko'       => 'bg-[#EB1D1D] text-white',
-            'waspada'        => 'bg-[#FFC700] text-white',
-            'normal'         => 'bg-[#2EDB58] text-white',
-            'tidak berisiko' => 'bg-[#2EDB58] text-white',
-            default          => 'bg-[#E9E9E9] text-[#1D1D1D]',
+            'berisiko', 'beresiko'                       => 'bg-[#EB1D1D] text-white',
+            'waspada'                                    => 'bg-[#FFC700] text-white',
+            'normal', 'tidak berisiko', 'tidak beresiko' => 'bg-[#2EDB58] text-white',
+            default                                      => 'bg-[#E9E9E9] text-[#1D1D1D]',
         };
 
         return view('pasien.dashboard', [            
