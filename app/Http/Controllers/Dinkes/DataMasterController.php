@@ -205,16 +205,25 @@ class DataMasterController extends Controller
     public function resetPassword(Request $request, int $user)
     {
         $data = $request->validate([
-            'new_password' => 'nullable|string|min:8', // kalau kosong, pakai default
+            'new_password' => 'nullable|string|min:8',
         ]);
 
+        // Jika tidak diisi, generate password acak yang kuat
+        $new = $data['new_password'] ?? Str::password(12); // campur huruf, angka, simbol
+
         DB::table('users')->where('id', $user)->update([
-            'password'   => Hash::make($data['new_password'] ?? 'Delisa123!'),
+            'password'   => Hash::make($new),
             'updated_at' => now(),
         ]);
 
-        return back()->with('ok', 'Password berhasil direset.');
+        // Kirim password baru agar bisa ditampilkan 1x sebagai UI toast
+        return back()->with([
+            'ok'           => 'Password berhasil direset.',
+            'new_password' => $new,
+            'flash_kind'   => 'password-reset', // optional: tipe toast
+        ]);
     }
+
 
 
     /** =========================

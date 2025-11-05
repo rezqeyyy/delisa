@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DINKES – Tambah Akun</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
+</head>
 
 <body class="bg-[#F5F5F5] font-[Poppins] text-[#000000cc]">
     <div class="flex min-h-screen">
@@ -79,7 +79,7 @@
                         </div>
                         <div>
                             <label>Nomor Telepon PIC</label>
-                            <input name="phone" value="{{ old('phone') }}"
+                            <input name="phone" type="number" value="{{ old('phone') }}"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
                         <div>
@@ -94,7 +94,7 @@
                         </div>
                         <div>
                             <label>Password</label>
-                            <input type="password" name="password" required
+                            <input type="password" placeholder="password harus berisi 8 karakter" name="password" required
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
                         <div>
@@ -130,7 +130,7 @@
                         </div>
                         <div>
                             <label>Nomor Telepon PIC</label>
-                            <input name="phone" value="{{ old('phone') }}"
+                            <input name="phone" type="number" value="{{ old('phone') }}"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
                         <div>
@@ -145,7 +145,7 @@
                         </div>
                         <div>
                             <label>Password</label>
-                            <input type="password" name="password" required
+                            <input type="password" placeholder="password harus berisi 8 karakter"  name="password" required
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
                         <div>
@@ -182,8 +182,8 @@
                         </div>
                         <div>
                             <label>Nomor Izin Praktek</label>
-                            <input name="nomor_izin_praktek" value="{{ old('nomor_izin_praktek') }}" required
-                                class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+                            <input name="nomor_izin_praktek" type="number" value="{{ old('nomor_izin_praktek') }}"
+                                required class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
                         <div>
                             <label>Email</label>
@@ -192,12 +192,12 @@
                         </div>
                         <div>
                             <label>No Telepon</label>
-                            <input name="phone" value="{{ old('phone') }}"
+                            <input name="phone" type="number" value="{{ old('phone') }}"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
                         <div>
                             <label>Password</label>
-                            <input type="password" name="password" required
+                            <input type="password" name="password" placeholder="password harus berisi 8 karakter" required
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
                         <div>

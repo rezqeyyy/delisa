@@ -5,36 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DINKES – Pasien Nifas</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js'])
-    </head>
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/dinkes/pasien-nifas.js'])
+</head>
 
 <body class="bg-[#F5F5F5] font-[Poppins] text-[#000000CC]">
-    <!-- Wrapper vertikal setinggi layar -->
     <div class="flex flex-col min-h-screen">
-
-        {{-- Sidebar (fixed) --}}
         <x-dinkes.sidebar />
 
-        {{-- Konten utama: flex-col + min-h-screen agar footer terdorong ke bawah --}}
         <main class="ml-[260px] flex-1 min-h-screen flex flex-col p-8 space-y-8">
-
-            <!-- === KONTEN (dibungkus flex-1) === -->
             <div class="flex-1">
-                {{-- NAVBAR / TOP-BAR PASIEN NIFAS --}}
                 <header class="w-full space-y-4">
-                    {{-- Judul --}}
                     <div>
-                        <h1 class="text-[28px] font-bold leading-tight text-[#000000]">
-                            Data Pasien Nifas
-                        </h1>
-                        <p class="text-sm text-[#7C7C7C]">
-                            Kelola Data Pasien Nifas Anda
-                        </p>
+                        <h1 class="text-[28px] font-bold leading-tight text-[#000000]">Data Pasien Nifas</h1>
+                        <p class="text-sm text-[#7C7C7C]">Kelola Data Pasien Nifas Anda</p>
                     </div>
 
-                    {{-- Search bar + tombol download (sejajar) --}}
                     <div class="flex items-center justify-between flex-wrap gap-3">
-                        {{-- Kiri: Search --}}
                         <section class="flex items-center gap-3 mt-6 mb-6">
                             <form action="{{ route('dinkes.pasien-nifas') }}" method="GET"
                                 class="flex items-center gap-3">
@@ -52,17 +38,15 @@
                             </form>
                         </section>
 
-                        {{-- Kanan: Download Data (dummy link) --}}
                         <a href="#"
                             class="inline-flex items-center gap-2 rounded-xl bg-[#B61E7B] px-4 py-2 text-sm font-semibold text-white hover:bg-[#B9257F] transition">
                             <img src="{{ asset('icons/Iconly/Regular/Outline/Paper Download.svg') }}" alt="Download"
-                                class="w-5 h-5 invert-[0] brightness-100 saturate-100" loading="lazy" decoding="async">
+                                class="w-5 h-5">
                             <span>Download Data</span>
                         </a>
                     </div>
                 </header>
 
-                {{-- Tabel --}}
                 <section class="mt-2 rounded-2xl overflow-hidden border border-[#EDEDED] bg-white">
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left border-collapse">
@@ -71,7 +55,7 @@
                                     <th class="pl-6 pr-4 py-3 font-semibold">No</th>
                                     <th class="px-4 py-3 font-semibold">Nama</th>
                                     <th class="px-4 py-3 font-semibold">NIK</th>
-                                    <th class="px-4 py-3 font-semibold">Role</th>
+                                    <th class="px-4 py-3 font-semibold">Role Penanggung</th>
                                     <th class="px-4 py-3 font-semibold">Tempat, Tanggal Lahir</th>
                                     <th class="px-4 py-3 font-semibold text-center w-[180px]">Aksi</th>
                                 </tr>
@@ -99,17 +83,26 @@
                                         </td>
 
                                         <td class="px-6 py-4">
-                                            <div class="flex justify-end">
-                                                <button class="h-2.5 w-2.5 rounded-full bg-[#B61E7B]"
-                                                    aria-label="More"></button>
+                                            <div class="flex items-center justify-center gap-2">
+                                                {{-- Tombol Delete --}}
+                                                <form class="form-delete"
+                                                    action="{{ route('dinkes.pasien-nifas.destroy', $row->id) }}"
+                                                    method="POST">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="h-8 border border-[#D9D9D9] rounded-md px-3 text-xs text-[#E20D0D] hover:bg-[#FFF0F0]">
+                                                        data-name="{{ $row->name }}">
+                                                        Hapus
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="px-6 py-6 text-center text-[#7C7C7C]">
-                                            Tidak ada data pasien nifas.
-                                        </td>
+                                        <td colspan="6" class="px-6 py-6 text-center text-[#7C7C7C]">Tidak ada data
+                                            pasien nifas.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -123,9 +116,7 @@
                     @endif
                 </section>
             </div>
-            <!-- === /KONTEN === -->
 
-            {{-- === FOOTER (selalu nempel bawah) === --}}
             <footer class="text-center text-xs text-[#7C7C7C] py-6">
                 © 2025 Dinas Kesehatan Kota Depok — DeLISA
             </footer>

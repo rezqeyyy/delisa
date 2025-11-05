@@ -40,7 +40,7 @@
       </div>
       <div>
         <label>No Telepon</label>
-        <input name="phone" value="{{ old('phone',$data->phone) }}" class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+        <input name="phone" type="number" value="{{ old('phone',$data->phone) }}" class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
       </div>
 
       @if($tab==='rs')
