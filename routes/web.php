@@ -14,6 +14,12 @@ use App\Http\Controllers\Dinkes\AkunBaruController;
 use App\Http\Controllers\Dinkes\PasienNifasController;
 use App\Http\Controllers\Dinkes\ProfileController;
 use App\Http\Controllers\WilayahController;
+use App\Http\Controllers\Pasien\Skrining\DataDiriController;
+use App\Http\Controllers\Pasien\Skrining\RiwayatKehamilanGPAController;
+use App\Http\Controllers\Pasien\Skrining\KondisiKesehatanPasienController;
+use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitPasienController;
+use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitKeluargaController;
+use App\Http\Controllers\Pasien\Skrining\PreeklampsiaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,46 +133,49 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/puskesmas/search', [PasienSkriningController::class, 'puskesmasSearch'])->name('puskesmas.search');
 
             // Pemilihan puskesmas via modal
-            Route::post('/skrining/ajukan/puskesmas', [PasienSkriningController::class, 'storePengajuan'])
+            Route::post('/skrining/ajukan/puskesmas', [DataDiriController::class, 'storePengajuan'])
                 ->name('skrining.pengajuan.store');
 
             // Data Diri
-            Route::get('/skrining/ajukan', [PasienSkriningController::class, 'create'])->name('data-diri');
-            Route::post('/skrining/ajukan', [PasienSkriningController::class, 'storeDataDiri'])->name('data-diri.store');
+            Route::get('/skrining/ajukan', [DataDiriController::class, 'create']) 
+                ->name('data-diri');
+            Route::post('/data-diri', [DataDiriController::class, 'store'])
+                ->name('data-diri.store');
 
             // Riwayat Kehamilan & Persalinan (GPA)
-            Route::get('/skrining/riwayat-kehamilan-gpa', [PasienSkriningController::class, 'riwayatKehamilanGpa'])
+            Route::get('/skrining/riwayat-kehamilan-gpa', [RiwayatKehamilanGPAController::class, 'riwayatKehamilanGpa'])
                 ->name('riwayat-kehamilan-gpa');
-            Route::post('/skrining/riwayat-kehamilan-gpa', [PasienSkriningController::class, 'storeRiwayatKehamilanGpa'])
+            Route::post('/riwayat-kehamilan-gpa', [RiwayatKehamilanGPAController::class, 'store'])
                 ->name('riwayat-kehamilan-gpa.store');
 
             // Kondisi Kesehatan Pasien
-            Route::get('/skrining/kondisi-kesehatan-pasien', [PasienSkriningController::class, 'kondisiKesehatanPasien'])
+            Route::get('/skrining/kondisi-kesehatan-pasien', [KondisiKesehatanPasienController::class, 'kondisiKesehatanPasien'])
                 ->name('kondisi-kesehatan-pasien');
-            Route::post('/skrining/kondisi-kesehatan-pasien', [PasienSkriningController::class, 'storeKondisiKesehatanPasien'])
+            Route::post('/kondisi-kesehatan-pasien', [KondisiKesehatanPasienController::class, 'store'])
                 ->name('kondisi-kesehatan-pasien.store');
 
             // Riwayat Penyakit Pasien
-            Route::get('/skrining/riwayat-penyakit-pasien', [PasienSkriningController::class, 'riwayatPenyakitPasien'])
+            Route::get('/skrining/riwayat-penyakit-pasien', [RiwayatPenyakitPasienController::class, 'riwayatPenyakitPasien'])
                 ->name('riwayat-penyakit-pasien');
-            Route::post('/skrining/riwayat-penyakit-pasien', [PasienSkriningController::class, 'storeRiwayatPenyakitPasien'])
+            Route::post('/riwayat-penyakit-pasien', [RiwayatPenyakitPasienController::class, 'store'])
                 ->name('riwayat-penyakit-pasien.store');
 
             // Riwayat Penyakit Keluarga
-            Route::get('/skrining/riwayat-penyakit-keluarga', [PasienSkriningController::class, 'riwayatPenyakitKeluarga'])
+            Route::get('/skrining/riwayat-penyakit-keluarga', [RiwayatPenyakitKeluargaController::class, 'riwayatPenyakitKeluarga'])
                 ->name('riwayat-penyakit-keluarga');
-            Route::post('/skrining/riwayat-penyakit-keluarga', [PasienSkriningController::class, 'storeRiwayatPenyakitKeluarga'])
+            Route::post('/riwayat-penyakit-keluarga', [RiwayatPenyakitKeluargaController::class, 'store'])
                 ->name('riwayat-penyakit-keluarga.store');
 
             // Preeklampsia
-            Route::get('/skrining/preeklampsia', [PasienSkriningController::class, 'preEklampsia'])
+            Route::get('/skrining/preeklampsia', [PreeklampsiaController::class, 'preEklampsia'])
                 ->name('preeklampsia');
-            Route::post('/skrining/preeklampsia', [PasienSkriningController::class, 'storePreEklampsia'])
+            Route::post('/skrining/preeklampsia', [PreeklampsiaController::class, 'store'])
                 ->name('preeklampsia.store');
 
 
             Route::get('/skrining/{skrining}', [PasienSkriningController::class, 'show'])->name('skrining.show');
             Route::get('/skrining/{skrining}/edit', [PasienSkriningController::class, 'edit'])->name('skrining.edit');
+            Route::put('/skrining/{skrining}', [PasienSkriningController::class, 'update'])->name('skrining.update');
             Route::delete('/skrining/{skrining}', [PasienSkriningController::class, 'destroy'])->name('skrining.destroy');
         });
 

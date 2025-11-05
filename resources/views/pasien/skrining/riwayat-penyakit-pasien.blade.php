@@ -63,12 +63,12 @@
             <x-pasien.stepper 
                 :current="4" 
                 :urls="[
-                    route('pasien.data-diri'),
-                    route('pasien.riwayat-kehamilan-gpa'),
-                    route('pasien.kondisi-kesehatan-pasien'),
-                    route('pasien.riwayat-penyakit-pasien'),
-                    route('pasien.riwayat-penyakit-keluarga'),
-                    route('pasien.preeklampsia'),
+                    route('pasien.data-diri', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-kehamilan-gpa', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.kondisi-kesehatan-pasien', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-penyakit-pasien', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-penyakit-keluarga', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.preeklampsia', ['skrining_id' => request('skrining_id')]),
                 ]" 
             />
 
@@ -81,6 +81,7 @@
 
             <form method="POST" action="{{ route('pasien.riwayat-penyakit-pasien.store') }}">
                 @csrf
+                <input type="hidden" name="skrining_id" value="{{ request('skrining_id') }}">
                 <div class="mt-6">
                     <h2 class="text-xl font-semibold text-[#B9257F]">Apakah Ibu memiliki riwayat penyakit?</h2>
                     <p class="mt-2 text-sm text-[#1D1D1D]">Centang penyakit yang pernah diderita</p>

@@ -66,7 +66,17 @@
                 ];
             @endphp
 
-            <x-pasien.stepper :current="$stepCurrent" :items="$stepItems" />
+            <x-pasien.stepper 
+                :current="$stepCurrent" 
+                :urls="[
+                    route('pasien.data-diri', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-kehamilan-gpa', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.kondisi-kesehatan-pasien', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-penyakit-pasien', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-penyakit-keluarga', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.preeklampsia', ['skrining_id' => request('skrining_id')]),
+                ]" 
+            />
             <!-- Judul langkah aktif untuk layar kecil -->
             <div class="mt-4 md:hidden">
                 <h2 class="text-base font-semibold text-[#1D1D1D]">
@@ -84,6 +94,7 @@
             @endphp
             <form x-data="{ bayar: '{{ old('pembiayaan_kesehatan', optional(optional(Auth::user())->pasien)->pembiayaan_kesehatan) }}' }" action="{{ route('pasien.data-diri.store') }}" method="POST">
                 @csrf
+                <input type="hidden" name="skrining_id" value="{{ request('skrining_id') }}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     <!-- Identitas dasar pasien -->

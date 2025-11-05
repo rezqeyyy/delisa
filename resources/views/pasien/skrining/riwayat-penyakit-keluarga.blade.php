@@ -60,12 +60,12 @@
             <x-pasien.stepper 
                 :current="5" 
                 :urls="[
-                    route('pasien.data-diri'),
-                    route('pasien.riwayat-kehamilan-gpa'),
-                    route('pasien.kondisi-kesehatan-pasien'),
-                    route('pasien.riwayat-penyakit-pasien'),
-                    route('pasien.riwayat-penyakit-keluarga'),
-                    route('pasien.preeklampsia'),
+                    route('pasien.data-diri', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-kehamilan-gpa', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.kondisi-kesehatan-pasien', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-penyakit-pasien', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-penyakit-keluarga', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.preeklampsia', ['skrining_id' => request('skrining_id')]),
                 ]" 
             />
 
@@ -75,18 +75,22 @@
                 </h2>
             </div>
 
-            <form>
+            <form method="POST" action="{{ route('pasien.riwayat-penyakit-keluarga.store') }}">
                 @csrf
+                <input type="hidden" name="skrining_id" value="{{ request('skrining_id') }}">
                 <div class="mt-6">
                     <h2 class="text-xl font-semibold text-[#B9257F]">Apakah Keluarga memiliki riwayat penyakit?</h2>
                     <p class="mt-2 text-sm text-[#1D1D1D]">Centang penyakit yang pernah diderita</p>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                        <!-- Hipertensi -->
+                        <!-- Hipertensi Kronik -->
                         <div class="relative">
-                            <input type="checkbox" id="hipertensi" name="penyakit[]" value="hipertensi" class="peer absolute opacity-0 h-0 w-0">
-                            <label for="hipertensi" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
-                                <span>Hipertensi</span>
+                            <input type="checkbox" id="hipertensi_kronik" name="penyakit[]"
+                                value="hipertensi_kronik"
+                                {{ in_array('hipertensi_kronik', old('penyakit', $selected ?? [])) ? 'checked' : '' }}
+                                class="peer absolute opacity-0 h-0 w-0">
+                            <label for="hipertensi_kronik" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
+                                <span>Hipertensi Kronik</span>
                                 <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
                                     <svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -95,149 +99,70 @@
                             </label>
                         </div>
 
-                        <!-- Alergi -->
+                        <!-- Ginjal -->
                         <div class="relative">
-                            <input type="checkbox" id="alergi" name="penyakit[]" value="alergi" class="peer absolute opacity-0 h-0 w-0">
-                            <label for="alergi" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
-                                <span>Alergi</span>
+                            <input type="checkbox" id="ginjal" name="penyakit[]" value="ginjal"
+                                {{ in_array('ginjal', old('penyakit', $selected ?? [])) ? 'checked' : '' }}
+                                class="peer absolute opacity-0 h-0 w-0">
+                            <label for="ginjal" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
+                                <span>Ginjal</span>
                                 <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
                                     <svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                                     </svg>
                                 </span>
                             </label>
                         </div>
 
-                        <!-- Tiroid -->
+                        <!-- Autoimun, SLE -->
                         <div class="relative">
-                            <input type="checkbox" id="tiroid" name="penyakit[]" value="tiroid" class="peer absolute opacity-0 h-0 w-0">
-                            <label for="tiroid" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
-                                <span>Tiroid</span>
+                            <input type="checkbox" id="autoimun_sle" name="penyakit[]" value="autoimun_sle"
+                                {{ in_array('autoimun_sle', old('penyakit', $selected ?? [])) ? 'checked' : '' }}
+                                class="peer absolute opacity-0 h-0 w-0">
+                            <label for="autoimun_sle" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
+                                <span>Autoimun, SLE</span>
                                 <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
                                     <svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                                     </svg>
                                 </span>
                             </label>
                         </div>
 
-                        <!-- TB -->
+                        <!-- Anti Phospholipid Syndrome -->
                         <div class="relative">
-                            <input type="checkbox" id="tb" name="penyakit[]" value="tb" class="peer absolute opacity-0 h-0 w-0">
-                            <label for="tb" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
-                                <span>TB</span>
+                            <input type="checkbox" id="anti_phospholipid_syndrome" name="penyakit[]" value="anti_phospholipid_syndrome"
+                                {{ in_array('anti_phospholipid_syndrome', old('penyakit', $selected ?? [])) ? 'checked' : '' }}
+                                class="peer absolute opacity-0 h-0 w-0">
+                            <label for="anti_phospholipid_syndrome" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
+                                <span>Anti Phospholipid Syndrome</span>
                                 <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
                                     <svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                                     </svg>
                                 </span>
                             </label>
-                        </div>
-
-                        <!-- Jantung -->
-                        <div class="relative">
-                            <input type="checkbox" id="jantung" name="penyakit[]" value="jantung" class="peer absolute opacity-0 h-0 w-0">
-                            <label for="jantung" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
-                                <span>Jantung</span>
-                                <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
-                                    <svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                </span>
-                            </label>
-                        </div>
-
-                        <!-- Hepatitis B -->
-                        <div class="relative">
-                            <input type="checkbox" id="hepatitis_b" name="penyakit[]" value="hepatitis_b" class="peer absolute opacity-0 h-0 w-0">
-                            <label for="hepatitis_b" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
-                                <span>Hepatitis B</span>
-                                <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
-                                    <svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                </span>
-                            </label>
-                        </div>
-
-                        <!-- Jiwa -->
-                        <div class="relative">
-                            <input type="checkbox" id="jiwa" name="penyakit[]" value="jiwa" class="peer absolute opacity-0 h-0 w-0">
-                            <label for="jiwa" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
-                                <span>Jiwa</span>
-                                <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
-                                    <svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                </span>
-                            </label>
-                        </div>
-
-                        <!-- Autoimun -->
-                        <div class="relative">
-                            <input type="checkbox" id="autoimun" name="penyakit[]" value="autoimun" class="peer absolute opacity-0 h-0 w-0">
-                            <label for="autoimun" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
-                                <span>Autoimun</span>
-                                <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
-                                    <svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                </span>
-                            </label>
-                        </div>
-
-                        <!-- Sifilis -->
-                        <div class="relative">
-                            <input type="checkbox" id="sifilis" name="penyakit[]" value="sifilis" class="peer absolute opacity-0 h-0 w-0">
-                            <label for="sifilis" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
-                                <span>Sifilis</span>
-                                <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
-                                    <svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                </span>
-                            </label>
-                        </div>
-
-                        <!-- Diabetes -->
-                        <div class="relative">
-                            <input type="checkbox" id="diabetes" name="penyakit[]" value="diabetes" class="peer absolute opacity-0 h-0 w-0">
-                            <label for="diabetes" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
-                                <span>Diabetes</span>
-                                <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
-                                    <svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                </span>
-                            </label>
-                        </div>
-
-                        <!-- Asma -->
-                        <div class="relative">
-                            <input type="checkbox" id="asma" name="penyakit[]" value="asma" class="peer absolute opacity-0 h-0 w-0">
-                            <label for="asma" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
-                                <span>Asma</span>
-                                <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
-                                    <svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                </span>
-                            </label>
+                            <div class="mt-1 text-xs text-[#B9257F]">* Manifestasi Klinis APS Antara Lain: Keguguran Berulang, IUFD, Kelahiran Prematur</div>
                         </div>
 
                         <!-- Lainnya -->
                         <div class="relative">
-                            <input type="checkbox" id="lainnya" name="penyakit[]" value="lainnya" class="peer absolute opacity-0 h-0 w-0">
+                            <input type="checkbox" id="lainnya" name="penyakit[]" value="lainnya"
+                                {{ in_array('lainnya', old('penyakit', $selected ?? [])) ? 'checked' : '' }}
+                                class="peer absolute opacity-0 h-0 w-0">
                             <label for="lainnya" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors">
                                 <span>Lainnya</span>
                                 <span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white">
                                     <svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                                     </svg>
                                 </span>
                             </label>
                             <div class="mt-2 hidden peer-checked:block">
-                                <input type="text" name="penyakit_keluarga_lainnya" placeholder="Sebutkan penyakit lainnya pada keluarga" class="w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm text-[#1D1D1D] placeholder-[#8C8C8C]" />
+                                <input type="text" name="penyakit_keluarga_lainnya"
+                                    value="{{ old('penyakit_keluarga_lainnya', $penyakitKeluargaLainnya ?? '') }}"
+                                    placeholder="Sebutkan penyakit lainnya pada keluarga"
+                                    class="w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm text-[#1D1D1D] placeholder-[#8C8C8C]" />
                             </div>
                         </div>
                     </div>
@@ -246,12 +171,13 @@
                         <a href="{{ route('pasien.riwayat-penyakit-pasien') }}" class="px-6 py-3 rounded-full bg-[#F2F2F2] text-[#1D1D1D] font-medium">
                             Kembali
                         </a>
-                        <a href="{{ route('pasien.preeklampsia') }}" class="px-6 py-3 rounded-full bg-[#B9257F] text-white font-medium">
+                        <button type="submit" class="px-6 py-3 rounded-full bg-[#B9257F] text-white font-medium">
                             Lanjut
-                        </a>
+                        </button>
                     </div>
                 </div>
             </form>
+
         </main>
     </div>
 </body>

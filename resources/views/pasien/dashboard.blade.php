@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pasien — Dashboard</title>
+    
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/pasien/puskesmas-picker.js'])
     <style>
         /* Mengimpor font Poppins dari Google Fonts agar visual teks 100% cocok dengan desain modern */
@@ -102,6 +103,7 @@
                 </div>
             </div>
 
+            <!-- List Skrining -->
             <section class="bg-white rounded-2xl shadow-md p-6">
                 <div class="flex flex-wrap items-start gap-4">
                     <div class="flex-1 min-w-[240px]">
@@ -110,18 +112,20 @@
 
                     <div class="ml-auto flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
                         <form action="{{ route('pasien.dashboard') }}" method="GET"
-                            class="flex w-full md:w-auto items-center gap-2 flex-wrap md:flex-nowrap">
+                                class="flex w-full md:w-auto items-center gap-2 flex-wrap md:flex-nowrap">
                             <div class="relative w-full md:w-auto">
                                 <select name="status"
                                         class="w-full pl-3 pr-9 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
                                     @php $currentStatus = $status ?? ''; @endphp
                                     <option value="" {{ $currentStatus === '' ? 'selected' : '' }}>Cari Berdasarkan Status</option>
-                                    <option value="Aman" {{ $currentStatus === 'Aman' ? 'selected' : '' }}>Aman</option>
+                                    <option value="" {{ ($status ?? '') === '' ? 'selected' : '' }}>Semua</option>
+                                    <option value="Normal" {{ $currentStatus === 'Normal' ? 'selected' : '' }}>Tidak Berisiko</option>
                                     <option value="Waspada" {{ $currentStatus === 'Waspada' ? 'selected' : '' }}>Waspada</option>
-                                    <option value="Beresiko" {{ $currentStatus === 'Beresiko' ? 'selected' : '' }}>Beresiko</option>
+                                    <option value="Beresiko" {{ $currentStatus === 'Beresiko' ? 'selected' : '' }}>Berisiko</option>
                                 </select>
                             </div>
-                            <button class="w-full md:w-auto px-4 py-2 rounded-full bg-[#B9257F] text-white text-sm font-medium hover:bg-[#a31f70]">
+                            <button type="submit"
+                                    class="px-5 py-2 rounded-full bg-[#B9257F] text-white text-sm hover:bg-[#a31f70]">
                                 Cari
                             </button>
                         </form>
@@ -142,106 +146,88 @@
                     </div>
                 </div>
 
-                @php
-                $badgeClass = function ($st) {
-                    $st = strtolower($st ?? '');
-                    return match ($st) {
-                    'aman', 'normal'    => 'bg-[#2EDB58] text-white',
-                    'waspada'           => 'bg-[#FFC700] text-white',
-                    'beresiko'          => 'bg-[#EB1D1D] text-white',
-                    default             => 'bg-gray-300 text-gray-700',
-                    };
-                };
-                @endphp
+                <!-- Tabel daftar skrining -->
+                <div class="overflow-x-auto">
+                    <table class="w-full table-auto border-separate
+                        sm:border-spacing-x-[12px] sm:border-spacing-y-[6px]
+                        md:border-spacing-x-[20px] md:border-spacing-y-[8px]
+                        lg:border-spacing-x-[24px] lg:border-spacing-y-[10px]">
+                        <thead>
+                            <tr>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Nama Pasien</th>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Tanggal Pengisian</th>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Alamat</th>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Kesimpulan</th>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">View Detail</th>
+                            </tr>
+                        </thead>
 
-                <div class="mt-5 space-y-3">
-                @forelse ($skrinings as $skrining)
-                    @php
-                    $editUrl = \Illuminate\Support\Facades\Route::has('pasien.skrining.edit')
-                        ? route('pasien.skrining.edit', $skrining->id)
-                        : '#';
-                    $viewUrl = \Illuminate\Support\Facades\Route::has('pasien.skrining.show')
-                        ? route('pasien.skrining.show', $skrining->id)
-                        : '#';
-                    $namaPasien = optional($skrining->pasien?->user)->name ?? (auth()->user()->name ?? 'Pasien');
-                    $alamat = auth()->user()->address ?? ($skrining->pasien?->PKabupaten ?? '-');
-                    @endphp
+                        <tbody>
+                        @forelse ($skrinings as $skrining)
+                            @php
+                                $nama     = optional(optional($skrining->pasien)->user)->name ?? '-';
+                                $tanggal  = \Carbon\Carbon::parse($skrining->created_at)->format('d/m/Y');
+                                $alamat   = optional(optional($skrining->pasien)->user)->address ?? '-';
+                                $resikoSedang = (int)($skrining->jumlah_resiko_sedang ?? 0);
+                                $resikoTinggi = (int)($skrining->jumlah_resiko_tinggi ?? 0);
+                                $conclusion = $skrining->conclusion_display ?? ($skrining->kesimpulan ?? 'Normal');
+                                $cls = $skrining->badge_class ?? 'bg-[#2EDB58] text-white';
+                                $editUrl = route('pasien.skrining.edit', $skrining->id);
+                                $viewUrl = route('pasien.skrining.show', $skrining->id);
+                                @endphp
+                                <tr class="align-middle">
+                                    <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap">
+                                        <div class="inline-flex items-center gap-3">
+                                            <span class="font-medium text-[#1D1D1D]">{{ $nama }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $tanggal }}</td>
+                                    <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $alamat }}</td>
+                                    <td class="px-3 py-3 md:px-6 md:py-4">
+                                        <span class="rounded-full px-4 py-2 text-sm font-medium {{ $cls }}">
+                                            {{ $conclusion }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-3 md:px-6 md:py-4">
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ $editUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">
+                                                Edit
+                                            </a>
+                                            <a href="{{ $viewUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">
+                                                View
+                                            </a>
 
-                    <div class="flex items-center justify-between bg-[#F7F7F7] rounded-xl px-4 py-3">
-                    <div class="flex items-center gap-4 min-w-0">
-                        <span class="w-8 h-8 rounded-full bg-[#EFEFEF] flex items-center justify-center">
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Profile.svg') }}" class="w-4 h-4 opacity-80" alt="avatar">
-                        </span>
-
-                        <div class="w-[200px]">
-                        <div class="text-sm font-medium text-[#1D1D1D] truncate">{{ $namaPasien }}</div>
-                        <div class="text-xs text-[#7C7C7C]">Nama Pasien</div>
-                        </div>
-
-                        <div class="w-[160px]">
-                        <div class="text-sm font-medium text-[#1D1D1D]">
-                            {{ optional($skrining->created_at)->format('d/m/Y') }}
-                        </div>
-                        <div class="text-xs text-[#7C7C7C]">Tanggal Pengisian</div>
-                        </div>
-
-                        <div class="w-[160px]">
-                        <div class="text-sm font-medium text-[#1D1D1D] truncate">{{ $alamat }}</div>
-                        <div class="text-xs text-[#7C7C7C]">Alamat</div>
-                        </div>
-
-                        <div class="w-[160px]">
-                        <span class="inline-block px-4 py-1.5 rounded-full text-xs font-semibold {{ $badgeClass($skrining->kesimpulan) }}">
-                            {{ $skrining->kesimpulan ?? '—' }}
-                        </span>
-                        <div class="text-xs text-[#7C7C7C] mt-1">Kesimpulan</div>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <a href="{{ $editUrl }}" class="px-3 py-1.5 rounded-full bg-white border border-[#E5E5E5] text-xs hover:bg-[#F0F0F0]">
-                        Edit
-                        </a>
-                        <a href="{{ $viewUrl }}" class="px-3 py-1.5 rounded-full bg-white border border-[#E5E5E5] text-xs hover:bg-[#F0F0F0]">
-                        View
-                        </a>
-                        <form method="POST"
-                              action="{{ route('pasien.skrining.destroy', $skrining->id) }}"
-                              class="inline-block"
-                              onsubmit="return confirm('Yakin ingin menghapus skrining ini?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="px-3 py-1.5 rounded-full bg-white border border-[#E5E5E5] text-xs hover:bg-[#F0F0F0]">
-                                Delete
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                @empty
-                    <div class="text-center text-sm text-[#7C7C7C] py-8">
-                    Belum ada data skrining.
-                    </div>
-                @endforelse
+                                            <form method="POST"
+                                                action="{{ route('pasien.skrining.destroy', $skrining->id) }}"
+                                                onsubmit="return confirm('Yakin hapus data skrining?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="rounded-full border px-4 py-2 text-red-600 hover:bg-red-50">
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="px-4 py-8 text-center text-[#7C7C7C]">
+                                        Belum ada data skrining.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
 
                 @if(isset($skrinings) && method_exists($skrinings, 'hasPages') && $skrinings->hasPages())
-                <div class="mt-4">
-                    {{ $skrinings->onEachSide(1)->links() }}
-                </div>
+                    <div class="mt-4">
+                        {{ $skrinings->links() }}
+                    </div>
                 @endif
             </section>
 
-            <!-- Ringkasan Total Skrining & Resiko Preeklamsia -->
-            @php
-                $risk = $riskPreeklampsia ?? null;
-                $riskBoxClass = match (strtolower($risk ?? '')) {
-                    'beresiko'          => 'bg-[#EB1D1D] text-white',
-                    'waspada'           => 'bg-[#FFC700] text-white',
-                    'aman', 'normal'    => 'bg-[#2EDB58] text-white',
-                    default             => 'bg-[#E9E9E9] text-[#1D1D1D]',
-                };
-            @endphp
-
+            <!-- Ringkasan Total Skrining & Resiko Preeklamsia -->           
             <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-white rounded-2xl p-6 shadow-md">
                     <h2 class="font-semibold text-[#1D1D1D] mb-3">Total Skrining</h2>
@@ -259,10 +245,10 @@
                 </div>
 
                 <div class="bg-white rounded-2xl p-6 shadow-md">
-                    <h2 class="font-semibold text-[#1D1D1D] mb-3">Resiko Preeklamsia</h2>
-                    <div class="rounded-xl {{ $riskBoxClass }} p-6 text-center">
+                    <h2 class="font-semibold text-[#1D1D1D] mb-3">Risiko Preeklamsia</h2>
+                    <div class="rounded-xl {{ $riskBoxClass ?? 'bg-[#E9E9E9] text-[#1D1D1D]' }} p-6 text-center">
                         <span class="text-lg font-semibold">
-                            {{ $risk ? $risk : 'Belum ada' }}
+                            {{ $riskPreeklampsia ? $riskPreeklampsia : 'Belum ada' }}
                         </span>
                     </div>
                 </div>

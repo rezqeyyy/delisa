@@ -60,12 +60,12 @@
             <x-pasien.stepper 
                 :current="6" 
                 :urls="[
-                    route('pasien.data-diri'),
-                    route('pasien.riwayat-kehamilan-gpa'),
-                    route('pasien.kondisi-kesehatan-pasien'),
-                    route('pasien.riwayat-penyakit-pasien'),
-                    route('pasien.riwayat-penyakit-keluarga'),
-                    route('pasien.preeklampsia'),
+                    route('pasien.data-diri', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-kehamilan-gpa', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.kondisi-kesehatan-pasien', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-penyakit-pasien', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-penyakit-keluarga', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.preeklampsia', ['skrining_id' => request('skrining_id')]),
                 ]" 
             />
 
@@ -75,8 +75,9 @@
                 </h2>
             </div>
 
-            <form>
+            <form method="POST" action="{{ route('pasien.preeklampsia.store') }}">
                 @csrf
+                <input type="hidden" name="skrining_id" value="{{ request('skrining_id') }}">
                 <div class="mt-6">
                     <h2 class="text-xl font-semibold text-[#B9257F]">Mohon isi informasi terkait dengan Preeklampsia</h2>
                     <p class="mt-2 text-sm text-[#1D1D1D]">Pilih jawaban yang sesuai</p>
@@ -87,12 +88,14 @@
                             <div class="font-medium mb-3">1. Apakah kehamilan ini adalah kehamilan kedua/lebih tetapi bukan dengan suami pertama (Pernikahan kedua atau lebih)</div>
                             <div class="flex items-center space-x-6">
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan1" value="ya" class="hidden peer">
+                                    <input type="radio" name="pertanyaan1" value="ya" class="hidden peer"
+                                        {{ !empty($answers) && ($answers['pertanyaan1'] ?? false) ? 'checked' : '' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Ya</span>
                                 </label>
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan1" value="tidak" class="hidden peer" checked>
+                                    <input type="radio" name="pertanyaan1" value="tidak" class="hidden peer"
+                                        {{ !empty($answers) ? (($answers['pertanyaan1'] ?? false) ? '' : 'checked') : 'checked' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Tidak</span>
                                 </label>
@@ -104,75 +107,72 @@
                             <div class="font-medium mb-3">2. Apakah kehamilan ini dengan Teknologi Reproduksi Berbantu (Bayi tabung, Obat induksi ovulasi)</div>
                             <div class="flex items-center space-x-6">
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan2" value="ya" class="hidden peer">
+                                    <input type="radio" name="pertanyaan2" value="ya" class="hidden peer"
+                                        {{ !empty($answers) && ($answers['pertanyaan2'] ?? false) ? 'checked' : '' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Ya</span>
                                 </label>
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan2" value="tidak" class="hidden peer" checked>
+                                    <input type="radio" name="pertanyaan2" value="tidak" class="hidden peer"
+                                        {{ !empty($answers) ? (($answers['pertanyaan2'] ?? false) ? '' : 'checked') : 'checked' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Tidak</span>
                                 </label>
                             </div>
                         </div>
-
+                                       
                         <!-- Pertanyaan 3 -->
                         <div class="rounded-3xl bg-[#FEF08A] p-4">
-                            <div class="font-medium mb-3">
-                                3. Umur ≥ 35 tahun
-                                @if(isset($preFill['pertanyaan3']))
-                                    <span class="ml-2 text-xs rounded-full bg-gray-200 text-gray-700 px-2 py-1">Otomatis</span>
-                                @endif
-                            </div>
+                            <div class="font-medium mb-3">3. Apakah kehamilan ini berjarak 10 tahun dari kehamilan sebelumnya</div>
                             <div class="flex items-center space-x-6">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="pertanyaan3" value="ya" class="hidden peer"
-                                        {{ (isset($preFill['pertanyaan3']) && $preFill['pertanyaan3'] === 'ya') ? 'checked' : '' }}
-                                        {{ isset($preFill['pertanyaan3']) ? 'disabled' : '' }}>
+                                        {{ !empty($answers) && ($answers['pertanyaan3'] ?? false) ? 'checked' : '' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Ya</span>
                                 </label>
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="pertanyaan3" value="tidak" class="hidden peer"
-                                        {{ (isset($preFill['pertanyaan3']) && $preFill['pertanyaan3'] === 'tidak') ? 'checked' : '' }}
-                                        {{ isset($preFill['pertanyaan3']) ? 'disabled' : '' }}>
+                                        {{ !empty($answers) ? (($answers['pertanyaan3'] ?? false) ? '' : 'checked') : 'checked' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Tidak</span>
                                 </label>
                             </div>
-                            @if(isset($preFill['pertanyaan3']))
-                                <input type="hidden" name="pertanyaan3" value="{{ $preFill['pertanyaan3'] }}">
-                            @endif
                         </div>
 
                         <!-- Pertanyaan 4 -->
                         <div class="rounded-3xl bg-[#FEF08A] p-4">
-                            <div class="font-medium mb-3">4. Apakah ini termasuk kehamilan pertama</div>
+                            <div class="font-medium mb-3">4. Apakah ibu kandung atau saudara perempuan anda memiliki riwayat pre-eklampsia</div>
                             <div class="flex items-center space-x-6">
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan4" value="ya" class="hidden peer">
+                                    <input type="radio" name="pertanyaan4" value="ya" class="hidden peer"
+                                        {{ !empty($answers) && ($answers['pertanyaan4'] ?? false) ? 'checked' : '' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Ya</span>
                                 </label>
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan4" value="tidak" class="hidden peer" checked>
+                                    <input type="radio" name="pertanyaan4" value="tidak" class="hidden peer"
+                                        {{ !empty($answers) ? (($answers['pertanyaan4'] ?? false) ? '' : 'checked') : 'checked' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Tidak</span>
                                 </label>
                             </div>
                         </div>
 
+                    
                         <!-- Pertanyaan 5 -->
-                        <div class="rounded-3xl bg-[#FEF08A] p-4">
-                            <div class="font-medium mb-3">5. Apakah kehamilan ini berjarak 10 tahun dari kehamilan sebelumnya</div>
+                        <div class="rounded-3xl bg-[#FFB6B6] p-4">
+                            <div class="font-medium mb-3">5. Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya</div>
                             <div class="flex items-center space-x-6">
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan5" value="ya" class="hidden peer">
+                                    <input type="radio" name="pertanyaan5" value="ya" class="hidden peer"
+                                        {{ !empty($answers) && ($answers['pertanyaan5'] ?? false) ? 'checked' : '' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Ya</span>
                                 </label>
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan5" value="tidak" class="hidden peer" checked>
+                                    <input type="radio" name="pertanyaan5" value="tidak" class="hidden peer"
+                                        {{ !empty($answers) ? (($answers['pertanyaan5'] ?? false) ? '' : 'checked') : 'checked' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Tidak</span>
                                 </label>
@@ -180,16 +180,18 @@
                         </div>
 
                         <!-- Pertanyaan 6 -->
-                        <div class="rounded-3xl bg-[#FEF08A] p-4">
-                            <div class="font-medium mb-3">6. Apakah ibu kandung atau saudara perempuan anda memiliki riwayat pre-eklampsia</div>
+                        <div class="rounded-3xl bg-[#FFB6B6] p-4">
+                            <div class="font-medium mb-3">6. Apakah kehamilan anda saat ini adalah kehamilan kembar</div>
                             <div class="flex items-center space-x-6">
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan6" value="ya" class="hidden peer">
+                                    <input type="radio" name="pertanyaan6" value="ya" class="hidden peer"
+                                        {{ !empty($answers) && ($answers['pertanyaan6'] ?? false) ? 'checked' : '' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Ya</span>
                                 </label>
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan6" value="tidak" class="hidden peer" checked>
+                                    <input type="radio" name="pertanyaan6" value="tidak" class="hidden peer"
+                                        {{ !empty($answers) ? (($answers['pertanyaan6'] ?? false) ? '' : 'checked') : 'checked' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Tidak</span>
                                 </label>
@@ -197,141 +199,25 @@
                         </div>
 
                         <!-- Pertanyaan 7 -->
-                        <div class="rounded-3xl bg-[#FEF08A] p-4">
-                            <div class="font-medium mb-3">7. Apakah memiliki riwayat obesitas sebelum hamil (IMT > 30kg/m2)</div>
-                            <div class="flex items-center space-x-6">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan7" value="ya" class="hidden peer">
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Ya</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan7" value="tidak" class="hidden peer" checked>
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Tidak</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Pertanyaan 8 -->
                         <div class="rounded-3xl bg-[#FFB6B6] p-4">
-                            <div class="font-medium mb-3">8. Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya</div>
+                            <div class="font-medium mb-3">7. Apakah anda memiliki diabetes dalam masa kehamilan</div>
                             <div class="flex items-center space-x-6">
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan8" value="ya" class="hidden peer">
+                                    <input type="radio" name="pertanyaan7" value="ya" class="hidden peer"
+                                        {{ !empty($answers) ? (($answers['pertanyaan7'] ?? false) ? 'checked' : '') : '' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Ya</span>
                                 </label>
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan8" value="tidak" class="hidden peer" checked>
+                                    <input type="radio" name="pertanyaan7" value="tidak" class="hidden peer"
+                                        {{ !empty($answers) ? (($answers['pertanyaan7'] ?? false) ? '' : 'checked') : 'checked' }}>
                                     <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                     <span class="text-sm">Tidak</span>
                                 </label>
                             </div>
                         </div>
-
-                        <!-- Pertanyaan 9 -->
-                        <div class="rounded-3xl bg-[#FFB6B6] p-4">
-                            <div class="font-medium mb-3">9. Apakah kehamilan anda saat ini adalah kehamilan kembar</div>
-                            <div class="flex items-center space-x-6">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan9" value="ya" class="hidden peer">
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Ya</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan9" value="tidak" class="hidden peer" checked>
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Tidak</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Pertanyaan 10 -->
-                        <div class="rounded-3xl bg-[#FFB6B6] p-4">
-                            <div class="font-medium mb-3">10. Apakah anda memiliki diabetes dalam masa kehamilan</div>
-                            <div class="flex items-center space-x-6">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan10" value="ya" class="hidden peer">
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Ya</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan10" value="tidak" class="hidden peer" checked>
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Tidak</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Pertanyaan 11 -->
-                        <div class="rounded-3xl bg-[#FFB6B6] p-4">
-                            <div class="font-medium mb-3">11. Apakah anda memiliki tekanan darah (Tensi) di atas 130/90 mHg</div>
-                            <div class="flex items-center space-x-6">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan11" value="ya" class="hidden peer">
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Ya</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan11" value="tidak" class="hidden peer" checked>
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Tidak</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Pertanyaan 12 -->
-                        <div class="rounded-3xl bg-[#FFB6B6] p-4">
-                            <div class="font-medium mb-3">12. Apakah anda memiliki penyakit ginjal</div>
-                            <div class="flex items-center space-x-6">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan12" value="ya" class="hidden peer">
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F]  peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Ya</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan12" value="tidak" class="hidden peer" checked>
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Tidak</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Pertanyaan 13 -->
-                        <div class="rounded-3xl bg-[#FFB6B6] p-4">
-                            <div class="font-medium mb-3">13. Apakah anda memiliki penyakit autoimun, SLE</div>
-                            <div class="flex items-center space-x-6">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan13" value="ya" class="hidden peer">
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Ya</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan13" value="tidak" class="hidden peer" checked>
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Tidak</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Pertanyaan 14 -->
-                        <div class="rounded-3xl bg-[#FFB6B6] p-4">
-                            <div class="font-medium mb-3">14. Apakah anda memiliki penyakit phospholid syndrome</div>
-                            <div class="flex items-center space-x-6">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan14" value="ya" class="hidden peer">
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Ya</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="pertanyaan14" value="tidak" class="hidden peer" checked>
-                                    <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
-                                    <span class="text-sm">Tidak</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
+                        
+                    <div>
 
                     <div class="mt-8">
                         <h3 class="text-lg font-semibold text-[#B9257F]">Catatan Tambahan</h3>
@@ -347,8 +233,8 @@
                             Kembali
                         </a>
                         <button type="submit"
-                            class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
-                            Simpan
+                                class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a21b73]">
+                            Simpan Hasil
                         </button>
                     </div>
                 </div>

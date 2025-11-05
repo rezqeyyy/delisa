@@ -70,12 +70,12 @@
             <x-pasien.stepper 
                 :current="3" 
                 :urls="[
-                    route('pasien.data-diri'),
-                    route('pasien.riwayat-kehamilan-gpa'),
-                    route('pasien.kondisi-kesehatan-pasien'),
-                    route('pasien.riwayat-penyakit-pasien'),
-                    route('pasien.riwayat-penyakit-keluarga'),
-                    route('pasien.preeklampsia'),
+                    route('pasien.data-diri', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-kehamilan-gpa', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.kondisi-kesehatan-pasien', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-penyakit-pasien', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.riwayat-penyakit-keluarga', ['skrining_id' => request('skrining_id')]),
+                    route('pasien.preeklampsia', ['skrining_id' => request('skrining_id')]),
                 ]" 
             />
 
@@ -91,6 +91,7 @@
 
             <form action="{{ route('pasien.kondisi-kesehatan-pasien.store') }}" method="POST">
                 @csrf
+                <input type="hidden" name="skrining_id" value="{{ request('skrining_id') }}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
                     <!-- Kolom kiri -->
                     <div class="space-y-6">
