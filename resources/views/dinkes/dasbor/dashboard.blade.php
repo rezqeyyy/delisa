@@ -501,26 +501,177 @@
 
             </section>
 
-            <!-- Chart contoh -->
+            {{-- Kunjungan Nifas per Bulan (KF) --}}
             <section class="bg-white rounded-2xl p-5 shadow-md">
+                {{-- Header --}}
                 <div class="flex items-center gap-2 mb-4">
                     <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Location.svg') }}" class="w-3.5 h-3.5"
                             alt="">
                     </span>
-                    <h2 class="font-semibold">Daerah Asal Pasien</h2>
+                    <h2 class="font-semibold">Kunjungan Nifas per Bulan</h2>
                 </div>
-                <div class="grid grid-cols-12 gap-3 h-56 items-end">
-                    @foreach (range(1, 12) as $i)
-                        <div
-                            class="h-{{ [14, 24, 36, 28, 52, 16, 32, 12, 16, 40, 14, 20][$i - 1] }} bg-[#B9257F] rounded-xl">
-                        </div>
-                    @endforeach
-                </div>
-                <div class="grid grid-cols-12 text-center text-xs text-[#7C7C7C] mt-3">
-                    <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>Mei</span><span>Jun</span><span>Jul</span><span>Agu</span><span>Sep</span><span>Okt</span><span>Nov</span><span>Des</span>
+
+                @php
+                    $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                    $data = $seriesBulanan ?? array_fill(0, 12, 0);
+                    $max = max($data) ?: 1;
+                    $sum = array_sum($data);
+
+                    // kanvas
+                    $H = 260; // tinggi viewBox
+                    $padT = 12; // padding atas
+                    $padB = 40; // padding bawah utk label bulan
+                    $innerH = $H - $padT - $padB;
+                    $W = 1200; // lebar viewBox (skala w-full)
+
+                    // skala tinggi (0..80 biar mirip Figma)
+                    $scale = max(80, $max);
+
+                    // style grid
+                    $gridColor = '#1F2937';
+                    $gridOpacity = 0.45;
+                    $gridWidth = 1.5;
+                    $gridDash = '4,4';
+                    $yTicks = [0, 20, 40, 60, 80];
+                @endphp
+
+                {{-- Bleed kiri/kanan agar chart mepet tepi kartu --}}
+                <div class="-mx-4">
+                    <div class="overflow-x-auto">
+                        <svg viewBox="0 0 {{ $W }} {{ $H }}" preserveAspectRatio="none"
+                            class="w-full h-56 block">
+                            @php
+                                // ====== PARAM KUSTOM LEBAR BAR ======
+                                $padL = 48; // padding kiri area plot
+                                $padR = 48; // padding kanan area plot
+                                $innerW = $W - $padL - $padR;
+
+                                $n = 12;
+                                $barPx = 50; // <<< UBAH INI untuk mengatur lebar batang (px)
+                                $minGap = 12; // gap minimum antar batang (px)
+
+                                // 1) Jika muat, sisakan ruang untuk memperlebar gap; kalau tidak muat, kecilkan bar
+                                $needMin = $n * $barPx + ($n - 1) * $minGap;
+                                if ($needMin <= $innerW) {
+                                    $extra = $innerW - $needMin;
+                                    $gap = $minGap + $extra / ($n - 1);
+                                    $barWidthF = array_fill(0, $n, $barPx);
+                                } else {
+                                    $barPxFit = max(2, ($innerW - ($n - 1) * $minGap) / $n);
+                                    $gap = $minGap;
+                                    $barWidthF = array_fill(0, $n, $barPxFit);
+                                }
+
+                                // 2) Bulatkan ke integer & distribusikan sisa piksel agar mentok kanan
+                                $barWInt = array_map(fn($w) => (int) floor($w), $barWidthF);
+                                $sumBars = array_sum($barWInt);
+                                $gapInt = (int) floor($gap);
+                                $sumGaps = $gapInt * ($n - 1);
+                                $remainder = (int) round($innerW - ($sumBars + $sumGaps));
+
+                                for ($i = 0; $i < $remainder; $i++) {
+                                    $barWInt[$i % $n] += 1;
+                                }
+
+                                $gapAdds = array_fill(0, $n - 1, $gapInt);
+                                $remain2 = (int) round($innerW - (array_sum($barWInt) + $gapInt * ($n - 1)));
+                                for ($i = 0; $i < $remain2; $i++) {
+                                    $gapAdds[$i % ($n - 1)] += 1;
+                                }
+
+                                $barWidths = $barWInt;
+                            @endphp>
+
+                            {{-- GRID --}}
+                            @foreach ($yTicks as $tick)
+                                @php
+                                    $ratio = $tick / $scale;
+                                    $yLine = $padT + ($innerH - $ratio * $innerH);
+                                @endphp
+                                <line x1="{{ $padL }}" y1="{{ $yLine }}" x2="{{ $W - $padR }}"
+                                    y2="{{ $yLine }}" stroke="{{ $gridColor }}"
+                                    stroke-opacity="{{ $gridOpacity }}" stroke-width="{{ $gridWidth }}"
+                                    stroke-linecap="round" stroke-dasharray="{{ $gridDash }}" />
+                            @endforeach
+                            <line x1="{{ $padL }}" y1="{{ $padT + $innerH }}" x2="{{ $W - $padR }}"
+                                y2="{{ $padT + $innerH }}" stroke="{{ $gridColor }}" stroke-opacity="0.55"
+                                stroke-width="2" stroke-linecap="round" />
+
+                            {{-- BATANG: rounded-top + alas datar (pakai PATH) --}}
+                            @php $xAcc = $padL; @endphp
+                            @if ($sum > 0)
+                                @foreach ($data as $i => $val)
+                                    @php
+                                        $myW = $barWidths[$i];
+                                        $hVal = ($val / $scale) * $innerH;
+                                        $yTop = $padT + ($innerH - $hVal);
+                                        $yBot = $yTop + $hVal;
+                                        $r = min($myW / 2, 16, $hVal); // radius atas
+                                        $xL = $xAcc;
+                                        $xR = $xAcc + $myW;
+                                    @endphp
+                                    <path d="
+                            M {{ $xL }},{{ $yBot }}
+                            L {{ $xL }},{{ $yTop + $r }}
+                            Q {{ $xL }},{{ $yTop }} {{ $xL + $r }},{{ $yTop }}
+                            L {{ $xR - $r }},{{ $yTop }}
+                            Q {{ $xR }},{{ $yTop }} {{ $xR }},{{ $yTop + $r }}
+                            L {{ $xR }},{{ $yBot }}
+                            Z" fill="#B9257F" />
+                                    @if ($val > 0)
+                                        <text x="{{ $xAcc + $myW / 2 }}" y="{{ max(14, $yTop - 8) }}"
+                                            text-anchor="middle" font-size="10"
+                                            fill="#B9257F">{{ $val }}</text>
+                                    @endif
+                                    @php $xAcc += $myW + ($i < $n-1 ? $gapAdds[$i] : 0); @endphp
+                                @endforeach
+                            @else
+                                @for ($i = 0; $i < $n; $i++)
+                                    @php
+                                        $myW = $barWidths[$i];
+                                        $hVal = 10;
+                                        $yTop = $padT + ($innerH - $hVal);
+                                        $yBot = $yTop + $hVal;
+                                        $r = min($myW / 2, 16, $hVal);
+                                        $xL = $xAcc;
+                                        $xR = $xAcc + $myW;
+                                    @endphp
+                                    <path d="
+                            M {{ $xL }},{{ $yBot }}
+                            L {{ $xL }},{{ $yTop + $r }}
+                            Q {{ $xL }},{{ $yTop }} {{ $xL + $r }},{{ $yTop }}
+                            L {{ $xR - $r }},{{ $yTop }}
+                            Q {{ $xR }},{{ $yTop }} {{ $xR }},{{ $yTop + $r }}
+                            L {{ $xR }},{{ $yBot }}
+                            Z" fill="#B9257F" />
+                                    @php $xAcc += $myW + ($i < $n-1 ? $gapAdds[$i] : 0); @endphp
+                                @endfor
+                            @endif
+
+                            {{-- LABEL BULAN --}}
+                            @php $xAcc = $padL; @endphp
+                            @foreach ($months as $i => $label)
+                                @php
+                                    $myW = $barWidths[$i];
+                                    $cx = $xAcc + $myW / 2;
+                                @endphp
+                                <text x="{{ $cx }}" y="{{ $H - 10 }}" text-anchor="middle"
+                                    font-size="11" fill="#6B7280">{{ $label }}</text>
+                                @php $xAcc += $myW + ($i < $n-1 ? $gapAdds[$i] : 0); @endphp
+                            @endforeach
+                        </svg>
+                    </div>
+
+                    {{-- Empty state --}}
+                    @if ($sum === 0)
+                        <p class="text-sm text-[#7C7C7C] mt-2 px-5">Belum ada data kunjungan nifas pada tahun ini.</p>
+                    @endif
                 </div>
             </section>
+
+
+
 
             <!-- Table: Data Pasien Pre-Eklampsia (dinamis jika $peList tersedia) -->
             <section class="bg-white rounded-2xl p-5 shadow-md">
