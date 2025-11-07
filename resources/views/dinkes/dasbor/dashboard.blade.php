@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DINKES – Dasbor</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/dinkes/dashboard-filters.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/dinkes/dashboard-filters.js', 'resources/js/dinkes/kf-filters.js', 'resources/js/dinkes/donut-nifas-filters.js', 'resources/js/dinkes/pasien-preeklampsia-search.js'])
 </head>
 
 <body class="bg-[#F5F5F5] font-[Poppins] text-[#000000cc]">
@@ -16,30 +16,25 @@
         <main class="ml-[260px] flex-1 p-8 space-y-8">
             <!-- Header -->
             <div class="flex items-center justify-between bg-white px-5 py-4 rounded-2xl shadow-md">
-                <div class="relative w-[520px] max-w-[58%]">
-                    <span class="absolute inset-y-0 left-3 flex items-center">
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60"
-                            alt="Search">
-                    </span>
-                    <input type="text" placeholder="Search data..."
-                        class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+                <div class="relative w-[520px] max-w-[58%]"> 
+                    <!-- NEW: Tautan ke Analytic Explorer -->
+                    <a href="{{ route('dinkes.analytics') }}"
+                        class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#E5E5E5] bg-white hover:bg-[#F8F8F8] transition"
+                        aria-label="Buka Analytic Explorer">
+                        <span class="inline-flex w-5 h-5 items-center justify-center">
+                            <img src="{{ asset('icons/analytics-analysis-svgrepo-com.svg') }}" class="w-4 h-4 opacity-90"
+                                alt="">
+                        </span>
+                        <span class="text-sm font-medium hidden md:inline">Analytic Explorer</span>
+                    </a>
                 </div>
+                <div class="flex items-right gap-3">
 
-                <div class="flex items-center gap-3">
                     <a href="{{ route('dinkes.profile.edit') }}"
                         class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90"
                             alt="Setting">
                     </a>
-
-
-                    <button
-                        class="relative w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Notification.svg') }}" class="w-4 h-4 opacity-90"
-                            alt="Notif">
-                        <span
-                            class="absolute top-1.5 right-1.5 inline-block w-2.5 h-2.5 bg-[#B9257F] rounded-full ring-2 ring-white"></span>
-                    </button>
 
                     <!-- Profile dropdown -->
                     <div id="profileWrapper" class="relative">
@@ -107,8 +102,6 @@
                             </span>
                             <h2 class="font-semibold text-lg">Daerah Asal Pasien</h2>
                         </div>
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}"
-                            class="w-3.5 h-3.5 opacity-60" alt="">
                     </div>
 
                     @php
@@ -189,13 +182,11 @@
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-2">
                             <span class="inline-flex w-6 h-6 items-center justify-center rounded-full bg-[#F5F5F5]">
-                                <img src="{{ asset('icons/Iconly/Sharp/Light/Group 36721.svg') }}"
-                                    class="w-3.5 h-3.5" alt="">
+                                <img src="{{ asset('icons/Iconly/Sharp/Light/Group 36721.svg') }}" class="w-3.5 h-3.5"
+                                    alt="">
                             </span>
                             <h2 class="font-semibold text-lg">Resiko Pre-Eklampsia</h2>
                         </div>
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}"
-                            class="w-3.5 h-3.5 opacity-60" alt="">
                     </div>
 
                     @php
@@ -238,9 +229,9 @@
                     </div>
                 </div>
 
-                <!-- KIRI BAWAH: Data Pasien Nifas – versi DONUT sepenuhnya responsif & proporsional -->
+                <!-- KIRI BAWAH: Data Pasien Nifas – versi DONUT dengan filter bulan&tahun -->
                 <div
-                    class="col-span-12 lg:col-span-7 lg:row-span-2 bg-white rounded-2xl p-5 shadow-md grid grid-rows-[auto_1fr_auto] gap-4">
+                    class="col-span-12 lg:col-span-7 lg:row-span-2 bg-white rounded-2xl p-5 shadow-md grid grid-rows-[auto_1fr_auto] gap-4 relative">
                     <!-- Header -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
@@ -249,9 +240,87 @@
                                     alt="">
                             </span>
                             <h2 class="font-semibold text-lg">Data Pasien Nifas</h2>
+
+                            {{-- Badge konteks periode (jika terfilter) --}}
+                            @if ($isDonutFiltered ?? false)
+                                <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-[#F5F5F5] text-[#4B4B4B]">
+                                    Periode:
+                                    @if ($dkfMonth)
+                                        {{ str_pad($dkfMonth, 2, '0', STR_PAD_LEFT) }}/
+                                    @endif
+                                    {{ $dkfYear ?? '—' }}
+                                </span>
+                            @else
+                                <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-[#F5F5F5] text-[#4B4B4B]">
+                                    Semua data (tanpa filter)
+                                </span>
+                            @endif
                         </div>
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}"
-                            class="w-3.5 h-3.5 opacity-60" alt="">
+
+                        <button id="btnDataKfFilter" type="button"
+                            class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm">
+                            Filter
+                        </button>
+                    </div>
+
+                    {{-- Panel filter (toggle by JS - Vite) --}}
+                    <div id="dataKfFilterPanel"
+                        class="hidden absolute right-5 top-16 z-20 w-72 bg-white border border-[#E5E7EB] rounded-2xl shadow-xl p-4">
+                        <form method="GET" class="grid grid-cols-1 gap-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label for="dkf_month"
+                                        class="block text-sm font-medium text-[#4B4B4B] mb-1">Bulan</label>
+                                    <select id="dkf_month" name="dkf_month"
+                                        class="w-full border border-[#CAC7C7] rounded-xl px-3 py-2 text-sm focus:outline-none">
+                                        <option value="">Semua</option>
+                                        @php
+                                            $bulanList = [
+                                                1 => 'Jan',
+                                                2 => 'Feb',
+                                                3 => 'Mar',
+                                                4 => 'Apr',
+                                                5 => 'Mei',
+                                                6 => 'Jun',
+                                                7 => 'Jul',
+                                                8 => 'Agu',
+                                                9 => 'Sep',
+                                                10 => 'Okt',
+                                                11 => 'Nov',
+                                                12 => 'Des',
+                                            ];
+                                        @endphp
+                                        @foreach ($bulanList as $m => $label)
+                                            <option value="{{ $m }}" @selected(($dkfMonth ?? null) === $m)>
+                                                {{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="dkf_year"
+                                        class="block text-sm font-medium text-[#4B4B4B] mb-1">Tahun</label>
+                                    <select id="dkf_year" name="dkf_year"
+                                        class="w-full border border-[#CAC7C7] rounded-xl px-3 py-2 text-sm focus:outline-none">
+                                        <option value="">Semua</option>
+                                        @foreach ($availableYears ?? [now()->year] as $y)
+                                            <option value="{{ $y }}" @selected(($dkfYear ?? null) === $y)>
+                                                {{ $y }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-1">
+                                {{-- Reset: kembali ke URL saat ini TANPA dkf_month & dkf_year --}}
+                                <a href="{{ request()->fullUrlWithQuery(['dkf_month' => null, 'dkf_year' => null]) }}"
+                                    class="text-sm text-[#B9257F] hover:underline">
+                                    Reset
+                                </a>
+                                <button type="submit" class="bg-[#B9257F] text-white text-sm px-4 py-2 rounded-xl">
+                                    Terapkan
+                                </button>
+                            </div>
+                        </form>
                     </div>
 
                     @php
@@ -260,14 +329,17 @@
                         $kf2 = $kf2 ?? 0;
                         $kf3 = $kf3 ?? 0;
                         $kf4 = $kf4 ?? 0;
+
+                        // coverage dihitung terhadap target 4x kunjungan per "pasien nifas" pada konteks periode
+                        $sumTargetBase = max(1, $totalNifas * 4);
+                        $coverage = round((($kf1 + $kf2 + $kf3 + $kf4) / $sumTargetBase) * 100);
+                        $coverage = max(0, min(100, $coverage));
+
                         $sum = max($totalNifas, 1);
                         $p1 = round(($kf1 / $sum) * 100);
                         $p2 = round(($kf2 / $sum) * 100);
                         $p3 = round(($kf3 / $sum) * 100);
                         $p4 = round(($kf4 / $sum) * 100);
-                        // Cakupan total KFi dibanding target 4x kunjungan per pasien
-                        $coverage = round((($kf1 + $kf2 + $kf3 + $kf4) / max(1, $totalNifas * 4)) * 100);
-                        $coverage = max(0, min(100, $coverage));
                     @endphp
 
                     <!-- AREA TENGAH: Semua donat proporsional dalam kontainer -->
@@ -279,17 +351,12 @@
                                 <span class="text-sm text-[#7C7C7C]">total pasien nifas</span>
                             </div>
 
-                            <!-- Pembungkus agar donat benar-benar memenuhi tinggi kolom kiri -->
                             <div class="relative w-full h-full">
-                                <!-- rasio kotak agar menjadi lingkaran sempurna & selalu ngepas -->
                                 <div class="absolute inset-0 grid place-items-center">
                                     <div class="relative aspect-square w-full max-w-[min(360px,100%)]">
-                                        <!-- Donut ring -->
                                         <div class="relative w-full h-full rounded-full"
                                             style="background: conic-gradient(#B9257F {{ $coverage }}%, #F1F1F1 {{ $coverage }}% 100%);">
-                                            <!-- lubang donat -->
                                             <div class="absolute inset-0 m-[11%] bg-white rounded-full"></div>
-                                            <!-- teks di tengah -->
                                             <div class="absolute inset-0 grid place-items-center text-center">
                                                 <div>
                                                     <div class="text-3xl font-bold tabular-nums">{{ $coverage }}%
@@ -339,7 +406,7 @@
                         </div>
                     </div>
 
-                    <!-- Footer: legend ringkas & ring progress segmented opsional -->
+                    <!-- Footer: legend ringkas & info target -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3 text-sm flex-wrap">
                             <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm"
@@ -356,6 +423,7 @@
                 </div>
 
 
+
                 <!-- KANAN TENGAH: Pasien Hadir (isi proporsional penuh) -->
                 <div
                     class="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-2 bg-white rounded-2xl p-5 shadow-md
@@ -369,8 +437,6 @@
                             </span>
                             <h2 class="font-semibold text-lg">Pasien Hadir</h2>
                         </div>
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}"
-                            class="w-3.5 h-3.5 opacity-60" alt="Go">
                     </div>
 
                     @php
@@ -454,8 +520,6 @@
                             </span>
                             <h2 class="font-semibold text-lg">Pemantauan</h2>
                         </div>
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}"
-                            class="w-3.5 h-3.5 opacity-60" alt="Go">
                     </div>
 
                     @php
@@ -502,7 +566,7 @@
             </section>
 
             {{-- Kunjungan Nifas per Bulan (KF) --}}
-            <section class="bg-white rounded-2xl p-5 shadow-md">
+            <section class="bg-white rounded-2xl p-5 shadow-md relative">
                 {{-- Header --}}
                 <div class="flex items-center gap-2 mb-4">
                     <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
@@ -510,6 +574,41 @@
                             alt="">
                     </span>
                     <h2 class="font-semibold">Kunjungan Nifas per Bulan</h2>
+
+                    {{-- Tahun terpilih (badge) --}}
+                    <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-[#F5F5F5] text-[#4B4B4B]">
+                        Tahun: {{ $selectedYear ?? now()->year }}
+                    </span>
+
+                    {{-- Tombol filter --}}
+                    <button id="btnKfFilter" type="button"
+                        class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm ml-auto">
+                        Filter
+                    </button>
+                </div>
+
+                {{-- Panel filter (toggle via JS, TIDAK inline script) --}}
+                <div id="kfFilterPanel"
+                    class="hidden absolute right-5 top-16 z-20 w-64 bg-white border border-[#E5E7EB] rounded-2xl shadow-xl p-4">
+                    <form method="GET" class="space-y-3">
+                        <div>
+                            <label for="year" class="block text-sm font-medium text-[#4B4B4B] mb-1">Pilih
+                                Tahun</label>
+                            <select id="year" name="year"
+                                class="w-full border border-[#CAC7C7] rounded-xl px-3 py-2 text-sm focus:outline-none">
+                                @foreach ($availableYears ?? [now()->year] as $y)
+                                    <option value="{{ $y }}" @selected(($selectedYear ?? now()->year) == $y)>
+                                        {{ $y }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between pt-1">
+                            <a href="{{ url()->current() }}" class="text-sm text-[#B9257F] hover:underline">Reset</a>
+                            <button type="submit" class="bg-[#B9257F] text-white text-sm px-4 py-2 rounded-xl">
+                                Terapkan
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
                 @php
@@ -548,7 +647,7 @@
                                 $innerW = $W - $padL - $padR;
 
                                 $n = 12;
-                                $barPx = 50; // <<< UBAH INI untuk mengatur lebar batang (px)
+                                $barPx = 50; // lebar batang (px)
                                 $minGap = 12; // gap minimum antar batang (px)
 
                                 // 1) Jika muat, sisakan ruang untuk memperlebar gap; kalau tidak muat, kecilkan bar
@@ -581,7 +680,7 @@
                                 }
 
                                 $barWidths = $barWInt;
-                            @endphp>
+                            @endphp
 
                             {{-- GRID --}}
                             @foreach ($yTicks as $tick)
@@ -665,17 +764,18 @@
 
                     {{-- Empty state --}}
                     @if ($sum === 0)
-                        <p class="text-sm text-[#7C7C7C] mt-2 px-5">Belum ada data kunjungan nifas pada tahun ini.</p>
+                        <p class="text-sm text-[#7C7C7C] mt-2 px-5">
+                            Belum ada data kunjungan nifas pada tahun {{ $selectedYear ?? now()->year }}.
+                        </p>
                     @endif
                 </div>
             </section>
 
 
-
-
             <!-- Table: Data Pasien Pre-Eklampsia (dinamis jika $peList tersedia) -->
             <section class="bg-white rounded-2xl p-5 shadow-md">
                 <div class="flex items-center justify-between mb-4">
+                    {{-- Kiri: Judul --}}
                     <div class="flex items-center gap-2">
                         <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
                             <img src="{{ asset('icons/Iconly/Regular/Light/Message.svg') }}" class="w-3.5 h-3.5"
@@ -683,11 +783,44 @@
                         </span>
                         <h2 class="font-semibold">Data Pasien Pre-Eklampsia</h2>
                     </div>
-                    <button id="btnPeFilter" type="button"
-                        class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm">
-                        Filter
-                    </button>
+
+                    {{-- Kanan: search kecil nempel ke tombol Filter --}}
+                    <div class="flex items-center gap-2">
+                        <form id="peSearchForm" role="search" method="GET" action="{{ url()->current() }}"
+                            class="relative w-40 sm:w-48">
+                            {{-- pertahankan filter lain --}}
+                            <input type="hidden" name="from" value="{{ $filters['from'] ?? '' }}">
+                            <input type="hidden" name="to" value="{{ $filters['to'] ?? '' }}">
+                            <input type="hidden" name="resiko" value="{{ $filters['resiko'] ?? '' }}">
+                            <input type="hidden" name="status" value="{{ $filters['status'] ?? '' }}">
+
+                            {{-- ikon kaca pembesar (posisi tetap kiri dalam input) --}}
+                            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#7C7C7C]">
+                                <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}"
+                                    class="w-4 h-4 opacity-60" alt="search">
+                            </span>
+
+                            <input id="peSearchInput" type="search" name="q"
+                                value="{{ $filters['q'] ?? '' }}" placeholder="Cari…" autocomplete="off"
+                                class="w-full h-8 border border-[#CAC7C7] rounded-full pl-8 pr-7 text-sm
+                                       focus:outline-none focus:ring-2 focus:ring-black/10"
+                                data-autosubmit="true" />
+
+                            {{-- tombol clear kecil --}}
+                            <button type="button" id="peSearchClear"
+                                class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 text-xs
+                           border border-[#CAC7C7] rounded-full"
+                                aria-label="Bersihkan pencarian">×</button>
+                        </form>
+
+                        <button id="btnPeFilter" type="button"
+                            class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm">
+                            Filter
+                        </button>
+                    </div>
                 </div>
+
+
                 <table class="w-full text-sm">
                     <thead class="text-[#7C7C7C] border-b border-[#CAC7C7]">
                         <tr>
@@ -808,6 +941,9 @@
                 </div>
 
             </section>
+            <!-- ...akhir konten halaman... -->
+            <span id="page-bottom"></span>
+
 
             <footer class="text-center text-xs text-[#7C7C7C] py-6">
                 © 2025 Dinas Kesehatan Kota Depok — DeLISA

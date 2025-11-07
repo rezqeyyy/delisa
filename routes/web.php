@@ -21,6 +21,8 @@ use App\Http\Controllers\Pasien\Skrining\KondisiKesehatanPasienController;
 use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitPasienController;
 use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitKeluargaController;
 use App\Http\Controllers\Pasien\Skrining\PreeklampsiaController;
+use App\Http\Controllers\Dinkes\AnalyticsController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -94,7 +96,10 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
             Route::delete('/profile/photo', [ProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
 
-            
+            // Analytics
+            Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+            Route::get('/analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
+            Route::get('/analytics/var/{key}', [AnalyticsController::class, 'showVariable'])->name('analytics.var');
         });
 
 
@@ -102,10 +107,10 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:puskesmas')
         ->prefix('puskesmas')->as('puskesmas.')
         ->group(function () {
-        Route::get('/dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/skrining', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'index'])->name('skrining');
-        Route::get('/laporan', [\App\Http\Controllers\Puskesmas\LaporanController::class, 'index'])->name('laporan');
-        Route::get('/pasien-nifas', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'index'])->name('pasien-nifas');
+            Route::get('/dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
+            Route::get('/skrining', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'index'])->name('skrining');
+            Route::get('/laporan', [\App\Http\Controllers\Puskesmas\LaporanController::class, 'index'])->name('laporan');
+            Route::get('/pasien-nifas', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'index'])->name('pasien-nifas');
         });
 
     // ================== BIDAN ==================
@@ -147,7 +152,7 @@ Route::middleware(['auth'])->group(function () {
                 ->name('skrining.pengajuan.store');
 
             // Data Diri
-            Route::get('/skrining/ajukan', [DataDiriController::class, 'create']) 
+            Route::get('/skrining/ajukan', [DataDiriController::class, 'create'])
                 ->name('data-diri');
             Route::post('/data-diri', [DataDiriController::class, 'store'])
                 ->name('data-diri.store');
