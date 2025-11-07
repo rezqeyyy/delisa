@@ -8,7 +8,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dinkes/dinkes-profile.js'])
 </head>
 
-<body class="bg-[#FFF7FA] font-[Poppins] text-[#000000CC]">
+<body class="bg-[#F5F5F5] font-[Poppins] text-[#000000cc]">
     <div class="flex">
         <x-dinkes.sidebar />
 
