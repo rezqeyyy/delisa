@@ -31,7 +31,7 @@ class AnalyticsController extends Controller
             ->leftJoin('kondisi_kesehatans as k', 'k.skrining_id', '=', 's.id')
             ->selectRaw("
                 p.id as pid,
-                p.\"PKecamatan\" as PKecamatan,
+                p.\"PKecamatan\" as kecamatan,
                 p.tanggal_lahir,
                 COALESCE(k.imt, NULL)::float as imt,
                 COALESCE(k.sdp, NULL)::float as sbp,
@@ -64,21 +64,41 @@ class AnalyticsController extends Controller
             ->when($filters['hadir'] === 'mangkir', fn($q) => $q->where('s.checked_status', false));
 
         // ==== 4) Umur & filter rentang ====
+        // MAP umur
         $rows = $base->get()->map(function ($r) {
             $r->age = null;
             if (!empty($r->tanggal_lahir)) {
                 try {
-                    $r->age = now()->diffInYears(\Carbon\Carbon::parse($r->tanggal_lahir));
+                    $birth = \Carbon\Carbon::parse($r->tanggal_lahir);
+                    // Jika tanggal lahir di masa depan, anggap tidak valid → null
+                    if ($birth->isFuture()) {
+                        $r->age = null;
+                    } else {
+                        $r->age = (int) $birth->age; // umur dalam tahun, non-negatif
+                    }
                 } catch (\Throwable $e) {
+                    $r->age = null;
                 }
             }
+
             return $r;
         });
 
-        $rows = $rows->filter(function ($r) use ($filters) {
-            $okAge = is_null($r->age) ? true : ($r->age >= $filters['ageMin'] && $r->age <= $filters['ageMax']);
+        // Aktifkan filter umur/IMT HANYA kalau user mengisi di query string
+        $ageOn = $request->hasAny(['age_min', 'age_max']);
+        $imtOn = $request->hasAny(['imt_min', 'imt_max']);
+
+        $rows = $rows->filter(function ($r) use ($filters, $ageOn, $imtOn) {
+            // Umur
+            $okAge = !$ageOn
+                ? true
+                : (!is_null($r->age) && $r->age >= $filters['ageMin'] && $r->age <= $filters['ageMax']);
+
+            // IMT
             $imt   = is_null($r->imt) ? null : (float)$r->imt;
-            $okImt = is_null($imt) ? true : ($imt >= $filters['imtMin'] && $imt <= $filters['imtMax']);
+            $okImt = !$imtOn
+                ? true
+                : (!is_null($imt) && $imt >= $filters['imtMin'] && $imt <= $filters['imtMax']);
 
             return $okAge && $okImt;
         })->values();
@@ -134,10 +154,12 @@ class AnalyticsController extends Controller
             elseif (!$plus && $r->y == 1) $c++;
             else $d++;
         }
+
         if (($b * $c) > 0) {
             $or = ($a * $d) / ($b * $c);
             $corrs[] = ['label' => 'Protein Urine (+)', 'key' => 'protein_urine', 'type' => 'categorical', 'or' => round($or, 2)];
         }
+
 
         $top = collect($corrs)->map(function ($it) {
             $score = $it['type'] === 'numeric' ? abs($it['r']) : abs(log(max(0.001, $it['or']))); // ranking
@@ -282,12 +304,20 @@ class AnalyticsController extends Controller
         $rows = $base->get()->map(function ($r) {
             // umur
             $r->age = null;
-            if ($r->tanggal_lahir) {
+            if (!empty($r->tanggal_lahir)) {
                 try {
-                    $r->age = now()->diffInYears(\Carbon\Carbon::parse($r->tanggal_lahir));
+                    $birth = \Carbon\Carbon::parse($r->tanggal_lahir);
+                    // Jika tanggal lahir di masa depan, anggap tidak valid → null
+                    if ($birth->isFuture()) {
+                        $r->age = null;
+                    } else {
+                        $r->age = (int) $birth->age; // umur dalam tahun, non-negatif
+                    }
                 } catch (\Throwable $e) {
+                    $r->age = null;
                 }
             }
+
             return $r;
         });
 
@@ -300,9 +330,16 @@ class AnalyticsController extends Controller
             'prot' => [
                 'label' => 'Protein urine',
                 'type' => 'cat',
-                'levels' => ['Negatif', 'Positif 1', 'Positif 2', 'Positif 3', 'Belum dilakukan Pemeriksaan']
+                'levels' => ['Negatif', 'Positif 1', 'Positif 2', 'Positif 3', 'Belum dilakukan Pemeriksaan'],
+            ],
+            // alias biar /var/protein_urine juga tidak 404
+            'protein_urine' => [
+                'label' => 'Protein urine',
+                'type' => 'cat',
+                'levels' => ['Negatif', 'Positif 1', 'Positif 2', 'Positif 3', 'Belum dilakukan Pemeriksaan'],
             ],
         ];
+
         abort_unless(isset($meta[$key]), 404);
         $m = $meta[$key];
 
@@ -425,6 +462,7 @@ class AnalyticsController extends Controller
                 'outcome'
             ]);
 
+
             // Jalankan stream baris demi baris
             try {
                 // Pastikan outcome default ada
@@ -437,7 +475,7 @@ class AnalyticsController extends Controller
 
                     fputcsv($out, [
                         $pidHash,
-                        $r->PKecamatan,
+                        $r->kecamatan,
                         $r->age ?? null,
                         $r->imt ?? null,
                         $r->sbp ?? null,
@@ -477,7 +515,7 @@ class AnalyticsController extends Controller
             ->leftJoin('kondisi_kesehatans as k', 'k.skrining_id', '=', 's.id')
             ->selectRaw("
                 p.id as pid,
-                p.\"PKecamatan\" as PKecamatan,
+                p.\"PKecamatan\" as kecamatan,
                 p.tanggal_lahir,
                 COALESCE(k.imt, NULL)::float as imt,
                 COALESCE(k.sdp, NULL)::float as sbp,
@@ -509,10 +547,18 @@ class AnalyticsController extends Controller
                 $r->age = null;
                 if (!empty($r->tanggal_lahir)) {
                     try {
-                        $r->age = now()->diffInYears(\Carbon\Carbon::parse($r->tanggal_lahir));
+                        $birth = \Carbon\Carbon::parse($r->tanggal_lahir);
+                        // Jika tanggal lahir di masa depan, anggap tidak valid → null
+                        if ($birth->isFuture()) {
+                            $r->age = null;
+                        } else {
+                            $r->age = (int) $birth->age; // umur dalam tahun, non-negatif
+                        }
                     } catch (\Throwable $e) {
+                        $r->age = null;
                     }
                 }
+
                 $each($r);
             }
         });
