@@ -5,9 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pasien — Dashboard</title>
     
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/pasien/puskesmas-picker.js'])
+    @vite([
+        'resources/css/app.css', 
+        'resources/js/app.js', 
+        'resources/js/dropdown.js', 
+        'resources/js/pasien/puskesmas-picker.js', 
+        'resources/js/pasien/sidebar.js', 
+        'resources/js/pasien/list-filter.js'])
+
     <style>
-        /* Mengimpor font Poppins dari Google Fonts agar visual teks 100% cocok dengan desain modern */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Poppins', sans-serif;
@@ -17,9 +23,9 @@
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
+        
         <x-pasien.sidebar class="hidden xl:flex z-30" />
 
-        <!-- Sidebar overlay (mobile) -->
         <x-pasien.sidebar
             x-cloak
             x-show="openSidebar"
@@ -31,25 +37,36 @@
             x-transition:leave-start="translate-x-0"
             x-transition:leave-end="-translate-x-full"
         />
-        <!-- Background overlay untuk menutup -->
         <div
             x-cloak
             x-show="openSidebar"
             class="fixed inset-0 z-40 bg-black/40 xl:hidden"
             @click="openSidebar = false">
         </div>
-    
+        
+            
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
-            <div class="flex flex-wrap items-start gap-4">
-                <div class="relative flex-1 min-w-0">
-                    <span class="absolute inset-y-0 left-3 flex items-center">
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60" alt="Search">
-                    </span>
-                    <input type="text" placeholder="Search..."
-                        class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+            <div class="flex items-center gap-3 flex-nowrap">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <button
+                        id="pasienSidebarOpen"
+                        class="xl:hidden inline-flex items-center justify-center p-2 rounded-md bg-white border border-[#E5E5E5] shadow"
+                        @click="openSidebar = true">
+                        <svg class="h-6 w-6 text-[#1D1D1D]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+
+                    <div class="relative w-full">
+                        <span class="absolute inset-y-0 left-3 flex items-center">
+                            <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60" alt="Search">
+                        </span>
+                        <input type="text" placeholder="Search..."
+                            class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-3 w-full md:w-auto justify-end md:justify-start flex-shrink-0">
+                <div class="flex items-center gap-3 flex-none justify-end">
                     <a class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90" alt="Setting">
                     </a>
@@ -105,18 +122,23 @@
 
             <!-- List Skrining -->
             <section class="bg-white rounded-2xl shadow-md p-6">
-                <div class="flex flex-wrap items-start gap-4">
-                    <div class="flex-1 min-w-[240px]">
-                        <h2 class="text-xl font-semibold text-[#1D1D1D]">List Skrining</h2>
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between md:flex-wrap gap-3 max-w-full">
+                    <div class="flex items-center gap-3 flex-none">
+                        <div class="leading-tight">
+                            <h2 class="text-xl font-semibold text-[#1D1D1D]">List Skrining</h2>
+                            <p class="text-xs text-[#B9257F]">Jika Status Eklampsia masih kosong, berarti skrining belum selesai terisi</p>
+                        </div>
                     </div>
 
-                    <div class="ml-auto flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
-                        <form action="{{ route('pasien.dashboard') }}" method="GET"
-                                class="flex w-full md:w-auto items-center gap-2 flex-wrap md:flex-nowrap">
-                            <div class="relative w-full md:w-auto">
-                                <select name="status"
+                    <!-- Grup aksi (dropdown + ajukan) selalu bersama -->
+                    <div class="flex items-center gap-2 w-full md:w-auto min-w-0 flex-wrap md:justify-end">
+                        <!-- Dropdown status -->
+                        <form id="skriningFilterForm" action="{{ route('pasien.dashboard') }}" method="GET"
+                            class="w-full md:w-[220px]">
+                            <div class="relative w-full">
+                                @php $currentStatus = $status ?? ''; @endphp
+                                <select id="statusSelect" name="status"
                                         class="w-full pl-3 pr-9 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
-                                    @php $currentStatus = $status ?? ''; @endphp
                                     <option value="" {{ $currentStatus === '' ? 'selected' : '' }}>Cari Berdasarkan Status</option>
                                     <option value="" {{ ($status ?? '') === '' ? 'selected' : '' }}>Semua</option>
                                     <option value="Normal" {{ $currentStatus === 'Normal' ? 'selected' : '' }}>Tidak Berisiko</option>
@@ -124,22 +146,19 @@
                                     <option value="Berisiko" {{ $currentStatus === 'Berisiko' ? 'selected' : '' }}>Berisiko</option>
                                 </select>
                             </div>
-                            <button type="submit"
-                                    class="px-5 py-2 rounded-full bg-[#B9257F] text-white text-sm hover:bg-[#a31f70]">
-                                Cari
-                            </button>
                         </form>
 
+                        <!-- Tombol Ajukan Skrining -->
                         @php
-                        $ajukanUrl = \Illuminate\Support\Facades\Route::has('pasien.data-diri')
-                            ? route('pasien.data-diri')
-                            : '#';
+                            $ajukanUrl = \Illuminate\Support\Facades\Route::has('pasien.data-diri')
+                                ? route('pasien.data-diri')
+                                : '#';
                         @endphp
                         <a href="{{ $ajukanUrl }}"
-                           id="btnAjukanSkrining"
-                           data-start-url="{{ route('pasien.data-diri') }}"
-                           data-search-url="{{ route('pasien.puskesmas.search') }}"
-                           class="w-full md:w-auto inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70]">
+                        id="btnAjukanSkrining"
+                        data-start-url="{{ route('pasien.data-diri') }}"
+                        data-search-url="{{ route('pasien.puskesmas.search') }}"
+                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70] w-full md:w-[220px]">
                             <span class="text-base leading-none">+</span>
                             <span class="leading-none">Ajukan Skrining</span>
                         </a>
@@ -147,7 +166,7 @@
                 </div>
 
                 <!-- Tabel daftar skrining -->
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto mt-4 md:mt-6">
                     <table class="w-full table-auto border-separate
                         sm:border-spacing-x-[12px] sm:border-spacing-y-[6px]
                         md:border-spacing-x-[20px] md:border-spacing-y-[8px]
@@ -184,7 +203,7 @@
                                     <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $tanggal }}</td>
                                     <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $alamat }}</td>
                                     <td class="px-3 py-3 md:px-6 md:py-4">
-                                        <span class="rounded-full px-4 py-2 text-sm font-medium {{ $cls }}">
+                                        <span class="inline-flex items-center rounded-full px-4 h-8 text-sm font-semibold leading-none whitespace-nowrap {{ $cls }}">
                                             {{ $conclusion }}
                                         </span>
                                     </td>

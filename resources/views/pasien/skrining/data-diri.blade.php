@@ -96,7 +96,6 @@
                 @csrf
                 <input type="hidden" name="skrining_id" value="{{ request('skrining_id') }}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                     <!-- Identitas dasar pasien -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nama Pasien (tidak dapat diubah)</label>
@@ -117,8 +116,9 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Tanggal Lahir</label>
-                        <input name="tanggal_lahir" type="date" class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
-                                value="{{ old('tanggal_lahir', optional($pasien)->tanggal_lahir) }}">
+                        <input name="tanggal_lahir" type="date" required
+                            class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
+                            value="{{ old('tanggal_lahir', optional($pasien)->tanggal_lahir) }}">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
@@ -261,7 +261,7 @@
                     </div>
                     <div x-cloak x-show="bayar === 'BPJS Kesehatan'">
                         <label class="block text-sm font-medium text-gray-700">Nomor Kartu JKN</label>
-                        <input name="no_jkn" type="text"
+                        <input name="no_jkn" type="text" required
                             class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
                             value="{{ old('no_jkn', optional($pasien)->no_jkn) }}"
                             placeholder="Masukkan nomor kartu JKN"

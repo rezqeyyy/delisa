@@ -147,10 +147,22 @@
                     <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-sm">{{ $kesimpulan }}</div>
 
                     <div class="border-t border-[#EFEFEF] p-4 text-sm">Rekomendasi</div>
-                    <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-sm">{{ $rekomendasi }}</div>
+                    <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-sm">
+                        @if (trim($kesimpulan) === 'Skrining belum selesai')
+                            Lengkapi Skrining terlebih dahulu.
+                        @else
+                            {{ $rekomendasi }}
+                        @endif
+                    </div>
 
                     <div class="border-t border-[#EFEFEF] p-4 text-sm">Catatan</div>
-                    <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-sm">{{ $catatan ?? 'Belum ada catatan.' }}</div>
+                    <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-sm">
+                        @if (trim($kesimpulan) === 'Skrining belum selesai')
+                            Skrining belum dapat disimpulkan sebelum semua data wajib diisi.
+                        @else
+                            {{ $catatan ?? 'Belum ada catatan.' }}
+                        @endif
+                    </div>
                 </div>
             </div>
 

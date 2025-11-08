@@ -245,6 +245,12 @@ class PreeklampsiaController extends Controller
             $msg .= ' — Rujuk ke Rumah Sakit.';
         }
 
+        if ($this->isSkriningCompleteForSkrining($skrining)) {
+            return redirect()
+                ->route('pasien.skrining.show', $skrining->id)
+                ->with('ok', $msg);
+        }
+
         return redirect()->route('pasien.dashboard')->with('ok', $msg);
     }
 }

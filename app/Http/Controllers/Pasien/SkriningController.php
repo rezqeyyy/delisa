@@ -62,10 +62,15 @@ class SkriningController extends Controller
 
         $resikoSedang = $skrining->jumlah_resiko_sedang ?? 0;
         $resikoTinggi = $skrining->jumlah_resiko_tinggi ?? 0;
-        $stepForm   = (int)($skrining->step_form ?? 0);
-        $kesimpulan = ($stepForm < 6)
+
+        // Gunakan kelengkapan data lintas semua halaman, bukan lagi step_form
+        $isComplete = $this->isSkriningCompleteForSkrining($skrining);
+
+        $kesimpulan = (!$isComplete)
             ? 'Skrining belum selesai'
-            : (($resikoTinggi === 0 && $resikoSedang <= 1) ? 'Tidak berisiko' : 'Berisiko');
+            : (($resikoTinggi >= 1 || $resikoSedang >= 2)
+                ? 'Berisiko'
+                : (($resikoSedang >= 1) ? 'Waspada' : 'Tidak berisiko'));
 
         $rekomendasi  = ($resikoTinggi > 0)
             ? 'Rujuk segera sesuai standar kebidanan/obstetri.'
@@ -297,4 +302,4 @@ class SkriningController extends Controller
         return [$skrining, $pasienId];
     }
 
-    }
+}
