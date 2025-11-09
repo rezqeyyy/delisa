@@ -44,7 +44,7 @@ class PasienNifasController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('dinkes.pasien-nifas', [
+        return view('dinkes.pasien-nifas.pasien-nifas', [
             'rows' => $rows,
             'q'    => $q,
         ]);
