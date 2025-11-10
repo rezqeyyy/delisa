@@ -3,7 +3,7 @@
 @php
     // Warna aktif dan idle
     $active = 'group flex items-center gap-3 px-6 py-3 bg-[#B9257F] text-white font-medium rounded-xl transition';
-    $idle = 'group flex items-center gap-3 px-6 py-3 text-[#4B4B4B] hover:bg-[#B9257F] rounded-xl transition';
+    $idle = 'group flex items-center gap-3 px-6 py-3 hover:text-white hover:font-medium hover:bg-[#B9257F] rounded-xl transition';
 
     $is = fn($pattern) => request()->routeIs($pattern);
 @endphp
