@@ -69,7 +69,7 @@
                                 {{ auth()->user()->email ?? 'email Dinkes' }}</p>
                         </div>
                         <!-- caret disembunyikan di mobile -->
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Down 2.svg') }}" class="hidden sm:block w-4 h-4 opacity-70" alt="More" />
+                        <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Down 2.svg') }}" class="sm:block w-4 h-4 opacity-70" alt="More" />
                     </button>
 
                     <div id="profileMenu"
@@ -97,7 +97,7 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <span class="inline-flex w-6 h-6 items-center justify-center rounded-full bg-[#F5F5F5]">
-                            <img src="{{ asset('icons/Iconly/Sharp/Light/Location.svg') }}" class="hidden sm:block w-3.5 h-3.5" alt="">
+                            <img src="{{ asset('icons/Iconly/Sharp/Light/Location.svg') }}" class="sm:block w-3.5 h-3.5" alt="">
                         </span>
                         <h2 class="font-semibold text-lg">Daerah Asal Pasien</h2>
                     </div>
@@ -130,7 +130,7 @@
                         </div>
                     </div>
 
-                    <div class="hidden sm:block w-px self-stretch bg-[#E5E5E5] mx-2"></div>
+                    <div class="sm:block w-px self-stretch bg-[#E5E5E5] mx-2"></div>
 
                     <!-- Non Depok -->
                     <div class="w-full flex flex-col items-center gap-3">
@@ -159,7 +159,7 @@
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
                         <span class="inline-flex w-6 h-6 items-center justify-center rounded-full bg-[#F5F5F5]">
-                            <img src="{{ asset('icons/Iconly/Sharp/Light/Group 36721.svg') }}" class="hidden sm:block w-3.5 h-3.5" alt="">
+                            <img src="{{ asset('icons/Iconly/Sharp/Light/Group 36721.svg') }}" class="sm:block w-3.5 h-3.5" alt="">
                         </span>
                         <h2 class="font-semibold text-lg">Resiko Pre-Eklampsia</h2>
                     </div>
@@ -205,7 +205,7 @@
                 <div class="flex flex-wrap items-center gap-3 justify-between">
                     <div class="flex items-center gap-2">
                         <span class="inline-flex w-6 h-6 items-center justify-center rounded-full bg-[#F5F5F5]">
-                            <img src="{{ asset('icons/Iconly/Regular/Light/3 User.svg') }}" class="hidden sm:block w-3.5 h-3.5" alt="">
+                            <img src="{{ asset('icons/Iconly/Regular/Light/3 User.svg') }}" class="sm:block w-3.5 h-3.5" alt="">
                         </span>
                         <h2 class="font-semibold text-lg">Data Pasien Nifas</h2>
 
@@ -350,7 +350,7 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
-                            <img src="{{ asset('icons/Iconly/Regular/Light/Graph.svg') }}" class="hidden sm:block w-3.5 h-3.5" alt="Hadir">
+                            <img src="{{ asset('icons/Iconly/Regular/Light/Graph.svg') }}" class="sm:block w-3.5 h-3.5" alt="Hadir">
                         </span>
                         <h2 class="font-semibold text-lg">Pasien Hadir</h2>
                     </div>
@@ -414,7 +414,7 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
-                            <img src="{{ asset('icons/Iconly/Sharp/Outline/Activity.svg') }}" class="hidden sm:block w-3.5 h-3.5" alt="Pemantauan">
+                            <img src="{{ asset('icons/Iconly/Sharp/Outline/Activity.svg') }}" class="sm:block w-3.5 h-3.5" alt="Pemantauan">
                         </span>
                         <h2 class="font-semibold text-lg">Pemantauan</h2>
                     </div>
@@ -457,7 +457,7 @@
         <section class="bg-white rounded-2xl p-5 shadow-md relative">
             <div class="flex flex-wrap items-center gap-2 mb-4">
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
-                    <img src="{{ asset('icons/Iconly/Sharp/Light/Location.svg') }}" class="hidden sm:block w-3.5 h-3.5" alt="">
+                    <img src="{{ asset('icons/Iconly/Sharp/Light/Location.svg') }}" class="sm:block w-3.5 h-3.5" alt="">
                 </span>
                 <h2 class="font-semibold">Kunjungan Nifas per Bulan</h2>
 
@@ -588,7 +588,7 @@
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div class="flex items-center gap-2">
                     <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
-                        <img src="{{ asset('icons/Iconly/Regular/Light/Message.svg') }}" class="hidden sm:block w-3.5 h-3.5" alt="">
+                        <img src="{{ asset('icons/Iconly/Regular/Light/Message.svg') }}" class="sm:block w-3.5 h-3.5" alt="">
                     </span>
                     <h2 class="font-semibold">Data Pasien Pre-Eklampsia</h2>
                 </div>
