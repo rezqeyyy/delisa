@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use App\Models\Skrining;
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 
 class DataDiriController extends Controller
 {
+    // - Jika puskesmas valid, membuat record skrining baru untuk pasien (step_form=1).
+    // - Mengarahkan ke form data diri untuk melengkapi profil dan alamat.
+
     public function create(Request $request)
     {
         $puskesmasId = (int) $request->query('puskesmas_id');
@@ -35,6 +37,9 @@ class DataDiriController extends Controller
         return view('pasien.skrining.data-diri');
     }
     
+    // Endpoint pengajuan skrining:
+    // - Validasi puskesmas_id lalu buat skrining baru.
+    // - Redirect kembali ke form data diri dengan pesan sukses.
     public function storePengajuan(Request $request)
     {
         $payload = $request->validate([
@@ -64,6 +69,11 @@ class DataDiriController extends Controller
 
     use SkriningHelpers;
 
+    // Penyimpanan Data Diri:
+    // - Update kontak/alamat di tabel users.
+    // - Update demografi di tabel pasiens.
+    // - Rehitung status preeklampsia setelah profil diperbarui.
+    // - Lanjut ke GPA (Langkah 2).
     public function store(Request $request)
     {
         $data = $request->validate([

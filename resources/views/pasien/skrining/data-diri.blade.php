@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Diri — Delisa Skrining</title>
     <!-- Memuat stylesheet utama via Vite -->
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/pasien/wilayah.js'])
+    @vite([
+        'resources/css/app.css', 
+        'resources/js/app.js', 
+        'resources/js/pasien/wilayah.js', 
+        'resources/js/pasien/sidebar-toggle.js'
+        ])
 
     <style>
         /* Mengimpor font Poppins dari Google Fonts agar visual teks 100% cocok dengan desain modern */
@@ -20,27 +25,7 @@
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
-        <x-pasien.sidebar class="hidden xl:flex z-30" />
-
-        <!-- Sidebar overlay (mobile) -->
-        <x-pasien.sidebar
-            x-cloak
-            x-show="openSidebar"
-            class="xl:hidden z-50 transform"
-            x-transition:enter="transform ease-out duration-300"
-            x-transition:enter-start="-translate-x-full"
-            x-transition:enter-end="translate-x-0"
-            x-transition:leave="transform ease-in duration-200"
-            x-transition:leave-start="translate-x-0"
-            x-transition:leave-end="-translate-x-full"
-        />
-        <!-- Background overlay untuk menutup -->
-        <div
-            x-cloak
-            x-show="openSidebar"
-            class="fixed inset-0 z-40 bg-black/40 xl:hidden"
-            @click="openSidebar = false">
-        </div>
+        <x-pasien.sidebar />
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
             <!-- Header dengan back icon -->

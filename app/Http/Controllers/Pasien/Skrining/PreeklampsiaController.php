@@ -16,9 +16,9 @@ class PreeklampsiaController extends Controller
 {
     use SkriningHelpers;
 
-    /**
-     * Halaman form Preeklampsia (q1..q7) dengan autosave.
-     */
+    // Halaman Preeklampsia (Q1..Q7):
+    // - Mendukung autosave saat parameter pertanyaan1..pertanyaan7 ada di query.
+    // - Tiap pertanyaan dimap ke kuisioner (status_soal='pre_eklampsia') dengan risiko sedang/tinggi.
     public function preEklampsia(Request $request)
     {
         $skriningId = (int) $request->query('skrining_id');
@@ -101,10 +101,15 @@ class PreeklampsiaController extends Controller
         return view('pasien.skrining.preeklampsia', compact('answers'));
     }
 
-    /**
-     * Simpan jawaban Preeklampsia dan hitung final.
-     * Di sini q1..q7 dihitung bersama faktor dari langkah-langkah sebelumnya.
-     */
+    // Penyimpanan jawaban Preeklampsia dan hitung final:
+    // - Menggabungkan faktor sedang (umur ≥35, primigravida, IMT>30, MAP>90),
+    //   faktor tinggi (Individu: hipertensi kronik, ginjal, SLE, APS),
+    //   serta jawaban Q1..Q7.
+    // - Aturan hasil:
+    //   * Risiko Tinggi jika highCount ≥ 1 atau kombinasi tertentu (di halaman hasil).
+    //   * Risiko Sedang jika moderateCount ≥ 1 (atau ≥ 2 di beberapa tampilan).
+    //   * Kesimpulan "Berisiko" jika highCount ≥ 1 atau moderateCount ≥ 2, selain itu "Waspada"/"Normal".
+    // - Update kolom status_pre_eklampsia, jumlah_resiko_sedang/tinggi, kesimpulan, tindak_lanjut, step_form=6.
     public function store(Request $request)
     {
         $skrining = $this->requireSkriningForPasien((int) $request->input('skrining_id'));

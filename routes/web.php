@@ -187,6 +187,10 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/skrining/preeklampsia', [PreeklampsiaController::class, 'store'])
                 ->name('preeklampsia.store');
 
+            // Profile Pasien
+            Route::get('/profile', [\App\Http\Controllers\Pasien\ProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('/profile', [\App\Http\Controllers\Pasien\ProfileController::class, 'update'])->name('profile.update');
+            Route::delete('/profile/photo', [\App\Http\Controllers\Pasien\ProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
 
             Route::get('/skrining/{skrining}', [PasienSkriningController::class, 'show'])->name('skrining.show');
             Route::get('/skrining/{skrining}/edit', [PasienSkriningController::class, 'edit'])->name('skrining.edit');

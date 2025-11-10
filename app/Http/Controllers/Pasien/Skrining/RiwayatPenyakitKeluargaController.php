@@ -12,6 +12,9 @@ class RiwayatPenyakitKeluargaController extends Controller
 {
     use SkriningHelpers;
 
+    // Halaman riwayat penyakit keluarga (status_soal='keluarga'):
+    // - Memuat pilihan penyakit keluarga dan prefill jawaban.
+    // - Jika "lainnya" dipilih, prefill isian "lainnya".
     public function riwayatPenyakitKeluarga(Request $request)
     {
         $skrining = $this->requireSkriningForPasien((int) $request->query('skrining_id'));
@@ -53,6 +56,9 @@ class RiwayatPenyakitKeluargaController extends Controller
         return view('pasien.skrining.riwayat-penyakit-keluarga', compact('selected', 'penyakitKeluargaLainnya'));
     }
 
+    // Penyimpanan riwayat penyakit keluarga:
+    // - Simpan pilihan keluarga dan "lainnya" bila terpilih.
+    // - Set step_form=5, sinkronkan risiko, lalu lanjut ke Preeklampsia.
     public function store(Request $request)
     {
         $data = $request->validate([

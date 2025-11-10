@@ -11,7 +11,9 @@ use App\Models\RiwayatKehamilanGpa;
 
 trait SkriningHelpers
 {
-    
+    // Ambil skrining milik pasien yang login:
+    // - Jika skrining_id tersedia, pastikan milik pasien.
+    // - Jika tidak, ambil skrining terbaru milik pasien.
     private function requireSkriningForPasien(int $skriningId): Skrining
     {
         $user     = Auth::user();
@@ -23,6 +25,8 @@ trait SkriningHelpers
             : Skrining::where('pasien_id', $pasienId)->latest()->firstOrFail();
     }
 
+    // Cek kelengkapan Data Diri (profil pasien + kontak/alamat user):
+    // - Memastikan semua field wajib terisi, termasuk no_jkn jika pembiayaan 'BPJS Kesehatan'.
     private function isDataDiriCompleteForSkrining(Skrining $skrining): bool
     {
         $pasien = optional($skrining->pasien);
@@ -65,6 +69,7 @@ trait SkriningHelpers
         return true;
     }
 
+    // Cek semua jawaban tersedia untuk daftar pertanyaan berdasarkan status_soal.
     private function hasAllJawaban(Skrining $skrining, array $names, string $statusSoal): bool
     {
         $kuis = DB::table('kuisioner_pasiens')
@@ -87,8 +92,8 @@ trait SkriningHelpers
         return $answeredCount === count($names);
     }
 
-    // ... existing code ...
-
+    // Validasi kelengkapan skrining lintas langkah (1..6):
+    // - Data Diri, GPA, Kondisi Kesehatan, Riwayat Penyakit Pasien, Riwayat Penyakit Keluarga, Preeklampsia.
     private function isSkriningCompleteForSkrining(Skrining $skrining): bool
     {
         // 1) Data Diri
@@ -164,8 +169,9 @@ trait SkriningHelpers
 
         return true;
     }
-    
 
+    // Sinkronisasi hasil risiko preeklampsia:
+    // - Hitung ulang jumlah faktor sedang/tinggi dan set status/kesimpulan/tindak_lanjut.
     private function recalcPreEklampsia(Skrining $skrining): void
     {
         $pasien = optional($skrining->pasien);

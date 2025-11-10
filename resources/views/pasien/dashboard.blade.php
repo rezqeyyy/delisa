@@ -10,7 +10,7 @@
         'resources/js/app.js', 
         'resources/js/dropdown.js', 
         'resources/js/pasien/puskesmas-picker.js', 
-        'resources/js/pasien/sidebar.js', 
+        'resources/js/pasien/sidebar-toggle.js', 
         'resources/js/pasien/list-filter.js'])
 
     <style>
@@ -24,39 +24,11 @@
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
         
-        <x-pasien.sidebar class="hidden xl:flex z-30" />
-
-        <x-pasien.sidebar
-            x-cloak
-            x-show="openSidebar"
-            class="xl:hidden z-50 transform"
-            x-transition:enter="transform ease-out duration-300"
-            x-transition:enter-start="-translate-x-full"
-            x-transition:enter-end="translate-x-0"
-            x-transition:leave="transform ease-in duration-200"
-            x-transition:leave-start="translate-x-0"
-            x-transition:leave-end="-translate-x-full"
-        />
-        <div
-            x-cloak
-            x-show="openSidebar"
-            class="fixed inset-0 z-40 bg-black/40 xl:hidden"
-            @click="openSidebar = false">
-        </div>
-        
+        <x-pasien.sidebar />
             
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
             <div class="flex items-center gap-3 flex-nowrap">
                 <div class="flex items-center gap-2 flex-1 min-w-0">
-                    <button
-                        id="pasienSidebarOpen"
-                        class="xl:hidden inline-flex items-center justify-center p-2 rounded-md bg-white border border-[#E5E5E5] shadow"
-                        @click="openSidebar = true">
-                        <svg class="h-6 w-6 text-[#1D1D1D]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-
                     <div class="relative w-full">
                         <span class="absolute inset-y-0 left-3 flex items-center">
                             <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60" alt="Search">
@@ -67,14 +39,9 @@
                 </div>
 
                 <div class="flex items-center gap-3 flex-none justify-end">
-                    <a class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
+                    <a href="{{ route('pasien.profile.edit') }}" class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90" alt="Setting">
                     </a>
-
-                    <button class="relative w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Notification.svg') }}" class="w-4 h-4 opacity-90" alt="Notif">
-                        <span class="absolute top-1.5 right-1.5 inline-block w-2.5 h-2.5 bg-[#B9257F] rounded-full ring-2 ring-white"></span>
-                    </button>
 
                     <div id="profileWrapper" class="relative">
                         <button id="profileBtn" class="flex items-center gap-3 pl-2 pr-3 py-1.5 bg-white border border-[#E5E5E5] rounded-full hover:bg-[#F8F8F8]">

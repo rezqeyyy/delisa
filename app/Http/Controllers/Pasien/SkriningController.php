@@ -12,6 +12,8 @@ use App\Models\Skrining;
 use App\Models\Puskesmas;
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 
+
+
 class SkriningController extends Controller
 {
     use SkriningHelpers;    
@@ -36,6 +38,12 @@ class SkriningController extends Controller
 
     private function buildSkriningShowData(Skrining $skrining): array
     {
+        // Penentuan kesimpulan tingkat risiko untuk tampilan hasil:
+        // - "Skrining belum selesai" jika kelengkapan lintas halaman belum terpenuhi.
+        // - "Berisiko Preeklampsia" jika jumlah risiko tinggi ≥ 1 atau risiko sedang ≥ 2.
+        // - "Waspada" jika jumlah risiko sedang ≥ 1.
+        // - "Tidak berisiko" jika tidak memenuhi kriteria di atas.
+
         $pasien = optional($skrining->pasien);
         $kk     = optional($skrining->kondisiKesehatan);
         $gpa    = optional($skrining->riwayatKehamilanGpa);
@@ -69,11 +77,11 @@ class SkriningController extends Controller
         $kesimpulan = (!$isComplete)
             ? 'Skrining belum selesai'
             : (($resikoTinggi >= 1 || $resikoSedang >= 2)
-                ? 'Berisiko'
+                ? 'Berisiko Preeklampsia'
                 : (($resikoSedang >= 1) ? 'Waspada' : 'Tidak berisiko'));
 
         $rekomendasi  = ($resikoTinggi > 0)
-            ? 'Rujuk segera sesuai standar kebidanan/obstetri.'
+            ? 'Silahkan untuk menghubungi petugas Puskesmas untuk mendapatkan rujukan Dokter atau Rumah Sakit untuk pengobatan lanjutan.'
             : 'Lanjutkan ANC sesuai standar, ulang skrining di trimester berikutnya.';
         $catatan      = $skrining->catatan ?? null;
 
@@ -257,6 +265,10 @@ class SkriningController extends Controller
      */
     public function puskesmasSearch(Request $request)
     {
+        // Pencarian puskesmas untuk modal pengajuan:
+        // - Parameter query "q" (opsional) akan dicocokkan ke kolom nama/kecamatan/lokasi.
+        // - Mengembalikan maksimal 20 baris dengan field: id, nama_puskesmas, kecamatan.
+        
         $q = trim($request->query('q', ''));
 
         $rows = Puskesmas::query()
