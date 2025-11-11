@@ -100,7 +100,7 @@
                     </a>
                     <button type="submit"
                         class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
-                        Lanjut
+                        Simpan & lanjut
                     </button>
                 </div>
             </form>

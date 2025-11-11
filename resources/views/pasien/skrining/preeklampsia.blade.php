@@ -218,7 +218,7 @@
                             Kembali
                         </a>
                         <button type="submit"
-                                class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a21b73]">
+                            class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a21b73]">
                             Simpan Hasil
                         </button>
                     </div>

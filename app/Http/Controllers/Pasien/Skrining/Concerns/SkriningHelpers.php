@@ -229,22 +229,70 @@ trait SkriningHelpers
         if ($isImtModerate)          $moderateCount++;
         if ($isMapModerate)          $moderateCount++;
 
-        if ($highCount > 0) {
-            $status = 'tinggi';
-        } elseif ($moderateCount >= 2) {
-            $status = 'sedang';
-        } else {
-            $status = 'rendah';
+        $preModerateNames = [
+            'Apakah kehamilan ini adalah kehamilan kedua/lebih tetapi bukan dengan suami pertama (Pernikahan kedua atau lebih)',
+            'Apakah kehamilan ini dengan Teknologi Reproduksi Berbantu (Bayi tabung, Obat induksi ovulasi)',
+            'Apakah kehamilan ini berjarak 10 tahun dari kehamilan sebelumnya',
+            'Apakah ibu kandung atau saudara perempuan anda memiliki riwayat pre-eklampsia',
+        ];
+        $preHighNames = [
+            'Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya',
+            'Apakah kehamilan anda saat ini adalah kehamilan kembar',
+            'Apakah anda memiliki diabetes dalam masa kehamilan',
+        ];
+
+        $preKuisModerate = DB::table('kuisioner_pasiens')
+            ->where('status_soal', 'pre_eklampsia')
+            ->whereIn('nama_pertanyaan', $preModerateNames)
+            ->get(['id', 'nama_pertanyaan'])
+            ->keyBy('nama_pertanyaan');
+
+        $preKuisHigh = DB::table('kuisioner_pasiens')
+            ->where('status_soal', 'pre_eklampsia')
+            ->whereIn('nama_pertanyaan', $preHighNames)
+            ->get(['id', 'nama_pertanyaan'])
+            ->keyBy('nama_pertanyaan');
+
+        $preJawab = DB::table('jawaban_kuisioners')
+            ->where('skrining_id', $skrining->id)
+            ->whereIn('kuisioner_id', array_merge(
+                $preKuisModerate->pluck('id')->all(),
+                $preKuisHigh->pluck('id')->all()
+            ))
+            ->get(['kuisioner_id', 'jawaban'])
+            ->keyBy('kuisioner_id');
+
+        foreach ($preKuisModerate as $row) {
+            if ((bool) optional($preJawab->get($row->id))->jawaban) {
+                $moderateCount++;
+            }
         }
-        
-        $kesimpulan = ($highCount === 0 && $moderateCount <= 1) ? 'Tidak berisiko' : 'Berisiko';
+        foreach ($preKuisHigh as $row) {
+            if ((bool) optional($preJawab->get($row->id))->jawaban) {
+                $highCount++;
+            }
+        }
+
+        if ($highCount >= 1 || $moderateCount >= 2) {
+            $status       = 'Risiko Tinggi';
+            $kesimpulan   = 'Berisiko';
+            $tindakLanjut = true;
+        } elseif ($moderateCount >= 1) {
+            $status       = 'Risiko Sedang';
+            $kesimpulan   = 'Waspada';
+            $tindakLanjut = false;
+        } else {
+            $status       = 'Normal';
+            $kesimpulan   = 'Tidak berisiko';
+            $tindakLanjut = false;
+        }
        
         Skrining::query()->whereKey($skrining->id)->update([
             'status_pre_eklampsia' => $status,
             'jumlah_resiko_sedang' => $moderateCount,
             'jumlah_resiko_tinggi' => $highCount,
             'kesimpulan'           => $kesimpulan,
-            'tindak_lanjut'        => ($status === 'tinggi'),
+            'tindak_lanjut'        => $tindakLanjut,
         ]);
     }
     

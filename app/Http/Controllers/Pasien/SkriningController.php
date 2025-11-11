@@ -80,7 +80,7 @@ class SkriningController extends Controller
                 ? 'Berisiko Preeklampsia'
                 : (($resikoSedang >= 1) ? 'Waspada' : 'Tidak berisiko'));
 
-        $rekomendasi  = ($resikoTinggi > 0)
+        $rekomendasi  = ($resikoTinggi >= 1 || $resikoSedang >= 2)
             ? 'Silahkan untuk menghubungi petugas Puskesmas untuk mendapatkan rujukan Dokter atau Rumah Sakit untuk pengobatan lanjutan.'
             : 'Lanjutkan ANC sesuai standar, ulang skrining di trimester berikutnya.';
         $catatan      = $skrining->catatan ?? null;

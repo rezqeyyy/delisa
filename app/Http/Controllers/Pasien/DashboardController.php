@@ -99,7 +99,7 @@ class DashboardController extends Controller
             $badgeClasses = [
                 'berisiko'               => 'bg-red-600 text-white',
                 'beresiko'               => 'bg-red-600 text-white',
-                'waspada'                => 'bg-yellow-400 text-black',
+                'waspada'                => 'bg-yellow-500 text-white',
                 'tidak berisiko'         => 'bg-green-500 text-white',
                 'tidak beresiko'         => 'bg-green-500 text-white',
                 'aman'                   => 'bg-green-500 text-white',
@@ -145,10 +145,10 @@ class DashboardController extends Controller
         // Tentukan warna box berdasarkan nilai (ikut alias)
         $riskLower   = strtolower($riskPreeklampsia ?? '');
         $riskBoxClass = match ($riskLower) {
-            'berisiko', 'beresiko'                       => 'bg-[#EB1D1D] text-white',
-            'waspada', 'risiko sedang'                   => 'bg-[#FFC700] text-white',
+            'berisiko', 'beresiko', 'risiko tinggi', 'resiko tinggi' => 'bg-red-600 text-white',
+            'waspada', 'risiko sedang' => 'bg-yellow-500 text-white',
             'normal', 'aman', 'tidak berisiko', 'tidak beresiko' => 'bg-[#2EDB58] text-white',
-            default                                      => 'bg-[#E9E9E9] text-[#1D1D1D]',
+            default => 'bg-[#E9E9E9] text-[#1D1D1D]',
         };
 
         // Kirim data ke view

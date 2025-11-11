@@ -153,8 +153,9 @@
                         <a href="{{ route('pasien.kondisi-kesehatan-pasien') }}" class="px-6 py-3 rounded-full bg-[#F2F2F2] text-[#1D1D1D] font-medium">
                             Kembali
                         </a>
-                        <button type="submit" class="px-4 py-2 rounded-full bg-[#B9257F] text-white">
-                            Lanjut
+                        <button type="submit" 
+                            class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
+                            Simpan & lanjut
                         </button>
                     </div>
                 </div>

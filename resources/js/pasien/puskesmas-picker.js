@@ -23,8 +23,7 @@
             <div id="puskesmasList" class="mt-3 max-h-64 overflow-y-auto border border-[#D9D9D9] rounded-xl"></div>
             <div class="mt-4 flex justify-end">
                 <button type="button" id="startSkriningBtn"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-400 text-white disabled:opacity-60 disabled:cursor-not-allowed">
-                    <span class="inline-block w-4 h-4 bg-white/40 rounded"></span>
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-400 text-white disabled:opacity-60 disabled:cursor-not-allowed">                    
                     Mulai Skrining
                 </button>
             </div>
