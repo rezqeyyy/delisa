@@ -83,8 +83,16 @@
             <!-- Ringkasan Status -->
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
                 <!-- Status Skrining Terbaru -->
-                <div class="bg-white rounded-2xl shadow-md p-4 sm:p-5">
+                <div class="bg-white rounded-2xl shadow-md p-4 sm:p-5 relative">
                     <h2 class="font-semibold mb-3">Status Skrining Terbaru</h2>
+
+                    {{-- Tanggal input di pojok kanan atas --}}
+                    @if ($skrining?->tanggal_waktu)
+                        <span class="absolute top-5 right-5 text-xs text-[#7C7C7C]">
+                            Diinput {{ $skrining->tanggal_waktu }}
+                        </span>
+                    @endif
+
                     @if ($skrining)
                         @php
                             $risk =
@@ -95,20 +103,27 @@
                                         : 'Normal');
                             $riskColor = ['Normal' => '#39E93F', 'Sedang' => '#E2D30D', 'Tinggi' => '#E20D0D'][$risk];
                         @endphp
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-5">
+                            {{-- Puskesmas --}}
                             <div>
-                                <div class="text-sm text-[#7C7C7C]">Tanggal Input Skrining</div>
-                                <div class="font-semibold">
-                                    {{ $skrining->tanggal ?? '—' }}
+                                <div class="text-sm text-[#7C7C7C] mb-1">Puskesmas</div>
+                                <div class="font-semibold break-words">
+                                    {{ $skrining->puskesmas_nama ?? '—' }}
                                 </div>
                             </div>
+
+                            {{-- Status --}}
                             <div>
                                 <div class="text-sm text-[#7C7C7C] mb-1">Status</div>
                                 <span class="inline-block px-2.5 py-1 rounded-full text-sm"
-                                    style="background: {{ $skrining->checked_status ? '#39E93F33' : '#E20D0D33' }}; color: {{ $skrining->checked_status ? '#39E93F' : '#E20D0D' }};">
+                                    style="background: {{ $skrining->checked_status ? '#39E93F33' : '#E20D0D33' }};
+                           color: {{ $skrining->checked_status ? '#39E93F' : '#E20D0D' }};">
                                     {{ $skrining->checked_status ? 'Hadir' : 'Mangkir' }}
                                 </span>
                             </div>
+
+                            {{-- Risiko --}}
                             <div>
                                 <div class="text-sm text-[#7C7C7C] mb-1">Risiko</div>
                                 <span class="inline-block px-2.5 py-1 rounded-full text-sm"
@@ -118,9 +133,10 @@
                             </div>
                         </div>
                     @else
-                        <p class="text-sm text-[#7C7C7C]">Belum ada data skrining.</p>
+                        <p class="text-sm text-[#7C7C7C] mt-2">Belum ada data skrining.</p>
                     @endif
                 </div>
+
 
                 <!-- Ringkasan GPA -->
                 <div class="bg-white rounded-2xl shadow-md p-4 sm:p-5">

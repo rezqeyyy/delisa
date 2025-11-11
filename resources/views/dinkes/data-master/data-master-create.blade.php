@@ -73,7 +73,7 @@
                     </div>
                     <div>
                         <label>Nomor Telepon PIC</label>
-                        <input name="phone" inputmode="tel" value="{{ old('phone') }}"
+                        <input name="phone" type="number" value="{{ old('phone') }}"
                                class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                     </div>
                     <div>
@@ -123,7 +123,7 @@
                     </div>
                     <div>
                         <label>Nomor Telepon PIC</label>
-                        <input name="phone" inputmode="tel" value="{{ old('phone') }}"
+                        <input name="phone" type="number" value="{{ old('phone') }}"
                                class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                     </div>
                     <div>
@@ -174,7 +174,7 @@
                     </div>
                     <div>
                         <label>Nomor Izin Praktek</label>
-                        <input name="nomor_izin_praktek" inputmode="numeric" value="{{ old('nomor_izin_praktek') }}" required
+                        <input name="nomor_izin_praktek" type="number" value="{{ old('nomor_izin_praktek') }}" required
                                class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                     </div>
                     <div>
@@ -184,7 +184,7 @@
                     </div>
                     <div>
                         <label>No Telepon</label>
-                        <input name="phone" inputmode="tel" value="{{ old('phone') }}"
+                        <input name="phone" type="number" value="{{ old('phone') }}"
                                class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                     </div>
                     <div>

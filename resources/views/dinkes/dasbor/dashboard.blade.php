@@ -718,6 +718,8 @@
                             <input type="hidden" name="to" value="{{ $filters['to'] ?? '' }}">
                             <input type="hidden" name="resiko" value="{{ $filters['resiko'] ?? '' }}">
                             <input type="hidden" name="status" value="{{ $filters['status'] ?? '' }}">
+                            <input type="hidden" name="kategori" value="{{ $filters['kategori'] ?? '' }}">
+                            <input type="hidden" name="puskesmas_id" value="{{ $filters['puskesmas_id'] ?? '' }}">
 
                             <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#7C7C7C] hidden sm:inline">
                                 <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}"
@@ -757,20 +759,25 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[#CAC7C7]">
-                            @forelse (($peList ?? []) as $i => $row)
+                            @forelse ($peList as $i => $row)
                                 <tr>
-                                    <td class="py-3 tabular-nums">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</td>
+                                    {{-- nomor urut mengikuti halaman --}}
+                                    <td class="py-3 tabular-nums">
+                                        {{ str_pad(($peList->firstItem() ?? 0) + $i, 2, '0', STR_PAD_LEFT) }}
+                                    </td>
                                     <td class="max-w-[220px] truncate">{{ $row->nama ?? '-' }}</td>
                                     <td class="hidden md:table-cell">{{ $row->nik_masked ?? ($row->nik ?? '-') }}
                                     </td>
                                     <td class="tabular-nums">{{ $row->umur ?? '-' }}</td>
                                     <td class="hidden sm:table-cell">
-                                        {{ $row->usia_kehamilan ? $row->usia_kehamilan . ' Minggu' : '-' }}</td>
+                                        {{ $row->usia_kehamilan ? $row->usia_kehamilan . ' Minggu' : '-' }}
+                                    </td>
                                     <td class="hidden lg:table-cell">{{ $row->tanggal ?? '-' }}</td>
                                     <td>
                                         @php $hadirClass = ($row->status_hadir ?? false) ? 'bg-[#39E93F33] text-[#39E93F]' : 'bg-[#E20D0D33] text-[#E20D0D]'; @endphp
-                                        <span
-                                            class="px-3 py-1 rounded-full {{ $hadirClass }}">{{ $row->status_hadir ?? false ? 'Hadir' : 'Mangkir' }}</span>
+                                        <span class="px-3 py-1 rounded-full {{ $hadirClass }}">
+                                            {{ $row->status_hadir ?? false ? 'Hadir' : 'Mangkir' }}
+                                        </span>
                                     </td>
                                     <td>
                                         @php
@@ -794,13 +801,13 @@
                                             $rk = $mapRisk[$row->resiko ?? 'non-risk'];
                                         @endphp
                                         <span class="px-3 py-1 rounded-full"
-                                            style="background: {{ $rk['bg'] }}; color: {{ $rk['tx'] }};">{{ $rk['label'] }}</span>
+                                            style="background: {{ $rk['bg'] }}; color: {{ $rk['tx'] }};">
+                                            {{ $rk['label'] }}
+                                        </span>
                                     </td>
                                     <td>
                                         <a href="{{ route('dinkes.pasien.show', $row->pasien_id) }}"
-                                            class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">
-                                            View
-                                        </a>
+                                            class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">View</a>
                                     </td>
                                 </tr>
                             @empty
@@ -812,8 +819,29 @@
                     </table>
                 </div>
 
+                {{-- Footer: total & pagination --}}
+                @if ($peList->count())
+                    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm">
+                        <div class="text-[#7C7C7C]">
+                            Menampilkan
+                            <span class="font-medium text-[#000000cc]">{{ $peList->firstItem() }}</span> –
+                            <span class="font-medium text-[#000000cc]">{{ $peList->lastItem() }}</span>
+                            dari
+                            <span class="font-medium text-[#000000cc]">{{ $peList->total() }}</span>
+                            data
+                        </div>
+
+                        {{-- Laravel Tailwind pagination --}}
+                        <div class="w-full sm:w-auto" id="pePagination">
+                            {{ $peList->onEachSide(1)->links() }}
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Backdrop -->
                 <div id="peFilterBackdrop" class="hidden fixed inset-0 bg-black/30 z-40"></div>
 
+                <!-- Modal Filter -->
                 <div id="peFilterModal" class="hidden fixed inset-0 z-50 p-4">
                     <div class="grid place-items-center min-h-screen">
                         <div class="bg-white w-full max-w-md rounded-2xl shadow-xl border border-[#E9E9E9]">
@@ -840,6 +868,7 @@
                                     <input type="date" name="to" value="{{ request('to') }}"
                                         class="w-full border rounded-md px-3 py-2 text-sm">
                                 </div>
+
                                 <div>
                                     <label class="block text-xs text-[#7C7C7C] mb-1">Resiko</label>
                                     <select name="resiko" class="w-full border rounded-md px-3 py-2 text-sm">
@@ -849,12 +878,42 @@
                                         <option value="tinggi" @selected(request('resiko') === 'tinggi')>Tinggi</option>
                                     </select>
                                 </div>
+
                                 <div>
                                     <label class="block text-xs text-[#7C7C7C] mb-1">Status</label>
                                     <select name="status" class="w-full border rounded-md px-3 py-2 text-sm">
                                         <option value="">Semua Status</option>
                                         <option value="hadir" @selected(request('status') === 'hadir')>Hadir</option>
                                         <option value="mangkir" @selected(request('status') === 'mangkir')>Mangkir</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs text-[#7C7C7C] mb-1">Kategori</label>
+                                    <select name="kategori" class="w-full border rounded-md px-3 py-2 text-sm">
+                                        <option value="">Semua Kategori</option>
+                                        <option value="remaja" @selected(request('kategori') === 'remaja')>Ibu Remaja (&lt; 20 th)
+                                        </option>
+                                        <option value="dewasa" @selected(request('kategori') === 'dewasa')>Usia 20–34 th</option>
+                                        <option value="berisiko_umur" @selected(request('kategori') === 'berisiko_umur')>Usia ≥ 35 th
+                                        </option>
+                                        <option value="trimester1" @selected(request('kategori') === 'trimester1')>Trimester 1 (&lt; 14
+                                            mg)</option>
+                                        <option value="trimester2" @selected(request('kategori') === 'trimester2')>Trimester 2 (14–27 mg)
+                                        </option>
+                                        <option value="trimester3" @selected(request('kategori') === 'trimester3')>Trimester 3 (≥ 28 mg)
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs text-[#7C7C7C] mb-1">Puskesmas</label>
+                                    <select name="puskesmas_id" class="w-full border rounded-md px-3 py-2 text-sm">
+                                        <option value="">Semua Puskesmas</option>
+                                        @foreach ($puskesmasList ?? [] as $pk)
+                                            <option value="{{ $pk->id }}" @selected(request('puskesmas_id') == $pk->id)>
+                                                {{ $pk->nama_puskesmas }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
 
@@ -872,11 +931,12 @@
                 </div>
             </section>
 
-            <span id="page-bottom"></span>
-
             <footer class="text-center text-xs text-[#7C7C7C] py-6">
                 © 2025 Dinas Kesehatan Kota Depok — DeLISA
             </footer>
+
+            <span id="page-bottom"></span>
+
         </main>
     </div>
 </body>

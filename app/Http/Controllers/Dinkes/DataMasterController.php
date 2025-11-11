@@ -10,6 +10,8 @@ use Illuminate\Support\Str;
 
 class DataMasterController extends Controller
 {
+    private const PHONE_REGEX = '/^\+?\d{8,15}$/'; // +optional, 8–15 digit
+
     private function roleId(string $name): int
     {
         return (int) DB::table('roles')
@@ -42,7 +44,7 @@ class DataMasterController extends Controller
                     });
                 })
                 ->orderBy('users.created_at', 'desc')
-                ->paginate(10)->withQueryString();
+                ->paginate(5)->withQueryString();
         } elseif ($tab === 'puskesmas') {
             $accounts = $base
                 ->join('puskesmas', 'puskesmas.user_id', '=', 'users.id')
@@ -55,7 +57,7 @@ class DataMasterController extends Controller
                     });
                 })
                 ->orderBy('users.created_at', 'desc')
-                ->paginate(10)->withQueryString();
+                ->paginate(5)->withQueryString();
         } else { // bidan
             $accounts = $base
                 ->join('bidans', 'bidans.user_id', '=', 'users.id')
@@ -69,7 +71,7 @@ class DataMasterController extends Controller
                     });
                 })
                 ->orderBy('users.created_at', 'desc')
-                ->paginate(10)->withQueryString();
+                ->paginate(5)->withQueryString();
         }
 
         $puskesmasList = DB::table('puskesmas')
@@ -82,6 +84,7 @@ class DataMasterController extends Controller
             'puskesmasList' => $puskesmasList,
         ]);
     }
+    
 
     // app/Http/Controllers/Dinkes/DataMasterController.php
 

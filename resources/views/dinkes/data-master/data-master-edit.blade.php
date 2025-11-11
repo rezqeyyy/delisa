@@ -40,7 +40,7 @@
       </div>
       <div>
         <label>No Telepon</label>
-        <input name="phone" inputmode="tel" value="{{ old('phone',$data->phone) }}" class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+        <input name="phone" type="number" value="{{ old('phone',$data->phone) }}" class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
       </div>
 
       @if($tab==='rs')
@@ -85,7 +85,7 @@
       @else
         <div>
           <label>No Izin Praktek</label>
-          <input name="nomor_izin_praktek" value="{{ old('nomor_izin_praktek',$data->nomor_izin_praktek) }}" required class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
+          <input name="nomor_izin_praktek" type="number" value="{{ old('nomor_izin_praktek',$data->nomor_izin_praktek) }}" required class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
         </div>
         <div>
           <label>Puskesmas</label>

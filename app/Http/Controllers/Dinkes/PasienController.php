@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Dinkes;
 
 use App\Http\Controllers\Controller;
@@ -10,8 +11,8 @@ class PasienController extends Controller
     {
         // ===================== Identitas & alamat =====================
         $pasien = DB::table('pasiens as p')
-            ->join('users as u','u.id','=','p.user_id')
-            ->leftJoin('roles as r','r.id','=','u.role_id')
+            ->join('users as u', 'u.id', '=', 'p.user_id')
+            ->leftJoin('roles as r', 'r.id', '=', 'u.role_id')
             ->selectRaw("
                 p.*,
                 u.name, u.email, u.photo, u.phone, u.address,
@@ -22,24 +23,26 @@ class PasienController extends Controller
 
         abort_unless($pasien, 404);
 
-        // ===================== Skrining TERBARU + tanggal terformat =====================
         // Catatan: alias 'tanggal' agar langsung kebaca di blade (mis. {{ $skrining->tanggal ?? '—' }})
+        // ===================== Skrining TERBARU + tanggal terformat =====================
         $skrining = DB::table('skrinings as s')
+            ->leftJoin('puskesmas as pk', 'pk.id', '=', 's.puskesmas_id') // <-- JOIN puskesmas
             ->where('s.pasien_id', $pasienId)
             ->orderByDesc('s.created_at')
             ->selectRaw("
-                s.*,
-                to_char(COALESCE(s.created_at, s.updated_at), 'DD/MM/YYYY')      as tanggal,
-                to_char(COALESCE(s.created_at, s.updated_at), 'DD/MM/YYYY HH24:MI') as tanggal_waktu
-            ")
-            ->first();
+        s.*,
+        pk.nama_puskesmas as puskesmas_nama,           -- <-- ambil nama puskesmas
+        to_char(COALESCE(s.created_at, s.updated_at), 'DD/MM/YYYY')       as tanggal,
+        to_char(COALESCE(s.created_at, s.updated_at), 'DD/MM/YYYY HH24:MI') as tanggal_waktu
+    ") ->first();
+
 
         // ===================== Kondisi kesehatan terbaru (jika ada) =====================
         $kondisi = $skrining
             ? DB::table('kondisi_kesehatans')
-                ->where('skrining_id', $skrining->id)
-                ->orderByDesc('created_at')
-                ->first()
+            ->where('skrining_id', $skrining->id)
+            ->orderByDesc('created_at')
+            ->first()
             : null;
 
         // ===================== GPA & riwayat kehamilan =====================
@@ -81,7 +84,7 @@ class PasienController extends Controller
 
         // ===================== Rujukan RS terakhir =====================
         $rujukan = DB::table('rujukan_rs as rr')
-            ->leftJoin('rumah_sakits as rs','rs.id','=','rr.rs_id')
+            ->leftJoin('rumah_sakits as rs', 'rs.id', '=', 'rr.rs_id')
             ->selectRaw('rr.*, rs.nama as rs_nama')
             ->where('rr.pasien_id', $pasienId)
             ->orderByDesc('rr.created_at')
