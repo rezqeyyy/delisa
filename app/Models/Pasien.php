@@ -5,11 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+// Model Pasien berfungsi untuk mempresentasikan tabel pasien di database dan mengatur field yang bisa diisi
 class Pasien extends Model
 {
-    //HasFactory digunakan untuk membuat data dummy
-    use HasFactory;
-
     protected $table = 'pasiens';
 
     protected $fillable = [

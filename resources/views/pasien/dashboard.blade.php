@@ -4,9 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pasien — Dashboard</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js'])
+    
+    @vite([
+        'resources/css/app.css', 
+        'resources/js/app.js', 
+        'resources/js/dropdown.js', 
+        'resources/js/pasien/puskesmas-picker.js', 
+        'resources/js/pasien/sidebar-toggle.js', 
+        'resources/js/pasien/list-filter.js'])
+
     <style>
-        /* Mengimpor font Poppins dari Google Fonts agar visual teks 100% cocok dengan desain modern */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Poppins', sans-serif;
@@ -16,47 +23,25 @@
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
-        <x-pasien.sidebar class="hidden xl:flex z-30" />
-
-        <!-- Sidebar overlay (mobile) -->
-        <x-pasien.sidebar
-            x-cloak
-            x-show="openSidebar"
-            class="xl:hidden z-50 transform"
-            x-transition:enter="transform ease-out duration-300"
-            x-transition:enter-start="-translate-x-full"
-            x-transition:enter-end="translate-x-0"
-            x-transition:leave="transform ease-in duration-200"
-            x-transition:leave-start="translate-x-0"
-            x-transition:leave-end="-translate-x-full"
-        />
-        <!-- Background overlay untuk menutup -->
-        <div
-            x-cloak
-            x-show="openSidebar"
-            class="fixed inset-0 z-40 bg-black/40 xl:hidden"
-            @click="openSidebar = false">
-        </div>
-    
+        
+        <x-pasien.sidebar />
+            
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
-            <div class="flex flex-wrap items-start gap-4">
-                <div class="relative flex-1 min-w-0">
-                    <span class="absolute inset-y-0 left-3 flex items-center">
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60" alt="Search">
-                    </span>
-                    <input type="text" placeholder="Search..."
-                        class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+            <div class="flex items-center gap-3 flex-nowrap">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <div class="relative w-full">
+                        <span class="absolute inset-y-0 left-3 flex items-center">
+                            <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60" alt="Search">
+                        </span>
+                        <input type="text" placeholder="Search..."
+                            class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-3 w-full md:w-auto justify-end md:justify-start flex-shrink-0">
-                    <a class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
+                <div class="flex items-center gap-3 flex-none justify-end">
+                    <a href="{{ route('pasien.profile.edit') }}" class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90" alt="Setting">
                     </a>
-
-                    <button class="relative w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Notification.svg') }}" class="w-4 h-4 opacity-90" alt="Notif">
-                        <span class="absolute top-1.5 right-1.5 inline-block w-2.5 h-2.5 bg-[#B9257F] rounded-full ring-2 ring-white"></span>
-                    </button>
 
                     <div id="profileWrapper" class="relative">
                         <button id="profileBtn" class="flex items-center gap-3 pl-2 pr-3 py-1.5 bg-white border border-[#E5E5E5] rounded-full hover:bg-[#F8F8F8]">
@@ -102,122 +87,158 @@
                 </div>
             </div>
 
+            <!-- List Skrining -->
             <section class="bg-white rounded-2xl shadow-md p-6">
-                <div class="flex flex-wrap items-start gap-4">
-                    <div class="flex-1 min-w-[240px]">
-                        <h2 class="text-xl font-semibold text-[#1D1D1D]">List Skrining</h2>
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between md:flex-wrap gap-3 max-w-full">
+                    <div class="flex items-center gap-3 flex-none">
+                        <div class="leading-tight">
+                            <h2 class="text-xl font-semibold text-[#1D1D1D]">List Skrining</h2>
+                            <p class="text-xs text-[#B9257F]">*Selesaikan skrining sebelum membuat skrining baru</p>
+                        </div>
                     </div>
 
-                    <div class="ml-auto flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
-                        <form action="{{ route('pasien.dashboard') }}" method="GET"
-                            class="flex w-full md:w-auto items-center gap-2 flex-wrap md:flex-nowrap">
-                            <div class="relative w-full md:w-auto">
-                                <select name="status"
+                    <!-- Grup aksi (dropdown + ajukan) selalu bersama -->
+                    <div class="flex items-center gap-2 w-full md:w-auto min-w-0 flex-wrap md:justify-end">
+                        <!-- Dropdown status -->
+                        <form id="skriningFilterForm" action="{{ route('pasien.dashboard') }}" method="GET"
+                            class="w-full md:w-[220px]">
+                            <div class="relative w-full">
+                                @php $currentStatus = $status ?? ''; @endphp
+                                <select id="statusSelect" name="status"
                                         class="w-full pl-3 pr-9 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
-                                    @php $currentStatus = $status ?? ''; @endphp
                                     <option value="" {{ $currentStatus === '' ? 'selected' : '' }}>Cari Berdasarkan Status</option>
-                                    <option value="Aman" {{ $currentStatus === 'Aman' ? 'selected' : '' }}>Aman</option>
+                                    <option value="" {{ ($status ?? '') === '' ? 'selected' : '' }}>Semua</option>
+                                    <option value="Normal" {{ $currentStatus === 'Normal' ? 'selected' : '' }}>Tidak Berisiko</option>
                                     <option value="Waspada" {{ $currentStatus === 'Waspada' ? 'selected' : '' }}>Waspada</option>
-                                    <option value="Beresiko" {{ $currentStatus === 'Beresiko' ? 'selected' : '' }}>Beresiko</option>
+                                    <option value="Berisiko" {{ $currentStatus === 'Berisiko' ? 'selected' : '' }}>Berisiko</option>
                                 </select>
                             </div>
-                            <button class="w-full md:w-auto px-4 py-2 rounded-full bg-[#B9257F] text-white text-sm font-medium hover:bg-[#a31f70]">
-                                Cari
-                            </button>
                         </form>
 
+                        <!-- Tombol Ajukan Skrining -->
                         @php
-                        $ajukanUrl = \Illuminate\Support\Facades\Route::has('pasien.data-diri')
-                            ? route('pasien.data-diri')
-                            : '#';
+                            $ajukanUrl = \Illuminate\Support\Facades\Route::has('pasien.data-diri')
+                                ? route('pasien.data-diri')
+                                : '#';
                         @endphp
                         <a href="{{ $ajukanUrl }}"
-                        class="w-full md:w-auto inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70]">
+                        id="btnAjukanSkrining"
+                        data-start-url="{{ route('pasien.data-diri') }}"
+                        data-search-url="{{ route('pasien.puskesmas.search') }}"
+                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70] w-full md:w-[220px]">
                             <span class="text-base leading-none">+</span>
                             <span class="leading-none">Ajukan Skrining</span>
                         </a>
                     </div>
                 </div>
 
-                @php
-                $badgeClass = function ($st) {
-                    $st = strtolower($st ?? '');
-                    return match ($st) {
-                    'aman', 'normal'    => 'bg-[#2EDB58] text-white',
-                    'waspada'           => 'bg-[#FFC700] text-white',
-                    'beresiko'          => 'bg-[#EB1D1D] text-white',
-                    default             => 'bg-gray-300 text-gray-700',
-                    };
-                };
-                @endphp
+                <!-- Tabel daftar skrining -->
+                <div class="overflow-x-auto mt-4 md:mt-6">
+                    <table class="w-full table-auto border-separate
+                        sm:border-spacing-x-[12px] sm:border-spacing-y-[6px]
+                        md:border-spacing-x-[20px] md:border-spacing-y-[8px]
+                        lg:border-spacing-x-[24px] lg:border-spacing-y-[10px]">
+                        <thead>
+                            <tr>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Nama Pasien</th>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Tanggal Pengisian</th>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Alamat</th>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Kesimpulan</th>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">View Detail</th>
+                            </tr>
+                        </thead>
 
-                <div class="mt-5 space-y-3">
-                @forelse ($skrinings as $skrining)
-                    @php
-                    $editUrl = \Illuminate\Support\Facades\Route::has('pasien.skrining.edit')
-                        ? route('pasien.skrining.edit', $skrining->id)
-                        : '#';
-                    $viewUrl = \Illuminate\Support\Facades\Route::has('pasien.skrining.show')
-                        ? route('pasien.skrining.show', $skrining->id)
-                        : '#';
-                    $namaPasien = optional($skrining->pasien?->user)->name ?? (auth()->user()->name ?? 'Pasien');
-                    $alamat = auth()->user()->address ?? ($skrining->pasien?->PKabupaten ?? '-');
-                    @endphp
+                        <tbody>
+                        @forelse ($skrinings as $skrining)
+                            @php
+                                $nama     = optional(optional($skrining->pasien)->user)->name ?? '-';
+                                $tanggal  = \Carbon\Carbon::parse($skrining->created_at)->format('d/m/Y');
+                                $alamat   = optional(optional($skrining->pasien)->user)->address ?? '-';
+                                $resikoSedang = (int)($skrining->jumlah_resiko_sedang ?? 0);
+                                $resikoTinggi = (int)($skrining->jumlah_resiko_tinggi ?? 0);
+                                $conclusion = $skrining->conclusion_display ?? ($skrining->kesimpulan ?? 'Normal');
+                                $cls = $skrining->badge_class ?? 'bg-[#2EDB58] text-white';
+                                $editUrl = route('pasien.skrining.edit', $skrining->id);
+                                $viewUrl = route('pasien.skrining.show', $skrining->id);
+                                @endphp
+                                <tr class="align-middle">
+                                    <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap">
+                                        <div class="inline-flex items-center gap-3">
+                                            <span class="font-medium text-[#1D1D1D]">{{ $nama }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $tanggal }}</td>
+                                    <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $alamat }}</td>
+                                    <td class="px-3 py-3 md:px-6 md:py-4">
+                                        <span class="inline-flex items-center rounded-full px-4 h-8 text-sm font-semibold leading-none whitespace-nowrap {{ $cls }}">
+                                            {{ $conclusion }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-3 md:px-6 md:py-4">
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ $editUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">
+                                                Edit
+                                            </a>
+                                            <a href="{{ $viewUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">
+                                                View
+                                            </a>
 
-                    <div class="flex items-center justify-between bg-[#F7F7F7] rounded-xl px-4 py-3">
-                    <div class="flex items-center gap-4 min-w-0">
-                        <span class="w-8 h-8 rounded-full bg-[#EFEFEF] flex items-center justify-center">
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Profile.svg') }}" class="w-4 h-4 opacity-80" alt="avatar">
-                        </span>
-
-                        <div class="w-[200px]">
-                        <div class="text-sm font-medium text-[#1D1D1D] truncate">{{ $namaPasien }}</div>
-                        <div class="text-xs text-[#7C7C7C]">Nama Pasien</div>
-                        </div>
-
-                        <div class="w-[160px]">
-                        <div class="text-sm font-medium text-[#1D1D1D]">
-                            {{ optional($skrining->created_at)->format('d/m/Y') }}
-                        </div>
-                        <div class="text-xs text-[#7C7C7C]">Tanggal Pengisian</div>
-                        </div>
-
-                        <div class="w-[160px]">
-                        <div class="text-sm font-medium text-[#1D1D1D] truncate">{{ $alamat }}</div>
-                        <div class="text-xs text-[#7C7C7C]">Alamat</div>
-                        </div>
-
-                        <div class="w-[160px]">
-                        <span class="inline-block px-4 py-1.5 rounded-full text-xs font-semibold {{ $badgeClass($skrining->kesimpulan) }}">
-                            {{ $skrining->kesimpulan ?? '—' }}
-                        </span>
-                        <div class="text-xs text-[#7C7C7C] mt-1">Kesimpulan</div>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <a href="{{ $editUrl }}" class="px-3 py-1.5 rounded-full bg-white border border-[#E5E5E5] text-xs hover:bg-[#F0F0F0]">
-                        Edit
-                        </a>
-                        <a href="{{ $viewUrl }}" class="px-3 py-1.5 rounded-full bg-white border border-[#E5E5E5] text-xs hover:bg-[#F0F0F0]">
-                        View
-                        </a>
-                    </div>
-                    </div>
-                @empty
-                    <div class="text-center text-sm text-[#7C7C7C] py-8">
-                    Belum ada data skrining.
-                    </div>
-                @endforelse
+                                            <form method="POST"
+                                                action="{{ route('pasien.skrining.destroy', $skrining->id) }}"
+                                                onsubmit="return confirm('Yakin hapus data skrining?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="rounded-full border px-4 py-2 text-red-600 hover:bg-red-50">
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="px-4 py-8 text-center text-[#7C7C7C]">
+                                        Belum ada data skrining.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
 
                 @if(isset($skrinings) && method_exists($skrinings, 'hasPages') && $skrinings->hasPages())
-                <div class="mt-4">
-                    {{ $skrinings->onEachSide(1)->links() }}
-                </div>
+                    <div class="mt-4">
+                        {{ $skrinings->links() }}
+                    </div>
                 @endif
             </section>
 
+            <!-- Ringkasan Total Skrining & Resiko Preeklamsia -->           
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white rounded-2xl p-6 shadow-md">
+                    <h2 class="font-semibold text-[#1D1D1D] mb-3">Total Skrining</h2>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#1D1D1D]">Sudah Selesai</span>
+                            <span class="font-semibold tabular-nums">{{ $totalSelesai ?? 0 }}</span>
+                        </div>
+                        <div class="border-t border-[#E9E9E9]"></div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#1D1D1D]">Belum diisi</span>
+                            <span class="font-semibold tabular-nums">{{ $totalBelum ?? 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-md">
+                    <h2 class="font-semibold text-[#1D1D1D] mb-3">Risiko Preeklamsia</h2>
+                    <div class="rounded-xl {{ $riskBoxClass ?? 'bg-[#E9E9E9] text-[#1D1D1D]' }} p-6 text-center">
+                        <span class="text-lg font-semibold">
+                            {{ $riskPreeklampsia ? $riskPreeklampsia : 'Belum ada' }}
+                        </span>
+                    </div>
+                </div>
+            </section>
 
             <footer class="text-center text-xs text-[#7C7C7C] py-6">
                 © 2025 Dinas Kesehatan Kota Depok — DeLISA

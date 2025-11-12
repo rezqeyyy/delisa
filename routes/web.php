@@ -15,6 +15,16 @@ use App\Http\Controllers\Dinkes\DataMasterController;
 use App\Http\Controllers\Dinkes\AkunBaruController;
 use App\Http\Controllers\Dinkes\PasienNifasController;
 use App\Http\Controllers\Dinkes\ProfileController;
+use App\Http\Controllers\Dinkes\PasienController;
+use App\Http\Controllers\WilayahController;
+use App\Http\Controllers\Pasien\Skrining\DataDiriController;
+use App\Http\Controllers\Pasien\Skrining\RiwayatKehamilanGPAController;
+use App\Http\Controllers\Pasien\Skrining\KondisiKesehatanPasienController;
+use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitPasienController;
+use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitKeluargaController;
+use App\Http\Controllers\Pasien\Skrining\PreeklampsiaController;
+use App\Http\Controllers\Dinkes\AnalyticsController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +33,7 @@ use App\Http\Controllers\Dinkes\ProfileController;
 | Satu saja. Jika sudah login, arahkan ke dashboard sesuai role.
 | Jika belum, tampilkan halaman login pasien (UI publik).
 */
+
 Route::get('/', function () {
     if (Auth::check()) {
         $role = optional(Auth::user()->role)->nama_role;
@@ -53,7 +64,8 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
             // Dashboard
             Route::get('/dashboard', [DinkesDashboardController::class, 'index'])->name('dashboard');
-
+            Route::get('/pasien/{pasien}', [PasienController::class, 'show'])
+                ->name('pasien.show');
             // Data Master
             Route::get('/data-master', [DataMasterController::class, 'index'])->name('data-master');
             Route::get('/data-master/create', [DataMasterController::class, 'create'])->name('data-master.create');
@@ -78,18 +90,29 @@ Route::middleware(['auth'])->group(function () {
 
             // Pasien Nifas
             Route::get('/pasien-nifas', [PasienNifasController::class, 'index'])->name('pasien-nifas');
+            Route::delete('/pasien-nifas/{pasien}', [PasienNifasController::class, 'destroy'])->name('pasien-nifas.destroy');
+
 
             // Profile
             Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
             Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
             Route::delete('/profile/photo', [ProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
+
+            // Analytics
+            Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+            Route::get('/analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
+            Route::get('/analytics/var/{key}', [AnalyticsController::class, 'showVariable'])->name('analytics.var');
         });
+
 
     // ================== PUSKESMAS ==================
     Route::middleware('role:puskesmas')
         ->prefix('puskesmas')->as('puskesmas.')
         ->group(function () {
             Route::get('/dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
+            Route::get('/skrining', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'index'])->name('skrining');
+            Route::get('/laporan', [\App\Http\Controllers\Puskesmas\LaporanController::class, 'index'])->name('laporan');
+            Route::get('/pasien-nifas', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'index'])->name('pasien-nifas');
         });
 
     // ================== BIDAN ==================
@@ -134,17 +157,64 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
             Route::get('/dashboard', [PasienDashboardController::class, 'index'])->name('dashboard');
             Route::get('/puskesmas/search', [PasienSkriningController::class, 'puskesmasSearch'])->name('puskesmas.search');
-            Route::get('/skrining/ajukan', [PasienSkriningController::class, 'create'])->name('data-diri');
-            Route::get('/skrining/riwayat-kehamilan', [PasienSkriningController::class, 'riwayatKehamilan'])->name('riwayat-kehamilan');
-            Route::get('/skrining/kondisi-kesehatan-pasien', [PasienSkriningController::class, 'kondisiKesehatanPasien'])
+
+            // Pemilihan puskesmas via modal
+            Route::post('/skrining/ajukan/puskesmas', [DataDiriController::class, 'storePengajuan'])
+                ->name('skrining.pengajuan.store');
+
+            // Data Diri
+            Route::get('/skrining/ajukan', [DataDiriController::class, 'create'])
+                ->name('data-diri');
+            Route::post('/data-diri', [DataDiriController::class, 'store'])
+                ->name('data-diri.store');
+
+            // Riwayat Kehamilan & Persalinan (GPA)
+            Route::get('/skrining/riwayat-kehamilan-gpa', [RiwayatKehamilanGPAController::class, 'riwayatKehamilanGpa'])
+                ->name('riwayat-kehamilan-gpa');
+            Route::post('/riwayat-kehamilan-gpa', [RiwayatKehamilanGPAController::class, 'store'])
+                ->name('riwayat-kehamilan-gpa.store');
+
+            // Kondisi Kesehatan Pasien
+            Route::get('/skrining/kondisi-kesehatan-pasien', [KondisiKesehatanPasienController::class, 'kondisiKesehatanPasien'])
                 ->name('kondisi-kesehatan-pasien');
-            Route::get('/skrining/riwayat-penyakit-pasien', [PasienSkriningController::class, 'riwayatPenyakitPasien'])
+            Route::post('/kondisi-kesehatan-pasien', [KondisiKesehatanPasienController::class, 'store'])
+                ->name('kondisi-kesehatan-pasien.store');
+
+            // Riwayat Penyakit Pasien
+            Route::get('/skrining/riwayat-penyakit-pasien', [RiwayatPenyakitPasienController::class, 'riwayatPenyakitPasien'])
                 ->name('riwayat-penyakit-pasien');
-            Route::get('/skrining/riwayat-penyakit-keluarga', [PasienSkriningController::class, 'riwayatPenyakitKeluarga'])
+            Route::post('/riwayat-penyakit-pasien', [RiwayatPenyakitPasienController::class, 'store'])
+                ->name('riwayat-penyakit-pasien.store');
+
+            // Riwayat Penyakit Keluarga
+            Route::get('/skrining/riwayat-penyakit-keluarga', [RiwayatPenyakitKeluargaController::class, 'riwayatPenyakitKeluarga'])
                 ->name('riwayat-penyakit-keluarga');
+            Route::post('/riwayat-penyakit-keluarga', [RiwayatPenyakitKeluargaController::class, 'store'])
+                ->name('riwayat-penyakit-keluarga.store');
+
+            // Preeklampsia
+            Route::get('/skrining/preeklampsia', [PreeklampsiaController::class, 'preEklampsia'])
+                ->name('preeklampsia');
+            Route::post('/skrining/preeklampsia', [PreeklampsiaController::class, 'store'])
+                ->name('preeklampsia.store');
+
+            // Profile Pasien
+            Route::get('/profile', [\App\Http\Controllers\Pasien\ProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('/profile', [\App\Http\Controllers\Pasien\ProfileController::class, 'update'])->name('profile.update');
+            Route::delete('/profile/photo', [\App\Http\Controllers\Pasien\ProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
+
             Route::get('/skrining/{skrining}', [PasienSkriningController::class, 'show'])->name('skrining.show');
             Route::get('/skrining/{skrining}/edit', [PasienSkriningController::class, 'edit'])->name('skrining.edit');
+            Route::put('/skrining/{skrining}', [PasienSkriningController::class, 'update'])->name('skrining.update');
+            Route::delete('/skrining/{skrining}', [PasienSkriningController::class, 'destroy'])->name('skrining.destroy');
         });
+
+    Route::prefix('wilayah')->group(function () {
+        Route::get('provinces', [WilayahController::class, 'provinces'])->name('wilayah.provinces');
+        Route::get('regencies/{provId}', [WilayahController::class, 'regencies'])->name('wilayah.regencies');
+        Route::get('districts/{kabId}', [WilayahController::class, 'districts'])->name('wilayah.districts');
+        Route::get('villages/{kecId}', [WilayahController::class, 'villages'])->name('wilayah.villages');
+    });
 });
 
 require __DIR__ . '/auth.php';

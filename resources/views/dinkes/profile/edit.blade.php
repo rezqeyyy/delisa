@@ -5,16 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>DINKES – Edit Profil</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dinkes/dinkes-profile.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dinkes/dinkes-profile.js', 'resources/js/dinkes/sidebar-toggle.js'])
 </head>
 
-<body class="bg-[#FFF7FA] font-[Poppins] text-[#000000CC]">
+<body class="bg-[#F5F5F5] font-[Poppins] text-[#000000cc]">
     <div class="flex">
         <x-dinkes.sidebar />
 
-        <main class="ml-[260px] w-full min-h-screen p-7 flex flex-col">
-            <div class="flex items-center gap-3 mb-6">
-                <h1 class="text-3xl font-semibold">Profile Edit User</h1>
+        <main class="ml-0 md:ml-[260px] w-full min-h-screen p-4 sm:p-6 lg:p-7 flex flex-col">
+            <!-- Header -->
+            <div class="flex items-center gap-3 mb-4 sm:mb-6">
+                <h1 class="text-2xl sm:text-3xl font-semibold">Profile Edit User</h1>
             </div>
 
             @if (session('success'))
@@ -22,6 +23,7 @@
                     {{ session('success') }}
                 </div>
             @endif
+
             @if ($errors->any())
                 <div class="mb-4 rounded-lg bg-rose-50 text-rose-800 px-4 py-3 border border-rose-200">
                     <ul class="list-disc list-inside space-y-1">
@@ -33,13 +35,24 @@
             @endif
 
             <section class="flex-1">
-                <div class="bg-white rounded-2xl shadow-md px-8 md:px-12 py-12 max-w-3xl mx-auto">
+                <div
+                    class="bg-white rounded-2xl shadow-md px-4 sm:px-8 md:px-12 py-8 sm:py-12 max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto">
+                    <!-- Tombol Kembali -->
+                    <a href="{{ route('dinkes.dashboard') }}"
+                        class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 active:bg-gray-100 px-3 py-2 sm:px-4 sm:py-2 shadow-sm transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                            class="w-4 h-4 sm:w-5 sm:h-5">
+                            <path
+                                d="M14.707 5.293a1 1 0 0 1 0 1.414L10.414 11H20a1 1 0 1 1 0 2h-9.586l4.293 4.293a1 1 0 0 1-1.414 1.414l-6-6a1 1 0 0 1 0-1.414l6-6a1 1 0 0 1 1.414 0Z" />
+                        </svg>
+                        <span class="text-sm sm:text-base font-medium">Kembali</span>
+                    </a>
                     {{-- Avatar --}}
                     <div class="w-full flex justify-center mb-6">
                         <div id="avatarFallback"
-                            class="w-32 h-32 rounded-full ring-4 ring-pink-100 bg-pink-50 flex items-center justify-center shadow">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-14 h-14 text-pink-500"
-                                fill="currentColor" aria-hidden="true">
+                            class="w-28 h-28 sm:w-32 sm:h-32 rounded-full ring-4 ring-pink-100 bg-pink-50 flex items-center justify-center shadow">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                class="w-12 h-12 sm:w-14 sm:h-14 text-pink-500" fill="currentColor" aria-hidden="true">
                                 <path
                                     d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.42 0-8 2.24-8 5v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1c0-2.76-3.58-5-8-5Z" />
                             </svg>
@@ -47,14 +60,14 @@
                         <img id="avatarPreview"
                             src="{{ $user->photo ? Storage::url($user->photo) . '?t=' . optional($user->updated_at)->timestamp : '' }}"
                             data-has-src="{{ $user->photo ? '1' : '0' }}" alt="Avatar"
-                            class="w-32 h-32 rounded-full object-cover ring-4 ring-pink-100 shadow hidden" />
-
+                            class="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover ring-4 ring-pink-100 shadow hidden" />
                     </div>
 
-                    {{-- Aksi foto: upload + hapus --}}
-                    <div class="flex items-center justify-center gap-3 mb-8">
+                    {{-- Aksi foto --}}
+                    <div
+                        class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3 mb-8">
                         <label for="photo"
-                            class="cursor-pointer inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-full shadow">
+                            class="cursor-pointer inline-flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-full shadow">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
                                 fill="currentColor">
                                 <path d="M5 20h14v-2H5v2Zm7-16-4 4h3v6h2V8h3l-4-4Z" />
@@ -63,9 +76,9 @@
                         </label>
                         <input id="photo" name="photo" type="file" accept=".svg,image/*" class="hidden"
                             form="profileForm" />
-                        {{-- tombol hapus --}}
+
                         <button id="btnRemovePhoto" type="button"
-                            class="inline-flex items-center gap-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 px-4 py-2 rounded-full">
+                            class="inline-flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 px-4 py-2 rounded-full">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
                                 fill="currentColor">
                                 <path
@@ -73,7 +86,7 @@
                             </svg>
                             Hapus Foto
                         </button>
-                        {{-- form delete tersembunyi --}}
+
                         <form id="removePhotoForm" action="{{ route('dinkes.profile.photo.destroy') }}" method="POST"
                             class="hidden">
                             @csrf
@@ -112,7 +125,7 @@
 
                         <div class="flex justify-end pt-2">
                             <button type="submit"
-                                class="inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white px-7 py-3 rounded-full shadow">
+                                class="inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white px-6 sm:px-7 py-3 rounded-full shadow">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
                                     fill="currentColor">
                                     <path d="M21 7L9 19l-5.5-5.5 1.42-1.42L9 16.17 19.59 5.59 21 7z" />

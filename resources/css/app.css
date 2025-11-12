@@ -18,3 +18,23 @@
 /* Scrollbar manis biar rapi seperti mockup */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 999px; }
+/* Matikan tombol clear bawaan hanya untuk search PE di dashboard */
+#peSearchInput[type="search"] {
+  -webkit-appearance: none;
+          appearance: none;
+}
+
+/* Chromium/WebKit: sembunyikan ikon cancel & dekorasi bawaan */
+#peSearchInput::-webkit-search-cancel-button,
+#peSearchInput::-webkit-search-decoration {
+  -webkit-appearance: none;
+          appearance: none;
+  display: none;
+}
+
+/* Legacy Edge/IE (aman kalau masih ada): */
+#peSearchInput::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}

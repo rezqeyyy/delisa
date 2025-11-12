@@ -30,6 +30,12 @@
                     <p class="text-gray-600 mt-1">Masukkan Nomor Induk Kependudukan (NIK) dan Nama Lengkap Anda untuk
                         masuk</p>
 
+                    @if (session('ok'))
+                        <div class="mt-4 rounded-lg border border-green-300 bg-green-50 text-green-700 p-3 text-sm">
+                            {{ session('ok') }}
+                        </div>
+                    @endif
+
                     <form action="{{ route('pasien.login.store') }}" method="POST" class="mt-8 space-y-5">
                         @csrf
                         <div>

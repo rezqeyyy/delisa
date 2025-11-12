@@ -10,6 +10,8 @@ use Illuminate\Support\Str;
 
 class DataMasterController extends Controller
 {
+    private const PHONE_REGEX = '/^\+?\d{8,15}$/'; // +optional, 8–15 digit
+
     private function roleId(string $name): int
     {
         return (int) DB::table('roles')
@@ -42,7 +44,7 @@ class DataMasterController extends Controller
                     });
                 })
                 ->orderBy('users.created_at', 'desc')
-                ->paginate(10)->withQueryString();
+                ->paginate(5)->withQueryString();
         } elseif ($tab === 'puskesmas') {
             $accounts = $base
                 ->join('puskesmas', 'puskesmas.user_id', '=', 'users.id')
@@ -55,7 +57,7 @@ class DataMasterController extends Controller
                     });
                 })
                 ->orderBy('users.created_at', 'desc')
-                ->paginate(10)->withQueryString();
+                ->paginate(5)->withQueryString();
         } else { // bidan
             $accounts = $base
                 ->join('bidans', 'bidans.user_id', '=', 'users.id')
@@ -69,7 +71,7 @@ class DataMasterController extends Controller
                     });
                 })
                 ->orderBy('users.created_at', 'desc')
-                ->paginate(10)->withQueryString();
+                ->paginate(5)->withQueryString();
         }
 
         $puskesmasList = DB::table('puskesmas')
@@ -82,6 +84,7 @@ class DataMasterController extends Controller
             'puskesmasList' => $puskesmasList,
         ]);
     }
+    
 
     // app/Http/Controllers/Dinkes/DataMasterController.php
 
@@ -205,16 +208,25 @@ class DataMasterController extends Controller
     public function resetPassword(Request $request, int $user)
     {
         $data = $request->validate([
-            'new_password' => 'nullable|string|min:8', // kalau kosong, pakai default
+            'new_password' => 'nullable|string|min:8',
         ]);
 
+        // Jika tidak diisi, generate password acak yang kuat
+        $new = $data['new_password'] ?? Str::password(12); // campur huruf, angka, simbol
+
         DB::table('users')->where('id', $user)->update([
-            'password'   => Hash::make($data['new_password'] ?? 'Delisa123!'),
+            'password'   => Hash::make($new),
             'updated_at' => now(),
         ]);
 
-        return back()->with('ok', 'Password berhasil direset.');
+        // Kirim password baru agar bisa ditampilkan 1x sebagai UI toast
+        return back()->with([
+            'ok'           => 'Password berhasil direset.',
+            'new_password' => $new,
+            'flash_kind'   => 'password-reset', // optional: tipe toast
+        ]);
     }
+
 
 
     /** =========================
