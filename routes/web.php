@@ -11,11 +11,15 @@ use App\Http\Controllers\Rs\SkriningController as RsSkriningController;
 use App\Http\Controllers\Rs\PasienNifasController as RsPasienNifasController;
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
 use App\Http\Controllers\Pasien\SkriningController as PasienSkriningController;
+
 use App\Http\Controllers\Dinkes\DataMasterController;
 use App\Http\Controllers\Dinkes\AkunBaruController;
 use App\Http\Controllers\Dinkes\PasienNifasController;
-use App\Http\Controllers\Dinkes\ProfileController;
+use App\Http\Controllers\Dinkes\ProfileController as DinkesProfileController;
 use App\Http\Controllers\Dinkes\PasienController;
+
+use App\Http\Controllers\Bidan\ProfileController as BidanProfileController; // <-- TAMBAHAN
+
 use App\Http\Controllers\WilayahController;
 use App\Http\Controllers\Pasien\Skrining\DataDiriController;
 use App\Http\Controllers\Pasien\Skrining\RiwayatKehamilanGPAController;
@@ -25,13 +29,10 @@ use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitKeluargaController;
 use App\Http\Controllers\Pasien\Skrining\PreeklampsiaController;
 use App\Http\Controllers\Dinkes\AnalyticsController;
 
-
 /*
 |--------------------------------------------------------------------------
 | Home / Landing
 |--------------------------------------------------------------------------
-| Satu saja. Jika sudah login, arahkan ke dashboard sesuai role.
-| Jika belum, tampilkan halaman login pasien (UI publik).
 */
 
 Route::get('/', function () {
@@ -44,7 +45,7 @@ Route::get('/', function () {
             'bidan'       => redirect()->route('bidan.dashboard'),
             'rumah_sakit' => redirect()->route('rs.dashboard'),
             'pasien'      => redirect()->route('pasien.dashboard'),
-            default       => redirect()->route('login'), // dari auth.php (Breeze)
+            default       => redirect()->route('login'),
         };
     }
 
@@ -64,8 +65,8 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
             // Dashboard
             Route::get('/dashboard', [DinkesDashboardController::class, 'index'])->name('dashboard');
-            Route::get('/pasien/{pasien}', [PasienController::class, 'show'])
-                ->name('pasien.show');
+            Route::get('/pasien/{pasien}', [PasienController::class, 'show'])->name('pasien.show');
+
             // Data Master
             Route::get('/data-master', [DataMasterController::class, 'index'])->name('data-master');
             Route::get('/data-master/create', [DataMasterController::class, 'create'])->name('data-master.create');
@@ -92,18 +93,16 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/pasien-nifas', [PasienNifasController::class, 'index'])->name('pasien-nifas');
             Route::delete('/pasien-nifas/{pasien}', [PasienNifasController::class, 'destroy'])->name('pasien-nifas.destroy');
 
-
-            // Profile
-            Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-            Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-            Route::delete('/profile/photo', [ProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
+            // Profile Dinkes
+            Route::get('/profile', [DinkesProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('/profile', [DinkesProfileController::class, 'update'])->name('profile.update');
+            Route::delete('/profile/photo', [DinkesProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
 
             // Analytics
             Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
             Route::get('/analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
             Route::get('/analytics/var/{key}', [AnalyticsController::class, 'showVariable'])->name('analytics.var');
         });
-
 
     // ================== PUSKESMAS ==================
     Route::middleware('role:puskesmas')
@@ -119,33 +118,41 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:bidan')
         ->prefix('bidan')->as('bidan.')
         ->group(function () {
+            // Dashboard
             Route::get('/dashboard', [BidanDashboardController::class, 'index'])->name('dashboard');
+
+            // Skrining
             Route::get('/skrining', [\App\Http\Controllers\Bidan\SkriningController::class, 'index'])->name('skrining');
 
-            // 1. Route untuk halaman detail (tujuan setelah klik "Ya")
+            // Detail skrining (setelah klik "Ya")
             Route::get('/skrining/{skrining}', [\App\Http\Controllers\Bidan\SkriningController::class, 'show'])
                 ->name('skrining.show');
 
-            // 2. Route untuk update status "checked" (saat "Ya" diklik)
+            // Update status "checked"
             Route::post('/skrining/{skrining}/mark-as-viewed', [\App\Http\Controllers\Bidan\SkriningController::class, 'markAsViewed'])
                 ->name('skrining.markAsViewed');
 
-            // 3. Route untuk tombol "Sudah Diperiksa"
+            // Tombol "Sudah Diperiksa"
             Route::post('/skrining/{skrining}/follow-up', [\App\Http\Controllers\Bidan\SkriningController::class, 'followUp'])
                 ->name('skrining.followUp');
+
+            // ========== Profile Bidan ==========
+            // Nanti temanmu tinggal buat Bidan\ProfileController + view-nya
+            Route::get('/profile', [BidanProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('/profile', [BidanProfileController::class, 'update'])->name('profile.update');
+            Route::delete('/profile/photo', [BidanProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
         });
 
     // ================== RUMAH SAKIT ==================
-
     Route::middleware('role:rumah_sakit')
         ->prefix('rs')->as('rs.')
         ->group(function () {
             Route::get('/dashboard', [RsDashboardController::class, 'index'])->name('dashboard');
-            
+
             // Skrining
             Route::get('/skrining', [RsSkriningController::class, 'index'])->name('skrining.index');
             Route::get('/skrining/{id}', [RsSkriningController::class, 'show'])->name('skrining.show');
-            Route::put('/skrining/{id}', [RsSkriningController::class, 'update'])->name('skrining.update'); 
+            Route::put('/skrining/{id}', [RsSkriningController::class, 'update'])->name('skrining.update');
 
             // Pasien Nifas
             Route::get('/pasien-nifas', [RsPasienNifasController::class, 'index'])->name('pasien-nifas.index');
@@ -169,10 +176,8 @@ Route::middleware(['auth'])->group(function () {
                 ->name('skrining.pengajuan.store');
 
             // Data Diri
-            Route::get('/skrining/ajukan', [DataDiriController::class, 'create'])
-                ->name('data-diri');
-            Route::post('/data-diri', [DataDiriController::class, 'store'])
-                ->name('data-diri.store');
+            Route::get('/skrining/ajukan', [DataDiriController::class, 'create'])->name('data-diri');
+            Route::post('/data-diri', [DataDiriController::class, 'store'])->name('data-diri.store');
 
             // Riwayat Kehamilan & Persalinan (GPA)
             Route::get('/skrining/riwayat-kehamilan-gpa', [RiwayatKehamilanGPAController::class, 'riwayatKehamilanGpa'])
@@ -209,12 +214,14 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/profile', [\App\Http\Controllers\Pasien\ProfileController::class, 'update'])->name('profile.update');
             Route::delete('/profile/photo', [\App\Http\Controllers\Pasien\ProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
 
+            // CRUD Skrining oleh Pasien
             Route::get('/skrining/{skrining}', [PasienSkriningController::class, 'show'])->name('skrining.show');
             Route::get('/skrining/{skrining}/edit', [PasienSkriningController::class, 'edit'])->name('skrining.edit');
             Route::put('/skrining/{skrining}', [PasienSkriningController::class, 'update'])->name('skrining.update');
             Route::delete('/skrining/{skrining}', [PasienSkriningController::class, 'destroy'])->name('skrining.destroy');
         });
 
+    // ================== WILAYAH ==================
     Route::prefix('wilayah')->group(function () {
         Route::get('provinces', [WilayahController::class, 'provinces'])->name('wilayah.provinces');
         Route::get('regencies/{provId}', [WilayahController::class, 'regencies'])->name('wilayah.regencies');
