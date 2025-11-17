@@ -1,9 +1,11 @@
 @props(['current' => request()->route()->getName()])
 
 @php
-    // Warna aktif dan idle
-    $active = 'group flex items-center gap-3 px-6 py-3 bg-[#B9257F] text-white font-medium rounded-xl transition';
-    $idle = 'group flex items-center gap-3 px-6 py-3 hover:text-white hover:font-medium hover:bg-[#B9257F] rounded-xl transition';
+    // Kelas aktif & idle (sekarang lebar penuh: w-full)
+    $active =
+        'group flex items-center gap-3 w-full px-6 py-3 bg-[#B9257F] text-white font-medium rounded-xl transition';
+    $idle =
+        'group flex items-center gap-3 w-full px-6 py-3 hover:text-white hover:font-medium hover:bg-[#B9257F] rounded-xl transition';
 
     $is = fn($pattern) => request()->routeIs($pattern);
 @endphp
@@ -33,46 +35,69 @@
                     <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
             </button>
-
         </div>
 
         <!-- Navigasi utama -->
-        <nav class="mt-4 px-3 pb-4 overflow-y-auto max-h-[calc(100vh-150px)] space-y-2">
-            <a href="{{ route('dinkes.dashboard') }}" class="{{ $is('dinkes.dashboard*') ? $active : $idle }}">
-                <img src="{{ asset('icons/Group 36729.png') }}"
-                    class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Dashboard">
-                <span>Dashboard</span>
-            </a>
+        <nav class="mt-4 px-3 pb-4 overflow-y-auto max-h-[calc(100vh-150px)] space-y-4">
+            {{-- HOME section --}}
+            <div class="space-y-2">
+                <p class="px-6 text-[13px] leading-[46px] font-medium text-black/50 tracking-[0.15em] uppercase">
+                    HOME
+                </p>
 
-            <a href="{{ route('dinkes.data-master') }}" class="{{ $is('dinkes.data-master*') ? $active : $idle }}">
-                <img src="{{ asset('icons/Group 36805.svg') }}"
-                    class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Data Master">
-                <span>Data Master</span>
-            </a>
+                <a href="{{ route('dinkes.dashboard') }}" class="{{ $is('dinkes.dashboard*') ? $active : $idle }}">
+                    <img src="{{ asset('icons/Group 36729.png') }}"
+                        class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Dashboard">
+                    <span>Dashboard</span>
+                </a>
 
-            <a href="{{ route('dinkes.akun-baru') }}" class="{{ $is('dinkes.akun-baru*') ? $active : $idle }}">
-                <img src="{{ asset('icons/Iconly/Regular/Light/Message.svg') }}"
-                    class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Akun Baru">
-                <span>Akun Baru</span>
-            </a>
+                <a href="{{ route('dinkes.data-master') }}" class="{{ $is('dinkes.data-master*') ? $active : $idle }}">
+                    <img src="{{ asset('icons/Group 36805.svg') }}"
+                        class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Data Master">
+                    <span>Data Master</span>
+                </a>
 
-            <a href="{{ route('dinkes.pasien-nifas') }}" class="{{ $is('dinkes.pasien-nifas*') ? $active : $idle }}">
-                <img src="{{ asset('icons/Iconly/Regular/Light/2 User.svg') }}"
-                    class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Pasien Nifas">
-                <span>Pasien Nifas</span>
-            </a>
+                <a href="{{ route('dinkes.akun-baru') }}" class="{{ $is('dinkes.akun-baru*') ? $active : $idle }}">
+                    <img src="{{ asset('icons/Iconly/Regular/Light/Message.svg') }}"
+                        class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Akun Baru">
+                    <span>Akun Baru</span>
+                </a>
+
+                <a href="{{ route('dinkes.pasien-nifas') }}"
+                    class="{{ $is('dinkes.pasien-nifas*') ? $active : $idle }}">
+                    <img src="{{ asset('icons/Iconly/Regular/Light/2 User.svg') }}"
+                        class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Pasien Nifas">
+                    <span>Pasien Nifas</span>
+                </a>
+            </div>
+
+            {{-- ACCOUNT section --}}
+            <div class="space-y-2 pt-2">
+                <p class="px-6 text-[13px] leading-[46px] font-medium text-black/50 tracking-[0.15em] uppercase">
+                    ACCOUNT
+                </p>
+
+                <a href="{{ route('dinkes.profile.edit') }}" class="{{ $is('dinkes.profile*') ? $active : $idle }}">
+                    <img src="{{ asset('icons/Iconly/Regular/Outline/Setting.svg') }}"
+                        class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Pengaturan">
+                    <span>Pengaturan</span>
+                </a>
+
+                <!-- Keluar -->
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit"
+                        class="{{ $idle }} text-[#E53935] underline underline-offset-4 decoration-2 hover:text-white">
+                        <img src="{{ asset('icons/Iconly/Regular/Outline/Logout.svg') }}" alt="Keluar"
+                            class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert">
+                        <span>Keluar</span>
+                    </button>
+                </form>
+
+            </div>
         </nav>
     </div>
 
-    <!-- Logout -->
-    <form method="POST" action="{{ route('logout') }}" class="p-3 border-t border-[#F0F0F0]">
-        @csrf
-        <button type="submit"
-            class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-[#7C7C7C] hover:bg-[#F3F3F3]">
-            <img src="{{ asset('icons/Iconly/Sharp/Light/Profile.svg') }}" alt="Logout" class="w-4 h-4">
-            Logout
-        </button>
-    </form>
 </aside>
 
 {{-- ========== HANDLE PEMBUKA (MOBILE) ========== --}}
