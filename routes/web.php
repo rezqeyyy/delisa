@@ -136,6 +136,7 @@ Route::middleware(['auth'])->group(function () {
         });
 
     // ================== RUMAH SAKIT ==================
+
     Route::middleware('role:rumah_sakit')
         ->prefix('rs')->as('rs.')
         ->group(function () {
@@ -144,11 +145,16 @@ Route::middleware(['auth'])->group(function () {
             // Skrining
             Route::get('/skrining', [RsSkriningController::class, 'index'])->name('skrining.index');
             Route::get('/skrining/{id}', [RsSkriningController::class, 'show'])->name('skrining.show');
+            Route::put('/skrining/{id}', [RsSkriningController::class, 'update'])->name('skrining.update'); 
 
             // Pasien Nifas
             Route::get('/pasien-nifas', [RsPasienNifasController::class, 'index'])->name('pasien-nifas.index');
+            Route::get('/pasien-nifas/create', [RsPasienNifasController::class, 'create'])->name('pasien-nifas.create');
             Route::get('/pasien-nifas/download/pdf', [RsPasienNifasController::class, 'downloadPDF'])->name('pasien-nifas.download-pdf');
             Route::get('/pasien-nifas/{id}', [RsPasienNifasController::class, 'show'])->name('pasien-nifas.show');
+
+            Route::post('/pasien-nifas/cek-nik', [RsPasienNifasController::class, 'cekNik'])->name('pasien-nifas.cek-nik');
+            Route::post('/pasien-nifas/store', [RsPasienNifasController::class, 'store'])->name('pasien-nifas.store');
         });
 
     // ================== PASIEN ==================

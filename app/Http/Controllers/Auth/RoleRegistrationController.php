@@ -46,7 +46,6 @@ class RoleRegistrationController extends Controller
 
             // 2) detail puskesmas melekat ke user (sudah lengkap dari form)
             DB::table('puskesmas')->insert([
-                'user_id'        => $userId,
                 'nama_puskesmas' => $data['nama'],
                 'kecamatan'      => $data['kecamatan'],
                 'lokasi'         => $data['lokasi'] ?? '',
@@ -81,7 +80,7 @@ class RoleRegistrationController extends Controller
                 'password'   => Hash::make($data['password']),
                 'phone'      => $data['phone'] ?? null,
                 'address'    => $data['lokasi'] ?? null,
-                'role_id'    => $this->roleId('rs'),
+                'role_id'    => $this->roleId('rumah_sakit'),
                 'status'     => 0,
                 'created_at' => now(),
                 'updated_at' => now(),

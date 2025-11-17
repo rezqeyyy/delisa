@@ -3,6 +3,22 @@
 @section('title', 'List Pasien Nifas')
 
 @section('content')
+
+{{-- Success/Error Message --}}
+@if(session('success'))
+<div class="alert alert-success">
+    <i class="fas fa-check-circle"></i>
+    {{ session('success') }}
+</div>
+@endif
+
+@if(session('error'))
+<div class="alert alert-danger">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ session('error') }}
+</div>
+@endif
+
 <div class="dashboard-wrapper">
     <!-- Sidebar -->
     <div class="sidebar">
@@ -43,68 +59,35 @@
     <div class="main-content">
         <!-- Header -->
         <div class="content-header">
-            <div class="page-title">
-                <i class="fas fa-exchange-alt"></i>
-                <h1>List Pasien Nifas</h1>
-            </div>
-            <div class="header-actions">
-                <button class="icon-btn"><i class="fas fa-cog"></i></button>
-                <button class="icon-btn"><i class="fas fa-bell"></i></button>
-                <div class="user-info" onclick="toggleDropdown()">
-                    <div class="user-avatar">{{ substr(Auth::user()->name ?? 'H', 0, 1) }}</div>
-                    <div class="user-details">
-                        <div class="user-name">{{ Auth::user()->name ?? 'Nama Bidan' }}</div>
-                        <div class="user-email">{{ Auth::user()->email ?? 'email Bidan' }}</div>
-                    </div>
-                    <i class="fas fa-chevron-down dropdown-icon"></i>
-                    
-                    <!-- Dropdown Menu -->
-                    <div class="dropdown-menu" id="userDropdown">
-                        <a href="#" class="dropdown-item">
-                            <i class="fas fa-user"></i> Profile
-                        </a>
-                        <a href="#" class="dropdown-item">
-                            <i class="fas fa-cog"></i> Settings
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item text-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <h2 class="page-title">List Pasien Nifas</h2>
         </div>
 
-        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-            @csrf
-        </form>
-
-        <!-- Main Content Area -->
-        <div class="page-content">
-            <div class="content-card">
+        <!-- Content -->
+        <div class="skrining-content">
+            <div class="dashboard-card">
                 <div class="card-header">
-                    <div class="card-title-section">
+                    <div class="card-title">
                         <div class="icon-wrapper">
-                            <i class="fas fa-file-medical"></i>
+                            <i class="fas fa-clipboard-list"></i>
                         </div>
                         <div>
-                            <h2>Data Pasien Nifas</h2>
-                            <p class="card-subtitle">Data pasien yang sedang nifas pada puskesmas ini</p>
+                            <span class="title-main">Data Pasien Nifas</span>
+                            <p class="title-subtitle">Data pasien yang sedang nifas pada puskesmas ini</p>
                         </div>
                     </div>
                     <div class="card-actions">
-                        <button class="btn-primary" onclick="tambahAkun()">
+                        <a href="{{ route('rs.pasien-nifas.create') }}" class="btn-action-header">
                             <i class="fas fa-plus"></i>
                             Tambah Akun
-                        </button>
-                        <button class="btn-download" onclick="downloadPDF()">
+                        </a>
+                        <button class="btn-action-header" onclick="downloadPDF()">
                             <i class="fas fa-download"></i>
                             Download Data
                         </button>
                     </div>
                 </div>
-
-                <div class="card-body">
+                
+                <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
@@ -114,36 +97,44 @@
                                     <th><i class="fas fa-calendar"></i> Tanggal</th>
                                     <th><i class="fas fa-map-marker-alt"></i> Alamat</th>
                                     <th><i class="fas fa-phone"></i> No Telp</th>
-                                    <th><i class="fas fa-heartbeat"></i> Penanganan</th>
-                                    <th><i class="fas fa-cog"></i> Aksi</th>
+                                    <th><i class="fas fa-clipboard-check"></i> Penanganan</th>
+                                    <th><i class="fas fa-eye"></i> Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($pasienNifas as $pasien)
                                 <tr>
-                                    <td>{{ $pasien->id }}</td>
+                                    <td>#{{ str_pad($pasien->id, 20, '0', STR_PAD_LEFT) }}</td>
                                     <td>
                                         <div class="user-cell">
                                             <i class="fas fa-user-circle"></i>
-                                            <span>{{ $pasien->pasien->nik ?? 'Asep Dadang' }}</span>
+                                            <span>{{ $pasien->pasien->user->name ?? 'Asep Dadang' }}</span>
                                         </div>
                                     </td>
-                                    <td>{{ \Carbon\Carbon::parse($pasien->tanggal_mulai_nifas)->format('d/m/Y') }}</td>
-                                    <td>{{ $pasien->rs->PProvinsi ?? 'N/A' }}</td>
+                                    <td>{{ $pasien->created_at ? $pasien->created_at->format('d/m/Y') : '01/01/2025' }}</td>
+                                    <td>{{ $pasien->pasien->PKabupaten ?? 'Beji' }}</td>
                                     <td>{{ $pasien->pasien->no_jkn ?? '0000000000' }}</td>
                                     <td>
-                                        @if($pasien->status_kunjungan == 'Aman')
-                                            <span class="badge badge-success">Aman</span>
-                                        @elseif($pasien->status_kunjungan == 'Beresiko')
-                                            <span class="badge badge-danger">Telat</span>
-                                        @elseif($pasien->status_kunjungan == 'Menengah')
-                                            <span class="badge badge-warning">Waspada</span>
-                                        @else
-                                            <span class="badge badge-success">Aman</span>
-                                        @endif
+                                        @php
+                                            $status = $pasien->status_kunjungan ?? 'Aman';
+                                            $badgeClass = match(strtolower($status)) {
+                                                'beresiko', 'telat' => 'badge-berisiko',
+                                                'aman', 'normal' => 'badge-normal',
+                                                'waspada', 'menengah' => 'badge-waspada',
+                                                default => 'badge-normal'
+                                            };
+                                            $displayText = match(strtolower($status)) {
+                                                'beresiko' => 'Telat',
+                                                'telat' => 'Telat',
+                                                'menengah' => 'Waspada',
+                                                'waspada' => 'Waspada',
+                                                default => 'Aman'
+                                            };
+                                        @endphp
+                                        <span class="badge {{ $badgeClass }}">{{ $displayText }}</span>
                                     </td>
                                     <td>
-                                        <a href="{{ route('rs.pasien-nifas.show', $pasien->id) }}" class="btn-action">
+                                        <a href="{{ route('rs.pasien-nifas.show', $pasien->id) }}" class="btn-proses">
                                             <i class="fas fa-eye"></i>
                                             Lihat Data Nifas
                                         </a>
@@ -151,23 +142,25 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-4">
-                                        <i class="fas fa-inbox fa-2x mb-2 text-muted"></i>
-                                        <p class="text-muted mb-0">Tidak ada data pasien nifas</p>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                                        <p class="mb-0">Tidak ada data pasien nifas</p>
                                     </td>
                                 </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
-
-                    <!-- Pagination -->
-                    @if($pasienNifas->hasPages())
-                    <div class="pagination-wrapper">
-                        {{ $pasienNifas->links('pagination::bootstrap-4') }}
-                    </div>
-                    @endif
                 </div>
+
+                <!-- Pagination -->
+                @if($pasienNifas->hasPages())
+                <div class="card-footer">
+                    <div class="pagination-wrapper">
+                        {{ $pasienNifas->onEachSide(1)->links() }}
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -192,7 +185,6 @@ body {
     min-height: 100vh;
 }
 
-/* Sidebar */
 .sidebar {
     width: 220px;
     background: white;
@@ -285,19 +277,14 @@ body {
     margin-top: 1.5rem;
 }
 
-/* Main Content */
 .main-content {
     flex: 1;
     background: #fafafa;
 }
 
-/* Header */
 .content-header {
     background: white;
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 1.5rem 2rem;
     border-bottom: 1px solid #e8e8e8;
     position: sticky;
     top: 0;
@@ -305,180 +292,47 @@ body {
 }
 
 .page-title {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.page-title i {
-    font-size: 1.5rem;
-    color: #333;
-}
-
-.page-title h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #333;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #1a1a1a;
     margin: 0;
 }
 
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+.skrining-content {
+    padding: 1.5rem 2rem;
 }
 
-.icon-btn {
-    width: 36px;
-    height: 36px;
-    border: none;
-    background: #f8f9fa;
-    border-radius: 8px;
-    cursor: pointer;
-    color: #666;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.875rem;
-}
-
-.icon-btn:hover {
-    background: #e8e8e8;
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    padding-left: 0.75rem;
-    border-left: 1px solid #e8e8e8;
-    position: relative;
-    cursor: pointer;
-}
-
-.user-avatar {
-    width: 36px;
-    height: 36px;
-    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    color: #333;
-    font-size: 0.875rem;
-}
-
-.user-name {
-    font-weight: 600;
-    font-size: 0.8125rem;
-    color: #333;
-    line-height: 1.2;
-}
-
-.user-email {
-    font-size: 0.6875rem;
-    color: #888;
-    line-height: 1.2;
-}
-
-.dropdown-icon {
-    font-size: 0.75rem;
-    color: #666;
-    margin-left: 0.25rem;
-}
-
-/* Dropdown */
-.dropdown-menu {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    right: 0;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    min-width: 180px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px);
-    transition: all 0.2s ease;
-    z-index: 1000;
-    overflow: hidden;
-}
-
-.dropdown-menu.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    padding: 0.625rem 1rem;
-    color: #666;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    font-size: 0.8125rem;
-}
-
-.dropdown-item:hover {
-    background: #f8f9fa;
-    color: #333;
-}
-
-.dropdown-item.text-danger {
-    color: #dc3545;
-}
-
-.dropdown-item.text-danger:hover {
-    background: #fff5f5;
-}
-
-.dropdown-item i {
-    font-size: 0.875rem;
-    width: 16px;
-}
-
-.dropdown-divider {
-    height: 1px;
-    background: #e8e8e8;
-    margin: 0.25rem 0;
-}
-
-/* Page Content */
-.page-content {
-    padding: 1.5rem;
-}
-
-.content-card {
+.dashboard-card {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
-    border: 1px solid #f0f0f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     overflow: hidden;
+    border: 1px solid #f0f0f0;
 }
 
 .card-header {
     padding: 1.25rem 1.5rem;
     border-bottom: 1px solid #f0f0f0;
+    background: #fafafa;
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.card-title-section {
-    display: flex;
-    align-items: center;
+    flex-wrap: wrap;
     gap: 1rem;
 }
 
+.card-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+}
+
 .icon-wrapper {
-    width: 42px;
-    height: 42px;
-    background: #f8f9fa;
-    border-radius: 10px;
+    width: 38px;
+    height: 38px;
+    background: white;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -486,73 +340,64 @@ body {
     flex-shrink: 0;
 }
 
-.icon-wrapper i {
-    font-size: 1.125rem;
+.card-title i {
+    font-size: 1rem;
 }
 
-.card-title-section h2 {
-    font-size: 1.125rem;
+.title-main {
     font-weight: 600;
-    color: #333;
-    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    color: #1a1a1a;
+    display: block;
+    margin-bottom: 0.25rem;
 }
 
-.card-subtitle {
+.title-subtitle {
     font-size: 0.75rem;
     color: #888;
     margin: 0;
+    line-height: 1.4;
 }
 
 .card-actions {
     display: flex;
     gap: 0.75rem;
+    flex-wrap: wrap;
 }
 
-.btn-primary {
+.btn-action-header {
     background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
     color: white;
     border: none;
-    padding: 0.625rem 1.25rem;
+    padding: 0.625rem 1.125rem;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     transition: all 0.2s ease;
     font-size: 0.8125rem;
+    text-decoration: none;
 }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(233, 30, 140, 0.3);
+.btn-action-header:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
 }
 
-.btn-download {
-    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
-    color: white;
-    border: none;
-    padding: 0.625rem 1.25rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s ease;
-    font-size: 0.8125rem;
-}
-
-.btn-download:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(233, 30, 140, 0.3);
+.btn-action-header i {
+    font-size: 0.875rem;
 }
 
 .card-body {
+    padding: 1.25rem;
+}
+
+.card-body.p-0 {
     padding: 0;
 }
 
-/* Table */
 .table-responsive {
     overflow-x: auto;
 }
@@ -567,7 +412,7 @@ body {
 }
 
 .data-table th {
-    padding: 0.875rem 1.25rem;
+    padding: 0.875rem 1rem;
     text-align: left;
     font-weight: 600;
     font-size: 0.6875rem;
@@ -575,6 +420,7 @@ body {
     border-bottom: 1px solid #e8e8e8;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    white-space: nowrap;
 }
 
 .data-table th i {
@@ -584,8 +430,8 @@ body {
 }
 
 .data-table td {
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 1rem;
+    border-bottom: 1px solid #f5f5f5;
     color: #333;
     font-size: 0.8125rem;
 }
@@ -601,113 +447,67 @@ body {
 .user-cell {
     display: flex;
     align-items: center;
-    gap: 0.625rem;
+    gap: 0.5rem;
 }
 
 .user-cell i {
-    font-size: 1.375rem;
+    font-size: 1.25rem;
     color: #ddd;
 }
 
-/* Badges */
 .badge {
-    padding: 0.375rem 0.875rem;
-    border-radius: 16px;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
     font-size: 0.6875rem;
     font-weight: 600;
     display: inline-block;
+    text-align: center;
+    min-width: 80px;
 }
 
-.badge-success {
-    background: #d4edda;
-    color: #28a745;
+.badge-berisiko {
+    background: #EF4444;
+    color: white;
 }
 
-.badge-danger {
-    background: #f8d7da;
-    color: #dc3545;
+.badge-normal {
+    background: #10B981;
+    color: white;
 }
 
-.badge-warning {
-    background: #fff3cd;
-    color: #ffc107;
+.badge-waspada {
+    background: #F59E0B;
+    color: white;
 }
 
-/* Action Button */
-.btn-action {
+.btn-proses {
     background: white;
     border: 1px solid #e8e8e8;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+    padding: 0.45rem 1rem;
+    border-radius: 6px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    gap: 0.425rem;
     font-size: 0.75rem;
     color: #666;
+    text-decoration: none;
     transition: all 0.2s ease;
     font-weight: 500;
-    text-decoration: none;
+    min-width: 140px;
+    white-space: nowrap;
 }
 
-.btn-action:hover {
-    background: #f8f9fa;
-    border-color: #d0d0d0;
-    color: #333;
-}
-
-.btn-action i {
-    font-size: 0.75rem;
-}
-
-/* Pagination */
-.pagination-wrapper {
-    padding: 1.25rem 1.5rem;
-    border-top: 1px solid #f0f0f0;
-    display: flex;
-    justify-content: center;
-}
-
-.pagination {
-    display: flex;
-    gap: 0.375rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.page-item {
-    margin: 0;
-}
-
-.page-link {
-    padding: 0.5rem 0.875rem;
-    border: 1px solid #e8e8e8;
-    border-radius: 6px;
-    color: #666;
-    text-decoration: none;
-    font-size: 0.8125rem;
-    transition: all 0.2s ease;
-    display: block;
-}
-
-.page-link:hover {
+.btn-proses:hover {
     background: #f8f9fa;
     border-color: #d0d0d0;
 }
 
-.page-item.active .page-link {
-    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
-    color: white;
-    border-color: #e91e8c;
+.btn-proses i {
+    font-size: 0.875rem;
 }
 
-.page-item.disabled .page-link {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Utilities */
 .text-center {
     text-align: center;
 }
@@ -729,7 +529,59 @@ body {
     margin-bottom: 0.5rem;
 }
 
-/* Responsive */
+.card-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f0f0f0;
+    background: #fafafa;
+}
+
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+/* Alert Notifications */
+.alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.alert-success {
+    background: #10B981;
+    color: white;
+}
+
+.alert-danger {
+    background: #EF4444;
+    color: white;
+}
+
+.alert i {
+    font-size: 1.125rem;
+}
+
 @media (max-width: 768px) {
     .dashboard-wrapper {
         flex-direction: column;
@@ -742,40 +594,59 @@ body {
     }
     
     .content-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
+        padding: 1rem 1.25rem;
     }
     
-    .header-actions {
-        width: 100%;
-        justify-content: space-between;
+    .skrining-content {
+        padding: 1rem 1.25rem;
     }
     
     .card-header {
         flex-direction: column;
-        gap: 1rem;
         align-items: flex-start;
     }
     
     .card-actions {
         width: 100%;
-        flex-direction: column;
     }
     
-    .btn-primary,
-    .btn-download {
-        width: 100%;
+    .btn-action-header {
+        flex: 1;
         justify-content: center;
     }
     
-    .data-table {
-        font-size: 0.75rem;
+    .alert {
+        right: 10px;
+        left: 10px;
+        top: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-title {
+        font-size: 1.25rem;
+    }
+    
+    .card-header {
+        padding: 1rem;
     }
     
     .data-table th,
     .data-table td {
-        padding: 0.75rem;
+        padding: 0.625rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .badge {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.65rem;
+        min-width: 70px;
+    }
+    
+    .btn-proses {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.7rem;
+        min-width: 120px;
     }
 }
 </style>
@@ -783,31 +654,20 @@ body {
 
 @push('scripts')
 <script>
-function toggleDropdown() {
-    const dropdown = document.getElementById('userDropdown');
-    dropdown.classList.toggle('show');
-}
-
-// Close dropdown when clicking outside
-document.addEventListener('click', function(event) {
-    const dropdown = document.getElementById('userDropdown');
-    const userInfo = event.target.closest('.user-info');
-    
-    if (!userInfo) {
-        dropdown.classList.remove('show');
-    }
-});
-
-function tambahAkun() {
-    alert('Fitur Tambah Akun akan segera ditambahkan');
-    // Route create belum dibuat
-}
-
-
-
 function downloadPDF() {
     window.location.href = '{{ route("rs.pasien-nifas.download-pdf") }}';
 }
+
+// Auto-hide alert setelah 5 detik
+document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 300);
+        }, 5000);
+    });
+});
 </script>
 @endpush
 

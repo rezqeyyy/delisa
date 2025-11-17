@@ -44,38 +44,6 @@
         <!-- Header -->
         <div class="content-header">
             <h2 class="page-title">List Skrining Ibu Hamil</h2>
-            <div class="header-actions">
-                <button class="icon-btn"><i class="fas fa-cog"></i></button>
-                <button class="icon-btn"><i class="fas fa-bell"></i></button>
-                <div class="user-info">
-                    <!-- Profile dropdown -->
-                    <div id="profileWrapper" class="profile-wrapper">
-                        <button id="profileBtn" class="profile-btn">
-                            <div class="user-avatar">{{ substr(Auth::user()->name ?? 'H', 0, 1) }}</div>
-                            
-                            <div class="user-details">
-                                <div class="user-name">{{ Auth::user()->name ?? 'Nama Bidan' }}</div>
-                                <div class="user-email">{{ Auth::user()->email ?? 'email Bidan' }}</div>
-                            </div>
-                            
-                            <i class="fas fa-chevron-down" style="font-size: 0.875rem; color: #666; opacity: 0.7;"></i>
-                        </button>
-
-                        <div id="profileMenu" class="profile-menu hidden">
-                            <div class="profile-menu-header">
-                                <p class="profile-menu-name">{{ Auth::user()->name ?? 'Nama Bidan' }}</p>
-                                <p class="profile-menu-email">{{ Auth::user()->email ?? 'email Bidan' }}</p>
-                            </div>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit" class="profile-menu-logout">
-                                    Logout
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Content -->
@@ -86,7 +54,10 @@
                         <div class="icon-wrapper">
                             <i class="fas fa-clipboard-list"></i>
                         </div>
-                        <span>Data Pasien Ibu Hamil</span>
+                        <div>
+                            <span class="title-main">Data Pasien Ibu Hamil</span>
+                            <p class="title-subtitle">Data pasien yang melakukan pengecakan pada puskesmas ini</p>
+                        </div>
                     </div>
                 </div>
                 
@@ -97,10 +68,10 @@
                                 <tr>
                                     <th><i class="fas fa-id-badge"></i> NIK Pasien</th>
                                     <th><i class="fas fa-user"></i> Nama Pasien</th>
-                                    <th><i class="fas fa-baby"></i> Kehamilan</th>
+                                    <th><i class="fas fa-calendar"></i> Kedatangan</th>
                                     <th><i class="fas fa-map-marker-alt"></i> Alamat</th>
                                     <th><i class="fas fa-phone"></i> No Telp</th>
-                                    <th><i class="fas fa-exclamation-triangle"></i> Hasil</th>
+                                    <th><i class="fas fa-clipboard-check"></i> Resiko</th>
                                     <th><i class="fas fa-eye"></i> View Detail</th>
                                 </tr>
                             </thead>
@@ -114,24 +85,26 @@
                                             <span>{{ $skrining->pasien->nama ?? 'N/A' }}</span>
                                         </div>
                                     </td>
-                                    <td>{{ $skrining->riwayatKehamilanGpa->kehamilan ?? 'N/A' }}</td>
+                                    <td>{{ $skrining->created_at ? $skrining->created_at->format('d/m/Y') : 'N/A' }}</td>
                                     <td>{{ $skrining->pasien->PKabupaten ?? 'N/A' }}</td>
                                     <td>{{ $skrining->pasien->no_jkn ?? 'N/A' }}</td>
                                     <td>
-                                        @if($skrining->status_pre_eklampsia == 'Beresiko' || $skrining->kesimpulan == 'Beresiko')
-                                            <span class="badge badge-danger">Beresiko</span>
-                                        @elseif($skrining->status_pre_eklampsia == 'Aman' || $skrining->kesimpulan == 'Aman')
-                                            <span class="badge badge-success">Aman</span>
-                                        @elseif($skrining->status_pre_eklampsia == 'Menengah' || $skrining->kesimpulan == 'Menengah')
-                                            <span class="badge badge-warning">Menengah</span>
-                                        @else
-                                            <span class="badge badge-secondary">{{ $skrining->kesimpulan ?? 'N/A' }}</span>
-                                        @endif
+                                        @php
+                                            $conclusion = $skrining->kesimpulan ?? $skrining->status_pre_eklampsia ?? 'Normal';
+                                            $badgeClass = match(strtolower($conclusion)) {
+                                                'berisiko', 'beresiko' => 'badge-berisiko',
+                                                'normal', 'aman' => 'badge-normal',
+                                                'waspada', 'menengah' => 'badge-waspada',
+                                                default => 'badge-secondary'
+                                            };
+                                            $displayText = ucfirst($conclusion);
+                                        @endphp
+                                        <span class="badge {{ $badgeClass }}">{{ $displayText }}</span>
                                     </td>
                                     <td>
-                                        <a href="{{ route('rs.skrining.show', $skrining->id) }}" class="btn-view">
-                                            <i class="fas fa-eye"></i>
-                                            View
+                                        <a href="{{ route('rs.skrining.show', $skrining->id) }}" class="btn-proses">
+                                            <i class="fas fa-user-check"></i>
+                                            Proses
                                         </a>
                                     </td>
                                 </tr>
@@ -180,7 +153,7 @@ body {
     min-height: 100vh;
 }
 
-/* Sidebar - Sama seperti Dashboard */
+/* Sidebar */
 .sidebar {
     width: 220px;
     background: white;
@@ -281,10 +254,7 @@ body {
 
 .content-header {
     background: white;
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 1.5rem 2rem;
     border-bottom: 1px solid #e8e8e8;
     position: sticky;
     top: 0;
@@ -292,198 +262,67 @@ body {
 }
 
 .page-title {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 600;
-    color: #333;
+    color: #1a1a1a;
     margin: 0;
-}
-
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.icon-btn {
-    width: 36px;
-    height: 36px;
-    border: none;
-    background: #f8f9fa;
-    border-radius: 8px;
-    cursor: pointer;
-    color: #666;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.875rem;
-}
-
-.icon-btn:hover {
-    background: #e8e8e8;
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    padding-left: 0.75rem;
-    border-left: 1px solid #e8e8e8;
-}
-
-/* Profile Dropdown - SESUAI TEMPLATE DINKES */
-.profile-wrapper {
-    position: relative;
-}
-
-.profile-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    background: white;
-    border: 1px solid #e8e8e8;
-    border-radius: 999px;
-    padding: 0.25rem 0.75rem 0.25rem 0.25rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.profile-btn:hover {
-    background: #f8f9fa;
-}
-
-.user-avatar {
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    color: #333;
-    font-size: 0.875rem;
-}
-
-.user-details {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    line-height: 1.2;
-}
-
-.user-name {
-    font-weight: 600;
-    font-size: 0.8125rem;
-    color: #1D1D1D;
-}
-
-.user-email {
-    font-size: 0.6875rem;
-    color: #7C7C7C;
-    margin-top: -0.125rem;
-}
-
-.profile-menu {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    right: 0;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    min-width: 220px;
-    overflow: hidden;
-    z-index: 9999;
-    border: 1px solid #E9E9E9;
-}
-
-.profile-menu.hidden {
-    display: none;
-}
-
-.profile-menu-header {
-    padding: 0.875rem 1rem;
-    border-bottom: 1px solid #F0F0F0;
-}
-
-.profile-menu-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #1D1D1D;
-    margin: 0 0 0.25rem 0;
-}
-
-.profile-menu-email {
-    font-size: 0.75rem;
-    color: #7C7C7C;
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.profile-menu-logout {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    background: none;
-    border: none;
-    color: #333;
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
-}
-
-.profile-menu-logout:hover {
-    background: #F9F9F9;
 }
 
 /* Content */
 .skrining-content {
-    padding: 1.25rem;
+    padding: 1.5rem 2rem;
 }
 
 .dashboard-card {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     overflow: hidden;
     border: 1px solid #f0f0f0;
 }
 
 .card-header {
-    padding: 1rem 1.25rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 1.25rem 1.5rem;
     border-bottom: 1px solid #f0f0f0;
+    background: #fafafa;
 }
 
 .card-title {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-weight: 600;
-    font-size: 0.9375rem;
-    color: #333;
+    align-items: flex-start;
+    gap: 0.875rem;
 }
 
 .icon-wrapper {
-    width: 34px;
-    height: 34px;
-    background: #f8f9fa;
+    width: 38px;
+    height: 38px;
+    background: white;
+    border: 1px solid #e8e8e8;
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #666;
+    flex-shrink: 0;
 }
 
 .card-title i {
-    font-size: 0.9375rem;
+    font-size: 1rem;
+}
+
+.title-main {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1a1a1a;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.title-subtitle {
+    font-size: 0.75rem;
+    color: #888;
+    margin: 0;
+    line-height: 1.4;
 }
 
 .card-body {
@@ -517,6 +356,7 @@ body {
     border-bottom: 1px solid #e8e8e8;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    white-space: nowrap;
 }
 
 .data-table th i {
@@ -526,8 +366,8 @@ body {
 }
 
 .data-table td {
-    padding: 0.875rem 1rem;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 1rem;
+    border-bottom: 1px solid #f5f5f5;
     color: #333;
     font-size: 0.8125rem;
 }
@@ -551,28 +391,31 @@ body {
     color: #ddd;
 }
 
-/* Badges */
+/* Badges - Updated Colors */
 .badge {
-    padding: 0.375rem 0.875rem;
-    border-radius: 16px;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
     font-size: 0.6875rem;
     font-weight: 600;
     display: inline-block;
+    text-align: center;
+    min-width: 80px;
 }
 
-.badge-danger {
-    background: #fee;
-    color: #dc3545;
+/* Status Badge Colors - DeLISA */
+.badge-berisiko {
+    background: #EF4444;
+    color: white;
 }
 
-.badge-success {
-    background: #e8f5e9;
-    color: #28a745;
+.badge-normal {
+    background: #10B981;
+    color: white;
 }
 
-.badge-warning {
-    background: #fff8e1;
-    color: #ffc107;
+.badge-waspada {
+    background: #F59E0B;
+    color: white;
 }
 
 .badge-secondary {
@@ -580,29 +423,31 @@ body {
     color: #6c757d;
 }
 
-.btn-view {
+.btn-proses {
     background: white;
     border: 1px solid #e8e8e8;
-    padding: 0.375rem 0.875rem;
+    padding: 0.45rem 1rem;
     border-radius: 6px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
+    justify-content: center;
+    gap: 0.425rem;
     font-size: 0.75rem;
     color: #666;
     text-decoration: none;
     transition: all 0.2s ease;
     font-weight: 500;
+    min-width: 90px;
 }
 
-.btn-view:hover {
+.btn-proses:hover {
     background: #f8f9fa;
     border-color: #d0d0d0;
 }
 
-.btn-view i {
-    font-size: 0.75rem;
+.btn-proses i {
+    font-size: 0.875rem;
 }
 
 .text-center {
@@ -628,8 +473,9 @@ body {
 
 /* Pagination */
 .card-footer {
-    padding: 1rem 1.25rem;
+    padding: 1rem 1.5rem;
     border-top: 1px solid #f0f0f0;
+    background: #fafafa;
 }
 
 .pagination-wrapper {
@@ -650,23 +496,20 @@ body {
     }
     
     .content-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
+        padding: 1rem 1.25rem;
     }
     
-    .header-actions {
-        width: 100%;
-        justify-content: space-between;
+    .skrining-content {
+        padding: 1rem 1.25rem;
     }
 }
 
 @media (max-width: 576px) {
-    .skrining-content {
-        padding: 0.875rem;
+    .page-title {
+        font-size: 1.25rem;
     }
     
-    .card-body {
+    .card-header {
         padding: 1rem;
     }
     
@@ -675,38 +518,20 @@ body {
         padding: 0.625rem 0.75rem;
         font-size: 0.75rem;
     }
+    
+    .badge {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.65rem;
+        min-width: 70px;
+    }
+    
+    .btn-proses {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.7rem;
+        min-width: 80px;
+    }
 }
 </style>
-@endpush
-
-@push('scripts')
-<script>
-// Profile Dropdown Toggle - SESUAI TEMPLATE DINKES
-document.addEventListener('DOMContentLoaded', function() {
-    const profileBtn = document.getElementById('profileBtn');
-    const profileMenu = document.getElementById('profileMenu');
-    
-    if (profileBtn && profileMenu) {
-        // Toggle dropdown saat klik button
-        profileBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            profileMenu.classList.toggle('hidden');
-        });
-        
-        // Close dropdown saat klik di luar
-        document.addEventListener('click', function(e) {
-            if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
-                profileMenu.classList.add('hidden');
-            }
-        });
-        
-        // Prevent dropdown dari close saat klik di dalam menu
-        profileMenu.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-    }
-});
-</script>
 @endpush
 
 @endsection
