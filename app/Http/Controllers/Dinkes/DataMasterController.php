@@ -84,7 +84,7 @@ class DataMasterController extends Controller
             'puskesmasList' => $puskesmasList,
         ]);
     }
-    
+
 
     // app/Http/Controllers/Dinkes/DataMasterController.php
 
@@ -408,48 +408,47 @@ class DataMasterController extends Controller
             ->with('ok', 'Data berhasil disimpan.');
     }
 
-    /** ===== E. DESTROY (hapus sesuai tab/role) ===== */
     public function destroy(Request $request, int $user)
-    {
-        $tab = $request->query('tab', 'bidan');
+{
+    $tab = $request->query('tab', 'bidan');
 
-        try {
-            DB::transaction(function () use ($tab, $user) {
-                if ($tab === 'rs') {
-                    // Hapus detail RS -> lalu user
-                    DB::table('rumah_sakits')->where('user_id', $user)->delete();
-                } elseif ($tab === 'puskesmas') {
-                    // Dapatkan id puskesmas dari user terkait
-                    $puskesmasId = DB::table('puskesmas')->where('user_id', $user)->value('id');
+    try {
+        DB::transaction(function () use ($tab, $user) {
+            if ($tab === 'rs') {
+                DB::table('rumah_sakits')->where('user_id', $user)->delete();
+            } elseif ($tab === 'puskesmas') {
+                $puskesmasId = DB::table('puskesmas')->where('user_id', $user)->value('id');
 
-                    if ($puskesmasId) {
-                        // Lepaskan relasi bidan ke puskesmas ini agar FK aman
-                        DB::table('bidans')
-                            ->where('puskesmas_id', $puskesmasId)
-                            ->update([
-                                'puskesmas_id' => null,
-                                'updated_at'   => now(),
-                            ]);
+                if ($puskesmasId) {
+                    DB::table('bidans')
+                        ->where('puskesmas_id', $puskesmasId)
+                        ->update([
+                            'puskesmas_id' => null,
+                            'updated_at'   => now(),
+                        ]);
 
-                        // Hapus row puskesmas
-                        DB::table('puskesmas')->where('id', $puskesmasId)->delete();
-                    }
-                } else { // bidan
-                    // Hapus detail Bidan -> lalu user
-                    DB::table('bidans')->where('user_id', $user)->delete();
+                    DB::table('puskesmas')->where('id', $puskesmasId)->delete();
                 }
+            } else {
+                DB::table('bidans')->where('user_id', $user)->delete();
+            }
 
-                // Terakhir: hapus user
-                DB::table('users')->where('id', $user)->delete();
-            });
+            DB::table('users')->where('id', $user)->delete();
+        });
 
-            return redirect()
-                ->route('dinkes.data-master', ['tab' => $tab, 'q' => $request->query('q')])
-                ->with('ok', 'Akun dan detail berhasil dihapus.');
-        } catch (\Throwable $e) {
-            return redirect()
-                ->route('dinkes.data-master', ['tab' => $tab, 'q' => $request->query('q')])
-                ->with('err', 'Gagal menghapus data: ' . $e->getMessage());
-        }
+        return redirect()
+            ->route('dinkes.data-master', [
+                'tab' => $tab,
+                'q'   => $request->query('q'), // <-- langsung dari $request
+            ])
+            ->with('ok', 'Akun dan detail berhasil dihapus.');
+    } catch (\Throwable $e) {
+        return redirect()
+            ->route('dinkes.data-master', [
+                'tab' => $tab,
+                'q'   => request()->query('q'), // <-- di sini juga, gunakan request() helper
+            ])
+            ->with('err', 'Gagal menghapus data: ' . $e->getMessage());
     }
+}
 }

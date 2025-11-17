@@ -12,8 +12,8 @@ use App\Http\Controllers\Rs\PasienNifasController as RsPasienNifasController;
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
 use App\Http\Controllers\Pasien\SkriningController as PasienSkriningController;
 
-use App\Http\Controllers\Dinkes\DataMasterController;
 use App\Http\Controllers\Dinkes\AkunBaruController;
+use App\Http\Controllers\Dinkes\DataMasterController;
 use App\Http\Controllers\Dinkes\PasienNifasController;
 use App\Http\Controllers\Dinkes\ProfileController as DinkesProfileController;
 use App\Http\Controllers\Dinkes\PasienController;
@@ -144,7 +144,7 @@ Route::middleware(['auth'])->group(function () {
         });
 
     // ================== RUMAH SAKIT ==================
-    Route::middleware('role:rumah_sakit')
+    Route::middleware('role:rs')
         ->prefix('rs')->as('rs.')
         ->group(function () {
             Route::get('/dashboard', [RsDashboardController::class, 'index'])->name('dashboard');

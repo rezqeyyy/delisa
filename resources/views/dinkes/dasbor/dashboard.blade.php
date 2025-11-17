@@ -405,10 +405,10 @@
                         $totalA = max($hadir + $mangkir, 1);
                         $pHadir = round(($hadir / $totalA) * 100);
                         $pMangkir = 100 - $pHadir;
-                        $seriesAbsensi = $seriesAbsensi ?? array_fill(0, 12, 0);
+                        /* $seriesAbsensi = $seriesAbsensi ?? array_fill(0, 12, 0);
                         if (count($seriesAbsensi) < 12) {
                             $seriesAbsensi = array_pad($seriesAbsensi, 12, 0);
-                        }
+                        } */
                     @endphp
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
@@ -442,18 +442,18 @@
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2"><span
-                                            class="w-3 h-3 rounded-sm bg-[#E20D0D]"></span>Pasien Tidak Hadir</div>
+                                            class="w-3 h-3 rounded-sm bg-[#E20D0D]"></span>Pasien Belum Hadir</div>
                                     <div class="font-semibold tabular-nums">{{ $mangkir }}</div>
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-12 gap-1 items-end h-14">
+                            {{-- <div class="grid grid-cols-12 gap-1 items-end h-14">
                                 @foreach ($seriesAbsensi as $v)
                                     @php $h = 10 + min(100, (int) $v); @endphp
                                     <div class="rounded-[6px] bg-[#B9257F]/60" style="height: {{ $h }}%">
                                     </div>
                                 @endforeach
-                            </div>
+                            </div> --}}
                         </div>
                     </div>
 
