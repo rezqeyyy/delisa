@@ -939,7 +939,7 @@
                                 {{-- UI SAJA: Riwayat Penyakit (multi select chip) --}}
                                 <div class="pt-1 border-t border-dashed border-[#E9E9E9] mt-1">
                                     <p class="block text-xs text-[#7C7C7C] mb-2">
-                                        Riwayat Penyakit <span class="text-[10px]">(UI saja, filter belum aktif)</span>
+                                        Riwayat Penyakit <span class="text-[10px]">(bisa pilih lebih dari satu)</span>
                                     </p>
 
                                     @php

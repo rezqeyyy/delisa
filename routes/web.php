@@ -98,10 +98,6 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/profile', [DinkesProfileController::class, 'update'])->name('profile.update');
             Route::delete('/profile/photo', [DinkesProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
 
-            // Analytics
-            Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
-            Route::get('/analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
-            Route::get('/analytics/var/{key}', [AnalyticsController::class, 'showVariable'])->name('analytics.var');
         });
 
     // ================== PUSKESMAS ==================

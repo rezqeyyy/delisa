@@ -174,13 +174,14 @@ class DashboardController extends Controller
 
         // ===================== 7. TABEL PE (LATEST PER PASIEN) =====================
 
-        $q           = (string) $request->query('q', '');
-        $from        = $request->query('from');
-        $to          = $request->query('to');
-        $resiko      = $request->query('resiko');
-        $status      = $request->query('status');
-        $kategori    = $request->query('kategori');
-        $puskesmasId = $request->query('puskesmas_id');
+        $q                = (string) $request->query('q', '');
+        $from             = $request->query('from');
+        $to               = $request->query('to');
+        $resiko           = $request->query('resiko');
+        $status           = $request->query('status');
+        $kategori         = $request->query('kategori');
+        $puskesmasId      = $request->query('puskesmas_id');
+        $riwayatSelected  = (array) $request->query('riwayat_penyakit_ui', []);
 
         $peQuery = DB::query()
             ->from(DB::raw($latestSkriningSql))
@@ -289,6 +290,66 @@ class DashboardController extends Controller
                 break;
         }
 
+        // ---- Filter RIWAYAT PENYAKIT (multi-select)
+        $riwayatSelected = array_filter($riwayatSelected); // buang string kosong kalau ada
+
+        if (!empty($riwayatSelected)) {
+            // mapping kode -> nama_pertanyaan (harus sama persis seperti di controller pasien)
+            $rpMap = [
+                'hipertensi'  => 'Hipertensi',
+                'alergi'      => 'Alergi',
+                'tiroid'      => 'Tiroid',
+                'tb'          => 'TB',
+                'jantung'     => 'Jantung',
+                'hepatitis_b' => 'Hepatitis B',
+                'jiwa'        => 'Jiwa',
+                'autoimun'    => 'Autoimun',
+                'sifilis'     => 'Sifilis',
+                'diabetes'    => 'Diabetes',
+                'asma'        => 'Asma',
+                'lainnya'     => 'Lainnya',
+            ];
+
+            $namaPertanyaan = [];
+            $filterLainnya  = false;
+
+            foreach ($riwayatSelected as $code) {
+                if ($code === 'lainnya') {
+                    $filterLainnya = true;
+                    continue;
+                }
+                if (isset($rpMap[$code])) {
+                    $namaPertanyaan[] = $rpMap[$code];
+                }
+            }
+
+            $peQuery->whereExists(function ($q) use ($namaPertanyaan, $filterLainnya) {
+                $q->select(DB::raw(1))
+                    ->from('jawaban_kuisioners as jk')
+                    ->join('kuisioner_pasiens as kp', 'kp.id', '=', 'jk.kuisioner_id')
+                    ->whereColumn('jk.skrining_id', 'ls.id')
+                    ->where('kp.status_soal', 'individu')
+                    ->where(function ($w) use ($namaPertanyaan, $filterLainnya) {
+                        // penyakit spesifik (hipertensi, jantung, dll)
+                        if (!empty($namaPertanyaan)) {
+                            $w->where(function ($w2) use ($namaPertanyaan) {
+                                $w2->whereIn('kp.nama_pertanyaan', $namaPertanyaan)
+                                   ->where('jk.jawaban', true);
+                            });
+                        }
+
+                        // opsi "Lainnya" → jawaban true + jawaban_lainnya tidak kosong
+                        if ($filterLainnya) {
+                            $w->orWhere(function ($w2) {
+                                $w2->where('kp.nama_pertanyaan', 'Lainnya')
+                                   ->where('jk.jawaban', true)
+                                   ->whereRaw("NULLIF(TRIM(COALESCE(jk.jawaban_lainnya,'')), '') IS NOT NULL");
+                            });
+                        }
+                    });
+            });
+        }
+
         // ---- Paginate
         $peList = $peQuery
             ->orderByDesc('ls.created_at')
@@ -334,13 +395,14 @@ class DashboardController extends Controller
             'puskesmasList'  => $puskesmasList,
 
             'filters'        => [
-                'q'            => $q,
-                'from'         => $from,
-                'to'           => $to,
-                'resiko'       => $resiko,
-                'status'       => $status,
-                'kategori'     => $kategori,
-                'puskesmas_id' => $puskesmasId,
+                'q'                   => $q,
+                'from'                => $from,
+                'to'                  => $to,
+                'resiko'              => $resiko,
+                'status'              => $status,
+                'kategori'            => $kategori,
+                'puskesmas_id'        => $puskesmasId,
+                'riwayat_penyakit_ui' => $riwayatSelected,
             ],
         ]);
     }
