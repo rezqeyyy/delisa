@@ -20,18 +20,18 @@ class SkriningController extends Controller
             ->paginate(10);
 
         // Tambahkan badge class untuk setiap skrining
-        $skrinings->getCollection()->transform(function($skrining) {
+        $skrinings->getCollection()->transform(function ($skrining) {
             $conclusion = $skrining->kesimpulan ?? $skrining->status_pre_eklampsia ?? 'Normal';
-            
-            $skrining->badge_class = match(strtolower($conclusion)) {
+
+            $skrining->badge_class = match (strtolower($conclusion)) {
                 'berisiko', 'beresiko' => 'badge-berisiko',
                 'normal', 'aman' => 'badge-normal',
                 'waspada', 'menengah' => 'badge-waspada',
                 default => 'badge-secondary'
             };
-            
+
             $skrining->conclusion_display = ucfirst($conclusion);
-            
+
             return $skrining;
         });
 
@@ -56,7 +56,7 @@ class SkriningController extends Controller
             ->first();
 
         // Ambil resep obat jika ada (column sudah benar)
-        $resepObats = $rujukan 
+        $resepObats = $rujukan
             ? ResepObat::where('rujukan_rs_id', $rujukan->id)->get()
             : collect();
 
@@ -76,7 +76,7 @@ class SkriningController extends Controller
 
         // Cari atau buat rujukan RS untuk skrining ini
         $rsId = Auth::user()->rumahSakit->id ?? null;
-        
+
         $rujukan = RujukanRs::firstOrCreate(
             [
                 'skrining_id' => $skrining->id,
@@ -90,7 +90,13 @@ class SkriningController extends Controller
         );
 
         // Ambil resep obat yang sudah ada (fixed column)
-        $resepObats = ResepObat::where('rujukan_rs_id', $rujukan->id)->get();
+        $riwayatRujukan = DB::table('riwayat_rujukans')
+            ->where('rujukan_id', $rujukan->id)
+            ->first();
+
+        $resepObats = $riwayatRujukan
+            ? ResepObat::where('riwayat_rujukan_id', $riwayatRujukan->id)->get()
+            : collect();
 
         return view('rs.skrining.edit', compact('skrining', 'rujukan', 'resepObats'));
     }
@@ -106,7 +112,7 @@ class SkriningController extends Controller
             'hasil_protein_urin' => 'nullable|string',
             'perlu_pemeriksaan_lanjut' => 'nullable|boolean',
             'catatan_rujukan' => 'nullable|string',
-            
+
             // Resep obat (array)
             'resep_obat' => 'nullable|array',
             'resep_obat.*' => 'nullable|string',
