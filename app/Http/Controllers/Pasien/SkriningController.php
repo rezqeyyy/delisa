@@ -18,8 +18,10 @@ class SkriningController extends Controller
 {
     use SkriningHelpers;    
 
-    /**
-     * Lihat hasil skrining (setelah ada kesimpulan).
+    /* =========================================================
+     * SKRINING — SHOW
+     * =========================================================
+     * Menampilkan halaman hasil skrining setelah ada kesimpulan
      */
     public function show(Skrining $skrining)
     {
@@ -38,11 +40,13 @@ class SkriningController extends Controller
 
     private function buildSkriningShowData(Skrining $skrining): array
     {
-        // Penentuan kesimpulan tingkat risiko untuk tampilan hasil:
-        // - "Skrining belum selesai" jika kelengkapan lintas halaman belum terpenuhi.
-        // - "Berisiko Preeklampsia" jika jumlah risiko tinggi ≥ 1 atau risiko sedang ≥ 2.
-        // - "Waspada" jika jumlah risiko sedang ≥ 1.
-        // - "Tidak berisiko" jika tidak memenuhi kriteria di atas.
+        /* =========================================================
+         * SKRINING — BUILD SHOW DATA
+         * =========================================================
+         * Menyusun data tampilan hasil: identitas, kondisi, GPA,
+         * ringkasan risiko, pemicu sedang/tinggi, dan rekomendasi
+         * Kesimpulan: Berisiko jika tinggi ≥1 atau sedang ≥2; jika belum lengkap → "Skrining belum selesai"
+         */
 
         $pasien = optional($skrining->pasien);
         $kk     = optional($skrining->kondisiKesehatan);
@@ -60,6 +64,7 @@ class SkriningController extends Controller
         $sistol  = $kk->sdp ?? null;
         $diastol = $kk->dbp ?? null;
         $map     = $kk->map ?? (($sistol && $diastol) ? round(($diastol + (($sistol - $diastol) / 3)), 2) : null);
+        $proteinUrine = $kk->pemeriksaan_protein_urine ?? null;
 
         $usiaKehamilan      = $kk->usia_kehamilan ?? '-';
         $taksiranPersalinan = $kk->tanggal_perkiraan_persalinan ?? null;
@@ -78,7 +83,7 @@ class SkriningController extends Controller
             ? 'Skrining belum selesai'
             : (($resikoTinggi >= 1 || $resikoSedang >= 2)
                 ? 'Berisiko Preeklampsia'
-                : (($resikoSedang >= 1) ? 'Waspada' : 'Tidak berisiko'));
+                : 'Tidak berisiko');
 
         $rekomendasi  = ($resikoTinggi >= 1 || $resikoSedang >= 2)
             ? 'Silahkan untuk menghubungi petugas Puskesmas untuk mendapatkan rujukan Dokter atau Rumah Sakit untuk pengobatan lanjutan.'
@@ -113,9 +118,9 @@ class SkriningController extends Controller
             $sebabSedang[] = 'IMT ' . number_format(floatval($kk->imt), 2) . ' kg/m² (>30)';
         }
 
-        // MAP > 90 mmHg
-        if ($map !== null && $map > 90) {
-            $sebabSedang[] = 'MAP ' . number_format($map, 2) . ' mmHg (>90)';
+        // Tensi ≥ 130/90 mmHg
+        if (($sistol !== null && $sistol >= 130) || ($diastol !== null && $diastol >= 90)) {
+            $sebabTinggi[] = 'Tekanan darah di atas 130/90 mHg';
         }
 
         // ===== Risiko sedang dari Preeklampsia (Q1–Q4) =====
@@ -183,11 +188,12 @@ class SkriningController extends Controller
             $sebabTinggi[] = 'Antiphospholipid Syndrome (APS)';
         }
 
-        // Risiko tinggi dari Preeklampsia (Q5–Q7)
+        // Risiko tinggi dari Preeklampsia (termasuk tensi)
         $preHighNames = [
             'Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya',
             'Apakah kehamilan anda saat ini adalah kehamilan kembar',
             'Apakah anda memiliki diabetes dalam masa kehamilan',
+            'Apakah anda memiliki tekanan darah (Tensi) di atas 130/90 mHg',
         ];
         $preKuisHigh = DB::table('kuisioner_pasiens')
             ->where('status_soal', 'pre_eklampsia')
@@ -213,14 +219,16 @@ class SkriningController extends Controller
 
         return compact(
             'skrining','nama','nik','tanggal','berat','tinggi','imt','anjuranBb',
-            'sistol','diastol','map','usiaKehamilan','taksiranPersalinan',
+            'sistol','diastol','map','proteinUrine','usiaKehamilan','taksiranPersalinan',
             'gravida','para','abortus','resikoSedang','resikoTinggi','kesimpulan',
             'rekomendasi','catatan','sebabSedang','sebabTinggi'
         );
     }
 
-    /**
-     * Mulai edit skrining: arahkan ke langkah Data Diri (stepper akan ikut skrining_id).
+    /* =========================================================
+     * SKRINING — EDIT
+     * =========================================================
+     * Arahkan ke langkah Data Diri dengan membawa skrining_id
      */
     public function edit(Skrining $skrining)
     {
@@ -229,8 +237,10 @@ class SkriningController extends Controller
         return redirect()->route('pasien.data-diri', ['skrining_id' => $skrining->id]);
     }
 
-    /**
-     * Contoh endpoint update (tidak digunakan untuk mengubah data langkah).
+    /* =========================================================
+     * SKRINING — UPDATE (placeholder)
+     * =========================================================
+     * Tidak digunakan untuk mengubah data langkah, hanya redirect
      */
     public function update(Request $request, Skrining $skrining)
     {
@@ -241,8 +251,10 @@ class SkriningController extends Controller
             ->with('ok', 'Puskesmas tetap sama seperti saat pengajuan.');
     }
 
-    /**
-     * Hapus skrining dan child records terkait.
+    /* =========================================================
+     * SKRINING — DESTROY
+     * =========================================================
+     * Hapus skrining beserta relasi jawaban, riwayat, dan kondisi
      */
     public function destroy(Skrining $skrining)
     {
@@ -260,8 +272,10 @@ class SkriningController extends Controller
         return redirect()->route('pasien.dashboard')->with('ok', 'Skrining berhasil dihapus.');
     }
 
-    /**
-     * Pencarian puskesmas untuk modal pemilihan pengajuan.
+    /* =========================================================
+     * PUSKESMAS — SEARCH
+     * =========================================================
+     * Pencarian untuk modal pengajuan berdasarkan kata kunci
      */
     public function puskesmasSearch(Request $request)
     {
@@ -284,8 +298,10 @@ class SkriningController extends Controller
         return response()->json($rows);
     }
 
-    /**
-     * Pastikan skrining milik pasien yang login.
+    /* =========================================================
+     * AUTH — AUTHORIZE ACCESS
+     * =========================================================
+     * Memastikan skrining milik pasien yang sedang login
      */
     private function authorizeAccess(Skrining $skrining): void
     {
@@ -293,8 +309,10 @@ class SkriningController extends Controller
         abort_unless($skrining->pasien_id === $userPasienId, 403);
     }
 
-    /**
-     * Helper: ambil skrining berdasarkan query skrining_id atau latest milik pasien.
+    /* =========================================================
+     * HELPER — GET SKRINING FROM QUERY
+     * =========================================================
+     * Ambil skrining berdasarkan skrining_id atau latest milik pasien
      * Return: [Skrining|null, int $pasienId]
      */
     private function getSkriningFromQuery($skriningId): array

@@ -11,9 +11,13 @@ use App\Models\RiwayatKehamilanGpa;
 
 trait SkriningHelpers
 {
-    // Ambil skrining milik pasien yang login:
-    // - Jika skrining_id tersedia, pastikan milik pasien.
-    // - Jika tidak, ambil skrining terbaru milik pasien.
+    /* =========================================================
+     * AUTH — REQUIRE SKRINING FOR PASIEN
+     * =========================================================
+     * Menjamin skrining milik pasien yang login
+     * - Jika skrining_id tersedia, pastikan milik pasien
+     * - Jika tidak, ambil skrining terbaru milik pasien
+     */
     private function requireSkriningForPasien(int $skriningId): Skrining
     {
         $user     = Auth::user();
@@ -25,8 +29,12 @@ trait SkriningHelpers
             : Skrining::where('pasien_id', $pasienId)->latest()->firstOrFail();
     }
 
-    // Cek kelengkapan Data Diri (profil pasien + kontak/alamat user):
-    // - Memastikan semua field wajib terisi, termasuk no_jkn jika pembiayaan 'BPJS Kesehatan'.
+    /* =========================================================
+     * VALIDASI — DATA DIRI COMPLETE
+     * =========================================================
+     * Memastikan profil pasien & user terisi lengkap
+     * Wajib: field utama + no_jkn bila pembiayaan 'BPJS Kesehatan'
+     */
     private function isDataDiriCompleteForSkrining(Skrining $skrining): bool
     {
         $pasien = optional($skrining->pasien);
@@ -69,7 +77,11 @@ trait SkriningHelpers
         return true;
     }
 
-    // Cek semua jawaban tersedia untuk daftar pertanyaan berdasarkan status_soal.
+    /* =========================================================
+     * UTIL — HAS ALL JAWABAN
+     * =========================================================
+     * Memeriksa kelengkapan jawaban untuk daftar pertanyaan berdasarkan status_soal
+     */
     private function hasAllJawaban(Skrining $skrining, array $names, string $statusSoal): bool
     {
         $kuis = DB::table('kuisioner_pasiens')
@@ -92,8 +104,12 @@ trait SkriningHelpers
         return $answeredCount === count($names);
     }
 
-    // Validasi kelengkapan skrining lintas langkah (1..6):
-    // - Data Diri, GPA, Kondisi Kesehatan, Riwayat Penyakit Pasien, Riwayat Penyakit Keluarga, Preeklampsia.
+    /* =========================================================
+     * VALIDASI — KELENGKAPAN SKRINING (STEP 1..6)
+     * =========================================================
+     * Memastikan semua langkah sudah terisi: Data Diri, GPA, Kondisi Kesehatan,
+     * Riwayat Penyakit Pasien, Riwayat Penyakit Keluarga, Preeklampsia
+     */
     private function isSkriningCompleteForSkrining(Skrining $skrining): bool
     {
         // 1) Data Diri
@@ -129,11 +145,7 @@ trait SkriningHelpers
 
         // 4) Riwayat Penyakit Pasien (individu)
         $individuNames = [
-            'Hipertensi Kronik',
-            'Ginjal',
-            'Autoimun, SLE',
-            'Anti Phospholipid Syndrome',
-            'Lainnya',
+            'Hipertensi', 'Alergi', 'Tiroid', 'TB', 'Jantung', 'Hepatitis B', 'Jiwa', 'Autoimun', 'Sifilis', 'Diabetes', 'Asma', 'Lainnya',
         ];
         if (!$this->hasAllJawaban($skrining, $individuNames, 'individu')) {
             return false;
@@ -141,27 +153,28 @@ trait SkriningHelpers
 
         // 5) Riwayat Penyakit Keluarga (keluarga)
         $keluargaNames = [
-            'Hipertensi Kronik',
-            'Ginjal',
-            'Autoimun, SLE',
-            'Anti Phospholipid Syndrome',
-            'Lainnya',
+            'Hipertensi', 'Alergi', 'Tiroid', 'TB', 'Jantung', 'Hepatitis B', 'Jiwa', 'Autoimun', 'Sifilis', 'Diabetes', 'Asma', 'Lainnya',
         ];
         if (!$this->hasAllJawaban($skrining, $keluargaNames, 'keluarga')) {
             return false;
         }
 
-        // 6) Preeklampsia (7 pertanyaan)
+        // 6) Preeklampsia (14 pertanyaan)
         $preeklampsiaNames = [
-            // Sedang
             'Apakah kehamilan ini adalah kehamilan kedua/lebih tetapi bukan dengan suami pertama (Pernikahan kedua atau lebih)',
             'Apakah kehamilan ini dengan Teknologi Reproduksi Berbantu (Bayi tabung, Obat induksi ovulasi)',
+            'Umur ≥ 35 tahun',
+            'Apakah ini termasuk ke kehamilan pertama',
             'Apakah kehamilan ini berjarak 10 tahun dari kehamilan sebelumnya',
             'Apakah ibu kandung atau saudara perempuan anda memiliki riwayat pre-eklampsia',
-            // Tinggi
+            'Apakah memiliki riwayat obesitas sebelum hamil (IMT > 30Kg/m2)',
             'Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya',
             'Apakah kehamilan anda saat ini adalah kehamilan kembar',
             'Apakah anda memiliki diabetes dalam masa kehamilan',
+            'Apakah anda memiliki tekanan darah (Tensi) di atas 130/90 mHg',
+            'Apakah anda memiliki penyakit ginjal',
+            'Apakah anda memiliki penyakit autoimun, SLE',
+            'Apakah anda memiliki penyakit Anti Phospholipid Syndrome',
         ];
         if (!$this->hasAllJawaban($skrining, $preeklampsiaNames, 'pre_eklampsia')) {
             return false;
@@ -170,8 +183,11 @@ trait SkriningHelpers
         return true;
     }
 
-    // Sinkronisasi hasil risiko preeklampsia:
-    // - Hitung ulang jumlah faktor sedang/tinggi dan set status/kesimpulan/tindak_lanjut.
+    /* =========================================================
+     * REKALKULASI — RISIKO PREEKLAMPSIA
+     * =========================================================
+     * Hitung ulang jumlah faktor sedang/tinggi dan set status/kesimpulan/tindak_lanjut
+     */
     private function recalcPreEklampsia(Skrining $skrining): void
     {
         $pasien = optional($skrining->pasien);
@@ -188,15 +204,14 @@ trait SkriningHelpers
             $umur = null;
         }
 
-        // MAP (moderate)
+        // Tensi threshold 130/90
         $sistol  = $kk ? (int) $kk->sdp : null;
         $diastol = $kk ? (int) $kk->dbp : null;
-        $map     = $kk ? ($kk->map ?? (($sistol !== null && $diastol !== null) ? round(($diastol + (($sistol - $diastol) / 3)), 2) : null)) : null;
 
         $isAgeModerate          = ($umur !== null && $umur >= 35);
         $isPrimigravidaModerate = ($gpa && intval($gpa->total_kehamilan) === 1);
         $isImtModerate          = ($kk && floatval($kk->imt) > 30);
-        $isMapModerate          = ($map !== null && $map > 90);
+        $isBpHigh               = (($sistol !== null && $sistol >= 130) || ($diastol !== null && $diastol >= 90));
 
         // Risiko tinggi dari kuisioner individu
         $kuisNames = ['Hipertensi Kronik', 'Ginjal', 'Autoimun, SLE', 'Anti Phospholipid Syndrome'];
@@ -222,23 +237,27 @@ trait SkriningHelpers
         if ($qidGinjal     && (bool) optional($jawaban->get($qidGinjal))->jawaban)     $highCount++;
         if ($qidSle        && (bool) optional($jawaban->get($qidSle))->jawaban)        $highCount++;
         if ($qidAps        && (bool) optional($jawaban->get($qidAps))->jawaban)        $highCount++;
+        if ($isBpHigh) $highCount++;
 
         $moderateCount = 0;
         if ($isAgeModerate)          $moderateCount++;
         if ($isPrimigravidaModerate) $moderateCount++;
         if ($isImtModerate)          $moderateCount++;
-        if ($isMapModerate)          $moderateCount++;
 
         $preModerateNames = [
             'Apakah kehamilan ini adalah kehamilan kedua/lebih tetapi bukan dengan suami pertama (Pernikahan kedua atau lebih)',
             'Apakah kehamilan ini dengan Teknologi Reproduksi Berbantu (Bayi tabung, Obat induksi ovulasi)',
+            'Umur ≥ 35 tahun',
+            'Apakah ini termasuk ke kehamilan pertama',
             'Apakah kehamilan ini berjarak 10 tahun dari kehamilan sebelumnya',
             'Apakah ibu kandung atau saudara perempuan anda memiliki riwayat pre-eklampsia',
+            'Apakah memiliki riwayat obesitas sebelum hamil (IMT > 30Kg/m2)',
         ];
         $preHighNames = [
             'Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya',
             'Apakah kehamilan anda saat ini adalah kehamilan kembar',
             'Apakah anda memiliki diabetes dalam masa kehamilan',
+            'Apakah anda memiliki tekanan darah (Tensi) di atas 130/90 mHg',
         ];
 
         $preKuisModerate = DB::table('kuisioner_pasiens')
@@ -277,10 +296,6 @@ trait SkriningHelpers
             $status       = 'Risiko Tinggi';
             $kesimpulan   = 'Berisiko';
             $tindakLanjut = true;
-        } elseif ($moderateCount >= 1) {
-            $status       = 'Risiko Sedang';
-            $kesimpulan   = 'Waspada';
-            $tindakLanjut = false;
         } else {
             $status       = 'Normal';
             $kesimpulan   = 'Tidak berisiko';
