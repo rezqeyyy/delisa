@@ -12,9 +12,9 @@ class RiwayatPenyakitPasienController extends Controller
 {
     use SkriningHelpers;
 
-    /* =========================================================
-     * RIWAYAT PENYAKIT PASIEN — INDEX
-     * =========================================================
+    /* {{-- ========== RIWAYAT PENYAKIT PASIEN — INDEX ========== --}} */
+    
+    /* 
      * Navigasi utama: menampilkan pilihan penyakit (status_soal='individu')
      * Prefill: membaca jawaban sebelumnya untuk menandai pilihan
      */
@@ -66,9 +66,9 @@ class RiwayatPenyakitPasienController extends Controller
         return view('pasien.skrining.riwayat-penyakit-pasien', compact('selected', 'penyakitLainnya'));
     }
 
-    /* =========================================================
-     * RIWAYAT PENYAKIT PASIEN — STORE
-     * =========================================================
+    /* {{-- ========== RIWAYAT PENYAKIT PASIEN — STORE ========== --}} */
+
+    /* 
      * Validasi & simpan: mapping kode→pertanyaan, create/update kuisioner
      * Lainnya: simpan jawaban_lainnya jika opsi "Lainnya" dipilih
      * Proses: set step_form=4, hitung ulang risiko, redirect ke penyakit keluarga

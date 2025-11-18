@@ -11,9 +11,10 @@ use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 
 class DataDiriController extends Controller
 {
+    /* {{-- ========== DATA DIRI — CREATE ========== --}} */
+
     // - Jika puskesmas valid, membuat record skrining baru untuk pasien (step_form=1).
     // - Mengarahkan ke form data diri untuk melengkapi profil dan alamat.
-
     public function create(Request $request)
     {
         $puskesmasId = (int) $request->query('puskesmas_id');
@@ -41,6 +42,9 @@ class DataDiriController extends Controller
 
         return view('pasien.skrining.data-diri');
     }
+
+    
+    /* {{-- ========== DATA DIRI — STORE PENGAJUAN ========== --}} */
     
     // Endpoint pengajuan skrining:
     // - Validasi puskesmas_id lalu buat skrining baru.
@@ -83,6 +87,8 @@ class DataDiriController extends Controller
 
     use SkriningHelpers;
 
+    /* {{-- ========== DATA DIRI — STORE ========== --}} */
+    
     // Penyimpanan Data Diri:
     // - Update kontak/alamat di tabel users.
     // - Update demografi di tabel pasiens.

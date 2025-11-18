@@ -13,6 +13,8 @@ use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 class KondisiKesehatanPasienController extends Controller
 {
     use SkriningHelpers;  
+    
+    /* {{-- ========== KONDISI KESEHATAN — FORM ========== --}} */
 
     // Halaman kondisi kesehatan:
     // - Menarik data kondisi (jika ada) untuk prefill form.
@@ -23,6 +25,8 @@ class KondisiKesehatanPasienController extends Controller
 
         return view('pasien.skrining.kondisi-kesehatan-pasien', compact('kk'));
     }
+    
+    /* {{-- ========== KONDISI KESEHATAN — STORE ========== --}} */
 
     // Penyimpanan kondisi kesehatan:
     // - Hitung IMT (kg/m^2) dan kategorinya, serta anjuran kenaikan BB.

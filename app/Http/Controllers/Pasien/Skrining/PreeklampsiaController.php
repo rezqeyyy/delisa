@@ -16,9 +16,9 @@ class PreeklampsiaController extends Controller
 {
     use SkriningHelpers;
 
-    /* =========================================================
-     * PREEKLAMPSIA — INDEX
-     * =========================================================
+    /* {{-- ========== PREEKLAMPSIA — INDEX ========== --}} */
+    
+    /*
      * Navigasi utama: menampilkan form Q1..Q14 (risiko sedang/tinggi)
      * Autosave: jika param pertanyaan1..pertanyaan14 ada di query
      * Prefill: dari DB dan data medis (umur, GPA, IMT, tensi)
@@ -119,17 +119,18 @@ class PreeklampsiaController extends Controller
         $umur = null;
         try { if ($pasien && $pasien->tanggal_lahir) { $umur = \Carbon\Carbon::parse($pasien->tanggal_lahir)->age; } } catch (\Throwable $e) { $umur = null; }
         $map = $kk ? ($kk->map ?? ((($kk->sdp ?? null) !== null && ($kk->dbp ?? null) !== null) ? round(($kk->dbp + ((($kk->sdp - $kk->dbp) / 3))), 2) : null)) : null;
-        $answers['pertanyaan3']  = (($answers['pertanyaan3']  ?? false) || ($umur !== null && $umur >= 35));
-        $answers['pertanyaan4']  = (($answers['pertanyaan4']  ?? false) || ($gpa && intval($gpa->total_kehamilan) === 1));
-        $answers['pertanyaan7']  = (($answers['pertanyaan7']  ?? false) || ($kk && floatval($kk->imt) > 30));
+        $answers['pertanyaan3']  = ($umur !== null && $umur >= 35);
+        $answers['pertanyaan4']  = ($gpa && intval($gpa->total_kehamilan) === 1);
+        $answers['pertanyaan7']  = ($kk && floatval($kk->imt) > 30);
         $answers['pertanyaan11'] = (($answers['pertanyaan11'] ?? false) || ($kk && (((int)($kk->sdp ?? 0) >= 130) || ((int)($kk->dbp ?? 0) >= 90))));
 
         return view('pasien.skrining.preeklampsia', compact('answers'));
     }
+        
 
-    /* =========================================================
-     * PREEKLAMPSIA — STORE
-     * =========================================================
+    /* {{-- ========== PREEKLAMPSIA — STORE ========== --}} */
+    
+    /* 
      * Simpan jawaban Q1..Q14 ke kuisioner (status_soal='pre_eklampsia')
      * Recalc: hitung status_pre_eklampsia dan jumlah risiko (tinggi/sedang)
      * Stepper: set step_form=6 lalu redirect ke hasil/dashboard

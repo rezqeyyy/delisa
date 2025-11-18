@@ -13,6 +13,8 @@ class RiwayatKehamilanGPAController extends Controller
 {
     use SkriningHelpers;
 
+    /* {{-- ========== GPA — FORM ========== --}} */
+
     // Halaman GPA (G, P, A):
     // - Prefill data jika sudah tersimpan.
     public function riwayatKehamilanGpa(Request $request)
@@ -24,6 +26,8 @@ class RiwayatKehamilanGPAController extends Controller
 
         return view('pasien.skrining.riwayat-kehamilan-gpa', compact('gpa'));
     }
+
+    /* {{-- ========== GPA — STORE ========== --}} */
 
     // Penyimpanan GPA:
     // - Simpan total kehamilan, persalinan, dan abortus (string untuk konsistensi).

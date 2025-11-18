@@ -212,37 +212,14 @@ trait SkriningHelpers
         $isPrimigravidaModerate = ($gpa && intval($gpa->total_kehamilan) === 1);
         $isImtModerate          = ($kk && floatval($kk->imt) > 30);
         $isBpHigh               = (($sistol !== null && $sistol >= 130) || ($diastol !== null && $diastol >= 90));
+        
+        $highFlags = [];
+        if ($isBpHigh) $highFlags[] = 'tensi';
 
-        // Risiko tinggi dari kuisioner individu
-        $kuisNames = ['Hipertensi Kronik', 'Ginjal', 'Autoimun, SLE', 'Anti Phospholipid Syndrome'];
-        $kuisioner = DB::table('kuisioner_pasiens')
-            ->where('status_soal', 'individu')
-            ->whereIn('nama_pertanyaan', $kuisNames)
-            ->get(['id', 'nama_pertanyaan'])
-            ->keyBy('nama_pertanyaan');
-
-        $jawaban = DB::table('jawaban_kuisioners')
-            ->where('skrining_id', $skrining->id)
-            ->whereIn('kuisioner_id', $kuisioner->pluck('id')->all())
-            ->get(['kuisioner_id', 'jawaban'])
-            ->keyBy('kuisioner_id');
-
-        $qidHipertensi = optional($kuisioner->get('Hipertensi Kronik'))->id;
-        $qidGinjal     = optional($kuisioner->get('Ginjal'))->id;
-        $qidSle        = optional($kuisioner->get('Autoimun, SLE'))->id;
-        $qidAps        = optional($kuisioner->get('Anti Phospholipid Syndrome'))->id;
-
-        $highCount = 0;
-        if ($qidHipertensi && (bool) optional($jawaban->get($qidHipertensi))->jawaban) $highCount++;
-        if ($qidGinjal     && (bool) optional($jawaban->get($qidGinjal))->jawaban)     $highCount++;
-        if ($qidSle        && (bool) optional($jawaban->get($qidSle))->jawaban)        $highCount++;
-        if ($qidAps        && (bool) optional($jawaban->get($qidAps))->jawaban)        $highCount++;
-        if ($isBpHigh) $highCount++;
-
-        $moderateCount = 0;
-        if ($isAgeModerate)          $moderateCount++;
-        if ($isPrimigravidaModerate) $moderateCount++;
-        if ($isImtModerate)          $moderateCount++;
+        $moderateFlags = [];
+        if ($isAgeModerate)          $moderateFlags[] = 'umur';
+        if ($isPrimigravidaModerate) $moderateFlags[] = 'primigravida';
+        if ($isImtModerate)          $moderateFlags[] = 'imt';
 
         $preModerateNames = [
             'Apakah kehamilan ini adalah kehamilan kedua/lebih tetapi bukan dengan suami pertama (Pernikahan kedua atau lebih)',
@@ -253,11 +230,32 @@ trait SkriningHelpers
             'Apakah ibu kandung atau saudara perempuan anda memiliki riwayat pre-eklampsia',
             'Apakah memiliki riwayat obesitas sebelum hamil (IMT > 30Kg/m2)',
         ];
+        $preModerateKeyMap = [
+            'Umur ≥ 35 tahun' => 'umur',
+            'Apakah ini termasuk ke kehamilan pertama' => 'primigravida',
+            'Apakah memiliki riwayat obesitas sebelum hamil (IMT > 30Kg/m2)' => 'imt',
+            'Apakah kehamilan ini adalah kehamilan kedua/lebih tetapi bukan dengan suami pertama (Pernikahan kedua atau lebih)' => 'perkawinan_kedua',
+            'Apakah kehamilan ini dengan Teknologi Reproduksi Berbantu (Bayi tabung, Obat induksi ovulasi)' => 'trb',
+            'Apakah kehamilan ini berjarak 10 tahun dari kehamilan sebelumnya' => 'jarak_10_tahun',
+            'Apakah ibu kandung atau saudara perempuan anda memiliki riwayat pre-eklampsia' => 'keluarga_preeklampsia',
+        ];
         $preHighNames = [
             'Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya',
             'Apakah kehamilan anda saat ini adalah kehamilan kembar',
             'Apakah anda memiliki diabetes dalam masa kehamilan',
             'Apakah anda memiliki tekanan darah (Tensi) di atas 130/90 mHg',
+            'Apakah anda memiliki penyakit ginjal',
+            'Apakah anda memiliki penyakit autoimun, SLE',
+            'Apakah anda memiliki penyakit Anti Phospholipid Syndrome',
+        ];
+        $preHighKeyMap = [
+            'Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya' => 'riwayat_preeklampsia',
+            'Apakah kehamilan anda saat ini adalah kehamilan kembar' => 'kembar',
+            'Apakah anda memiliki diabetes dalam masa kehamilan' => 'diabetes',
+            'Apakah anda memiliki tekanan darah (Tensi) di atas 130/90 mHg' => 'tensi',
+            'Apakah anda memiliki penyakit ginjal' => 'ginjal',
+            'Apakah anda memiliki penyakit autoimun, SLE' => 'sle',
+            'Apakah anda memiliki penyakit Anti Phospholipid Syndrome' => 'aps',
         ];
 
         $preKuisModerate = DB::table('kuisioner_pasiens')
@@ -283,14 +281,21 @@ trait SkriningHelpers
 
         foreach ($preKuisModerate as $row) {
             if ((bool) optional($preJawab->get($row->id))->jawaban) {
-                $moderateCount++;
+                $key = $preModerateKeyMap[$row->nama_pertanyaan] ?? (string) $row->nama_pertanyaan;
+                if (!in_array($key, ['umur','primigravida','imt'], true)) {
+                    $moderateFlags[] = $key;
+                }
             }
         }
         foreach ($preKuisHigh as $row) {
             if ((bool) optional($preJawab->get($row->id))->jawaban) {
-                $highCount++;
+                $key = $preHighKeyMap[$row->nama_pertanyaan] ?? (string) $row->nama_pertanyaan;
+                $highFlags[] = $key;
             }
         }
+
+        $moderateCount = count(array_unique($moderateFlags));
+        $highCount     = count(array_unique($highFlags));
 
         if ($highCount >= 1 || $moderateCount >= 2) {
             $status       = 'Risiko Tinggi';

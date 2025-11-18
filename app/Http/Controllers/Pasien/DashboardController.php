@@ -12,9 +12,9 @@ class DashboardController extends Controller
 {
     use SkriningHelpers;
 
-    /* =========================================================
-     * DASHBOARD — INDEX
-     * =========================================================
+    /* {{-- ========== DASHBOARD — INDEX ========== --}} */
+    
+    /* 
      * List skrining (paginate), filter status & tanggal, ringkasan, status risiko terbaru
      */
     public function index(Request $request)
@@ -27,7 +27,9 @@ class DashboardController extends Controller
 
         $pasienId = optional(Auth::user()->pasien)->id;
 
-        /* ==== FILTER ALIAS (KESIMPULAN & STATUS PREEKLAMPSIA) ====
+        /* {{-- ==== FILTER ALIAS (KESIMPULAN & STATUS PREEKLAMPSI) ==== --}} */
+        
+        /* 
          * Menyatukan variasi nilai di DB untuk dipakai pada dropdown filter
          */
         $kesimpulanAliases = [
@@ -41,7 +43,7 @@ class DashboardController extends Controller
             'Berisiko' => ['Risiko Tinggi'],
         ];
 
-        /* ==== QUERY DAFTAR SKRINING ==== */
+        /* {{-- ==== QUERY DAFTAR SKRINING ==== --}} */
         $skrinings = Skrining::where('pasien_id', $pasienId)
             ->when($status !== '', function ($q) use ($status, $kesimpulanAliases, $preeklampsiaAliases) {
                 if ($status === 'Skrining belum selesai') {
@@ -70,7 +72,11 @@ class DashboardController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        /* ==== TRANSFORM TAMPILAN (KESIMPULAN & BADGE) ====
+        /* {{-- ==== TRANSFORM TAMPILAN (KESIMPULAN & BADGE) ==== --}} */
+        
+        /* 
+         * Menyusun data tampilan ringkasan: kesimpulan, badge status,
+         * ringkasan risiko, pemicu sedang/tinggi, dan rekomendasi
          * Kesimpulan: belum selesai | berisiko (tinggi ≥1 atau sedang ≥2) | tidak berisiko
          */
         $skrinings->getCollection()->transform(function ($s) {
@@ -103,7 +109,11 @@ class DashboardController extends Controller
             return $s;
         });
 
-        /* ==== RINGKASAN TOTAL SKRINING ==== */
+        /* {{-- ==== RINGKASAN TOTAL SKRINING ==== --}} */
+        
+        /* 
+         * Menghitung total skrining, selesai, dan belum selesai
+         */
         $allSkrinings = Skrining::where('pasien_id', $pasienId)
             ->with(['pasien.user'])
             ->get();
@@ -112,7 +122,9 @@ class DashboardController extends Controller
         $totalSelesai = $allSkrinings->filter(fn ($s) => $this->isSkriningCompleteForSkrining($s))->count();
         $totalBelum   = max(0, $totalAll - $totalSelesai);
 
-        /* ==== STATUS PREEKLAMPSIA TERBARU ====
+        /* {{-- ==== STATUS PREEKLAMPSIA TERBARU ==== --}} */
+        
+        /* 
          * Ambil dari skrining terbaru; jika belum lengkap → "Skrining belum selesai"
          */
         $latestAny = $allSkrinings->sortByDesc('created_at')->first();
@@ -133,7 +145,7 @@ class DashboardController extends Controller
             default => 'bg-[#E9E9E9] text-[#1D1D1D]',
         };
 
-        /* ==== RETURN VIEW ==== */
+        /* {{-- ==== RETURN VIEW ==== --}} */
         return view('pasien.dashboard', [
             'skrinings'         => $skrinings,
             'status'            => $status,

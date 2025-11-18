@@ -12,9 +12,9 @@ class RiwayatPenyakitKeluargaController extends Controller
 {
     use SkriningHelpers;
 
-    /* =========================================================
-     * RIWAYAT PENYAKIT KELUARGA — INDEX
-     * =========================================================
+    /* {{-- ========== RIWAYAT PENYAKIT KELUARGA — INDEX ========== --}} */
+
+    /* 
      * Navigasi utama: menampilkan pilihan penyakit keluarga (status_soal='keluarga')
      * Prefill: membaca jawaban sebelumnya, termasuk isian "lainnya" jika ada
      */
@@ -66,9 +66,9 @@ class RiwayatPenyakitKeluargaController extends Controller
         return view('pasien.skrining.riwayat-penyakit-keluarga', compact('selected', 'penyakitKeluargaLainnya'));
     }
 
-    /* =========================================================
-     * RIWAYAT PENYAKIT KELUARGA — STORE
-     * =========================================================
+    /* {{-- ========== RIWAYAT PENYAKIT KELUARGA — STORE ========== --}} */
+
+    /* 
      * Validasi & simpan: mapping kode→pertanyaan, create/update kuisioner keluarga
      * Lainnya: simpan jawaban_lainnya jika opsi "Lainnya" dipilih
      * Proses: set step_form=5, hitung ulang risiko, redirect ke Preeklampsia
