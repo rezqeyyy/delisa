@@ -39,16 +39,18 @@ class DashboardController extends Controller
         $pemantauanMeninggal = 0;
 
         // Data Pasien Pre Eklampsia (5 terbaru) - dari tabel pasiens
-        $pasienPreEklampsia = Pasien::orderBy('created_at', 'desc')
+        $pasienPreEklampsia = Pasien::with('user')
+            ->orderBy('created_at', 'desc')
             ->take(5)
             ->get()
             ->map(function($item) {
                 return [
+                    'id' => $item->id, // ✅ TAMBAHKAN ID untuk routing
                     'id_pasien' => $item->id,
-                    'nama' => $item->nik ?? 'Anon Dadang',
-                    'tanggal' => Carbon::parse($item->tanggal_lahir)->format('d/m/Y'),
+                    'nama' => $item->user->name ?? 'Nama Tidak Tersedia',
+                    'tanggal' => $item->tanggal_lahir ? Carbon::parse($item->tanggal_lahir)->format('d/m/Y') : '-',
                     'status' => $item->PKabupaten ?? 'N/A',
-                    'no_telp' => $item->no_jkn ?? '0000000000',
+                    'no_telp' => $item->no_telepon ?? '0000000000',
                     'klasifikasi' => 'Beresiko'
                 ];
             });
@@ -67,5 +69,22 @@ class DashboardController extends Controller
             'pemantauanMeninggal',
             'pasienPreEklampsia'
         ));
+    }
+
+    /**
+     * Show detail pasien
+     */
+    public function showPasien($id)
+    {
+        try {
+            $pasien = Pasien::with('user')->findOrFail($id);
+            
+            return view('rs.show', compact('pasien'));
+            
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('rs.dashboard')
+                ->with('error', 'Data pasien tidak ditemukan');
+        }
     }
 }

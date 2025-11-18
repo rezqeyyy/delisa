@@ -29,6 +29,14 @@ class PasienNifas extends Model
     {
         return $this->belongsTo(Pasien::class, 'pasien_id');
     }
+
+    /**
+     * Relasi ke Anak Pasien
+     */
+        public function anakPasien()
+    {
+        return $this->hasMany(\App\Models\AnakPasien::class, 'nifas_id');
+    }
     
     /**
      * Relasi ke Rumah Sakit

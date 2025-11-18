@@ -296,10 +296,10 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <button class="btn-view">
+                                                <a href="{{ route('rs.pasien.show', $pasien['id']) }}" class="btn-view">
                                                     <i class="fas fa-eye"></i>
                                                     View
-                                                </button>
+                                                </a>
                                             </td>
                                         </tr>
                                         @empty

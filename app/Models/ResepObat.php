@@ -12,15 +12,14 @@ class ResepObat extends Model
     protected $table = 'resep_obats';
 
     protected $fillable = [
-        'riwayat_rujukan_id',
+        'rujukan_rs_id',
         'resep_obat',
         'dosis',
         'penggunaan',
     ];
 
-    // Relasi ke Rujukan RS
     public function rujukanRs()
     {
-        return $this->belongsTo(RujukanRs::class, 'riwayat_rujukan_id');
+        return $this->belongsTo(RujukanRs::class, 'rujukan_rs_id');
     }
 }

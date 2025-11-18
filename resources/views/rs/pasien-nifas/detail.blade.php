@@ -23,11 +23,11 @@
                     <i class="fas fa-th-large"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="{{ route('rs.skrining.index') }}" class="menu-item active">
+                <a href="{{ route('rs.skrining.index') }}" class="menu-item">
                     <i class="fas fa-file-alt"></i>
                     <span>Skrining</span>
                 </a>
-                <a href="{{ route('rs.pasien-nifas.index') }}" class="menu-item">
+                <a href="{{ route('rs.pasien-nifas.index') }}" class="menu-item active">
                     <i class="fas fa-users"></i>
                     <span>Pasien Nifas</span>
                 </a>
@@ -44,193 +44,165 @@
         <!-- Header -->
         <div class="content-header">
             <div class="header-left">
-                <a href="{{ route('rs.skrining.index') }}" class="btn-back">
+                <a href="{{ route('rs.pasien-nifas.index') }}" class="btn-back">
                     <i class="fas fa-arrow-left"></i>
                 </a>
                 <h2 class="page-title">Riwayat Pasien</h2>
             </div>
         </div>
 
+        @if(session('success'))
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            {{ session('success') }}
+        </div>
+        @endif
+
         <!-- Content -->
         <div class="skrining-content">
             <!-- Informasi Pasien dan Data Kehamilan -->
-            <div class="dashboard-card mb-4">
+            <div class="dashboard-card">
                 <div class="card-header-simple">
                     <h3 class="card-title-simple">Informasi Pasien dan Data Kehamilan</h3>
                 </div>
                 
-                <div class="card-body">
+                <div class="card-body p-0">
                     <div class="info-table">
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-label">Informasi</span>
-                                <span class="info-label">Data</span>
-                            </div>
-                        </div>
-                        
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Tanggal Pemeriksaan</span>
-                                <span class="info-value">{{ $skrining->created_at ? $skrining->created_at->format('d F Y') : '-' }}</span>
-                            </div>
+                        <div class="info-row header-row">
+                            <div class="info-cell">Informasi</div>
+                            <div class="info-cell">Data</div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Nama</span>
-                                <span class="info-value">{{ $skrining->pasien->user->name ?? '-' }}</span>
-                            </div>
+                            <div class="info-cell label">Tanggal Pemeriksaan</div>
+                            <div class="info-cell value">{{ $pasienNifas->created_at ? $pasienNifas->created_at->format('d F Y') : '-' }}</div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">NIK</span>
-                                <span class="info-value">{{ $skrining->pasien->nik ?? '-' }}</span>
-                            </div>
+                            <div class="info-cell label">Nama</div>
+                            <div class="info-cell value">{{ $pasienNifas->pasien->user->name ?? '-' }}</div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Kehamilan ke (G)</span>
-                                <span class="info-value">{{ $skrining->riwayatKehamilanGpa->kehamilan_ke ?? '1' }}</span>
-                            </div>
+                            <div class="info-cell label">NIK</div>
+                            <div class="info-cell value">{{ $pasienNifas->pasien->nik ?? '-' }}</div>
+                        </div>
+
+                        @if($anakPasien)
+                        <div class="info-row">
+                            <div class="info-cell label">Kehamilan ke (G)</div>
+                            <div class="info-cell value">{{ $anakPasien->anak_ke ?? '1' }}</div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Jumlah Persalinan (P)</span>
-                                <span class="info-value">{{ $skrining->riwayatKehamilanGpa->jumlah_persalinan ?? '1' }}</span>
-                            </div>
+                            <div class="info-cell label">Jumlah Persalinan (P)</div>
+                            <div class="info-cell value">{{ $pasienNifas->anakPasien->count() }}</div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Jumlah Abortus (A)</span>
-                                <span class="info-value">{{ $skrining->riwayatKehamilanGpa->jumlah_abortus ?? '0' }}</span>
-                            </div>
+                            <div class="info-cell label">Jumlah Abortus (A)</div>
+                            <div class="info-cell value">0</div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Usia Kehamilan</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->usia_kehamilan ?? '-' }} minggu</span>
-                            </div>
+                            <div class="info-cell label">Usia Kehamilan</div>
+                            <div class="info-cell value">{{ $anakPasien->usia_kehamilan_saat_lahir ?? '0' }} Minggu</div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Tanggal Persalinan</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->tanggal_persalinan ?? '24 Juli 2026' }}</span>
-                            </div>
+                            <div class="info-cell label">Tanggal Persalinan</div>
+                            <div class="info-cell value">{{ $anakPasien->tanggal_lahir ? \Carbon\Carbon::parse($anakPasien->tanggal_lahir)->format('d F Y') : '-' }}</div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Indeks Massa Tubuh (IMT)</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->imt ?? '25.76' }}</span>
-                            </div>
+                            <div class="info-cell label">Indeks Massa Tubuh (IMT)</div>
+                            <div class="info-cell value">25.76</div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Status IMT</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->status_imt ?? 'Normal (IMT 18.5 - 25)' }}</span>
-                            </div>
+                            <div class="info-cell label">Status IMT</div>
+                            <div class="info-cell value">Normal (IMT 18.5 - 25)</div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Anjuran Kenaikan BB</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->anjuran_kenaikan_bb ?? '11.5 - 16 kg' }}</span>
-                            </div>
+                            <div class="info-cell label">Anjuran Kenaikan BB</div>
+                            <div class="info-cell value">11.5 - 16 kg</div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Tensi Tekanan Darah</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->tekanan_darah ?? '90/120 mmHg' }}</span>
-                            </div>
+                            <div class="info-cell label">Tensi Tekanan Darah</div>
+                            <div class="info-cell value">90/120 mmHg</div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Mean Arterial Pressure (MAP)</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->map ?? '100.00 mmHg' }}</span>
+                            <div class="info-cell label">Mean Arterial Pressure (MAP)</div>
+                            <div class="info-cell value">100.00 mmHg</div>
+                        </div>
+                        @else
+                        <div class="info-row">
+                            <div class="info-cell label" colspan="2" style="text-align: center; color: #999;">
+                                Data anak belum ditambahkan
                             </div>
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
 
+            @if($anakPasien)
             <!-- Hasil Skrining dan Rekomendasi -->
-            <div class="dashboard-card mb-4">
+            <div class="dashboard-card">
                 <div class="card-header-simple">
                     <h3 class="card-title-simple">Hasil Skrining dan Rekomendasi</h3>
                 </div>
                 
-                <div class="card-body">
+                <div class="card-body p-0">
                     <div class="info-table">
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-label">Informasi</span>
-                                <span class="info-label">Data</span>
-                            </div>
+                        <div class="info-row header-row">
+                            <div class="info-cell">Informasi</div>
+                            <div class="info-cell">Data</div>
                         </div>
-                        
+
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Jumlah Resiko Sedang</span>
-                                <span class="info-value">{{ $skrining->jumlah_resiko_sedang ?? '0' }}</span>
+                            <div class="info-cell label">Jumlah Resiko Sedang</div>
+                            <div class="info-cell value">0</div>
+                        </div>
+
+                        <div class="info-row">
+                            <div class="info-cell label">Jumlah Resiko Tinggi</div>
+                            <div class="info-cell value">0</div>
+                        </div>
+
+                        <div class="info-row">
+                            <div class="info-cell label">Kesimpulan</div>
+                            <div class="info-cell value">
+                                <span class="badge badge-normal">Tidak Beresiko Pre Eklampsia</span>
                             </div>
                         </div>
 
                         <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Jumlah Resiko Tinggi</span>
-                                <span class="info-value">{{ $skrining->jumlah_resiko_tinggi ?? '0' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Kesimpulan</span>
-                                <span class="info-value">
-                                    @php
-                                        $conclusion = $skrining->kesimpulan ?? $skrining->status_pre_eklampsia ?? 'Normal';
-                                        $badgeClass = match(strtolower($conclusion)) {
-                                            'berisiko', 'beresiko' => 'badge-berisiko',
-                                            'normal', 'aman' => 'badge-normal',
-                                            'waspada', 'menengah' => 'badge-waspada',
-                                            default => 'badge-secondary'
-                                        };
-                                    @endphp
-                                    <span class="badge {{ $badgeClass }}">{{ ucfirst($conclusion) }}</span>
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Rekomendasi</span>
-                                <span class="info-value">{{ $skrining->rekomendasi ?? 'Tidak Beresiko Pre Eklampsia' }}</span>
-                            </div>
+                            <div class="info-cell label">Rekomendasi</div>
+                            <div class="info-cell value">Belum ada catatan</div>
                         </div>
 
                         <div class="info-row full-width">
-                            <div class="info-col">
-                                <span class="info-key">Catatan</span>
+                            <div class="info-cell label">Catatan</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-cell value" colspan="2">
                                 <div class="catatan-box">
-                                    <p>{{ $skrining->catatan ?? 'Anda memiliki penyakit yang berisiko dengan adanya indikasi gangguan pada ginjal sehingga sebaiknya perlu melakukan pemeriksaan tambahan meliputi : Ureum, Albumin, LDH, dan kadar trombosit.' }}</p>
+                                    <p>{{ $anakPasien->keterangan_masalah_lain ?? 'Tidak ada catatan tambahan.' }}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            @endif
 
-            <!-- Button Kembali -->
+            <!-- Button Actions -->
             <div class="form-actions">
-                <a href="{{ route('rs.skrining.index') }}" class="btn btn-primary">
+                <a href="{{ route('rs.pasien-nifas.index') }}" class="btn btn-secondary">
                     Kembali
                 </a>
             </div>
@@ -397,6 +369,27 @@ body {
     margin: 0;
 }
 
+/* Alert */
+.alert {
+    margin: 1.5rem 2rem 0;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.alert-success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.alert i {
+    font-size: 1.125rem;
+}
+
 /* Content */
 .skrining-content {
     padding: 1.5rem 2rem 3rem;
@@ -408,9 +401,6 @@ body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     overflow: hidden;
     border: 1px solid #f0f0f0;
-}
-
-.mb-4 {
     margin-bottom: 1.5rem;
 }
 
@@ -428,16 +418,22 @@ body {
 }
 
 .card-body {
+    padding: 1.5rem;
+}
+
+.card-body.p-0 {
     padding: 0;
 }
 
 /* Info Table */
 .info-table {
     width: 100%;
+    border-collapse: collapse;
 }
 
 .info-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 40% 60%;
     border-bottom: 1px solid #f0f0f0;
 }
 
@@ -445,41 +441,40 @@ body {
     border-bottom: none;
 }
 
-.info-row.full-width .info-col {
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.info-col {
-    display: flex;
-    width: 100%;
-}
-
-.info-col > span:first-child,
-.info-col > .info-key {
-    flex: 0 0 40%;
-    padding: 1rem 1.5rem;
-    font-size: 0.8125rem;
-    color: #666;
+.info-row.header-row {
     background: #fafafa;
-    font-weight: 500;
 }
 
-.info-col > span:last-child,
-.info-col > .info-value {
-    flex: 1;
+.info-row.header-row .info-cell {
+    font-weight: 600;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.3px;
+}
+
+.info-row.full-width {
+    grid-template-columns: 1fr;
+}
+
+.info-row.full-width + .info-row {
+    grid-template-columns: 1fr;
+}
+
+.info-cell {
     padding: 1rem 1.5rem;
     font-size: 0.8125rem;
+}
+
+.info-cell.label {
+    color: #666;
+    font-weight: 500;
+    background: #fafafa;
+}
+
+.info-cell.value {
     color: #1a1a1a;
     font-weight: 500;
-}
-
-.info-label {
-    font-weight: 600 !important;
-    color: #1a1a1a !important;
-    text-transform: uppercase;
-    font-size: 0.75rem !important;
-    letter-spacing: 0.3px;
 }
 
 /* Badge */
@@ -492,13 +487,13 @@ body {
     text-align: center;
 }
 
-.badge-berisiko {
-    background: #EF4444;
+.badge-normal {
+    background: #10B981;
     color: white;
 }
 
-.badge-normal {
-    background: #10B981;
+.badge-berisiko {
+    background: #EF4444;
     color: white;
 }
 
@@ -507,18 +502,12 @@ body {
     color: white;
 }
 
-.badge-secondary {
-    background: #f8f9fa;
-    color: #6c757d;
-}
-
 /* Catatan Box */
 .catatan-box {
     padding: 1rem;
     background: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #e8e8e8;
-    margin-top: 0.5rem;
 }
 
 .catatan-box p {
@@ -528,20 +517,10 @@ body {
     line-height: 1.6;
 }
 
-.full-width .info-key {
-    flex: 0 0 100% !important;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.full-width .info-value {
-    padding-top: 0 !important;
-}
-
 /* Form Actions */
 .form-actions {
     display: flex;
     justify-content: flex-start;
-    margin-top: 2rem;
 }
 
 .btn {
@@ -558,13 +537,14 @@ body {
     transition: all 0.2s ease;
 }
 
-.btn-primary {
-    background: #e91e8c;
-    color: white;
+.btn-secondary {
+    background: white;
+    color: #666;
+    border: 1px solid #e8e8e8;
 }
 
-.btn-primary:hover {
-    background: #c2185b;
+.btn-secondary:hover {
+    background: #f8f9fa;
 }
 
 /* Responsive */
@@ -587,19 +567,12 @@ body {
         padding: 1rem 1.25rem 2rem;
     }
     
-    .info-col {
-        flex-direction: column;
+    .info-row {
+        grid-template-columns: 1fr;
     }
     
-    .info-col > span:first-child,
-    .info-col > .info-key {
-        flex: 0 0 auto;
+    .info-cell.label {
         border-bottom: 1px solid #f0f0f0;
-    }
-    
-    .info-col > span:last-child,
-    .info-col > .info-value {
-        padding-top: 0.75rem;
     }
 }
 </style>

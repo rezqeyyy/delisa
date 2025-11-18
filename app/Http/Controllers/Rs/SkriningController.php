@@ -38,7 +38,33 @@ class SkriningController extends Controller
         return view('rs.skrining.index', compact('skrinings'));
     }
 
+    // Method baru untuk detail view (readonly)
     public function show($id)
+    {
+        // Ambil data skrining dengan semua relasi
+        $skrining = Skrining::with([
+            'pasien.user',
+            'kondisiKesehatan',
+            'riwayatKehamilanGpa',
+            'puskesmas'
+        ])->findOrFail($id);
+
+        // Ambil rujukan RS jika ada
+        $rsId = Auth::user()->rumahSakit->id ?? null;
+        $rujukan = RujukanRs::where('skrining_id', $skrining->id)
+            ->where('rs_id', $rsId)
+            ->first();
+
+        // Ambil resep obat jika ada (column sudah benar)
+        $resepObats = $rujukan 
+            ? ResepObat::where('rujukan_rs_id', $rujukan->id)->get()
+            : collect();
+
+        return view('rs.skrining.show', compact('skrining', 'rujukan', 'resepObats'));
+    }
+
+    // Method untuk form edit/input
+    public function edit($id)
     {
         // Ambil data skrining dengan semua relasi
         $skrining = Skrining::with([
@@ -63,10 +89,10 @@ class SkriningController extends Controller
             ]
         );
 
-        // Ambil resep obat yang sudah ada
-        $resepObats = ResepObat::where('riwayat_rujukan_id', $rujukan->id)->get();
+        // Ambil resep obat yang sudah ada (fixed column)
+        $resepObats = ResepObat::where('rujukan_rs_id', $rujukan->id)->get();
 
-        return view('rs.skrining.show', compact('skrining', 'rujukan', 'resepObats'));
+        return view('rs.skrining.edit', compact('skrining', 'rujukan', 'resepObats'));
     }
 
     public function update(Request $request, $id)
@@ -104,19 +130,19 @@ class SkriningController extends Controller
                     'hasil_protein_urin' => $validated['hasil_protein_urin'] ?? null,
                     'perlu_pemeriksaan_lanjut' => $validated['perlu_pemeriksaan_lanjut'] ?? null,
                     'catatan_rujukan' => $validated['catatan_rujukan'] ?? null,
-                    'done_status' => true, // Tandai sudah diproses
+                    'done_status' => true,
                 ]
             );
 
             // Hapus resep obat lama
-            ResepObat::where('riwayat_rujukan_id', $rujukan->id)->delete();
+            ResepObat::where('rujukan_rs_id', $rujukan->id)->delete();
 
             // Simpan resep obat baru
             if (!empty($validated['resep_obat'])) {
                 foreach ($validated['resep_obat'] as $index => $obat) {
                     if (!empty($obat)) {
                         ResepObat::create([
-                            'riwayat_rujukan_id' => $rujukan->id,
+                            'rujukan_rs_id' => $rujukan->id,
                             'resep_obat' => $obat,
                             'dosis' => $validated['dosis'][$index] ?? null,
                             'penggunaan' => $validated['penggunaan'][$index] ?? null,

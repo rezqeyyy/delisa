@@ -49,9 +49,9 @@ class RujukanRs extends Model
         return $this->belongsTo(Skrining::class);
     }
 
-    // Relasi ke Resep Obat
+    // Relasi ke Resep Obat - ✅ Update foreign key name
     public function resepObats()
     {
-        return $this->hasMany(ResepObat::class, 'riwayat_rujukan_id');
+        return $this->hasMany(ResepObat::class, 'rujukan_rs_id');
     }
 }

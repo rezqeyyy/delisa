@@ -56,7 +56,7 @@
                         </div>
                         <div>
                             <span class="title-main">Data Pasien Ibu Hamil</span>
-                            <p class="title-subtitle">Data pasien yang melakukan pengecakan pada puskesmas ini</p>
+                            <p class="title-subtitle">Data pasien yang melakukan pengecakan pada rumah sakit ini</p>
                         </div>
                     </div>
                 </div>
@@ -82,12 +82,12 @@
                                     <td>
                                         <div class="user-cell">
                                             <i class="fas fa-user-circle"></i>
-                                            <span>{{ $skrining->pasien->nama ?? 'N/A' }}</span>
+                                            <span>{{ $skrining->pasien->user->name ?? 'N/A' }}</span>
                                         </div>
                                     </td>
                                     <td>{{ $skrining->created_at ? $skrining->created_at->format('d/m/Y') : 'N/A' }}</td>
                                     <td>{{ $skrining->pasien->PKabupaten ?? 'N/A' }}</td>
-                                    <td>{{ $skrining->pasien->no_jkn ?? 'N/A' }}</td>
+                                    <td>{{ $skrining->pasien->user->phone ?? 'N/A' }}</td>
                                     <td>
                                         @php
                                             $conclusion = $skrining->kesimpulan ?? $skrining->status_pre_eklampsia ?? 'Normal';
@@ -102,7 +102,7 @@
                                         <span class="badge {{ $badgeClass }}">{{ $displayText }}</span>
                                     </td>
                                     <td>
-                                        <a href="{{ route('rs.skrining.show', $skrining->id) }}" class="btn-proses">
+                                        <a href="{{ route('rs.skrining.edit', $skrining->id) }}" class="btn-proses">
                                             <i class="fas fa-user-check"></i>
                                             Proses
                                         </a>
@@ -391,7 +391,7 @@ body {
     color: #ddd;
 }
 
-/* Badges - Updated Colors */
+/* Badges */
 .badge {
     padding: 0.4rem 1rem;
     border-radius: 20px;
@@ -402,7 +402,6 @@ body {
     min-width: 80px;
 }
 
-/* Status Badge Colors - DeLISA */
 .badge-berisiko {
     background: #EF4444;
     color: white;

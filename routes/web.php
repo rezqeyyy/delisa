@@ -141,20 +141,27 @@ Route::middleware(['auth'])->group(function () {
         ->prefix('rs')->as('rs.')
         ->group(function () {
             Route::get('/dashboard', [RsDashboardController::class, 'index'])->name('dashboard');
+
+            Route::get('/pasien/{id}', [RsDashboardController::class, 'showPasien'])->name('pasien.show');
             
             // Skrining
             Route::get('/skrining', [RsSkriningController::class, 'index'])->name('skrining.index');
+            Route::get('/skrining/{id}/edit', [RsSkriningController::class, 'edit'])->name('skrining.edit'); 
             Route::get('/skrining/{id}', [RsSkriningController::class, 'show'])->name('skrining.show');
             Route::put('/skrining/{id}', [RsSkriningController::class, 'update'])->name('skrining.update'); 
 
             // Pasien Nifas
+         
+            Route::post('/pasien-nifas/{id}/anak', [RsPasienNifasController::class, 'storeAnakPasien'])->name('pasien-nifas.store-anak');
             Route::get('/pasien-nifas', [RsPasienNifasController::class, 'index'])->name('pasien-nifas.index');
             Route::get('/pasien-nifas/create', [RsPasienNifasController::class, 'create'])->name('pasien-nifas.create');
             Route::get('/pasien-nifas/download/pdf', [RsPasienNifasController::class, 'downloadPDF'])->name('pasien-nifas.download-pdf');
             Route::get('/pasien-nifas/{id}', [RsPasienNifasController::class, 'show'])->name('pasien-nifas.show');
+            
 
             Route::post('/pasien-nifas/cek-nik', [RsPasienNifasController::class, 'cekNik'])->name('pasien-nifas.cek-nik');
             Route::post('/pasien-nifas/store', [RsPasienNifasController::class, 'store'])->name('pasien-nifas.store');
+            Route::get('/pasien-nifas/{id}/detail', [RsPasienNifasController::class, 'detail'])->name('pasien-nifas.detail');
         });
 
     // ================== PASIEN ==================

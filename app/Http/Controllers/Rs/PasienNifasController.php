@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Rs;
 
 use App\Http\Controllers\Controller;
 use App\Models\PasienNifas;
+use App\Models\AnakPasien;
 use App\Models\Pasien;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -35,11 +36,9 @@ class PasienNifasController extends Controller
 
     /**
      * Simpan data pasien nifas baru
-     * CATATAN: NIK boleh duplikat karena ini hanya menambah data nifas, bukan mendaftar pasien baru
      */
     public function store(Request $request)
     {
-        // Validasi input - NIK TIDAK PERLU UNIQUE
         $validated = $request->validate([
             'nama_pasien' => 'required|string|max:255',
             'nik' => 'required|digits:16',
@@ -49,35 +48,16 @@ class PasienNifasController extends Controller
             'kecamatan' => 'required|string|max:100',
             'kelurahan' => 'required|string|max:100',
             'domisili' => 'required|string',
-        ], [
-            'nama_pasien.required' => 'Nama pasien harus diisi',
-            'nik.required' => 'NIK harus diisi',
-            'nik.digits' => 'NIK harus 16 digit',
-            'no_telepon.required' => 'Nomor telepon harus diisi',
-            'provinsi.required' => 'Provinsi harus diisi',
-            'kota.required' => 'Kota/Kabupaten harus diisi',
-            'kecamatan.required' => 'Kecamatan harus diisi',
-            'kelurahan.required' => 'Kelurahan harus diisi',
-            'domisili.required' => 'Domisili harus diisi',
         ]);
 
         try {
             DB::beginTransaction();
 
-            Log::info('=== START CREATE PASIEN NIFAS ===');
-            Log::info('Validated Data:', $validated);
-            Log::info('Auth User ID:', [auth()->id()]);
-
-            // ✅ CEK APAKAH PASIEN SUDAH ADA BERDASARKAN NIK
             $existingPasien = Pasien::where('nik', $validated['nik'])->first();
 
             if ($existingPasien) {
-                // ✅ PASIEN SUDAH ADA - Langsung daftarkan ke pasien_nifas_rs
-                Log::info('Pasien already exists, using existing pasien_id:', ['id' => $existingPasien->id]);
-                
                 $pasien = $existingPasien;
                 
-                // Update data pasien jika perlu (opsional)
                 $existingPasien->update([
                     'no_telepon' => $validated['no_telepon'],
                     'PProvinsi' => $validated['provinsi'],
@@ -86,24 +66,16 @@ class PasienNifasController extends Controller
                     'PWilayah' => $validated['kelurahan'],
                 ]);
                 
-                Log::info('Pasien data updated');
-                
             } else {
-                // ✅ PASIEN BELUM ADA - Buat user dan pasien baru
-                Log::info('Creating new pasien');
-
-                // 1. Buat user baru
                 $roleId = DB::table('roles')->where('nama_role', 'pasien')->first();
                 
                 if (!$roleId) {
                     throw new \Exception('Role "pasien" tidak ditemukan di database');
                 }
 
-                // Cek apakah email sudah ada
                 $emailExists = User::where('email', $validated['nik'] . '@pasien.delisa.id')->first();
                 
                 if ($emailExists) {
-                    // Jika email sudah ada, tambahkan timestamp
                     $email = $validated['nik'] . '.' . time() . '@pasien.delisa.id';
                 } else {
                     $email = $validated['nik'] . '@pasien.delisa.id';
@@ -116,9 +88,6 @@ class PasienNifasController extends Controller
                     'role_id' => $roleId->id,
                 ]);
 
-                Log::info('User Created:', ['id' => $user->id, 'email' => $user->email]);
-
-                // 2. Buat data pasien
                 $pasienData = [
                     'user_id' => $user->id,
                     'nik' => $validated['nik'],
@@ -129,19 +98,11 @@ class PasienNifasController extends Controller
                     'PWilayah' => $validated['kelurahan'],
                 ];
 
-                Log::info('Creating Pasien with data:', $pasienData);
-
                 $pasien = Pasien::create($pasienData);
-
-                Log::info('Pasien Created:', ['id' => $pasien->id, 'nik' => $pasien->nik]);
             }
 
-            // ✅ DETEKSI rs_id OTOMATIS
             $rs_id = $this->getRsId();
-            
-            Log::info('Using RS ID:', ['rs_id' => $rs_id]);
 
-            // ✅ CEK APAKAH SUDAH TERDAFTAR DI PASIEN NIFAS RS INI
             $existingNifas = PasienNifas::where('pasien_id', $pasien->id)
                                         ->where('rs_id', $rs_id)
                                         ->first();
@@ -150,49 +111,28 @@ class PasienNifasController extends Controller
                 DB::commit();
                 
                 return redirect()
-                    ->route('rs.pasien-nifas.index')
-                    ->with('info', 'Pasien sudah terdaftar sebagai pasien nifas di rumah sakit ini.');
+                    ->route('rs.pasien-nifas.show', $existingNifas->id)
+                    ->with('info', 'Pasien sudah terdaftar. Silakan tambah data anak.');
             }
 
-            // 3. Daftarkan sebagai pasien nifas
             $pasienNifasData = [
                 'rs_id' => $rs_id,
                 'pasien_id' => $pasien->id,
                 'tanggal_mulai_nifas' => now(),
             ];
 
-            Log::info('Creating Pasien Nifas with data:', $pasienNifasData);
-
             $pasienNifas = PasienNifas::create($pasienNifasData);
-
-            Log::info('Pasien Nifas Created:', ['id' => $pasienNifas->id]);
-            Log::info('=== SUCCESS CREATE PASIEN NIFAS ===');
 
             DB::commit();
 
             return redirect()
-                ->route('rs.pasien-nifas.index')
-                ->with('success', 'Data pasien nifas berhasil ditambahkan!');
+                ->route('rs.pasien-nifas.show', $pasienNifas->id)
+                ->with('success', 'Data pasien nifas berhasil ditambahkan! Silakan tambah data anak.');
 
-        } catch (\Illuminate\Database\QueryException $e) {
-            DB::rollBack();
-            
-            Log::error('=== DATABASE ERROR ===');
-            Log::error('SQL Error: ' . $e->getMessage());
-            Log::error('Error Code: ' . $e->getCode());
-            
-            return back()
-                ->withInput()
-                ->with('error', 'Terjadi kesalahan database: ' . $e->getMessage());
-                
         } catch (\Exception $e) {
             DB::rollBack();
             
-            Log::error('=== ERROR CREATE PASIEN NIFAS ===');
-            Log::error('Message: ' . $e->getMessage());
-            Log::error('File: ' . $e->getFile());
-            Log::error('Line: ' . $e->getLine());
-            Log::error('Trace: ' . $e->getTraceAsString());
+            Log::error('Error Create Pasien Nifas: ' . $e->getMessage());
             
             return back()
                 ->withInput()
@@ -202,14 +142,11 @@ class PasienNifasController extends Controller
 
     /**
      * Get RS ID from authenticated user
-     * 
-     * @return int
      */
     private function getRsId()
     {
         $user = auth()->user();
         
-        // Cek berbagai kemungkinan field rs_id
         if (isset($user->rumah_sakit_id) && !is_null($user->rumah_sakit_id)) {
             return $user->rumah_sakit_id;
         }
@@ -222,19 +159,89 @@ class PasienNifasController extends Controller
             return $user->puskesmas_id;
         }
         
-        // Ultimate fallback
-        Log::warning('RS ID not found in user attributes, using default: 1');
         return 1;
     }
 
     /**
-     * Display detail pasien nifas
+     * Display form tambah data anak
      */
     public function show($id)
     {
-        $pasienNifas = PasienNifas::with(['pasien.user', 'rs'])->findOrFail($id);
+        $pasienNifas = PasienNifas::with(['pasien.user', 'rs', 'anakPasien'])
+            ->findOrFail($id);
         
         return view('rs.pasien-nifas.show', compact('pasienNifas'));
+    }
+
+    /**
+     * Store data anak pasien
+     */
+    public function storeAnakPasien(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'anak_ke' => 'required|integer|min:1',
+            'tanggal_lahir' => 'required|date',
+            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
+            'nama_anak' => 'nullable|string|max:255',
+            'usia_kehamilan_saat_lahir' => 'required|string',
+            'berat_lahir_anak' => 'required|numeric|min:0',
+            'panjang_lahir_anak' => 'required|numeric|min:0',
+            'lingkar_kepala_anak' => 'required|numeric|min:0',
+            'memiliki_buku_kia' => 'required|boolean',
+            'buku_kia_bayi_kecil' => 'required|boolean',
+            'imd' => 'required|boolean',
+            'riwayat_penyakit' => 'nullable|array',
+            'keterangan_masalah_lain' => 'nullable|string',
+        ]);
+
+        try {
+            $pasienNifas = PasienNifas::findOrFail($id);
+
+            AnakPasien::create([
+                'nifas_id' => $pasienNifas->id,
+                'anak_ke' => $validated['anak_ke'],
+                'tanggal_lahir' => $validated['tanggal_lahir'],
+                'jenis_kelamin' => $validated['jenis_kelamin'],
+                'nama_anak' => $validated['nama_anak'] ?? 'Anak ke-' . $validated['anak_ke'],
+                'usia_kehamilan_saat_lahir' => $validated['usia_kehamilan_saat_lahir'],
+                'berat_lahir_anak' => $validated['berat_lahir_anak'],
+                'panjang_lahir_anak' => $validated['panjang_lahir_anak'],
+                'lingkar_kepala_anak' => $validated['lingkar_kepala_anak'],
+                'memiliki_buku_kia' => $validated['memiliki_buku_kia'],
+                'buku_kia_bayi_kecil' => $validated['buku_kia_bayi_kecil'],
+                'imd' => $validated['imd'],
+                'riwayat_penyakit' => $validated['riwayat_penyakit'] ?? [],
+                'keterangan_masalah_lain' => $validated['keterangan_masalah_lain'],
+            ]);
+
+            return redirect()
+                ->route('rs.pasien-nifas.detail', $id)
+                ->with('success', 'Data anak berhasil ditambahkan!');
+
+        } catch (\Exception $e) {
+            Log::error('Error Store Anak Pasien: ' . $e->getMessage());
+            
+            return back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display detail readonly pasien nifas dan data anak
+     */
+    public function detail($id)
+    {
+        $pasienNifas = PasienNifas::with([
+            'pasien.user', 
+            'rs', 
+            'anakPasien'
+        ])->findOrFail($id);
+        
+        // Ambil data anak pertama (atau bisa diubah sesuai kebutuhan)
+        $anakPasien = $pasienNifas->anakPasien->first();
+        
+        return view('rs.pasien-nifas.detail', compact('pasienNifas', 'anakPasien'));
     }
 
     /**
