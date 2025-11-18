@@ -44,8 +44,9 @@ class RoleRegistrationController extends Controller
                 'updated_at' => now(),
             ]);
 
-            // 2) detail puskesmas melekat ke user (sudah lengkap dari form)
+            // 2) detail puskesmas melekat ke user
             DB::table('puskesmas')->insert([
+                'user_id'        => $userId,                // ✅ JANGAN LUPA INI
                 'nama_puskesmas' => $data['nama'],
                 'kecamatan'      => $data['kecamatan'],
                 'lokasi'         => $data['lokasi'] ?? '',
@@ -80,7 +81,7 @@ class RoleRegistrationController extends Controller
                 'password'   => Hash::make($data['password']),
                 'phone'      => $data['phone'] ?? null,
                 'address'    => $data['lokasi'] ?? null,
-                'role_id'    => $this->roleId('rumah_sakit'),
+                'role_id'    => $this->roleId('rs'),   // ✅ pakai 'rs', sesuai isi tabel roles
                 'status'     => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -101,11 +102,9 @@ class RoleRegistrationController extends Controller
             ->with('ok', 'Pengajuan akun Rumah Sakit terkirim. Menunggu persetujuan DINKES.');
     }
 
-    /** BIDAN (mandiri/PKM – formmu sudah memuat puskesmas/wilayah kerja) */
+    /** BIDAN */
     public function storeBidan(Request $r)
     {
-        $puskesmasList = DB::table('puskesmas')->select('id', 'nama_puskesmas')->orderBy('nama_puskesmas')->get();
-
         $data = $r->validate([
             'pic_name'           => 'required|string|max:255',   // Nama lengkap PIC
             'email'              => 'required|email|max:255|unique:users,email',
@@ -143,7 +142,7 @@ class RoleRegistrationController extends Controller
     }
 
     /** PASIEN **/
-    public function storePasien(\Illuminate\Http\Request $r)
+    public function storePasien(Request $r)
     {
         $data = $r->validate([
             'nik'          => 'required|string|size:16|unique:pasiens,nik',
@@ -152,15 +151,15 @@ class RoleRegistrationController extends Controller
 
         $roleId = $this->roleId('pasien');
         if (!$roleId) {
-            $roleId = \Illuminate\Support\Facades\DB::table('roles')->insertGetId([
+            $roleId = DB::table('roles')->insertGetId([
                 'nama_role'  => 'pasien',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($data, $roleId) {
-            $userId = \Illuminate\Support\Facades\DB::table('users')->insertGetId([
+        DB::transaction(function () use ($data, $roleId) {
+            $userId = DB::table('users')->insertGetId([
                 'name'       => $data['nama_lengkap'],
                 'email'      => null,
                 'password'   => null,
@@ -170,7 +169,7 @@ class RoleRegistrationController extends Controller
                 'updated_at' => now(),
             ]);
 
-            \Illuminate\Support\Facades\DB::table('pasiens')->insert([
+            DB::table('pasiens')->insert([
                 'user_id'    => $userId,
                 'nik'        => $data['nik'],
                 'created_at' => now(),
