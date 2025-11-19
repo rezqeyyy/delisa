@@ -91,6 +91,9 @@
                         Mean Arterial Pressure (MAP)                        
                     </div>
                     <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ $map !== null ? number_format($map, 2) . ' mmHg' : '-' }}</div>
+
+                    <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Pemeriksaan Protein Urine</div>
+                    <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ $proteinUrine ?? '-' }}</div>
                 </div>
             </div>
         </div>

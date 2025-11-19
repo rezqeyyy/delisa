@@ -97,22 +97,26 @@
                         </div>
                     </div>
 
-                    <!-- Grup aksi (dropdown + ajukan) selalu bersama -->
-                    <div class="flex items-center gap-2 w-full md:w-auto min-w-0 flex-wrap md:justify-end">
-                        <!-- Dropdown status -->
-                        <form id="skriningFilterForm" action="{{ route('pasien.dashboard') }}" method="GET"
-                            class="w-full md:w-[220px]">
-                            <div class="relative w-full">
-                                @php $currentStatus = $status ?? ''; @endphp
-                                <select id="statusSelect" name="status"
-                                        class="w-full pl-3 pr-9 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
-                                    <option value="" {{ $currentStatus === '' ? 'selected' : '' }}>Cari Berdasarkan Status</option>
-                                    <option value="" {{ ($status ?? '') === '' ? 'selected' : '' }}>Semua</option>
-                                    <option value="Normal" {{ $currentStatus === 'Normal' ? 'selected' : '' }}>Tidak Berisiko</option>
-                                    <option value="Waspada" {{ $currentStatus === 'Waspada' ? 'selected' : '' }}>Waspada</option>
-                                    <option value="Berisiko" {{ $currentStatus === 'Berisiko' ? 'selected' : '' }}>Berisiko</option>
-                                </select>
-                            </div>
+                    <div class="flex items-center gap-2 w-full md:w-auto min-w-0 flex-wrap md:justify-start">
+                        <form id="skriningFilterForm" action="{{ route('pasien.dashboard') }}" method="GET" class="w-full md:w-auto">
+                            <!-- <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"> -->
+                                <div class="relative">
+                                    @php $currentStatus = $status ?? ''; @endphp
+                                    <select id="statusSelect" name="status"
+                                            class="w-full pl-3 pr-9 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+                                        <option value="" {{ $currentStatus === '' ? 'selected' : '' }}>Cari Berdasarkan Status</option>
+                                        <option value="Tidak berisiko preeklampsia" {{ $currentStatus === 'Tidak berisiko preeklampsia' ? 'selected' : '' }}>Tidak berisiko preeklampsia</option>
+                                        <option value="Berisiko preeklampsia" {{ $currentStatus === 'Berisiko preeklampsia' ? 'selected' : '' }}>Berisiko preeklampsia</option>
+                                        <option value="Skrining belum selesai" {{ $currentStatus === 'Skrining belum selesai' ? 'selected' : '' }}>Skrining belum selesai</option>
+                                    </select>
+                                </div>
+                                <!-- <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}"
+                                       class="w-full pl-3 pr-3 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40"
+                                       onchange="if(this.value && this.form.date_to.value) this.form.submit();" />
+                                <input type="date" name="date_to" value="{{ $dateTo ?? '' }}"
+                                       class="w-full pl-3 pr-3 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40"
+                                       onchange="if(this.value && this.form.date_from.value) this.form.submit();" />
+                            </div> -->
                         </form>
 
                         <!-- Tombol Ajukan Skrining -->
@@ -125,7 +129,7 @@
                         id="btnAjukanSkrining"
                         data-start-url="{{ route('pasien.data-diri') }}"
                         data-search-url="{{ route('pasien.puskesmas.search') }}"
-                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70] w-full md:w-[220px]">
+                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70] w-full md:w-[220px] md:ml-3 flex-none">
                             <span class="text-base leading-none">+</span>
                             <span class="leading-none">Ajukan Skrining</span>
                         </a>
@@ -215,9 +219,9 @@
 
             <!-- Ringkasan Total Skrining & Resiko Preeklamsia -->           
             <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white rounded-2xl p-6 shadow-md">
-                    <h2 class="font-semibold text-[#1D1D1D] mb-3">Total Skrining</h2>
-                    <div class="space-y-3 text-sm">
+                <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col h-full">
+                    <h2 class="text-xl font-semibold text-[#1D1D1D] mb-3">Total Skrining</h2>
+                    <div class="text-base flex-1 flex flex-col justify-center space-y-3">
                         <div class="flex items-center justify-between">
                             <span class="text-[#1D1D1D]">Sudah Selesai</span>
                             <span class="font-semibold tabular-nums">{{ $totalSelesai ?? 0 }}</span>
@@ -230,13 +234,23 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl p-6 shadow-md">
-                    <h2 class="font-semibold text-[#1D1D1D] mb-3">Risiko Preeklamsia</h2>
-                    <div class="rounded-xl {{ $riskBoxClass ?? 'bg-[#E9E9E9] text-[#1D1D1D]' }} p-6 text-center">
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h2 class="text-xl font-semibold text-[#1D1D1D] mb-3">Risiko Preeklamsia</h2>
+                    <div class="rounded-xl {{ $riskBoxClass ?? 'bg-[#E9E9E9] text-[#1D1D1D]' }} p-4 text-center">
                         <span class="text-lg font-semibold">
                             {{ $riskPreeklampsia ? $riskPreeklampsia : 'Belum ada' }}
                         </span>
                     </div>
+
+                    @php $riskLower = strtolower($riskPreeklampsia ?? ''); @endphp
+                    @if(in_array($riskLower, ['berisiko preeklampsia','berisiko','beresiko','risiko tinggi','resiko tinggi']))
+                        <p class="text-xs text-red-600 mt-3">*Segera Menuju ke RS di Bawah Untuk Penanganan Lebih Lanjut</p>
+                        <div class="rounded-xl bg-[#E9E9E9] text-[#1D1D1D] p-4 text-center mt-2">
+                            <span class="font-medium">
+                                {{ ($referralAccepted ?? false) && ($referralHospital ?? null) ? $referralHospital : 'Tunggu Hasil Rujukan' }}
+                            </span>
+                        </div>
+                    @endif
                 </div>
             </section>
 

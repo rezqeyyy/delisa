@@ -10,7 +10,6 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
-
 class AkunBaruController extends Controller
 {
     // List pengajuan akun = users.status = false
@@ -30,10 +29,8 @@ class AkunBaruController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-
         return view('dinkes.akun-baru.akun-baru', compact('q', 'requests'));
     }
-
 
     // Simpan pengajuan (buat user status=false)
     public function store(Request $request)
@@ -57,8 +54,9 @@ class AkunBaruController extends Controller
         $role = Role::where('nama_role', $roleName)->firstOrCreate();
 
         // password sementara
-        // (kalau versi laravel-mu belum ada Str::password, pakai Str::random(12))
-        $tempPassword = method_exists(Str::class, 'password') ? Str::password(10) : Str::random(12);
+        $tempPassword = method_exists(Str::class, 'password')
+            ? Str::password(10)
+            : Str::random(12);
 
         User::create([
             'name'     => $request->name,
@@ -73,12 +71,50 @@ class AkunBaruController extends Controller
             ->with('ok', "Pengajuan akun dibuat. Password sementara: {$tempPassword}");
     }
 
-    // Terima pengajuan: aktifkan user (status=true)
+    // Terima pengajuan: aktifkan user (status=true) + bikin detail sesuai role
     public function approve($id)
     {
-        $user = User::where('status', false)->findOrFail($id);
-        $user->status = true;
-        $user->save();
+        // ambil user + role-nya
+        $user = User::with('role')
+            ->where('status', false)
+            ->findOrFail($id);
+
+        DB::transaction(function () use ($user) {
+            // aktifkan user
+            $user->status = true;
+            $user->save();
+
+            $roleName = optional($user->role)->nama_role; // 'bidan' | 'rs' | 'puskesmas'
+
+            if ($roleName === 'puskesmas') {
+                DB::table('puskesmas')->updateOrInsert(
+                    ['user_id' => $user->id],
+                    [
+                        'nama_puskesmas' => $user->name ?? 'Belum diisi',
+                        'lokasi'         => 'Belum diisi',
+                        'kecamatan'      => 'Belum diisi',
+                        'is_mandiri'     => 0,
+                        'created_at'     => now(),
+                        'updated_at'     => now(),
+                    ]
+                );
+            } elseif ($roleName === 'rs') {
+                DB::table('rumah_sakits')->updateOrInsert(
+                    ['user_id' => $user->id],
+                    [
+                        'nama'       => $user->name ?? 'Belum diisi',
+                        'lokasi'     => 'Belum diisi',
+                        'kecamatan'  => 'Belum diisi',
+                        'kelurahan'  => 'Belum diisi',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            } elseif ($roleName === 'bidan') {
+                // ❗ Untuk bidan, detail sudah dibuat saat registrasi (storeBidan),
+                // jadi di sini kita cukup mengaktifkan user saja.
+            }
+        });
 
         return back()->with('ok', "Pengajuan akun {$user->name} telah diterima (aktif).");
     }

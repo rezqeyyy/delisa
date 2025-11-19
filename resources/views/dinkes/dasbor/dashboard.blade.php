@@ -18,19 +18,7 @@
             <!-- Header -->
             <div
                 class="flex flex-wrap items-center gap-3 justify-between bg-white px-4 sm:px-5 py-3 sm:py-4 rounded-2xl shadow-md">
-                <div class="flex items-center gap-3 min-w-0">
-
-                    <!-- Analytic Explorer: icon disembunyikan di mobile -->
-                    <a href="{{ route('dinkes.analytics') }}"
-                        class="shrink-0 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#E5E5E5] bg-white hover:bg-[#F8F8F8] transition"
-                        aria-label="Buka Analytic Explorer">
-                        <span class=" sm:inline-flex w-5 h-5 items-center justify-center">
-                            <img src="{{ asset('icons/analytics-analysis-svgrepo-com.svg') }}"
-                                class="w-4 h-4 opacity-90" alt="">
-                        </span>
-                        <span class="text-xs sm:text-sm font-medium">Analytic Explorer</span>
-                    </a>
-                </div>
+                <div class="flex items-center gap-3 min-w-0"> </div>
 
                 <div class="flex items-center gap-2 sm:gap-3">
                     <!-- Settings: icon disembunyikan di mobile (ganti teks 'Set') -->
@@ -844,8 +832,11 @@
                 <!-- Modal Filter -->
                 <div id="peFilterModal" class="hidden fixed inset-0 z-50 p-4">
                     <div class="grid place-items-center min-h-screen">
-                        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl border border-[#E9E9E9]">
-                            <div class="px-5 py-4 border-b flex items-center justify-between">
+                        <div
+                            class="bg-white w-full max-w-md max-h-[90vh] rounded-2xl shadow-xl border border-[#E9E9E9] flex flex-col">
+
+                            {{-- Header --}}
+                            <div class="px-5 py-4 border-b flex items-center justify-between shrink-0">
                                 <h3 class="font-semibold">Filter Data Pasien Pre-Eklampsia</h3>
                                 <button type="button" data-close class="p-1 rounded hover:bg-[#F5F5F5]">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5"
@@ -856,8 +847,11 @@
                                 </button>
                             </div>
 
+                            {{-- Isi + scroll --}}
                             <form id="pe-filter-form" method="GET" action="{{ request()->url() }}"
-                                class="p-5 grid gap-4">
+                                class="p-5 grid gap-4 flex-1 overflow-y-auto">
+
+                                {{-- Rentang tanggal --}}
                                 <div>
                                     <label class="block text-xs text-[#7C7C7C] mb-1">Dari Tanggal</label>
                                     <input type="date" name="from" value="{{ request('from') }}"
@@ -869,6 +863,7 @@
                                         class="w-full border rounded-md px-3 py-2 text-sm">
                                 </div>
 
+                                {{-- Resiko --}}
                                 <div>
                                     <label class="block text-xs text-[#7C7C7C] mb-1">Resiko</label>
                                     <select name="resiko" class="w-full border rounded-md px-3 py-2 text-sm">
@@ -879,6 +874,7 @@
                                     </select>
                                 </div>
 
+                                {{-- Status hadir --}}
                                 <div>
                                     <label class="block text-xs text-[#7C7C7C] mb-1">Status</label>
                                     <select name="status" class="w-full border rounded-md px-3 py-2 text-sm">
@@ -888,47 +884,129 @@
                                     </select>
                                 </div>
 
+                                {{-- Kategori umum --}}
                                 <div>
                                     <label class="block text-xs text-[#7C7C7C] mb-1">Kategori</label>
                                     <select name="kategori" class="w-full border rounded-md px-3 py-2 text-sm">
                                         <option value="">Semua Kategori</option>
-                                        <option value="remaja" @selected(request('kategori') === 'remaja')>Ibu Remaja (&lt; 20 th)
+
+                                        {{-- masih pakai kategori remaja --}}
+                                        <option value="remaja" @selected(request('kategori') === 'remaja')>
+                                            Ibu Remaja (&lt; 20 th)
                                         </option>
-                                        <option value="dewasa" @selected(request('kategori') === 'dewasa')>Usia 20–34 th</option>
-                                        <option value="berisiko_umur" @selected(request('kategori') === 'berisiko_umur')>Usia ≥ 35 th
+
+                                        {{-- Pasien JKN --}}
+                                        <option value="jkn" @selected(request('kategori') === 'jkn')>
+                                            Pasien JKN
                                         </option>
-                                        <option value="trimester1" @selected(request('kategori') === 'trimester1')>Trimester 1 (&lt; 14
-                                            mg)</option>
-                                        <option value="trimester2" @selected(request('kategori') === 'trimester2')>Trimester 2 (14–27 mg)
+
+                                        {{-- Pasien Asuransi (non-JKN) --}}
+                                        <option value="asuransi" @selected(request('kategori') === 'asuransi')>
+                                            Pasien Asuransi
                                         </option>
-                                        <option value="trimester3" @selected(request('kategori') === 'trimester3')>Trimester 3 (≥ 28 mg)
+
+                                        {{-- Domisili --}}
+                                        <option value="depok" @selected(request('kategori') === 'depok')>
+                                            Pasien Domisili Depok
+                                        </option>
+                                        <option value="non_depok" @selected(request('kategori') === 'non_depok')>
+                                            Pasien Domisili Non-Depok
+                                        </option>
+
+                                        {{-- Berat badan / IMT --}}
+                                        <option value="bb_normal" @selected(request('kategori') === 'bb_normal')>
+                                            Berat Badan Normal (IMT normal)
+                                        </option>
+                                        <option value="bb_kurang" @selected(request('kategori') === 'bb_kurang')>
+                                            Berat Badan di Bawah Normal
                                         </option>
                                     </select>
                                 </div>
 
+                                {{-- Puskesmas --}}
                                 <div>
                                     <label class="block text-xs text-[#7C7C7C] mb-1">Puskesmas</label>
                                     <select name="puskesmas_id" class="w-full border rounded-md px-3 py-2 text-sm">
                                         <option value="">Semua Puskesmas</option>
                                         @foreach ($puskesmasList ?? [] as $pk)
                                             <option value="{{ $pk->id }}" @selected(request('puskesmas_id') == $pk->id)>
-                                                {{ $pk->nama_puskesmas }}</option>
+                                                {{ $pk->nama_puskesmas }}
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
 
+                                {{-- UI SAJA: Riwayat Penyakit (multi select chip) --}}
+                                <div class="pt-1 border-t border-dashed border-[#E9E9E9] mt-1">
+                                    <p class="block text-xs text-[#7C7C7C] mb-2">
+                                        Riwayat Penyakit <span class="text-[10px]">(bisa pilih lebih dari satu)</span>
+                                    </p>
+
+                                    @php
+                                        $rpOptions = [
+                                            'hipertensi' => 'Hipertensi',
+                                            'alergi' => 'Alergi',
+                                            'tiroid' => 'Tiroid',
+                                            'tb' => 'TB',
+                                            'jantung' => 'Jantung',
+                                            'hepatitis_b' => 'Hepatitis B',
+                                            'jiwa' => 'Jiwa',
+                                            'autoimun' => 'Autoimun',
+                                            'sifilis' => 'Sifilis',
+                                            'diabetes' => 'Diabetes',
+                                            'asma' => 'Asma',
+                                            'lainnya' => 'Lainnya',
+                                        ];
+                                        $rpSelected = (array) request('riwayat_penyakit_ui', []);
+                                    @endphp
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+                                        @foreach ($rpOptions as $val => $label)
+                                            <label class="cursor-pointer">
+
+                                                {{-- input checklistnya disembunyikan --}}
+                                                <input type="checkbox" name="riwayat_penyakit_ui[]"
+                                                    value="{{ $val }}" class="peer hidden"
+                                                    @checked(in_array($val, $rpSelected))>
+
+                                                {{-- tampilan chip --}}
+                                                <div
+                                                    class="
+                    flex items-center justify-between
+                    border border-pink-400 rounded-full px-4 py-2
+                    text-xs sm:text-sm transition-all
+                    peer-checked:bg-[#B9257F] peer-checked:text-white peer-checked:border-[#B9257F]
+                    hover:bg-[#ffe6f2]
+                ">
+                                                    <span>{{ $label }}</span>
+
+                                                </div>
+
+                                            </label>
+                                        @endforeach
+
+                                    </div>
+                                </div>
+
+
                                 <input type="hidden" name="q" value="{{ request('q') }}">
 
-                                <div class="flex items-center justify-end gap-2 pt-2 border-t">
+                                {{-- Footer tombol (tetap nempel di bawah area scroll) --}}
+                                <div class="flex items-center justify-end gap-2 pt-2 border-t bg-white">
                                     <button type="button" data-reset
-                                        class="border border-[#CAC7C7] rounded-md px-3 py-2 text-sm">Reset</button>
-                                    <button
-                                        class="bg-[#B9257F] text-white rounded-md px-4 py-2 text-sm">Terapkan</button>
+                                        class="border border-[#CAC7C7] rounded-md px-3 py-2 text-sm">
+                                        Reset
+                                    </button>
+                                    <button class="bg-[#B9257F] text-white rounded-md px-4 py-2 text-sm">
+                                        Terapkan
+                                    </button>
                                 </div>
                             </form>
                         </div>
                     </div>
                 </div>
+
             </section>
 
             <footer class="text-center text-xs text-[#7C7C7C] py-6">

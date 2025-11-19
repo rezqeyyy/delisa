@@ -99,10 +99,11 @@
                 </section>
 
                 {{-- 🔐 Password baru (auto-hide) --}}
-                @if (session('new_password'))
+                @if (session('new_password') && session('pw_user_id'))
                     <div id="pwToast"
                         class="mb-3 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 shadow transition-all duration-300"
-                        data-timeout="5000" role="status">
+                        data-timeout="5000" role="status" data-user-id="{{ session('pw_user_id') }}"
+                        data-password="{{ session('new_password') }}">
                         <div class="mt-0.5">🔐</div>
                         <div class="flex-1">
                             <div class="font-semibold">Password baru telah dibuat</div>
@@ -117,12 +118,16 @@
                                     Salin
                                 </button>
                             </div>
-                            <p class="mt-1 text-xs opacity-80">Simpan password ini dengan aman. Kotak ini akan hilang
-                                otomatis.</p>
+                            <p class="mt-1 text-xs opacity-80">
+                                Simpan password ini dengan aman. Kotak ini akan hilang otomatis,
+                                tetapi password tetap tersimpan di browser ini dan dapat dilihat pada halaman detail
+                                akun.
+                            </p>
                         </div>
                         <button type="button" id="pwToastClose" class="opacity-60 hover:opacity-100">✕</button>
                     </div>
                 @endif
+
 
                 {{-- ====== LIST: mode KARTU (mobile) ====== --}}
                 <section class="md:hidden space-y-3" id="dataMasterCards">

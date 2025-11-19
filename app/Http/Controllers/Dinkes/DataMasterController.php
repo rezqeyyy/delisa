@@ -211,21 +211,42 @@ class DataMasterController extends Controller
             'new_password' => 'nullable|string|min:8',
         ]);
 
-        // Jika tidak diisi, generate password acak yang kuat
-        $new = $data['new_password'] ?? Str::password(12); // campur huruf, angka, simbol
+        // CASE 1: password DIISI MANUAL
+        if (!empty($data['new_password'])) {
+            $new = $data['new_password'];
+
+            DB::table('users')->where('id', $user)->update([
+                'password'   => Hash::make($new),
+                'updated_at' => now(),
+            ]);
+
+            // ⚠️ TIDAK kirim password ke session (tidak disimpan di localStorage).
+            // ✅ Kirim flag untuk MENGHAPUS password acak terakhir di browser.
+            return back()->with([
+                'ok'              => 'Password berhasil direset dengan password yang Anda tentukan.',
+                'flash_kind'      => 'password-reset-manual',
+                'pw_user_id_clear' => $user,   // ← ini penting
+            ]);
+        }
+
+        // CASE 2: password DIKOSONGKAN → generate otomatis
+        $new = Str::password(12); // password acak kuat
 
         DB::table('users')->where('id', $user)->update([
             'password'   => Hash::make($new),
             'updated_at' => now(),
         ]);
 
-        // Kirim password baru agar bisa ditampilkan 1x sebagai UI toast
+        // Kirim password & user id ke session → nanti disimpan di localStorage (browser)
         return back()->with([
-            'ok'           => 'Password berhasil direset.',
-            'new_password' => $new,
-            'flash_kind'   => 'password-reset', // optional: tipe toast
+            'ok'           => 'Password berhasil direset. Sistem membuat password acak baru.',
+            'new_password' => $new,   // plaintext, sekali lewat ke browser
+            'pw_user_id'   => $user,  // untuk key localStorage
+            'flash_kind'   => 'password-reset-auto',
         ]);
     }
+
+
 
 
 
@@ -409,46 +430,46 @@ class DataMasterController extends Controller
     }
 
     public function destroy(Request $request, int $user)
-{
-    $tab = $request->query('tab', 'bidan');
+    {
+        $tab = $request->query('tab', 'bidan');
 
-    try {
-        DB::transaction(function () use ($tab, $user) {
-            if ($tab === 'rs') {
-                DB::table('rumah_sakits')->where('user_id', $user)->delete();
-            } elseif ($tab === 'puskesmas') {
-                $puskesmasId = DB::table('puskesmas')->where('user_id', $user)->value('id');
+        try {
+            DB::transaction(function () use ($tab, $user) {
+                if ($tab === 'rs') {
+                    DB::table('rumah_sakits')->where('user_id', $user)->delete();
+                } elseif ($tab === 'puskesmas') {
+                    $puskesmasId = DB::table('puskesmas')->where('user_id', $user)->value('id');
 
-                if ($puskesmasId) {
-                    DB::table('bidans')
-                        ->where('puskesmas_id', $puskesmasId)
-                        ->update([
-                            'puskesmas_id' => null,
-                            'updated_at'   => now(),
-                        ]);
+                    if ($puskesmasId) {
+                        DB::table('bidans')
+                            ->where('puskesmas_id', $puskesmasId)
+                            ->update([
+                                'puskesmas_id' => null,
+                                'updated_at'   => now(),
+                            ]);
 
-                    DB::table('puskesmas')->where('id', $puskesmasId)->delete();
+                        DB::table('puskesmas')->where('id', $puskesmasId)->delete();
+                    }
+                } else {
+                    DB::table('bidans')->where('user_id', $user)->delete();
                 }
-            } else {
-                DB::table('bidans')->where('user_id', $user)->delete();
-            }
 
-            DB::table('users')->where('id', $user)->delete();
-        });
+                DB::table('users')->where('id', $user)->delete();
+            });
 
-        return redirect()
-            ->route('dinkes.data-master', [
-                'tab' => $tab,
-                'q'   => $request->query('q'), // <-- langsung dari $request
-            ])
-            ->with('ok', 'Akun dan detail berhasil dihapus.');
-    } catch (\Throwable $e) {
-        return redirect()
-            ->route('dinkes.data-master', [
-                'tab' => $tab,
-                'q'   => request()->query('q'), // <-- di sini juga, gunakan request() helper
-            ])
-            ->with('err', 'Gagal menghapus data: ' . $e->getMessage());
+            return redirect()
+                ->route('dinkes.data-master', [
+                    'tab' => $tab,
+                    'q'   => $request->query('q'), // <-- langsung dari $request
+                ])
+                ->with('ok', 'Akun dan detail berhasil dihapus.');
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('dinkes.data-master', [
+                    'tab' => $tab,
+                    'q'   => request()->query('q'), // <-- di sini juga, gunakan request() helper
+                ])
+                ->with('err', 'Gagal menghapus data: ' . $e->getMessage());
+        }
     }
-}
 }

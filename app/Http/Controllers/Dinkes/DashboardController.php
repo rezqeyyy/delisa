@@ -10,7 +10,7 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        // ====== Tahun utk chart batang KF ======
+        // ===================== 0. YEAR FILTER (KF CHART) =====================
         $selectedYear = (int) ($request->query('year') ?? now()->year);
 
         $availableYears = DB::table('kf')
@@ -18,20 +18,30 @@ class DashboardController extends Controller
             ->orderByDesc('year')
             ->pluck('year')
             ->toArray();
-        if (empty($availableYears)) $availableYears = [now()->year];
 
-        // --- Subquery: skrining TERBARU per pasien (PostgreSQL DISTINCT ON)
+        if (empty($availableYears)) {
+            $availableYears = [now()->year];
+        }
+
+        // Subquery: skrining TERBARU per pasien (PostgreSQL DISTINCT ON)
         $latestSkriningSql = <<<SQL
             (
                 SELECT DISTINCT ON (pasien_id)
-                       id, pasien_id, puskesmas_id, status_pre_eklampsia, checked_status,
-                       jumlah_resiko_sedang, jumlah_resiko_tinggi, created_at
+                       id,
+                       pasien_id,
+                       puskesmas_id,
+                       status_pre_eklampsia,
+                       checked_status,
+                       jumlah_resiko_sedang,
+                       jumlah_resiko_tinggi,
+                       created_at
                 FROM skrinings
                 ORDER BY pasien_id, created_at DESC
             ) AS ls
         SQL;
 
-        // === 1) Daerah Asal Pasien (Depok vs Non Depok) — hanya pasien yg punya skrining (dedup by pasien)
+        // ===================== 1. ASAL PASIEN (DEPOK vs NON) =====================
+
         $depok = DB::table('pasiens as p')
             ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'")
             ->whereExists(function ($q) {
@@ -50,45 +60,64 @@ class DashboardController extends Controller
             })
             ->count();
 
-        // ===== Series bulanan KF (12 slot) — by tahun (tetap sesuai data KF)
+        // ===================== 2. KF PER BULAN (12 SLOT) =====================
+
         $kfPerBulan = DB::table('kf')
             ->selectRaw('EXTRACT(MONTH FROM tanggal_kunjungan)::int as bulan, COUNT(*)::int as total')
             ->whereYear('tanggal_kunjungan', $selectedYear)
-            ->groupBy('bulan')->orderBy('bulan')->get();
+            ->groupBy('bulan')
+            ->orderBy('bulan')
+            ->get();
 
         $seriesBulanan = array_fill(1, 12, 0);
-        foreach ($kfPerBulan as $row) $seriesBulanan[(int)$row->bulan] = (int)$row->total;
+        foreach ($kfPerBulan as $row) {
+            $seriesBulanan[(int) $row->bulan] = (int) $row->total;
+        }
         $seriesBulanan = array_values($seriesBulanan);
 
-        // === 2) Risiko Pre-Eklampsia — dihitung dari skrining TERBARU saja
-        $normal = DB::query()->from(DB::raw($latestSkriningSql))
+        // ===================== 3. RISIKO PRE-EKLAMPSIA (LATEST ONLY) =====================
+
+        $normal = DB::query()
+            ->from(DB::raw($latestSkriningSql))
             ->whereRaw("COALESCE(status_pre_eklampsia, '') ILIKE 'normal'")
             ->count();
 
-        $risk = DB::query()->from(DB::raw($latestSkriningSql))
+        $risk = DB::query()
+            ->from(DB::raw($latestSkriningSql))
             ->whereRaw("COALESCE(status_pre_eklampsia, '') NOT ILIKE 'normal'")
             ->count();
 
-        // ========== 3) Data Pasien Nifas (DONUT) — filter Bulan & Tahun ==========
+        // ===================== 4. DONUT NIFAS (KF) =====================
+
         $dkfMonth = $request->query('dkf_month'); // 1..12 | null
         $dkfYear  = $request->query('dkf_year');  // int | null
 
-        $dkfMonth = is_numeric($dkfMonth) && (int)$dkfMonth >= 1 && (int)$dkfMonth <= 12 ? (int)$dkfMonth : null;
-        $dkfYear  = is_numeric($dkfYear)  ? (int)$dkfYear  : null;
+        $dkfMonth = is_numeric($dkfMonth) && (int) $dkfMonth >= 1 && (int) $dkfMonth <= 12
+            ? (int) $dkfMonth
+            : null;
+
+        $dkfYear  = is_numeric($dkfYear)
+            ? (int) $dkfYear
+            : null;
 
         $isDonutFiltered = !is_null($dkfYear) || !is_null($dkfMonth);
 
         if ($isDonutFiltered) {
             $kfPeriod = DB::table('kf as k');
-            if (!is_null($dkfYear))  $kfPeriod->whereYear('k.tanggal_kunjungan', $dkfYear);
-            if (!is_null($dkfMonth)) $kfPeriod->whereMonth('k.tanggal_kunjungan', $dkfMonth);
+
+            if (!is_null($dkfYear)) {
+                $kfPeriod->whereYear('k.tanggal_kunjungan', $dkfYear);
+            }
+            if (!is_null($dkfMonth)) {
+                $kfPeriod->whereMonth('k.tanggal_kunjungan', $dkfMonth);
+            }
 
             $totalNifas = (clone $kfPeriod)
                 ->leftJoin('pasien_nifas_bidan as pnb', 'pnb.id', '=', 'k.id_nifas')
-                ->leftJoin('pasien_nifas_rs as pnr',   'pnr.id', '=', 'k.id_nifas')
+                ->leftJoin('pasien_nifas_rs as pnr', 'pnr.id', '=', 'k.id_nifas')
                 ->where(function ($w) {
                     $w->whereNotNull('pnb.pasien_id')
-                        ->orWhereNotNull('pnr.pasien_id');
+                      ->orWhereNotNull('pnr.pasien_id');
                 })
                 ->selectRaw('COUNT(DISTINCT COALESCE(pnb.pasien_id, pnr.pasien_id)) as total')
                 ->value('total');
@@ -101,7 +130,10 @@ class DashboardController extends Controller
             $union = DB::table('pasien_nifas_bidan')->select('pasien_id')
                 ->union(DB::table('pasien_nifas_rs')->select('pasien_id'));
 
-            $totalNifas = DB::query()->fromSub($union, 't')->distinct()->count('pasien_id');
+            $totalNifas = DB::query()
+                ->fromSub($union, 't')
+                ->distinct()
+                ->count('pasien_id');
 
             $kf1 = DB::table('kf')->where('kunjungan_nifas_ke', 1)->count();
             $kf2 = DB::table('kf')->where('kunjungan_nifas_ke', 2)->count();
@@ -109,35 +141,50 @@ class DashboardController extends Controller
             $kf4 = DB::table('kf')->where('kunjungan_nifas_ke', 4)->count();
         }
 
-        // === 4) Hadir/Mangkir — dari skrining TERBARU
-        $hadir = DB::query()->from(DB::raw($latestSkriningSql))
-            ->where('checked_status', true)->count();
+        // ===================== 5. HADIR / MANGKIR (LATEST) =====================
 
-        $mangkir = DB::query()->from(DB::raw($latestSkriningSql))
-            ->where('checked_status', false)->count();
+        $hadir = DB::query()
+            ->from(DB::raw($latestSkriningSql))
+            ->where('checked_status', true)
+            ->count();
 
-        // Absensi per bulan — dari tanggal skrining TERBARU
-        $absensiPerBulan = DB::query()->from(DB::raw($latestSkriningSql))
+        $mangkir = DB::query()
+            ->from(DB::raw($latestSkriningSql))
+            ->where('checked_status', false)
+            ->count();
+
+        // Absensi per bulan – dari tanggal skrining terbaru
+        $absensiPerBulan = DB::query()
+            ->from(DB::raw($latestSkriningSql))
             ->selectRaw('EXTRACT(MONTH FROM created_at)::int as bulan, COUNT(*)::int as total')
-            ->groupBy('bulan')->orderBy('bulan')->get();
+            ->groupBy('bulan')
+            ->orderBy('bulan')
+            ->get();
 
-        $seriesAbsensi = array_values(array_replace(array_fill(1, 12, 0), $absensiPerBulan->pluck('total', 'bulan')->toArray()));
+        $seriesAbsensi = array_values(array_replace(
+            array_fill(1, 12, 0),
+            $absensiPerBulan->pluck('total', 'bulan')->toArray()
+        ));
 
-        // === 5) Pemantauan (KF)
+        // ===================== 6. PEMANTAUAN KF =====================
+
         $sehat     = DB::table('kf')->where('kesimpulan_pantauan', 'Sehat')->count();
         $dirujuk   = DB::table('kf')->where('kesimpulan_pantauan', 'Dirujuk')->count();
         $meninggal = DB::table('kf')->where('kesimpulan_pantauan', 'Meninggal')->count();
 
-        // ============= 6) TABEL PE — satu baris per pasien (skrining TERBARU) =============
-        $q            = (string) $request->query('q', '');
-        $from         = $request->query('from');
-        $to           = $request->query('to');
-        $resiko       = $request->query('resiko');
-        $status       = $request->query('status');
-        $kategori     = $request->query('kategori');      // NEW
-        $puskesmasId  = $request->query('puskesmas_id');  // NEW
+        // ===================== 7. TABEL PE (LATEST PER PASIEN) =====================
 
-        $peQuery = DB::query()->from(DB::raw($latestSkriningSql))
+        $q                = (string) $request->query('q', '');
+        $from             = $request->query('from');
+        $to               = $request->query('to');
+        $resiko           = $request->query('resiko');
+        $status           = $request->query('status');
+        $kategori         = $request->query('kategori');
+        $puskesmasId      = $request->query('puskesmas_id');
+        $riwayatSelected  = (array) $request->query('riwayat_penyakit_ui', []);
+
+        $peQuery = DB::query()
+            ->from(DB::raw($latestSkriningSql))
             ->join('pasiens as p', 'p.id', '=', 'ls.pasien_id')
             ->join('users as u', 'u.id', '=', 'p.user_id')
             ->leftJoin('kondisi_kesehatans as kk', 'kk.skrining_id', '=', 'ls.id')
@@ -146,9 +193,11 @@ class DashboardController extends Controller
                 p.id AS pasien_id,
                 u.name AS nama,
                 p.nik,
-                CASE WHEN length(p.nik) = 16
-                    THEN substr(p.nik,1,4) || '•••' || substr(p.nik,13,4)
-                    ELSE p.nik END AS nik_masked,
+                CASE
+                    WHEN length(p.nik) = 16
+                        THEN substr(p.nik,1,4) || '•••' || substr(p.nik,13,4)
+                    ELSE p.nik
+                END AS nik_masked,
                 EXTRACT(YEAR FROM age(current_date, p.tanggal_lahir))::int AS umur,
                 kk.usia_kehamilan,
                 to_char(ls.created_at, 'DD/MM/YYYY') AS tanggal,
@@ -158,127 +207,202 @@ class DashboardController extends Controller
                 CASE
                     WHEN ls.jumlah_resiko_tinggi > 0 THEN 'tinggi'
                     WHEN ls.jumlah_resiko_sedang > 0 THEN 'sedang'
-                    ELSE 'non-risk' END AS resiko
+                    ELSE 'non-risk'
+                END AS resiko
             ");
 
-        // Search bebas (nama / NIK)
+        // ---- Search bebas (nama / NIK)
         if ($q !== '') {
             $like = '%' . str_replace('%', '\%', $q) . '%';
             $peQuery->where(function ($w) use ($like) {
                 $w->whereRaw('u.name ILIKE ?', [$like])
-                    ->orWhereRaw('p.nik ILIKE ?', [$like]);
+                  ->orWhereRaw('p.nik ILIKE ?', [$like]);
             });
         }
 
-        // Rentang tanggal
-        if ($from) $peQuery->whereRaw('ls.created_at::date >= ?', [$from]);
-        if ($to)   $peQuery->whereRaw('ls.created_at::date <= ?', [$to]);
+        // ---- Rentang tanggal
+        if ($from) {
+            $peQuery->whereRaw('ls.created_at::date >= ?', [$from]);
+        }
+        if ($to) {
+            $peQuery->whereRaw('ls.created_at::date <= ?', [$to]);
+        }
 
-        // Filter resiko
+        // ---- Filter resiko
         if ($resiko === 'tinggi') {
             $peQuery->whereRaw('COALESCE(ls.jumlah_resiko_tinggi,0) > 0');
         } elseif ($resiko === 'sedang') {
             $peQuery->whereRaw('COALESCE(ls.jumlah_resiko_tinggi,0) = 0')
-                ->whereRaw('COALESCE(ls.jumlah_resiko_sedang,0) > 0');
+                    ->whereRaw('COALESCE(ls.jumlah_resiko_sedang,0) > 0');
         } elseif ($resiko === 'non-risk') {
             $peQuery->whereRaw('COALESCE(ls.jumlah_resiko_tinggi,0) = 0')
-                ->whereRaw('COALESCE(ls.jumlah_resiko_sedang,0) = 0');
+                    ->whereRaw('COALESCE(ls.jumlah_resiko_sedang,0) = 0');
         }
 
-        // Filter status hadir
+        // ---- Filter status hadir
         if ($status === 'hadir') {
             $peQuery->whereRaw('COALESCE(ls.checked_status, false) = true');
         } elseif ($status === 'mangkir') {
             $peQuery->whereRaw('COALESCE(ls.checked_status, false) = false');
         }
 
-        // ====== NEW: Filter Puskesmas ======
-        // skrinings.puskesmas_id → puskesmas.id
+        // ---- Filter puskesmas
         if (is_numeric($puskesmasId)) {
-            $peQuery->where('ls.puskesmas_id', (int)$puskesmasId);
+            $peQuery->where('ls.puskesmas_id', (int) $puskesmasId);
         }
 
-        // ====== NEW: Filter Kategori (umur / trimester) ======
+        // ---- Filter Kategori (remaja, JKN, asuransi, domisili, BB)
         switch ($kategori) {
             case 'remaja': // < 20 tahun
-                $peQuery->whereRaw('EXTRACT(YEAR FROM age(current_date, p.tanggal_lahir))::int < 20');
+                $peQuery->whereRaw(
+                    'EXTRACT(YEAR FROM age(current_date, p.tanggal_lahir))::int < 20'
+                );
                 break;
 
-            case 'dewasa': // 20–34 tahun
-                $peQuery->whereRaw('EXTRACT(YEAR FROM age(current_date, p.tanggal_lahir))::int BETWEEN 20 AND 34');
+            case 'jkn':
+                $peQuery->where(function ($w) {
+                    $w->whereRaw("COALESCE(p.pembiayaan_kesehatan,'') ILIKE '%jkn%'")
+                      ->orWhereRaw("NULLIF(TRIM(COALESCE(p.no_jkn,'')), '') IS NOT NULL");
+                });
                 break;
 
-            case 'berisiko_umur': // ≥ 35 tahun
-                $peQuery->whereRaw('EXTRACT(YEAR FROM age(current_date, p.tanggal_lahir))::int >= 35');
+            case 'asuransi':
+                $peQuery->whereRaw("COALESCE(p.pembiayaan_kesehatan,'') ILIKE '%asuransi%'");
                 break;
 
-            case 'trimester1': // < 14 minggu
-                $peQuery->where('kk.usia_kehamilan', '<', 14);
+            case 'depok':
+                $peQuery->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'");
                 break;
 
-            case 'trimester2': // 14–27 minggu
-                $peQuery->whereBetween('kk.usia_kehamilan', [14, 27]);
+            case 'non_depok':
+                $peQuery->whereRaw("(p.\"PKabupaten\" IS NULL OR p.\"PKabupaten\" NOT ILIKE '%Depok%')");
                 break;
 
-            case 'trimester3': // ≥ 28 minggu
-                $peQuery->where('kk.usia_kehamilan', '>=', 28);
+            case 'bb_normal':
+                $peQuery->whereRaw("COALESCE(kk.status_imt,'') ILIKE '%normal%'");
+                break;
+
+            case 'bb_kurang':
+                $peQuery->where(function ($w) {
+                    $w->whereRaw("LOWER(kk.status_imt) LIKE '%kurus%'")
+                      ->orWhereRaw("LOWER(kk.status_imt) LIKE '%under%'");
+                });
                 break;
         }
 
+        // ---- Filter RIWAYAT PENYAKIT (multi-select)
+        $riwayatSelected = array_filter($riwayatSelected); // buang string kosong kalau ada
 
+        if (!empty($riwayatSelected)) {
+            // mapping kode -> nama_pertanyaan (harus sama persis seperti di controller pasien)
+            $rpMap = [
+                'hipertensi'  => 'Hipertensi',
+                'alergi'      => 'Alergi',
+                'tiroid'      => 'Tiroid',
+                'tb'          => 'TB',
+                'jantung'     => 'Jantung',
+                'hepatitis_b' => 'Hepatitis B',
+                'jiwa'        => 'Jiwa',
+                'autoimun'    => 'Autoimun',
+                'sifilis'     => 'Sifilis',
+                'diabetes'    => 'Diabetes',
+                'asma'        => 'Asma',
+                'lainnya'     => 'Lainnya',
+            ];
+
+            $namaPertanyaan = [];
+            $filterLainnya  = false;
+
+            foreach ($riwayatSelected as $code) {
+                if ($code === 'lainnya') {
+                    $filterLainnya = true;
+                    continue;
+                }
+                if (isset($rpMap[$code])) {
+                    $namaPertanyaan[] = $rpMap[$code];
+                }
+            }
+
+            $peQuery->whereExists(function ($q) use ($namaPertanyaan, $filterLainnya) {
+                $q->select(DB::raw(1))
+                    ->from('jawaban_kuisioners as jk')
+                    ->join('kuisioner_pasiens as kp', 'kp.id', '=', 'jk.kuisioner_id')
+                    ->whereColumn('jk.skrining_id', 'ls.id')
+                    ->where('kp.status_soal', 'individu')
+                    ->where(function ($w) use ($namaPertanyaan, $filterLainnya) {
+                        // penyakit spesifik (hipertensi, jantung, dll)
+                        if (!empty($namaPertanyaan)) {
+                            $w->where(function ($w2) use ($namaPertanyaan) {
+                                $w2->whereIn('kp.nama_pertanyaan', $namaPertanyaan)
+                                   ->where('jk.jawaban', true);
+                            });
+                        }
+
+                        // opsi "Lainnya" → jawaban true + jawaban_lainnya tidak kosong
+                        if ($filterLainnya) {
+                            $w->orWhere(function ($w2) {
+                                $w2->where('kp.nama_pertanyaan', 'Lainnya')
+                                   ->where('jk.jawaban', true)
+                                   ->whereRaw("NULLIF(TRIM(COALESCE(jk.jawaban_lainnya,'')), '') IS NOT NULL");
+                            });
+                        }
+                    });
+            });
+        }
+
+        // ---- Paginate
         $peList = $peQuery
             ->orderByDesc('ls.created_at')
-            ->paginate(10)              // 10 data per halaman
-            ->withQueryString();        // bawa semua ?q=&from=&... saat paging
+            ->paginate(10)
+            ->withQueryString();
 
-        // ====== NEW: daftar Puskesmas untuk dropdown
+        // ===================== 8. DAFTAR PUSKESMAS (UNTUK DROPDOWN) =====================
+
         $puskesmasList = DB::table('puskesmas')
             ->select('id', 'nama_puskesmas')
             ->orderBy('nama_puskesmas')
             ->get();
 
+        // ===================== 9. RENDER VIEW =====================
+
         return view('dinkes.dasbor.dashboard', [
             'depok'          => $depok,
             'non'            => $non,
 
-            // chart batang KF
             'seriesBulanan'  => $seriesBulanan,
             'selectedYear'   => $selectedYear,
             'availableYears' => $availableYears,
 
-            // donut data pasien nifas
-            'totalNifas' => $totalNifas,
-            'kf1' => $kf1,
-            'kf2' => $kf2,
-            'kf3' => $kf3,
-            'kf4' => $kf4,
-            'dkfMonth' => $dkfMonth,
-            'dkfYear' => $dkfYear,
-            'isDonutFiltered' => $isDonutFiltered,
+            'totalNifas'     => $totalNifas,
+            'kf1'            => $kf1,
+            'kf2'            => $kf2,
+            'kf3'            => $kf3,
+            'kf4'            => $kf4,
+            'dkfMonth'       => $dkfMonth,
+            'dkfYear'        => $dkfYear,
+            'isDonutFiltered'=> $isDonutFiltered,
 
-            // lainnya
-            'normal' => $normal,
-            'risk' => $risk,
-            'hadir' => $hadir,
-            'mangkir' => $mangkir,
-            'seriesAbsensi' => $seriesAbsensi,
-            'sehat' => $sehat,
-            'dirujuk' => $dirujuk,
-            'meninggal' => $meninggal,
+            'normal'         => $normal,
+            'risk'           => $risk,
+            'hadir'          => $hadir,
+            'mangkir'        => $mangkir,
+            'seriesAbsensi'  => $seriesAbsensi,
+            'sehat'          => $sehat,
+            'dirujuk'        => $dirujuk,
+            'meninggal'      => $meninggal,
 
-            // tabel PE + dropdown puskesmas
-            'peList' => $peList,
-            'puskesmasList' => $puskesmasList,
+            'peList'         => $peList,
+            'puskesmasList'  => $puskesmasList,
 
-            // state filter tabel PE
-            'filters' => [
-                'q' => $q,
-                'from' => $from,
-                'to' => $to,
-                'resiko' => $resiko,
-                'status' => $status,
-                'kategori' => $kategori,
-                'puskesmas_id' => $puskesmasId,
+            'filters'        => [
+                'q'                   => $q,
+                'from'                => $from,
+                'to'                  => $to,
+                'resiko'              => $resiko,
+                'status'              => $status,
+                'kategori'            => $kategori,
+                'puskesmas_id'        => $puskesmasId,
+                'riwayat_penyakit_ui' => $riwayatSelected,
             ],
         ]);
     }

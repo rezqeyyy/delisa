@@ -12,20 +12,30 @@ class RiwayatPenyakitKeluargaController extends Controller
 {
     use SkriningHelpers;
 
-    // Halaman riwayat penyakit keluarga (status_soal='keluarga'):
-    // - Memuat pilihan penyakit keluarga dan prefill jawaban.
-    // - Jika "lainnya" dipilih, prefill isian "lainnya".
+    /* {{-- ========== RIWAYAT PENYAKIT KELUARGA — INDEX ========== --}} */
+
+    /* 
+     * Navigasi utama: menampilkan pilihan penyakit keluarga (status_soal='keluarga')
+     * Prefill: membaca jawaban sebelumnya, termasuk isian "lainnya" jika ada
+     */
     public function riwayatPenyakitKeluarga(Request $request)
     {
         $skrining = $this->requireSkriningForPasien((int) $request->query('skrining_id'));
 
         // Mapping kode -> nama pertanyaan
         $map = [
-            'hipertensi_kronik'          => 'Hipertensi Kronik',
-            'ginjal'                     => 'Ginjal',
-            'autoimun_sle'               => 'Autoimun, SLE',
-            'anti_phospholipid_syndrome' => 'Anti Phospholipid Syndrome',
-            'lainnya'                    => 'Lainnya',
+            'hipertensi'  => 'Hipertensi',
+            'alergi'      => 'Alergi',
+            'tiroid'      => 'Tiroid',
+            'tb'          => 'TB',
+            'jantung'     => 'Jantung',
+            'hepatitis_b' => 'Hepatitis B',
+            'jiwa'        => 'Jiwa',
+            'autoimun'    => 'Autoimun',
+            'sifilis'     => 'Sifilis',
+            'diabetes'    => 'Diabetes',
+            'asma'        => 'Asma',
+            'lainnya'     => 'Lainnya',
         ];
 
         $selected = [];
@@ -56,25 +66,36 @@ class RiwayatPenyakitKeluargaController extends Controller
         return view('pasien.skrining.riwayat-penyakit-keluarga', compact('selected', 'penyakitKeluargaLainnya'));
     }
 
-    // Penyimpanan riwayat penyakit keluarga:
-    // - Simpan pilihan keluarga dan "lainnya" bila terpilih.
-    // - Set step_form=5, sinkronkan risiko, lalu lanjut ke Preeklampsia.
+    /* {{-- ========== RIWAYAT PENYAKIT KELUARGA — STORE ========== --}} */
+
+    /* 
+     * Validasi & simpan: mapping kode→pertanyaan, create/update kuisioner keluarga
+     * Lainnya: simpan jawaban_lainnya jika opsi "Lainnya" dipilih
+     * Proses: set step_form=5, hitung ulang risiko, redirect ke Preeklampsia
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
             'penyakit'                  => ['array'],
-            'penyakit.*'                => ['in:hipertensi_kronik,ginjal,autoimun_sle,anti_phospholipid_syndrome,lainnya'],
+            'penyakit.*'                => ['in:hipertensi,alergi,tiroid,tb,jantung,hepatitis_b,jiwa,autoimun,sifilis,diabetes,asma,lainnya'],
             'penyakit_keluarga_lainnya' => ['nullable', 'string', 'max:255'],
         ]);
 
         $skrining = $this->requireSkriningForPasien((int) $request->input('skrining_id'));
 
         $map = [
-            'hipertensi_kronik'          => ['nama' => 'Hipertensi Kronik',          'resiko' => 'tinggi'],
-            'ginjal'                     => ['nama' => 'Ginjal',                     'resiko' => 'tinggi'],
-            'autoimun_sle'               => ['nama' => 'Autoimun, SLE',              'resiko' => 'tinggi'],
-            'anti_phospholipid_syndrome' => ['nama' => 'Anti Phospholipid Syndrome', 'resiko' => 'tinggi'],
-            'lainnya'                    => ['nama' => 'Lainnya',                    'resiko' => 'non-risk'],
+            'hipertensi'  => ['nama' => 'Hipertensi',  'resiko' => 'tinggi'],
+            'alergi'      => ['nama' => 'Alergi',      'resiko' => 'non-risk'],
+            'tiroid'      => ['nama' => 'Tiroid',      'resiko' => 'non-risk'],
+            'tb'          => ['nama' => 'TB',          'resiko' => 'non-risk'],
+            'jantung'     => ['nama' => 'Jantung',     'resiko' => 'tinggi'],
+            'hepatitis_b' => ['nama' => 'Hepatitis B', 'resiko' => 'non-risk'],
+            'jiwa'        => ['nama' => 'Jiwa',        'resiko' => 'non-risk'],
+            'autoimun'    => ['nama' => 'Autoimun',    'resiko' => 'tinggi'],
+            'sifilis'     => ['nama' => 'Sifilis',     'resiko' => 'tinggi'],
+            'diabetes'    => ['nama' => 'Diabetes',    'resiko' => 'tinggi'],
+            'asma'        => ['nama' => 'Asma',        'resiko' => 'non-risk'],
+            'lainnya'     => ['nama' => 'Lainnya',     'resiko' => 'non-risk'],
         ];
 
         $dipilih     = $data['penyakit'] ?? [];
