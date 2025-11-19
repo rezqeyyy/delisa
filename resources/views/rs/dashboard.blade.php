@@ -3,6 +3,29 @@
 @section('title', 'Dashboard')
 
 @section('content')
+
+{{-- Success/Error Message --}}
+@if(session('success'))
+<div class="alert alert-success">
+    <i class="fas fa-check-circle"></i>
+    {{ session('success') }}
+</div>
+@endif
+
+@if(session('error'))
+<div class="alert alert-danger">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ session('error') }}
+</div>
+@endif
+
+@if(session('info'))
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i>
+    {{ session('info') }}
+</div>
+@endif
+
 <div class="dashboard-wrapper">
     <!-- Sidebar -->
     <div class="sidebar">
@@ -35,6 +58,17 @@
 
             <div class="menu-section mt-4">
                 <span class="menu-label">ACCOUNT</span>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Pengaturan</span>
+                </a>
+                <form method="POST" action="{{ route('logout') }}" style="margin: 0;">
+                    @csrf
+                    <button type="submit" class="menu-item logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Keluar</span>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -51,31 +85,10 @@
                 <button class="icon-btn"><i class="fas fa-cog"></i></button>
                 <button class="icon-btn"><i class="fas fa-bell"></i></button>
                 <div class="user-info">
-                    <!-- Profile dropdown -->
-                    <div id="profileWrapper" class="profile-wrapper">
-                        <button id="profileBtn" class="profile-btn">
-                            <div class="user-avatar">{{ substr(Auth::user()->name ?? 'H', 0, 1) }}</div>
-                            
-                            <div class="user-details">
-                                <div class="user-name">{{ Auth::user()->name ?? 'Nama Bidan' }}</div>
-                                <div class="user-email">{{ Auth::user()->email ?? 'email Bidan' }}</div>
-                            </div>
-                            
-                            <i class="fas fa-chevron-down" style="font-size: 0.875rem; color: #666; opacity: 0.7;"></i>
-                        </button>
-
-                        <div id="profileMenu" class="profile-menu hidden">
-                            <div class="profile-menu-header">
-                                <p class="profile-menu-name">{{ Auth::user()->name ?? 'Nama Bidan' }}</p>
-                                <p class="profile-menu-email">{{ Auth::user()->email ?? 'email Bidan' }}</p>
-                            </div>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit" class="profile-menu-logout">
-                                    Logout
-                                </button>
-                            </form>
-                        </div>
+                    <div class="user-avatar">{{ substr(Auth::user()->name ?? 'R', 0, 1) }}</div>
+                    <div class="user-details">
+                        <div class="user-name">{{ Auth::user()->name ?? 'Rumah Sakit' }}</div>
+                        <div class="user-email">{{ Auth::user()->email ?? 'rs@delisa.com' }}</div>
                     </div>
                 </div>
             </div>
@@ -84,30 +97,29 @@
         <!-- Dashboard Content -->
         <div class="dashboard-content">
             <div class="row g-3">
-                <!-- Card Daerah Asal Pasien -->
+                <!-- Card Data Pasien Rujukan -->
                 <div class="col-lg-6">
                     <div class="dashboard-card">
                         <div class="card-header">
                             <div class="card-title">
                                 <div class="icon-wrapper">
-                                    <i class="fas fa-map-marker-alt"></i>
+                                    <i class="fas fa-hospital-user"></i>
                                 </div>
-                                <span>Daerah Asal Pasien</span>
+                                <span>Data Pasien Rujukan</span>
                             </div>
                             <button class="btn-arrow">
                                 <i class="fas fa-arrow-right"></i>
                             </button>
                         </div>
                         <div class="card-body">
-                            <div class="stats-row">
-                                <div class="stat-item">
-                                    <div class="stat-label">Depok</div>
-                                    <div class="stat-value">{{ $pasienDepok }}</div>
+                            <div class="info-list">
+                                <div class="info-item">
+                                    <span>Setelah Melahirkan</span>
+                                    <strong>{{ $pasienSetelahMelahirkan ?? 0 }}</strong>
                                 </div>
-                                <div class="stat-divider"></div>
-                                <div class="stat-item">
-                                    <div class="stat-label">Non Depok</div>
-                                    <div class="stat-value">{{ $pasienNonDepok }}</div>
+                                <div class="info-item">
+                                    <span>Beresiko</span>
+                                    <strong>{{ $pasienRujukanBeresiko ?? 0 }}</strong>
                                 </div>
                             </div>
                         </div>
@@ -143,15 +155,15 @@
                     </div>
                 </div>
 
-                <!-- Card Data Pasien Nifas -->
+                <!-- Card Data Pasien -->
                 <div class="col-lg-6">
                     <div class="dashboard-card">
                         <div class="card-header">
                             <div class="card-title">
                                 <div class="icon-wrapper">
-                                    <i class="fas fa-chart-bar"></i>
+                                    <i class="fas fa-user-injured"></i>
                                 </div>
-                                <span>Data Pasien Nifas</span>
+                                <span>Data Pasien</span>
                             </div>
                             <button class="btn-arrow">
                                 <i class="fas fa-arrow-right"></i>
@@ -160,12 +172,12 @@
                         <div class="card-body">
                             <div class="info-list">
                                 <div class="info-item">
-                                    <span>Total Pasien Nifas</span>
-                                    <strong>{{ $totalPasienNifas }}</strong>
+                                    <span>Rujukan</span>
+                                    <strong>{{ $pasienRujukan ?? 0 }}</strong>
                                 </div>
                                 <div class="info-item">
-                                    <span>Sudah KF1</span>
-                                    <strong>{{ $sudahKF1 }}</strong>
+                                    <span>Non Rujukan</span>
+                                    <strong>{{ $pasienNonRujukan ?? 0 }}</strong>
                                 </div>
                             </div>
                         </div>
@@ -201,35 +213,69 @@
                     </div>
                 </div>
 
-                <!-- Card Pemantauan -->
+                <!-- Combined Card: Data Pasien Nifas & Pemantauan -->
                 <div class="col-12">
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="icon-wrapper">
-                                    <i class="fas fa-heartbeat"></i>
+                    <div class="row g-3">
+                        <!-- Card Data Pasien Nifas -->
+                        <div class="col-lg-6">
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <div class="card-title">
+                                        <div class="icon-wrapper">
+                                            <i class="fas fa-baby"></i>
+                                        </div>
+                                        <span>Data Pasien Nifas</span>
+                                    </div>
+                                    <button class="btn-arrow">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
                                 </div>
-                                <span>Pemantauan</span>
+                                <div class="card-body">
+                                    <div class="info-list">
+                                        <div class="info-item">
+                                            <span>Total Pasien Nifas</span>
+                                            <strong>{{ $totalPasienNifas }}</strong>
+                                        </div>
+                                        <div class="info-item">
+                                            <span>Sudah KF1</span>
+                                            <strong>{{ $sudahKF1 }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <button class="btn-arrow">
-                                <i class="fas fa-arrow-right"></i>
-                            </button>
                         </div>
-                        <div class="card-body">
-                            <div class="stats-row-three">
-                                <div class="stat-item">
-                                    <div class="stat-label">Sehat</div>
-                                    <div class="stat-value">{{ $pemantauanSehat }}</div>
+
+                        <!-- Card Pemantauan -->
+                        <div class="col-lg-6">
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <div class="card-title">
+                                        <div class="icon-wrapper">
+                                            <i class="fas fa-heartbeat"></i>
+                                        </div>
+                                        <span>Pemantauan</span>
+                                    </div>
+                                    <button class="btn-arrow">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
                                 </div>
-                                <div class="stat-divider"></div>
-                                <div class="stat-item">
-                                    <div class="stat-label">Total Dirujuk</div>
-                                    <div class="stat-value">{{ $pemantauanDirujuk }}</div>
-                                </div>
-                                <div class="stat-divider"></div>
-                                <div class="stat-item">
-                                    <div class="stat-label">Meninggal</div>
-                                    <div class="stat-value">{{ $pemantauanMeninggal }}</div>
+                                <div class="card-body">
+                                    <div class="stats-row-three">
+                                        <div class="stat-item-small">
+                                            <div class="stat-label">Sehat</div>
+                                            <div class="stat-value-small">{{ $pemantauanSehat }}</div>
+                                        </div>
+                                        <div class="stat-divider-small"></div>
+                                        <div class="stat-item-small">
+                                            <div class="stat-label">Total Dirujuk</div>
+                                            <div class="stat-value-small">{{ $pemantauanDirujuk }}</div>
+                                        </div>
+                                        <div class="stat-divider-small"></div>
+                                        <div class="stat-item-small">
+                                            <div class="stat-label">Meninggal</div>
+                                            <div class="stat-value-small">{{ $pemantauanMeninggal }}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -247,64 +293,145 @@
                                 <span>Data Pasien Pre Eklampsia</span>
                             </div>
                             <div class="card-actions">
-                                <button class="btn-primary" onclick="alert('Fitur akan segera ditambahkan')">
+                                <button class="btn-filter" onclick="toggleFilters()">
+                                    <i class="fas fa-filter"></i>
+                                    Filter
+                                </button>
+                                <button class="btn-action-green" onclick="alert('Fitur proses akan segera ditambahkan')">
+                                    <i class="fas fa-check"></i>
+                                    Proses
+                                </button>
+                                <button class="btn-action-pink" onclick="alert('Fitur tambah akun akan segera ditambahkan')">
                                     <i class="fas fa-plus"></i>
                                     Tambah Akun
                                 </button>
-                                <button class="btn-secondary" onclick="location.reload()">
+                                <button class="btn-action-blue" onclick="location.reload()">
                                     <i class="fas fa-sync"></i>
                                     Refresh
                                 </button>
                             </div>
                         </div>
+
+                        <!-- Filter Panel -->
+                        <div id="filterPanel" class="filter-panel" style="display: none;">
+                            <div class="filter-content">
+                                <div class="filter-group">
+                                    <label class="filter-label">
+                                        <input type="checkbox" name="filter[]" value="nik">
+                                        <i class="fas fa-id-card"></i>
+                                        <span>NIK Pasien</span>
+                                    </label>
+                                </div>
+                                <div class="filter-group">
+                                    <label class="filter-label">
+                                        <input type="checkbox" name="filter[]" value="nama">
+                                        <i class="fas fa-user"></i>
+                                        <span>Nama Pasien</span>
+                                    </label>
+                                </div>
+                                <div class="filter-group">
+                                    <label class="filter-label">
+                                        <input type="checkbox" name="filter[]" value="tanggal">
+                                        <i class="fas fa-calendar"></i>
+                                        <span>Tanggal</span>
+                                    </label>
+                                </div>
+                                <div class="filter-group">
+                                    <label class="filter-label">
+                                        <input type="checkbox" name="filter[]" value="alamat">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>Alamat</span>
+                                    </label>
+                                </div>
+                                <div class="filter-group">
+                                    <label class="filter-label">
+                                        <input type="checkbox" name="filter[]" value="telp">
+                                        <i class="fas fa-phone"></i>
+                                        <span>No Telp</span>
+                                    </label>
+                                </div>
+                                <div class="filter-group">
+                                    <label class="filter-label">
+                                        <input type="checkbox" name="filter[]" value="kesimpulan">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>Kesimpulan</span>
+                                    </label>
+                                </div>
+                                <div class="filter-group">
+                                    <label class="filter-label">
+                                        <input type="checkbox" name="filter[]" value="detail">
+                                        <i class="fas fa-eye"></i>
+                                        <span>View Detail</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="data-table">
                                     <thead>
                                         <tr>
-                                            <th><i class="fas fa-id-badge"></i> ID Pasien</th>
-                                            <th><i class="fas fa-user"></i> Nama Pasien</th>
-                                            <th><i class="fas fa-calendar"></i> Tanggal</th>
-                                            <th><i class="fas fa-map-marker-alt"></i> Alamat</th>
-                                            <th><i class="fas fa-phone"></i> No Telp</th>
-                                            <th><i class="fas fa-exclamation-triangle"></i> Kesimpulan</th>
-                                            <th><i class="fas fa-eye"></i> View Detail</th>
+                                            <th data-col="checkbox">
+                                                <input type="checkbox" id="selectAll">
+                                            </th>
+                                            <th data-col="nik"><i class="fas fa-id-card"></i> NIK Pasien</th>
+                                            <th data-col="nama"><i class="fas fa-user"></i> Nama Pasien</th>
+                                            <th data-col="tanggal"><i class="fas fa-calendar"></i> Tanggal</th>
+                                            <th data-col="alamat"><i class="fas fa-map-marker-alt"></i> Alamat</th>
+                                            <th data-col="telp"><i class="fas fa-phone"></i> No Telp</th>
+                                            <th data-col="kesimpulan"><i class="fas fa-exclamation-triangle"></i> Kesimpulan</th>
+                                            <th data-col="detail"><i class="fas fa-cog"></i> Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse($pasienPreEklampsia as $pasien)
                                         <tr>
-                                            <td>{{ $pasien['id_pasien'] }}</td>
-                                            <td>
+                                            <td data-col="checkbox">
+                                                <input type="checkbox" name="selected[]" value="{{ $pasien['id'] }}">
+                                            </td>
+                                            <td data-col="nik">{{ $pasien['id_pasien'] }}</td>
+                                            <td data-col="nama">
                                                 <div class="user-cell">
                                                     <i class="fas fa-user-circle"></i>
                                                     <span>{{ $pasien['nama'] }}</span>
                                                 </div>
                                             </td>
-                                            <td>{{ $pasien['tanggal'] }}</td>
-                                            <td>{{ $pasien['status'] }}</td>
-                                            <td>{{ $pasien['no_telp'] }}</td>
-                                            <td>
+                                            <td data-col="tanggal">{{ $pasien['tanggal'] }}</td>
+                                            <td data-col="alamat">{{ $pasien['status'] }}</td>
+                                            <td data-col="telp">{{ $pasien['no_telp'] }}</td>
+                                            <td data-col="kesimpulan">
                                                 @if($pasien['klasifikasi'] == 'Beresiko')
                                                     <span class="badge badge-danger">Beresiko</span>
                                                 @elseif($pasien['klasifikasi'] == 'Aman')
-                                                    <span class="badge badge-success">Sehat</span>
+                                                    <span class="badge badge-success">Aman</span>
                                                 @elseif($pasien['klasifikasi'] == 'Menengah')
                                                     <span class="badge badge-warning">Waspada</span>
                                                 @else
                                                     <span class="badge badge-secondary">{{ $pasien['klasifikasi'] }}</span>
                                                 @endif
                                             </td>
-                                            <td>
-                                                <a href="{{ route('rs.pasien.show', $pasien['id']) }}" class="btn-view">
-                                                    <i class="fas fa-eye"></i>
-                                                    View
-                                                </a>
+                                            <td data-col="detail">
+                                                <div class="action-buttons">
+                                                    <a href="{{ route('rs.pasien.show', $pasien['id']) }}" class="btn-view">
+                                                        <i class="fas fa-eye"></i>
+                                                        View
+                                                    </a>
+                                                    <form method="POST" action="{{ route('rs.dashboard.proses-nifas', $pasien['id']) }}" 
+                                                        onsubmit="return confirm('Apakah Anda yakin ingin memproses pasien ini ke data nifas?')" 
+                                                        style="display: inline; margin: 0;">
+                                                        @csrf
+                                                        <button type="submit" class="btn-proses-nifas">
+                                                            <i class="fas fa-check-circle"></i>
+                                                            Proses
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             </td>
                                         </tr>
                                         @empty
                                         <tr>
-                                            <td colspan="7" class="text-center py-4 text-muted">
+                                            <td colspan="8" class="text-center py-4 text-muted">
                                                 <i class="fas fa-inbox fa-2x mb-2"></i>
                                                 <p class="mb-0">Tidak ada data pasien</p>
                                             </td>
@@ -350,6 +477,8 @@ body {
     top: 0;
     height: 100vh;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar-header {
@@ -390,6 +519,20 @@ body {
     line-height: 1.2;
 }
 
+.sidebar-menu {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-section {
+    margin-bottom: 1.5rem;
+}
+
+.menu-section:last-child {
+    margin-top: auto;
+}
+
 .menu-label {
     font-size: 0.625rem;
     color: #999;
@@ -412,6 +555,8 @@ body {
     transition: all 0.2s ease;
     font-weight: 500;
     font-size: 0.875rem;
+    width: 100%;
+    text-align: left;
 }
 
 .menu-item:hover {
@@ -427,6 +572,18 @@ body {
 .menu-item i {
     font-size: 1rem;
     width: 18px;
+}
+
+/* Logout Button */
+.logout-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    background: #fff5f5 !important;
+    color: #dc3545 !important;
 }
 
 .mt-4 {
@@ -509,46 +666,6 @@ body {
     border-left: 1px solid #e8e8e8;
 }
 
-.dropdown-wrapper {
-    position: relative;
-    margin-left: 0.5rem;
-}
-
-.btn-dropdown {
-    width: 36px;
-    height: 36px;
-    border: 1px solid #e8e8e8;
-    background: white;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    color: #666;
-    font-size: 0.875rem;
-}
-
-.btn-dropdown:hover {
-    background: #f8f9fa;
-    border-color: #e91e8c;
-    color: #e91e8c;
-}
-
-.btn-dropdown.active {
-    background: #e91e8c;
-    border-color: #e91e8c;
-    color: white;
-}
-
-.btn-dropdown i {
-    transition: transform 0.2s ease;
-}
-
-.btn-dropdown.active i {
-    transform: rotate(180deg);
-}
-
 .user-avatar {
     width: 36px;
     height: 36px;
@@ -562,6 +679,10 @@ body {
     font-size: 0.875rem;
 }
 
+.user-details {
+    text-align: left;
+}
+
 .user-name {
     font-weight: 600;
     font-size: 0.8125rem;
@@ -573,92 +694,6 @@ body {
     font-size: 0.6875rem;
     color: #888;
     line-height: 1.2;
-}
-
-/* Dropdown Menu */
-.dropdown-menu {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    right: 0;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    min-width: 200px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px);
-    transition: all 0.2s ease;
-    z-index: 9999;
-    overflow: hidden;
-    display: none;
-}
-
-.dropdown-menu.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-    display: block;
-}
-
-.dropdown-header {
-    padding: 0.875rem 1rem;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.dropdown-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #333;
-    margin: 0 0 0.25rem 0;
-}
-
-.dropdown-email {
-    font-size: 0.75rem;
-    color: #7c7c7c;
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    color: #666;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    font-size: 0.875rem;
-    border: none;
-    background: none;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-}
-
-.dropdown-item:hover {
-    background: #f8f9fa;
-    color: #333;
-}
-
-.dropdown-item.logout-item {
-    color: #dc3545;
-}
-
-.dropout-item.logout-item:hover {
-    background: #fff5f5;
-}
-
-.dropdown-item i {
-    font-size: 0.875rem;
-    width: 16px;
-}
-
-.dropdown-divider {
-    height: 1px;
-    background: #e8e8e8;
-    margin: 0.25rem 0;
 }
 
 /* Dashboard Content */
@@ -760,41 +795,34 @@ body {
 }
 
 /* Stats Row */
-.stats-row {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 1.25rem;
-    align-items: center;
-}
-
 .stats-row-three {
     display: grid;
     grid-template-columns: 1fr auto 1fr auto 1fr;
-    gap: 1.25rem;
+    gap: 0.75rem;
     align-items: center;
 }
 
-.stat-item {
+.stat-item-small {
     text-align: center;
 }
 
 .stat-label {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     color: #888;
-    margin-bottom: 0.625rem;
+    margin-bottom: 0.5rem;
     font-weight: 500;
 }
 
-.stat-value {
-    font-size: 2.5rem;
+.stat-value-small {
+    font-size: 1.5rem;
     font-weight: 700;
     color: #333;
     line-height: 1;
 }
 
-.stat-divider {
+.stat-divider-small {
     width: 1px;
-    height: 60px;
+    height: 40px;
     background: linear-gradient(to bottom, transparent, #e8e8e8, transparent);
 }
 
@@ -833,46 +861,131 @@ body {
 /* Card Actions */
 .card-actions {
     display: flex;
-    gap: 0.625rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
-    color: white;
-    border: none;
-    padding: 0.5625rem 1.125rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-    transition: all 0.2s ease;
-    font-size: 0.8125rem;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(233, 30, 140, 0.3);
-}
-
-.btn-secondary {
+.btn-filter {
     background: white;
     color: #666;
     border: 1px solid #e8e8e8;
-    padding: 0.5625rem 1.125rem;
+    padding: 0.5rem 1rem;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: 0.5rem;
     transition: all 0.2s ease;
     font-size: 0.8125rem;
 }
 
-.btn-secondary:hover {
+.btn-filter:hover {
     background: #f8f9fa;
+    border-color: #666;
+}
+
+.btn-action-green {
+    background: #10B981;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    font-size: 0.8125rem;
+}
+
+.btn-action-green:hover {
+    background: #059669;
+}
+
+.btn-action-pink {
+    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    font-size: 0.8125rem;
+}
+
+.btn-action-pink:hover {
+    opacity: 0.9;
+}
+
+.btn-action-blue {
+    background: #3B82F6;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    font-size: 0.8125rem;
+}
+
+.btn-action-blue:hover {
+    background: #2563EB;
+}
+
+/* Filter Panel */
+.filter-panel {
+    border-bottom: 1px solid #f0f0f0;
+    background: #fafafa;
+    transition: all 0.3s ease;
+}
+
+.filter-content {
+    padding: 1rem 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+}
+
+.filter-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.8125rem;
+    color: #666;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.filter-label:hover {
+    background: white;
+}
+
+.filter-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.filter-label i {
+    font-size: 0.875rem;
+    color: #888;
 }
 
 /* Table */
@@ -921,6 +1034,12 @@ body {
     background: #fafafa;
 }
 
+.data-table input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
 .user-cell {
     display: flex;
     align-items: center;
@@ -930,6 +1049,13 @@ body {
 .user-cell i {
     font-size: 1.25rem;
     color: #ddd;
+}
+
+/* Action Buttons Container */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
 }
 
 /* Badges */
@@ -942,18 +1068,18 @@ body {
 }
 
 .badge-danger {
-    background: #fee;
-    color: #dc3545;
+    background: #FEE2E2;
+    color: #DC2626;
 }
 
 .badge-success {
-    background: #e8f5e9;
-    color: #28a745;
+    background: #D1FAE5;
+    color: #059669;
 }
 
 .badge-warning {
-    background: #fff8e1;
-    color: #ffc107;
+    background: #FEF3C7;
+    color: #D97706;
 }
 
 .badge-secondary {
@@ -961,6 +1087,7 @@ body {
     color: #6c757d;
 }
 
+/* Button View */
 .btn-view {
     background: white;
     border: 1px solid #e8e8e8;
@@ -974,6 +1101,7 @@ body {
     color: #666;
     transition: all 0.2s ease;
     font-weight: 500;
+    text-decoration: none;
 }
 
 .btn-view:hover {
@@ -983,6 +1111,79 @@ body {
 
 .btn-view i {
     font-size: 0.75rem;
+}
+
+/* Button Proses Nifas */
+.btn-proses-nifas {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    border: none;
+    padding: 0.375rem 0.875rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: white;
+    transition: all 0.2s ease;
+    font-weight: 600;
+}
+
+.btn-proses-nifas:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-proses-nifas i {
+    font-size: 0.75rem;
+}
+
+/* Alert Notifications */
+.alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease;
+    min-width: 300px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.alert-success {
+    background: #10B981;
+    color: white;
+}
+
+.alert-danger {
+    background: #EF4444;
+    color: white;
+}
+
+.alert-info {
+    background: #3B82F6;
+    color: white;
+}
+
+.alert i {
+    font-size: 1.125rem;
 }
 
 .text-center {
@@ -1024,12 +1225,12 @@ body {
         position: relative;
     }
     
-    .stats-row,
     .stats-row-three {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
     
-    .stat-divider {
+    .stat-divider-small {
         display: none;
     }
     
@@ -1048,14 +1249,30 @@ body {
     }
     
     .card-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .action-buttons {
         flex-direction: column;
         width: 100%;
     }
-    
-    .btn-primary,
-    .btn-secondary {
+
+    .btn-view,
+    .btn-proses-nifas {
         width: 100%;
         justify-content: center;
+    }
+
+    .alert {
+        right: 10px;
+        left: 10px;
+        top: 10px;
+        min-width: auto;
+    }
+
+    .filter-content {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -1068,8 +1285,8 @@ body {
         padding: 1rem;
     }
     
-    .stat-value {
-        font-size: 2rem;
+    .stat-value-small {
+        font-size: 1.25rem;
     }
     
     .data-table th,
@@ -1077,42 +1294,69 @@ body {
         padding: 0.625rem 0.75rem;
         font-size: 0.75rem;
     }
+
+    .card-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .btn-filter,
+    .btn-action-green,
+    .btn-action-pink,
+    .btn-action-blue {
+        width: 100%;
+        justify-content: center;
+    }
 }
 </style>
 @endpush
 
 @push('scripts')
 <script>
-// Wait for DOM to load
 document.addEventListener('DOMContentLoaded', function() {
-    const button = document.getElementById('dropdownButton');
-    const dropdown = document.getElementById('userDropdown');
-    
-    if (button && dropdown) {
-        // Click button to toggle
-        button.addEventListener('click', function(e) {
-            e.stopPropagation();
-            dropdown.classList.toggle('show');
-            button.classList.toggle('active');
-            console.log('Dropdown toggled!'); // Debug
+    // Auto-hide alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 300);
+        }, 5000);
+    });
+
+    // Select All Checkbox
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('input[name="selected[]"]');
+            checkboxes.forEach(cb => cb.checked = this.checked);
         });
-        
-        // Click outside to close
-        document.addEventListener('click', function(e) {
-            if (!button.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.classList.remove('show');
-                button.classList.remove('active');
-            }
-        });
-        
-        // Prevent dropdown from closing when clicking inside
-        dropdown.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-    } else {
-        console.error('Button or dropdown not found!'); // Debug
     }
+
+    // Filter functionality
+    const filterCheckboxes = document.querySelectorAll('.filter-label input[type="checkbox"]');
+    filterCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const col = this.value;
+            const isChecked = this.checked;
+            
+            // Toggle column visibility
+            const colElements = document.querySelectorAll(`[data-col="${col}"]`);
+            colElements.forEach(el => {
+                el.style.display = isChecked ? 'none' : '';
+            });
+        });
+    });
 });
+
+// Toggle Filter Panel
+function toggleFilters() {
+    const panel = document.getElementById('filterPanel');
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+    } else {
+        panel.style.display = 'none';
+    }
+}
 </script>
 @endpush
 

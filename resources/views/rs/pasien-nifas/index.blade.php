@@ -72,11 +72,11 @@
                         </div>
                         <div>
                             <span class="title-main">Data Pasien Nifas</span>
-                            <p class="title-subtitle">Data pasien yang sedang nifas pada puskesmas ini</p>
+                            <p class="title-subtitle">Data pasien yang sedang nifas pada rumah sakit ini</p>
                         </div>
                     </div>
                     <div class="card-actions">
-                        <a href="{{ route('rs.pasien-nifas.create') }}" class="btn-action-header">
+                        <a href="{{ route('rs.dashboard') }}" class="btn-action-header">
                             <i class="fas fa-plus"></i>
                             Tambah Akun
                         </a>
@@ -92,11 +92,12 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th><i class="fas fa-id-badge"></i> ID Pasien</th>
+                                    <th><i class="fas fa-id-card"></i> NIK</th>
                                     <th><i class="fas fa-user"></i> Nama Pasien</th>
                                     <th><i class="fas fa-calendar"></i> Tanggal</th>
                                     <th><i class="fas fa-map-marker-alt"></i> Alamat</th>
                                     <th><i class="fas fa-phone"></i> No Telp</th>
+                                    <th><i class="fas fa-exclamation-triangle"></i> Status Pre-Eklampsia</th>
                                     <th><i class="fas fa-clipboard-check"></i> Penanganan</th>
                                     <th><i class="fas fa-eye"></i> Aksi</th>
                                 </tr>
@@ -104,16 +105,22 @@
                             <tbody>
                                 @forelse($pasienNifas as $pasien)
                                 <tr>
-                                    <td>#{{ str_pad($pasien->id, 20, '0', STR_PAD_LEFT) }}</td>
+                                    <td>{{ $pasien->pasien->nik ?? '-' }}</td>
                                     <td>
                                         <div class="user-cell">
                                             <i class="fas fa-user-circle"></i>
-                                            <span>{{ $pasien->pasien->user->name ?? 'Asep Dadang' }}</span>
+                                            <span>{{ $pasien->pasien->user->name ?? 'Nama Tidak Tersedia' }}</span>
                                         </div>
                                     </td>
-                                    <td>{{ $pasien->created_at ? $pasien->created_at->format('d/m/Y') : '01/01/2025' }}</td>
-                                    <td>{{ $pasien->pasien->PKabupaten ?? 'Beji' }}</td>
-                                    <td>{{ $pasien->pasien->no_jkn ?? '0000000000' }}</td>
+                                    <td>{{ $pasien->created_at ? $pasien->created_at->format('d/m/Y') : '-' }}</td>
+                                    <td>{{ $pasien->pasien->PKabupaten ?? '-' }}</td>
+                                    <td>{{ $pasien->pasien->no_telepon ?? '-' }}</td>
+                                    <td>
+                                        <span class="badge badge-preeklampsia">
+                                            <i class="fas fa-heartbeat"></i>
+                                            Pre-Eklampsia
+                                        </span>
+                                    </td>
                                     <td>
                                         @php
                                             $status = $pasien->status_kunjungan ?? 'Aman';
@@ -142,7 +149,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
+                                    <td colspan="8" class="text-center py-4 text-muted">
                                         <i class="fas fa-inbox fa-2x mb-2"></i>
                                         <p class="mb-0">Tidak ada data pasien nifas</p>
                                     </td>
@@ -460,24 +467,45 @@ body {
     border-radius: 20px;
     font-size: 0.6875rem;
     font-weight: 600;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
     text-align: center;
     min-width: 80px;
+    justify-content: center;
 }
 
 .badge-berisiko {
-    background: #EF4444;
-    color: white;
+    background: #FEE2E2;
+    color: #DC2626;
 }
 
 .badge-normal {
-    background: #10B981;
-    color: white;
+    background: #D1FAE5;
+    color: #059669;
 }
 
 .badge-waspada {
-    background: #F59E0B;
+    background: #FEF3C7;
+    color: #D97706;
+}
+
+/* Badge Status Pre-Eklampsia */
+.badge-preeklampsia {
+    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
     color: white;
+    padding: 0.4rem 0.875rem;
+    border-radius: 20px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: auto;
+}
+
+.badge-preeklampsia i {
+    font-size: 0.75rem;
 }
 
 .btn-proses {

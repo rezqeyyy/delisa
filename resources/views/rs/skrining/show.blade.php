@@ -1,6 +1,6 @@
 @extends('layouts.rs')
 
-@section('title', 'Riwayat Pasien')
+@section('title', 'Hasil Pemeriksaan Pasien')
 
 @section('content')
 <div class="dashboard-wrapper">
@@ -47,37 +47,37 @@
                 <a href="{{ route('rs.skrining.index') }}" class="btn-back">
                     <i class="fas fa-arrow-left"></i>
                 </a>
-                <h2 class="page-title">Riwayat Pasien</h2>
+                <h2 class="page-title">Hasil Pemeriksaan Pasien ({{ $skrining->pasien->user->name ?? 'N/A' }})</h2>
             </div>
+            <a href="{{ route('rs.skrining.edit', $skrining->id) }}" class="btn-edit">
+                <i class="fas fa-edit"></i>
+                Edit Data
+            </a>
         </div>
+
+        @if(session('success'))
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            {{ session('success') }}
+        </div>
+        @endif
 
         <!-- Content -->
         <div class="skrining-content">
-            <!-- Informasi Pasien dan Data Kehamilan -->
+            <!-- Data Pasien -->
             <div class="dashboard-card mb-4">
                 <div class="card-header-simple">
-                    <h3 class="card-title-simple">Informasi Pasien dan Data Kehamilan</h3>
+                    <h3 class="card-title-simple">
+                        <i class="fas fa-user-circle"></i>
+                        Informasi Pasien
+                    </h3>
                 </div>
                 
                 <div class="card-body">
                     <div class="info-table">
                         <div class="info-row">
                             <div class="info-col">
-                                <span class="info-label">Informasi</span>
-                                <span class="info-label">Data</span>
-                            </div>
-                        </div>
-                        
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Tanggal Pemeriksaan</span>
-                                <span class="info-value">{{ $skrining->created_at ? $skrining->created_at->format('d F Y') : '-' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Nama</span>
+                                <span class="info-key">Nama Lengkap</span>
                                 <span class="info-value">{{ $skrining->pasien->user->name ?? '-' }}</span>
                             </div>
                         </div>
@@ -91,22 +91,8 @@
 
                         <div class="info-row">
                             <div class="info-col">
-                                <span class="info-key">Kehamilan ke (G)</span>
-                                <span class="info-value">{{ $skrining->riwayatKehamilanGpa->kehamilan_ke ?? '1' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Jumlah Persalinan (P)</span>
-                                <span class="info-value">{{ $skrining->riwayatKehamilanGpa->jumlah_persalinan ?? '1' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Jumlah Abortus (A)</span>
-                                <span class="info-value">{{ $skrining->riwayatKehamilanGpa->jumlah_abortus ?? '0' }}</span>
+                                <span class="info-key">Tanggal Pemeriksaan Awal</span>
+                                <span class="info-value">{{ $skrining->created_at ? $skrining->created_at->format('d F Y, H:i') : '-' }} WIB</span>
                             </div>
                         </div>
 
@@ -119,64 +105,163 @@
 
                         <div class="info-row">
                             <div class="info-col">
-                                <span class="info-key">Tanggal Persalinan</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->tanggal_persalinan ?? '24 Juli 2026' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Indeks Massa Tubuh (IMT)</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->imt ?? '25.76' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Status IMT</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->status_imt ?? 'Normal (IMT 18.5 - 25)' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Anjuran Kenaikan BB</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->anjuran_kenaikan_bb ?? '11.5 - 16 kg' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Tensi Tekanan Darah</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->tekanan_darah ?? '90/120 mmHg' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-key">Mean Arterial Pressure (MAP)</span>
-                                <span class="info-value">{{ $skrining->kondisiKesehatan->map ?? '100.00 mmHg' }}</span>
+                                <span class="info-key">Status Awal</span>
+                                <span class="info-value">
+                                    @php
+                                        $conclusion = $skrining->kesimpulan ?? $skrining->status_pre_eklampsia ?? 'Normal';
+                                        $badgeClass = match(strtolower($conclusion)) {
+                                            'berisiko', 'beresiko' => 'badge-berisiko',
+                                            'normal', 'aman' => 'badge-normal',
+                                            'waspada', 'menengah' => 'badge-waspada',
+                                            default => 'badge-secondary'
+                                        };
+                                    @endphp
+                                    <span class="badge {{ $badgeClass }}">{{ ucfirst($conclusion) }}</span>
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Hasil Skrining dan Rekomendasi -->
+            <!-- Hasil Pemeriksaan di Rumah Sakit -->
             <div class="dashboard-card mb-4">
                 <div class="card-header-simple">
-                    <h3 class="card-title-simple">Hasil Skrining dan Rekomendasi</h3>
+                    <h3 class="card-title-simple">
+                        <i class="fas fa-hospital"></i>
+                        Hasil Pemeriksaan di Rumah Sakit
+                    </h3>
+                </div>
+                
+                <div class="card-body">
+                    @if($rujukan)
+                    <div class="info-table">
+                        <div class="info-row">
+                            <div class="info-col">
+                                <span class="info-key">Pasien Datang</span>
+                                <span class="info-value">
+                                    @if($rujukan->pasien_datang === 1)
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-check-circle"></i> Ya
+                                        </span>
+                                    @elseif($rujukan->pasien_datang === 0)
+                                        <span class="badge badge-danger">
+                                            <i class="fas fa-times-circle"></i> Tidak
+                                        </span>
+                                    @else
+                                        <span class="text-muted">Belum diisi</span>
+                                    @endif
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="info-row">
+                            <div class="info-col">
+                                <span class="info-key">Riwayat Tekanan Darah</span>
+                                <span class="info-value">{{ $rujukan->riwayat_tekanan_darah ?? '-' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="info-row">
+                            <div class="info-col">
+                                <span class="info-key">Hasil Pemeriksaan Protein Urin</span>
+                                <span class="info-value">{{ $rujukan->hasil_protein_urin ?? '-' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="info-row">
+                            <div class="info-col">
+                                <span class="info-key">Perlu Pemeriksaan Lanjutan</span>
+                                <span class="info-value">
+                                    @if($rujukan->perlu_pemeriksaan_lanjut === 1)
+                                        <span class="badge badge-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> Ya
+                                        </span>
+                                    @elseif($rujukan->perlu_pemeriksaan_lanjut === 0)
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-check"></i> Tidak
+                                        </span>
+                                    @else
+                                        <span class="text-muted">Belum diisi</span>
+                                    @endif
+                                </span>
+                            </div>
+                        </div>
+
+                        @if($rujukan->catatan_rujukan)
+                        <div class="info-row full-width">
+                            <div class="info-col">
+                                <span class="info-key">Catatan Tambahan</span>
+                                <div class="catatan-box">
+                                    <p>{{ $rujukan->catatan_rujukan }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                    @else
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-check fa-3x"></i>
+                        <p>Belum ada data pemeriksaan dari rumah sakit</p>
+                        <a href="{{ route('rs.skrining.edit', $skrining->id) }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Tambah Data Pemeriksaan
+                        </a>
+                    </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Resep Obat -->
+            @if($rujukan && $resepObats->count() > 0)
+            <div class="dashboard-card mb-4">
+                <div class="card-header-simple">
+                    <h3 class="card-title-simple">
+                        <i class="fas fa-pills"></i>
+                        Resep Obat
+                    </h3>
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="obat-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama Obat</th>
+                                    <th>Dosis</th>
+                                    <th>Cara Penggunaan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($resepObats as $index => $resep)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>
+                                        <strong>{{ $resep->resep_obat }}</strong>
+                                    </td>
+                                    <td>{{ $resep->dosis ?? '-' }}</td>
+                                    <td>{{ $resep->penggunaan ?? '-' }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <!-- Kesimpulan dan Rekomendasi Awal -->
+            <div class="dashboard-card mb-4">
+                <div class="card-header-simple">
+                    <h3 class="card-title-simple">
+                        <i class="fas fa-file-medical-alt"></i>
+                        Kesimpulan Skrining Awal (dari Puskesmas)
+                    </h3>
                 </div>
                 
                 <div class="card-body">
                     <div class="info-table">
-                        <div class="info-row">
-                            <div class="info-col">
-                                <span class="info-label">Informasi</span>
-                                <span class="info-label">Data</span>
-                            </div>
-                        </div>
-                        
                         <div class="info-row">
                             <div class="info-col">
                                 <span class="info-key">Jumlah Resiko Sedang</span>
@@ -211,27 +296,34 @@
 
                         <div class="info-row">
                             <div class="info-col">
-                                <span class="info-key">Rekomendasi</span>
-                                <span class="info-value">{{ $skrining->rekomendasi ?? 'Tidak Beresiko Pre Eklampsia' }}</span>
+                                <span class="info-key">Rekomendasi Awal</span>
+                                <span class="info-value">{{ $skrining->rekomendasi ?? '-' }}</span>
                             </div>
                         </div>
 
+                        @if($skrining->catatan)
                         <div class="info-row full-width">
                             <div class="info-col">
-                                <span class="info-key">Catatan</span>
+                                <span class="info-key">Catatan dari Puskesmas</span>
                                 <div class="catatan-box">
-                                    <p>{{ $skrining->catatan ?? 'Anda memiliki penyakit yang berisiko dengan adanya indikasi gangguan pada ginjal sehingga sebaiknya perlu melakukan pemeriksaan tambahan meliputi : Ureum, Albumin, LDH, dan kadar trombosit.' }}</p>
+                                    <p>{{ $skrining->catatan }}</p>
                                 </div>
                             </div>
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
 
-            <!-- Button Kembali -->
+            <!-- Button Actions -->
             <div class="form-actions">
-                <a href="{{ route('rs.skrining.index') }}" class="btn btn-primary">
+                <a href="{{ route('rs.skrining.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
                     Kembali
+                </a>
+                <a href="{{ route('rs.skrining.edit', $skrining->id) }}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i>
+                    Edit Data Pemeriksaan
                 </a>
             </div>
         </div>
@@ -364,6 +456,9 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .header-left {
@@ -390,11 +485,64 @@ body {
     background: #e8e8e8;
 }
 
+.btn-edit {
+    background: #e91e8c;
+    color: white;
+    border: none;
+    padding: 0.625rem 1.125rem;
+    border-radius: 8px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-edit:hover {
+    background: #c2185b;
+    transform: translateY(-1px);
+}
+
 .page-title {
     font-size: 1.5rem;
     font-weight: 600;
     color: #1a1a1a;
     margin: 0;
+}
+
+/* Alert */
+.alert {
+    margin: 1.5rem 2rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.alert-success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.alert i {
+    font-size: 1.125rem;
 }
 
 /* Content */
@@ -425,9 +573,20 @@ body {
     font-weight: 600;
     color: #1a1a1a;
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+.card-title-simple i {
+    color: #e91e8c;
 }
 
 .card-body {
+    padding: 0;
+}
+
+.card-body.p-0 {
     padding: 0;
 }
 
@@ -455,17 +614,15 @@ body {
     width: 100%;
 }
 
-.info-col > span:first-child,
 .info-col > .info-key {
-    flex: 0 0 40%;
+    flex: 0 0 35%;
     padding: 1rem 1.5rem;
     font-size: 0.8125rem;
     color: #666;
     background: #fafafa;
-    font-weight: 500;
+    font-weight: 600;
 }
 
-.info-col > span:last-child,
 .info-col > .info-value {
     flex: 1;
     padding: 1rem 1.5rem;
@@ -474,42 +631,55 @@ body {
     font-weight: 500;
 }
 
-.info-label {
-    font-weight: 600 !important;
-    color: #1a1a1a !important;
-    text-transform: uppercase;
-    font-size: 0.75rem !important;
-    letter-spacing: 0.3px;
-}
-
 /* Badge */
 .badge {
-    padding: 0.35rem 0.875rem;
+    padding: 0.375rem 0.875rem;
     border-radius: 20px;
     font-size: 0.6875rem;
     font-weight: 600;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
     text-align: center;
 }
 
 .badge-berisiko {
-    background: #EF4444;
-    color: white;
+    background: #FEE2E2;
+    color: #DC2626;
 }
 
 .badge-normal {
-    background: #10B981;
-    color: white;
+    background: #D1FAE5;
+    color: #059669;
 }
 
 .badge-waspada {
-    background: #F59E0B;
-    color: white;
+    background: #FEF3C7;
+    color: #D97706;
 }
 
 .badge-secondary {
     background: #f8f9fa;
     color: #6c757d;
+}
+
+.badge-success {
+    background: #D1FAE5;
+    color: #059669;
+}
+
+.badge-danger {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+.badge-warning {
+    background: #FEF3C7;
+    color: #D97706;
+}
+
+.badge i {
+    font-size: 0.75rem;
 }
 
 /* Catatan Box */
@@ -519,6 +689,7 @@ body {
     border-radius: 8px;
     border: 1px solid #e8e8e8;
     margin-top: 0.5rem;
+    width: 100%;
 }
 
 .catatan-box p {
@@ -537,15 +708,79 @@ body {
     padding-top: 0 !important;
 }
 
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.empty-state i {
+    color: #d0d0d0;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: #888;
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Table Obat */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.obat-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.obat-table thead {
+    background: #fafafa;
+}
+
+.obat-table th {
+    padding: 0.875rem 1.25rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: #888;
+    border-bottom: 1px solid #e8e8e8;
+    text-transform: uppercase;
+}
+
+.obat-table td {
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 0.8125rem;
+    color: #333;
+}
+
+.obat-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.obat-table tbody tr:hover {
+    background: #fafafa;
+}
+
+/* Text utilities */
+.text-muted {
+    color: #888;
+    font-style: italic;
+}
+
 /* Form Actions */
 .form-actions {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
     margin-top: 2rem;
 }
 
 .btn {
-    padding: 0.75rem 2rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 8px;
     font-size: 0.875rem;
     font-weight: 600;
@@ -558,6 +793,16 @@ body {
     transition: all 0.2s ease;
 }
 
+.btn-secondary {
+    background: white;
+    color: #666;
+    border: 1px solid #e8e8e8;
+}
+
+.btn-secondary:hover {
+    background: #f8f9fa;
+}
+
 .btn-primary {
     background: #e91e8c;
     color: white;
@@ -565,6 +810,7 @@ body {
 
 .btn-primary:hover {
     background: #c2185b;
+    transform: translateY(-1px);
 }
 
 /* Responsive */
@@ -581,6 +827,9 @@ body {
     
     .content-header {
         padding: 1rem 1.25rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
     }
     
     .skrining-content {
@@ -591,15 +840,22 @@ body {
         flex-direction: column;
     }
     
-    .info-col > span:first-child,
     .info-col > .info-key {
         flex: 0 0 auto;
         border-bottom: 1px solid #f0f0f0;
     }
     
-    .info-col > span:last-child,
     .info-col > .info-value {
         padding-top: 0.75rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 </style>
