@@ -86,8 +86,8 @@ class SkriningController extends Controller
                 : 'Tidak berisiko');
 
         $rekomendasi  = ($resikoTinggi >= 1 || $resikoSedang >= 2)
-            ? 'Silahkan untuk menghubungi petugas Puskesmas untuk mendapatkan rujukan Dokter atau Rumah Sakit untuk pengobatan lanjutan.'
-            : 'Lanjutkan ANC sesuai standar, ulang skrining di trimester berikutnya.';
+            ? 'Beresiko preeklampsia. Silahkan untuk menghubungi petugas Puskesmas untuk mendapatkan rujukan Dokter atau Rumah Sakit untuk pengobatan lanjutan.'
+            : 'Kondisi normal. Lanjutkan ANC sesuai standar dan ulang skrining di trimester berikutnya.';
         $catatan      = $skrining->catatan ?? null;
 
         // ===== Pemicu risiko =====
@@ -162,10 +162,18 @@ class SkriningController extends Controller
             'Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya',
             'Apakah kehamilan anda saat ini adalah kehamilan kembar',
             'Apakah anda memiliki diabetes dalam masa kehamilan',
-            'Apakah anda memiliki tekanan darah (Tensi) di atas 130/90 mHg',
             'Apakah anda memiliki penyakit ginjal',
             'Apakah anda memiliki penyakit autoimun, SLE',
             'Apakah anda memiliki penyakit Anti Phospholipid Syndrome',
+        ];
+
+        $preHighLabels = [
+            $preHighNames[0] => 'Riwayat preeklampsia sebelumnya',
+            $preHighNames[1] => 'Kehamilan kembar',
+            $preHighNames[2] => 'Diabetes dalam kehamilan',
+            $preHighNames[3] => 'Penyakit ginjal',
+            $preHighNames[4] => 'Penyakit autoimun (SLE)',
+            $preHighNames[5] => 'Anti Phospholipid Syndrome',
         ];
 
         $preKuisHigh = DB::table('kuisioner_pasiens')

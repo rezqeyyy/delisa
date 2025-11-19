@@ -105,8 +105,8 @@
                                     <select id="statusSelect" name="status"
                                             class="w-full pl-3 pr-9 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
                                         <option value="" {{ $currentStatus === '' ? 'selected' : '' }}>Cari Berdasarkan Status</option>
-                                        <option value="Normal" {{ $currentStatus === 'Normal' ? 'selected' : '' }}>Tidak Berisiko</option>
-                                        <option value="Berisiko" {{ $currentStatus === 'Berisiko' ? 'selected' : '' }}>Berisiko</option>
+                                        <option value="Tidak berisiko preeklampsia" {{ $currentStatus === 'Tidak berisiko preeklampsia' ? 'selected' : '' }}>Tidak berisiko preeklampsia</option>
+                                        <option value="Berisiko preeklampsia" {{ $currentStatus === 'Berisiko preeklampsia' ? 'selected' : '' }}>Berisiko preeklampsia</option>
                                         <option value="Skrining belum selesai" {{ $currentStatus === 'Skrining belum selesai' ? 'selected' : '' }}>Skrining belum selesai</option>
                                     </select>
                                 </div>
@@ -219,9 +219,9 @@
 
             <!-- Ringkasan Total Skrining & Resiko Preeklamsia -->           
             <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white rounded-2xl p-6 shadow-md">
-                    <h2 class="font-semibold text-[#1D1D1D] mb-3">Total Skrining</h2>
-                    <div class="space-y-3 text-sm">
+                <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col h-full">
+                    <h2 class="text-xl font-semibold text-[#1D1D1D] mb-3">Total Skrining</h2>
+                    <div class="text-base flex-1 flex flex-col justify-center space-y-3">
                         <div class="flex items-center justify-between">
                             <span class="text-[#1D1D1D]">Sudah Selesai</span>
                             <span class="font-semibold tabular-nums">{{ $totalSelesai ?? 0 }}</span>
@@ -234,13 +234,23 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl p-6 shadow-md">
-                    <h2 class="font-semibold text-[#1D1D1D] mb-3">Risiko Preeklamsia</h2>
-                    <div class="rounded-xl {{ $riskBoxClass ?? 'bg-[#E9E9E9] text-[#1D1D1D]' }} p-6 text-center">
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h2 class="text-xl font-semibold text-[#1D1D1D] mb-3">Risiko Preeklamsia</h2>
+                    <div class="rounded-xl {{ $riskBoxClass ?? 'bg-[#E9E9E9] text-[#1D1D1D]' }} p-4 text-center">
                         <span class="text-lg font-semibold">
                             {{ $riskPreeklampsia ? $riskPreeklampsia : 'Belum ada' }}
                         </span>
                     </div>
+
+                    @php $riskLower = strtolower($riskPreeklampsia ?? ''); @endphp
+                    @if(in_array($riskLower, ['berisiko preeklampsia','berisiko','beresiko','risiko tinggi','resiko tinggi']))
+                        <p class="text-xs text-red-600 mt-3">*Segera Menuju ke RS di Bawah Untuk Penanganan Lebih Lanjut</p>
+                        <div class="rounded-xl bg-[#E9E9E9] text-[#1D1D1D] p-4 text-center mt-2">
+                            <span class="font-medium">
+                                {{ ($referralAccepted ?? false) && ($referralHospital ?? null) ? $referralHospital : 'Tunggu Hasil Rujukan' }}
+                            </span>
+                        </div>
+                    @endif
                 </div>
             </section>
 

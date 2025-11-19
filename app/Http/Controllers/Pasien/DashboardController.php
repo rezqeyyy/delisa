@@ -33,14 +33,12 @@ class DashboardController extends Controller
          * Menyatukan variasi nilai di DB untuk dipakai pada dropdown filter
          */
         $kesimpulanAliases = [
-            'Normal'   => ['Normal', 'Aman', 'Tidak berisiko', 'Tidak beresiko'],
-            'Waspada'  => ['Waspada', 'Waspadai'],
-            'Berisiko' => ['Berisiko', 'Beresiko'],
+            'Tidak berisiko preeklampsia' => ['Tidak berisiko preeklampsia','Tidak beresiko preeklampsia','Tidak berisiko','Tidak beresiko','Aman','Normal','Sehat'],
+            'Berisiko preeklampsia'       => ['Berisiko preeklampsia','Beresiko preeklampsia','Berisiko','Beresiko','Waspada','Waspadai','Menengah'],
         ];
         $preeklampsiaAliases = [
-            'Normal'   => ['Normal'],
-            'Waspada'  => ['Risiko Sedang'],
-            'Berisiko' => ['Risiko Tinggi'],
+            'Tidak berisiko preeklampsia' => ['Normal','Tidak berisiko','Tidak beresiko','Tidak berisiko preeklampsia','Tidak beresiko preeklampsia'],
+            'Berisiko preeklampsia'       => ['Risiko Tinggi','Resiko Tinggi','Risiko Sedang','Resiko Sedang','Berisiko preeklampsia','Beresiko preeklampsia'],
         ];
 
         /* {{-- ==== QUERY DAFTAR SKRINING ==== --}} */
@@ -88,19 +86,15 @@ class DashboardController extends Controller
             if (!$isComplete) {
                 $conclusion = 'Skrining belum selesai';
             } elseif ($resikoTinggi >= 1 || $resikoSedang >= 2) {
-                $conclusion = 'Berisiko';
+                $conclusion = 'Berisiko preeklampsia';
             } else {
-                $conclusion = 'Tidak berisiko';
+                $conclusion = 'Tidak berisiko preeklampsia';
             }
 
             $key = strtolower(trim($conclusion));
             $badgeClasses = [
-                'berisiko'               => 'bg-red-600 text-white',
-                'beresiko'               => 'bg-red-600 text-white',
-                'tidak berisiko'         => 'bg-green-500 text-white',
-                'tidak beresiko'         => 'bg-green-500 text-white',
-                'aman'                   => 'bg-green-500 text-white',
-                'normal'                 => 'bg-green-500 text-white',
+                'berisiko preeklampsia' => 'bg-red-600 text-white',
+                'tidak berisiko preeklampsia' => 'bg-green-500 text-white',
                 'skrining belum selesai' => 'bg-gray-200 text-gray-900',
             ];
 
@@ -134,16 +128,42 @@ class DashboardController extends Controller
             if (!$this->isSkriningCompleteForSkrining($latestAny)) {
                 $riskPreeklampsia = 'Skrining belum selesai';
             } else {
-                $riskPreeklampsia = $latestAny->status_pre_eklampsia ?: $latestAny->kesimpulan;
+                $raw = $latestAny->status_pre_eklampsia ?: $latestAny->kesimpulan;
+                $rawLower = strtolower(trim($raw ?? ''));
+                $riskValues = ['berisiko','beresiko','risiko tinggi','resiko tinggi','risiko sedang','resiko sedang','waspada','menengah'];
+                if (in_array($rawLower, $riskValues, true)) {
+                    $riskPreeklampsia = 'Berisiko preeklampsia';
+                } else {
+                    $riskPreeklampsia = 'Tidak berisiko preeklampsia';
+                }
             }
         }
 
         $riskLower   = strtolower($riskPreeklampsia ?? '');
         $riskBoxClass = match ($riskLower) {
-            'berisiko', 'beresiko', 'risiko tinggi', 'resiko tinggi' => 'bg-red-600 text-white',
-            'normal', 'aman', 'tidak berisiko', 'tidak beresiko' => 'bg-[#2EDB58] text-white',
+            'berisiko preeklampsia' => 'bg-red-600 text-white',
+            'tidak berisiko preeklampsia' => 'bg-[#2EDB58] text-white',
             default => 'bg-[#E9E9E9] text-[#1D1D1D]',
         };
+
+        /* {{-- ==== STATUS RUJUKAN MENUJU RUMAH SAKIT ==== --}} */
+        $referralHospital = null;
+        $referralAccepted = false;
+
+        if ($latestAny) {
+            $ref = \Illuminate\Support\Facades\DB::table('rujukan_rs as rr')
+                ->leftJoin('rumah_sakits as rs', 'rs.id', '=', 'rr.rs_id')
+                ->select('rs.nama as rs_nama', 'rr.done_status')
+                ->where('rr.pasien_id', $pasienId)
+                ->where('rr.skrining_id', $latestAny->id)
+                ->orderByDesc('rr.created_at')
+                ->first();
+
+            if ($ref) {
+                $referralHospital = $ref->rs_nama;
+                $referralAccepted = (bool) $ref->done_status;
+            }
+        }
 
         /* {{-- ==== RETURN VIEW ==== --}} */
         return view('pasien.dashboard', [
@@ -155,6 +175,8 @@ class DashboardController extends Controller
             'totalBelum'        => $totalBelum,
             'riskPreeklampsia'  => $riskPreeklampsia,
             'riskBoxClass'      => $riskBoxClass,
+            'referralHospital'  => $referralHospital,
+            'referralAccepted'  => $referralAccepted,
         ]);
     }
 }
