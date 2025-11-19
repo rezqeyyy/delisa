@@ -724,11 +724,18 @@
                                 aria-label="Bersihkan pencarian">×</button>
                         </form>
 
+                        {{-- TOMBOL UNDUH (PAKAI FILTER YANG SAMA) --}}
+                        <a href="{{ route('dinkes.dashboard.pe-export', request()->query()) }}"
+                            class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm whitespace-nowrap">
+                            Unduh
+                        </a>
+
                         <button id="btnPeFilter" type="button"
                             class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm">
                             Filter
                         </button>
                     </div>
+
                 </div>
 
                 <div class="overflow-x-auto">

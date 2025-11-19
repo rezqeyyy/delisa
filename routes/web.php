@@ -65,6 +65,8 @@ Route::middleware(['auth'])->group(function () {
             // Dashboard
             Route::get('/dashboard', [DinkesDashboardController::class, 'index'])->name('dashboard');
             Route::get('/pasien/{pasien}', [PasienController::class, 'show'])->name('pasien.show');
+            Route::get('/dashboard/export-pe', [DinkesDashboardController::class, 'exportPe'])
+                ->name('dashboard.pe-export');
 
             // Data Master
             Route::get('/data-master', [DataMasterController::class, 'index'])->name('data-master');
@@ -165,7 +167,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/pasien-nifas/cek-nik', [RsPasienNifasController::class, 'cekNik'])->name('pasien-nifas.cek-nik');
             Route::post('/pasien-nifas/store', [RsPasienNifasController::class, 'store'])->name('pasien-nifas.store');
             Route::get('/pasien-nifas/{id}/detail', [RsPasienNifasController::class, 'detail'])->name('pasien-nifas.detail');
-/*             Route::get('/rs/dashboard', function () {
+            /*             Route::get('/rs/dashboard', function () {
                 return view('rs.skrining.dashboard');
             })->name('rs.dashboard'); */
         });
