@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pasien;
 use App\Models\PasienNifas;
 use App\Models\PasienPreEklampsia;
+use App\Models\RumahSakit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -44,7 +45,7 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get()
-            ->map(function($item) {
+            ->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'id_pasien' => $item->nik ?? $item->id,
@@ -79,9 +80,8 @@ class DashboardController extends Controller
     {
         try {
             $pasien = Pasien::with('user')->findOrFail($id);
-            
+
             return view('rs.show', compact('pasien'));
-            
         } catch (\Exception $e) {
             return redirect()
                 ->route('rs.dashboard')
@@ -105,12 +105,12 @@ class DashboardController extends Controller
 
             // Cek apakah pasien sudah ada di data nifas
             $existingNifas = PasienNifas::where('pasien_id', $pasien->id)
-                                        ->where('rs_id', $rs_id)
-                                        ->first();
-            
+                ->where('rs_id', $rs_id)
+                ->first();
+
             if ($existingNifas) {
                 DB::commit();
-                
+
                 return redirect()
                     ->route('rs.pasien-nifas.show', $existingNifas->id)
                     ->with('info', 'Pasien sudah terdaftar dalam data nifas.');
@@ -128,12 +128,11 @@ class DashboardController extends Controller
             return redirect()
                 ->route('rs.pasien-nifas.show', $pasienNifas->id)
                 ->with('success', 'Pasien berhasil diproses ke data nifas! Silakan tambah data anak.');
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             Log::error('Error Proses Pasien Nifas: ' . $e->getMessage());
-            
+
             return redirect()
                 ->route('rs.dashboard')
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -141,24 +140,26 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get RS ID from authenticated user
+     * Ambil ID Rumah Sakit milik user yang sedang login.
      */
     private function getRsId()
     {
-        $user = auth()->user();
-        
-        if (isset($user->rumah_sakit_id) && !is_null($user->rumah_sakit_id)) {
-            return $user->rumah_sakit_id;
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (!$user) {
+            throw new \RuntimeException('User belum login.');
         }
-        
-        if (isset($user->rs_id) && !is_null($user->rs_id)) {
-            return $user->rs_id;
+
+        // Cari rumah sakit yang terhubung dengan user ini
+        $rs = RumahSakit::where('user_id', $user->id)->first();
+
+        if (!$rs) {
+            // Bisa juga diubah jadi abort(403) atau redirect,
+            // tapi untuk sekarang biar ketahuan jelas di flash message
+            throw new \RuntimeException('Rumah sakit untuk akun ini belum terdaftar.');
         }
-        
-        if (isset($user->puskesmas_id) && !is_null($user->puskesmas_id)) {
-            return $user->puskesmas_id;
-        }
-        
-        return 1;
+
+        return $rs->id;
     }
 }

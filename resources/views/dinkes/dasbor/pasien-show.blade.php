@@ -137,7 +137,6 @@
                     @endif
                 </div>
 
-
                 <!-- Ringkasan GPA -->
                 <div class="bg-white rounded-2xl shadow-md p-4 sm:p-5">
                     <h2 class="font-semibold mb-3">Ringkasan GPA</h2>
@@ -230,6 +229,49 @@
                     </div>
                 @else
                     <p class="text-sm text-[#7C7C7C]">Belum ada catatan kondisi kesehatan.</p>
+                @endif
+            </section>
+
+            <!-- Riwayat Penyakit -->
+            <section class="bg-white rounded-2xl shadow-md p-4 sm:p-5">
+                <h2 class="font-semibold mb-4">Riwayat Penyakit</h2>
+
+                @if ($skrining && (count($riwayatPenyakit) || $penyakitLainnya))
+                    <div class="space-y-3 text-sm">
+                        {{-- Daftar penyakit yang dipilih --}}
+                        <div class="flex flex-wrap gap-2">
+                            @forelse ($riwayatPenyakit as $nama)
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 rounded-full bg-[#FFF0F6] text-[#B9257F] text-xs sm:text-sm">
+                                    {{ $nama }}
+                                </span>
+                            @empty
+                                <p class="text-[#7C7C7C]">Tidak ada penyakit spesifik yang dicentang.</p>
+                            @endforelse
+                        </div>
+
+                        {{-- Penyakit lainnya (free text) --}}
+                        @if ($penyakitLainnya)
+                            <div class="mt-2">
+                                <div class="text-[#7C7C7C] mb-0.5">Penyakit Lainnya</div>
+                                <div class="font-semibold break-words">
+                                    {{ $penyakitLainnya }}
+                                </div>
+                            </div>
+                        @endif
+
+                        <p class="text-xs text-[#9E9E9E] mt-2">
+                            Sumber data: isian riwayat penyakit pada skrining terakhir pasien.
+                        </p>
+                    </div>
+                @elseif ($skrining)
+                    <p class="text-sm text-[#7C7C7C]">
+                        Belum ada riwayat penyakit yang diisi pada skrining terakhir.
+                    </p>
+                @else
+                    <p class="text-sm text-[#7C7C7C]">
+                        Belum ada data skrining sehingga riwayat penyakit tidak tersedia.
+                    </p>
                 @endif
             </section>
 
