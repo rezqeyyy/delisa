@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DINKES – Detail Akun</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dinkes/sidebar-toggle.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dinkes/sidebar-toggle.js', 'resources/js/dinkes/data-master-show.js'])
 </head>
 
 <body class="bg-[#F5F5F5] font-[Poppins] text-[#000000cc]">
@@ -14,7 +14,7 @@
         <div class="mb-4 sm:mb-6 flex items-center justify-between gap-3">
             <h1 class="text-xl sm:text-2xl font-bold">Detail Akun ({{ ucfirst($tab) }})</h1>
             <a href="{{ route('dinkes.data-master', ['tab' => $tab]) }}"
-               class="px-3 sm:px-4 py-2 rounded-full bg-white border border-[#D9D9D9] text-xs sm:text-sm">
+                class="px-3 sm:px-4 py-2 rounded-full bg-white border border-[#D9D9D9] text-xs sm:text-sm">
                 ← Kembali
             </a>
         </div>
@@ -32,33 +32,38 @@
             </div>
 
             {{-- Row password --}}
-            <div>
-                <span class="text-[#7C7C7C] text-xs sm:text-sm">Password (terakhir diset)</span>
+            <div id="dmPasswordSection" data-user-id="{{ $data->id }}"
+                @if (session('new_password') && session('pw_user_id') == $data->id) data-init-password="{{ session('new_password') }}" @endif>
+                <span class="text-[#7C7C7C] text-xs sm:text-sm">
+                    Password (hasil reset otomatis)
+                </span>
 
-                @if ($data->last_plain_password)
-                    <div class="mt-1 font-mono text-sm sm:text-base break-all bg-[#F5F5F5] rounded-xl px-3 py-2">
-                        {{ $data->last_plain_password }}
+                <div class="mt-1">
+                    {{-- Bagian yang menampilkan password jika ada --}}
+                    <div id="dmPasswordValueWrapper" class="hidden">
+                        <div class="font-mono text-sm sm:text-base break-all bg-[#F5F5F5] rounded-xl px-3 py-2"
+                            id="dmPasswordValue"></div>
+
+                        <p id="dmPasswordInfo" class="mt-1 text-[11px] sm:text-xs text-[#7C7C7C]"></p>
                     </div>
 
-                    @if (session('flash_kind') === 'password-reset')
-                        <p class="mt-1 text-[11px] sm:text-xs text-[#7C7C7C]">
-                            Password ini baru saja direset.
-                            Simpan untuk diberikan ke petugas.
-                        </p>
-                    @else
-                        <p class="mt-1 text-[11px] sm:text-xs text-[#7C7C7C]">
-                            Password ini adalah password terakhir yang tersimpan.
-                            Jaga kerahasiaannya dan ubah secara berkala bila perlu.
-                        </p>
-                    @endif
-                @else
-                    <div class="mt-1 text-xs sm:text-sm text-[#7C7C7C]">
-                        Belum ada password yang tersimpan untuk ditampilkan.
-                        Silakan gunakan fitur <span class="font-semibold">Reset Password</span> di bawah
-                        untuk membuat password baru.
+                    {{-- Pesan default kalau belum pernah ada reset otomatis --}}
+                    <div id="dmPasswordEmptyInfo" class="text-xs sm:text-sm text-[#7C7C7C]">
+                        Password hanya akan ditampilkan jika Anda melakukan
+                        <span class="font-semibold">Reset Password</span> tanpa mengisi password baru
+                        (sistem akan membuat password acak).
+                        Jika Anda mengisi password manual, password tidak akan ditampilkan demi keamanan.
                     </div>
+                </div>
+
+                {{-- Flag: kalau baru saja reset MANUAL untuk user ini, hapus password acak di browser --}}
+                @if (session('pw_user_id_clear') && session('pw_user_id_clear') == $data->id)
+                    <div id="dmPwClearFlag" data-clear="1"></div>
                 @endif
             </div>
+
+
+
 
             @if ($tab === 'rs')
                 <div>
@@ -125,24 +130,17 @@
                 Jika dikosongkan, sistem akan membuatkan password acak yang kuat.
             </p>
 
-            <form
-                action="{{ route('dinkes.data-master.reset', ['user' => $data->id, 'tab' => $tab]) }}"
-                method="POST"
-                class="space-y-3"
-            >
+            <form action="{{ route('dinkes.data-master.reset', ['user' => $data->id, 'tab' => $tab]) }}" method="POST"
+                class="space-y-3">
                 @csrf
 
                 <div class="space-y-1">
                     <label for="new_password" class="text-xs sm:text-sm text-[#7C7C7C]">
                         Password baru (opsional, minimal 8 karakter)
                     </label>
-                    <input
-                        id="new_password"
-                        name="new_password"
-                        type="text"
+                    <input id="new_password" name="new_password" type="text"
                         class="w-full rounded-xl border border-[#D9D9D9] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1677FF33]"
-                        placeholder="Kosongkan untuk generate otomatis"
-                    >
+                        placeholder="Kosongkan untuk generate otomatis">
 
                     @error('new_password')
                         <p class="text-[11px] sm:text-xs text-red-600 mt-1">
@@ -151,10 +149,8 @@
                     @enderror
                 </div>
 
-                <button
-                    type="submit"
-                    class="inline-flex items-center justify-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-[#1677FF] text-white hover:bg-[#125FCC] transition"
-                >
+                <button type="submit"
+                    class="inline-flex items-center justify-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-[#1677FF] text-white hover:bg-[#125FCC] transition">
                     Reset Password
                 </button>
             </form>
