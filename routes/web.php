@@ -144,12 +144,14 @@ Route::middleware(['auth'])->group(function () {
         });
 
     // ================== RUMAH SAKIT ==================
-    Route::middleware('role:rs')
+    Route::middleware('role:rumah_sakit')
         ->prefix('rs')->as('rs.')
         ->group(function () {
             Route::get('/dashboard', [RsDashboardController::class, 'index'])->name('dashboard');
+            Route::post('/dashboard/proses-nifas/{id}', [RsDashboardController::class, 'prosesPasienNifas'])->name('dashboard.proses-nifas');
 
             Route::get('/pasien/{id}', [RsDashboardController::class, 'showPasien'])->name('pasien.show');
+            
             
             // Skrining
             Route::get('/skrining', [RsSkriningController::class, 'index'])->name('skrining.index');
@@ -158,7 +160,6 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/skrining/{id}', [RsSkriningController::class, 'update'])->name('skrining.update');
 
             // Pasien Nifas
-         
             Route::post('/pasien-nifas/{id}/anak', [RsPasienNifasController::class, 'storeAnakPasien'])->name('pasien-nifas.store-anak');
             Route::get('/pasien-nifas', [RsPasienNifasController::class, 'index'])->name('pasien-nifas.index');
             Route::get('/pasien-nifas/create', [RsPasienNifasController::class, 'create'])->name('pasien-nifas.create');
@@ -169,6 +170,8 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/pasien-nifas/cek-nik', [RsPasienNifasController::class, 'cekNik'])->name('pasien-nifas.cek-nik');
             Route::post('/pasien-nifas/store', [RsPasienNifasController::class, 'store'])->name('pasien-nifas.store');
             Route::get('/pasien-nifas/{id}/detail', [RsPasienNifasController::class, 'detail'])->name('pasien-nifas.detail');
+            Route::get('/rs/dashboard', function () {return view('rs.skrining.dashboard');})->name('rs.dashboard');
+
         });
 
     // ================== PASIEN ==================
