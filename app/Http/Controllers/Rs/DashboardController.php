@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pasien;
 use App\Models\PasienNifas;
 use App\Models\PasienPreEklampsia;
-use App\Models\RumahSakit;
+use App\Models\Skrining;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -40,20 +40,30 @@ class DashboardController extends Controller
         $pemantauanDirujuk = 0;
         $pemantauanMeninggal = 0;
 
-        // Data Pasien Pre Eklampsia (5 terbaru) - dari tabel pasiens
-        $pasienPreEklampsia = Pasien::with('user')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
+        // Data Pasien Pre Eklampsia — hanya skrining yang lengkap/selesai
+        $pePatients = Skrining::with(['pasien.user'])
+            ->where(function ($q) {
+                $q->whereNotNull('kesimpulan')
+                  ->orWhereNotNull('status_pre_eklampsia');
+            })
+            ->orderByDesc('created_at')
+            ->take(10)
             ->get()
-            ->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'id_pasien' => $item->nik ?? $item->id,
-                    'nama' => $item->user->name ?? 'Nama Tidak Tersedia',
-                    'tanggal' => $item->tanggal_lahir ? Carbon::parse($item->tanggal_lahir)->format('d/m/Y') : '-',
-                    'status' => $item->PKabupaten ?? 'N/A',
-                    'no_telp' => $item->no_telepon ?? '0000000000',
-                    'klasifikasi' => 'Beresiko'
+            ->map(function ($s) {
+                $pasien = $s->pasien;
+                $user   = optional($pasien)->user;
+                $kes    = $s->kesimpulan ?? $s->status_pre_eklampsia ?? 'Normal';
+
+                return (object) [
+                    'id'          => $pasien->id ?? null,
+                    'nik'         => $pasien->nik ?? '-',
+                    'nama'        => $user->name ?? 'Nama Tidak Tersedia',
+                    'tanggal'     => optional($s->created_at)->format('d/m/Y') ?? '-',
+                    'alamat'      => $pasien->PKecamatan ?? $pasien->PWilayah ?? '-',
+                    'telp'        => $user->phone ?? $pasien->no_telepon ?? '-',
+                    'kesimpulan'  => ucfirst($kes),
+                    'detail_url'  => route('rs.skrining.show', $s->id),
+                    'process_url' => route('rs.dashboard.proses-nifas', $pasien->id ?? 0),
                 ];
             });
 
@@ -69,7 +79,7 @@ class DashboardController extends Controller
             'pemantauanSehat',
             'pemantauanDirujuk',
             'pemantauanMeninggal',
-            'pasienPreEklampsia'
+            'pePatients'
         ));
     }
 
@@ -80,8 +90,9 @@ class DashboardController extends Controller
     {
         try {
             $pasien = Pasien::with('user')->findOrFail($id);
-
+            
             return view('rs.show', compact('pasien'));
+            
         } catch (\Exception $e) {
             return redirect()
                 ->route('rs.dashboard')
@@ -105,12 +116,12 @@ class DashboardController extends Controller
 
             // Cek apakah pasien sudah ada di data nifas
             $existingNifas = PasienNifas::where('pasien_id', $pasien->id)
-                ->where('rs_id', $rs_id)
-                ->first();
-
+                                        ->where('rs_id', $rs_id)
+                                        ->first();
+            
             if ($existingNifas) {
                 DB::commit();
-
+                
                 return redirect()
                     ->route('rs.pasien-nifas.show', $existingNifas->id)
                     ->with('info', 'Pasien sudah terdaftar dalam data nifas.');
@@ -128,11 +139,12 @@ class DashboardController extends Controller
             return redirect()
                 ->route('rs.pasien-nifas.show', $pasienNifas->id)
                 ->with('success', 'Pasien berhasil diproses ke data nifas! Silakan tambah data anak.');
+
         } catch (\Exception $e) {
             DB::rollBack();
-
+            
             Log::error('Error Proses Pasien Nifas: ' . $e->getMessage());
-
+            
             return redirect()
                 ->route('rs.dashboard')
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -140,26 +152,24 @@ class DashboardController extends Controller
     }
 
     /**
-     * Ambil ID Rumah Sakit milik user yang sedang login.
+     * Get RS ID from authenticated user
      */
     private function getRsId()
     {
-        /** @var \App\Models\User|null $user */
         $user = Auth::user();
-
-        if (!$user) {
-            throw new \RuntimeException('User belum login.');
+        
+        if (isset($user->rumah_sakit_id) && !is_null($user->rumah_sakit_id)) {
+            return $user->rumah_sakit_id;
         }
-
-        // Cari rumah sakit yang terhubung dengan user ini
-        $rs = RumahSakit::where('user_id', $user->id)->first();
-
-        if (!$rs) {
-            // Bisa juga diubah jadi abort(403) atau redirect,
-            // tapi untuk sekarang biar ketahuan jelas di flash message
-            throw new \RuntimeException('Rumah sakit untuk akun ini belum terdaftar.');
+        
+        if (isset($user->rs_id) && !is_null($user->rs_id)) {
+            return $user->rs_id;
         }
-
-        return $rs->id;
+        
+        if (isset($user->puskesmas_id) && !is_null($user->puskesmas_id)) {
+            return $user->puskesmas_id;
+        }
+        
+        return 1;
     }
 }

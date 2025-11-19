@@ -14,25 +14,29 @@ class SkriningController extends Controller
 {
     public function index()
     {
-        // Ambil semua data skrining dengan relasi pasien
-        $skrinings = Skrining::with('pasien.user')
-            ->orderBy('created_at', 'desc')
+        $rsId = Auth::user()->rumahSakit->id ?? null;
+
+        $skrinings = RujukanRs::with(['skrining.pasien.user'])
+            ->where('rs_id', $rsId)
+            ->orderByDesc('created_at')
             ->paginate(10);
 
-        // Tambahkan badge class untuk setiap skrining
-        $skrinings->getCollection()->transform(function ($skrining) {
-            $conclusion = $skrining->kesimpulan ?? $skrining->status_pre_eklampsia ?? 'Normal';
-
-            $skrining->badge_class = match (strtolower($conclusion)) {
-                'berisiko', 'beresiko' => 'badge-berisiko',
-                'normal', 'aman' => 'badge-normal',
-                'waspada', 'menengah' => 'badge-waspada',
-                default => 'badge-secondary'
-            };
-
-            $skrining->conclusion_display = ucfirst($conclusion);
-
-            return $skrining;
+        $skrinings->getCollection()->transform(function ($rujukan) {
+            $skr = $rujukan->skrining;
+            $pas = optional($skr)->pasien;
+            $usr = optional($pas)->user;
+            $raw = strtolower(trim($skr->kesimpulan ?? $skr->status_pre_eklampsia ?? ''));
+            $isHigh = ($skr->jumlah_resiko_tinggi ?? 0) > 0 || in_array($raw, ['beresiko','berisiko','risiko tinggi','tinggi']);
+            $isMed  = ($skr->jumlah_resiko_sedang ?? 0) > 0 || in_array($raw, ['waspada','menengah','sedang','risiko sedang']);
+            $rujukan->risk_display = $isHigh ? 'Beresiko' : ($isMed ? 'Waspada' : 'Tidak Berisiko');
+            $rujukan->tanggal_display = optional($skr->created_at)->format('d/m/Y');
+            $rujukan->nik_display = $pas->nik ?? '-';
+            $rujukan->nama_display = $usr->name ?? 'Nama Tidak Tersedia';
+            $rujukan->alamat_display = $pas->PKecamatan ?? $pas->PWilayah ?? '-';
+            $rujukan->telp_display = $usr->phone ?? $pas->no_telepon ?? '-';
+            $rujukan->detail_url = route('rs.skrining.show', $skr->id ?? 0);
+            $rujukan->process_url = route('rs.skrining.edit', $skr->id ?? 0);
+            return $rujukan;
         });
 
         return view('rs.skrining.index', compact('skrinings'));
@@ -55,9 +59,13 @@ class SkriningController extends Controller
             ->where('rs_id', $rsId)
             ->first();
 
-        // Ambil resep obat jika ada (column sudah benar)
-        $resepObats = $rujukan
-            ? ResepObat::where('rujukan_rs_id', $rujukan->id)->get()
+        // Ambil resep obat via tabel riwayat_rujukans -> resep_obats
+        $riwayatRujukan = $rujukan
+            ? DB::table('riwayat_rujukans')->where('rujukan_id', $rujukan->id)->first()
+            : null;
+
+        $resepObats = $riwayatRujukan
+            ? ResepObat::where('riwayat_rujukan_id', $riwayatRujukan->id)->get()
             : collect();
 
         return view('rs.skrining.show', compact('skrining', 'rujukan', 'resepObats'));
