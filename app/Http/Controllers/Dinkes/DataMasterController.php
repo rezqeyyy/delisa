@@ -10,14 +10,36 @@ use Illuminate\Support\Str;
 
 class DataMasterController extends Controller
 {
-    private const PHONE_REGEX = '/^\+?\d{8,15}$/'; // +optional, 8–15 digit
-
+    
     private function roleId(string $name): int
     {
+        // Alias nama role yang dianggap sama
+        $aliases = [
+            'rs'          => ['rs', 'rumah_sakit'],
+            'rumah_sakit' => ['rs', 'rumah_sakit'],
+            // role lain cukup pakai nama aslinya
+            'bidan'      => ['bidan'],
+            'puskesmas'  => ['puskesmas'],
+            'dinkes'     => ['dinkes'],
+            'pasien'     => ['pasien'],
+        ];
+
+        $key       = strtolower($name);
+        $candidates = $aliases[$key] ?? [$key];          // kalau tidak ada di alias, pakai nama sendiri
+
         return (int) DB::table('roles')
-            ->whereRaw('LOWER(nama_role)=?', [strtolower($name)])
+            ->where(function ($q) use ($candidates) {
+                foreach ($candidates as $i => $n) {
+                    if ($i === 0) {
+                        $q->whereRaw('LOWER(nama_role) = ?', [$n]);
+                    } else {
+                        $q->orWhereRaw('LOWER(nama_role) = ?', [$n]);
+                    }
+                }
+            })
             ->value('id');
     }
+
 
     /** ===== A. LIST (inner join, tanpa has_detail) ===== */
     public function index(Request $request)

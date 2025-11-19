@@ -27,7 +27,6 @@ use App\Http\Controllers\Pasien\Skrining\KondisiKesehatanPasienController;
 use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitPasienController;
 use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitKeluargaController;
 use App\Http\Controllers\Pasien\Skrining\PreeklampsiaController;
-use App\Http\Controllers\Dinkes\AnalyticsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,7 +42,7 @@ Route::get('/', function () {
             'dinkes'      => redirect()->route('dinkes.dashboard'),
             'puskesmas'   => redirect()->route('puskesmas.dashboard'),
             'bidan'       => redirect()->route('bidan.dashboard'),
-            'rumah_sakit' => redirect()->route('rs.dashboard'),
+            'rumah_sakit', 'rs' => redirect()->route('rs.dashboard'),
             'pasien'      => redirect()->route('pasien.dashboard'),
             default       => redirect()->route('login'),
         };
@@ -97,7 +96,6 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/profile', [DinkesProfileController::class, 'edit'])->name('profile.edit');
             Route::put('/profile', [DinkesProfileController::class, 'update'])->name('profile.update');
             Route::delete('/profile/photo', [DinkesProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
-
         });
 
     // ================== PUSKESMAS ==================
@@ -140,18 +138,19 @@ Route::middleware(['auth'])->group(function () {
         });
 
     // ================== RUMAH SAKIT ==================
-    Route::middleware('role:rumah_sakit')
+    // Izinkan dua nama role: "rumah_sakit" dan "rs"
+    Route::middleware('role:rumah_sakit,rs')
         ->prefix('rs')->as('rs.')
         ->group(function () {
             Route::get('/dashboard', [RsDashboardController::class, 'index'])->name('dashboard');
             Route::post('/dashboard/proses-nifas/{id}', [RsDashboardController::class, 'prosesPasienNifas'])->name('dashboard.proses-nifas');
 
             Route::get('/pasien/{id}', [RsDashboardController::class, 'showPasien'])->name('pasien.show');
-            
-            
+
+
             // Skrining
             Route::get('/skrining', [RsSkriningController::class, 'index'])->name('skrining.index');
-            Route::get('/skrining/{id}/edit', [RsSkriningController::class, 'edit'])->name('skrining.edit'); 
+            Route::get('/skrining/{id}/edit', [RsSkriningController::class, 'edit'])->name('skrining.edit');
             Route::get('/skrining/{id}', [RsSkriningController::class, 'show'])->name('skrining.show');
             Route::put('/skrining/{id}', [RsSkriningController::class, 'update'])->name('skrining.update');
 
@@ -161,13 +160,14 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/pasien-nifas/create', [RsPasienNifasController::class, 'create'])->name('pasien-nifas.create');
             Route::get('/pasien-nifas/download/pdf', [RsPasienNifasController::class, 'downloadPDF'])->name('pasien-nifas.download-pdf');
             Route::get('/pasien-nifas/{id}', [RsPasienNifasController::class, 'show'])->name('pasien-nifas.show');
-            
+
 
             Route::post('/pasien-nifas/cek-nik', [RsPasienNifasController::class, 'cekNik'])->name('pasien-nifas.cek-nik');
             Route::post('/pasien-nifas/store', [RsPasienNifasController::class, 'store'])->name('pasien-nifas.store');
             Route::get('/pasien-nifas/{id}/detail', [RsPasienNifasController::class, 'detail'])->name('pasien-nifas.detail');
-            Route::get('/rs/dashboard', function () {return view('rs.skrining.dashboard');})->name('rs.dashboard');
-
+/*             Route::get('/rs/dashboard', function () {
+                return view('rs.skrining.dashboard');
+            })->name('rs.dashboard'); */
         });
 
     // ================== PASIEN ==================
