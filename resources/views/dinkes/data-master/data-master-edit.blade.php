@@ -62,7 +62,7 @@
 
                     {{-- Common fields --}}
                     <div>
-                        <label>Nama Lengkap</label>
+                        <label>Nama</label>
                         <input name="name" value="{{ old('name', $data->name) }}" required
                             class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                     </div>

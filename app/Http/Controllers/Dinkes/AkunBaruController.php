@@ -132,23 +132,34 @@ class AkunBaruController extends Controller
     // Tolak pengajuan: hapus user pending
     public function reject($id)
     {
-        // pastikan ambil juga role, supaya tahu detail mana yang harus dibersihkan
         $user = User::with('role')
-            ->where('status', false)
+            ->where('status', false) // hanya akun pending
             ->findOrFail($id);
 
         $name = $user->name;
-        $role = optional($user->role)->nama_role; // 'bidan' | 'rs' | 'puskesmas'
+        $roleName = optional($user->role)->nama_role; // 'bidan' | 'rs' | 'puskesmas' | null
 
-        DB::transaction(function () use ($user, $role) {
-            if ($role === 'bidan') {
-                DB::table('bidans')->where('user_id', $user->id)->delete();
-            } elseif ($role === 'rs') {
-                DB::table('rumah_sakits')->where('user_id', $user->id)->delete();
-            } elseif ($role === 'puskesmas') {
-                DB::table('puskesmas')->where('user_id', $user->id)->delete();
+        DB::transaction(function () use ($user, $roleName) {
+            switch ($roleName) {
+                case 'bidan':
+                    DB::table('bidans')
+                        ->where('user_id', $user->id)
+                        ->delete();
+                    break;
+
+                case 'rs':
+                    DB::table('rumah_sakits')
+                        ->where('user_id', $user->id)
+                        ->delete();
+                    break;
+
+                case 'puskesmas':
+                    DB::table('puskesmas')
+                        ->where('user_id', $user->id)
+                        ->delete();
+                    break;
             }
-            // terakhir: hapus user-nya
+
             $user->delete();
         });
 

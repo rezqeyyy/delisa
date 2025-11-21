@@ -208,7 +208,7 @@
                         class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 text-sm">
                         @csrf
                         <div>
-                            <label>Nama Lengkap</label>
+                            <label>Nama</label>
                             <input name="name" value="{{ old('name') }}" required
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
