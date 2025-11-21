@@ -20,14 +20,18 @@ class RoleRegistrationController extends Controller
     public function storePuskesmas(Request $r)
     {
         $data = $r->validate([
-            'pic_name'   => 'required|string|max:255',
-            'email'      => 'required|email|max:255|unique:users,email',
-            'password'   => 'required|string|min:6',
-            'phone'      => 'nullable|string|max:50',
-            'nama'       => 'required|string|max:255',         // nama puskesmas
-            'kecamatan'  => 'required|string|max:255',
-            'lokasi'     => 'nullable|string',                  // alamat
-            'is_mandiri' => 'nullable|boolean',
+            'pic_name' => 'required|string|max:255',
+            'email'    => 'required|email|max:255|unique:users,email',
+            'password' => 'required|string|min:6',
+            'phone'    => 'nullable|string|max:50',
+
+            // dropdown nama puskesmas (sekaligus kecamatan)
+            // pastikan UNIQUE terhadap tabel puskesmas
+            'nama'     => 'required|string|max:255|unique:puskesmas,nama_puskesmas',
+
+            'lokasi'   => 'nullable|string', // alamat bebas isi
+        ], [
+            'nama.unique' => 'Puskesmas / Kecamatan tersebut sudah memiliki akun.',
         ]);
 
         DB::transaction(function () use ($data) {
@@ -45,12 +49,13 @@ class RoleRegistrationController extends Controller
             ]);
 
             // 2) detail puskesmas melekat ke user
+            // nama_puskesmas dan kecamatan disamakan sesuai requirement
             DB::table('puskesmas')->insert([
-                'user_id'        => $userId,                // ✅ JANGAN LUPA INI
+                'user_id'        => $userId,
                 'nama_puskesmas' => $data['nama'],
-                'kecamatan'      => $data['kecamatan'],
+                'kecamatan'      => $data['nama'],        // jadikan juga sebagai kecamatan
                 'lokasi'         => $data['lokasi'] ?? '',
-                'is_mandiri'     => !empty($data['is_mandiri']) ? 1 : 0,
+                'is_mandiri'     => 0,                    // centang mandiri dihilangkan ⇒ selalu 0
                 'created_at'     => now(),
                 'updated_at'     => now(),
             ]);
@@ -60,28 +65,118 @@ class RoleRegistrationController extends Controller
             ->with('ok', 'Pengajuan akun Puskesmas terkirim. Menunggu persetujuan DINKES.');
     }
 
+    public function showPuskesmasRegisterForm()
+    {
+        // 1) Master list Puskesmas Kecamatan Kota Depok
+        // value array ini sengaja disamakan dengan yang akan disimpan ke nama_puskesmas
+        $allPuskesmas = [
+            'Beji'         => 'Kecamatan Beji',
+            'Bojongsari'   => 'Kecamatan Bojongsari',
+            'Cilodong'     => 'Kecamatan Cilodong',
+            'Cimanggis'    => 'Kecamatan Cimanggis',
+            'Cinere'       => 'Kecamatan Cinere',
+            'Cipayung'     => 'Kecamatan Cipayung',
+            'Limo'         => 'Kecamatan Limo',
+            'Pancoran Mas' => 'Kecamatan Pancoran Mas',
+            'Sawangan'     => 'Kecamatan Sawangan',
+            'Sukmajaya'    => 'Kecamatan Sukmajaya',
+            'Tapos'        => 'Kecamatan Tapos',
+        ];
+
+
+        // 2) Nama puskesmas yang sudah punya akun (tidak boleh daftar lagi)
+        $alreadyTaken = DB::table('puskesmas')
+            ->pluck('nama_puskesmas')
+            ->all();
+
+        // 3) Filter array: buang yang sudah ada di tabel puskesmas
+        $available = array_diff_key(
+            $allPuskesmas,
+            array_flip($alreadyTaken) // convert list ke key agar cocok dengan key array master
+        );
+
+        return view('auth.register-puskesmas', [
+            'kecamatanOptions' => $available,
+        ]);
+    }
+
+    private function depokKecamatanOptions(): array
+    {
+        return [
+            'Beji'         => 'Kecamatan Beji',
+            'Bojongsari'   => 'Kecamatan Bojongsari',
+            'Cilodong'     => 'Kecamatan Cilodong',
+            'Cimanggis'    => 'Kecamatan Cimanggis',
+            'Cinere'       => 'Kecamatan Cinere',
+            'Cipayung'     => 'Kecamatan Cipayung',
+            'Limo'         => 'Kecamatan Limo',
+            'Pancoran Mas' => 'Kecamatan Pancoran Mas',
+            'Sawangan'     => 'Kecamatan Sawangan',
+            'Sukmajaya'    => 'Kecamatan Sukmajaya',
+            'Tapos'        => 'Kecamatan Tapos',
+        ];
+    }
+
+    private function depokKelurahanByKecamatan(): array
+    {
+        return [
+            'Beji' => ['Beji', 'Beji Timur', 'Kemiri Muka', 'Kukusan', 'Pondok Cina', 'Tanah Baru'],
+            'Bojongsari' => ['Bojongsari', 'Bojongsari Lama', 'Curug', 'Duren Mekar', 'Duren Seribu', 'Pondok Petir', 'Serua'],
+            'Cilodong' => ['Cilodong', 'Jatimulya', 'Kalibaru', 'Kalimulya', 'Sukamaju', 'Sukamaju Baru'],
+            'Cimanggis' => ['Cisalak', 'Cisalak Pasar', 'Curug', 'Harjamukti', 'Mekarsari', 'Pasir Gunung Selatan', 'Tugu'],
+            'Cinere' => ['Cinere', 'Gandul', 'Pangkalan Jati', 'Pangkalan Jati Baru'],
+            'Cipayung' => ['Cipayung', 'Cipayung Jaya', 'Cilangkap', 'Pondok Jaya', 'Ratu Jaya'],
+            'Limo' => ['Grogol', 'Krukut', 'Limo', 'Meruyung'],
+            'Pancoran Mas' => ['Depok', 'Depok Jaya', 'Depok Baru', 'Mampang', 'Pancoran Mas', 'Rangkapan Jaya', 'Rangkapan Jaya Baru'],
+            'Sawangan' => ['Bedahan', 'Cinangka', 'Kedaung', 'Pasir Putih', 'Pengasinan', 'Sawangan', 'Sawangan Baru'],
+            'Sukmajaya' => ['Abadijaya', 'Bakti Jaya', 'Cisalak', 'Mekarsari', 'Sukmajaya', 'Tirtajaya'],
+            'Tapos' => ['Cimpaeun', 'Cilangkap', 'Jatijajar', 'Leuwinanggung', 'Sukatani', 'Sukamaju Baru', 'Tapos'],
+        ];
+    }
+
+    private function depokKelurahanOptions(): array
+    {
+        $grouped = $this->depokKelurahanByKecamatan();
+        $flat = [];
+
+        foreach ($grouped as $kec => $list) {
+            foreach ($list as $kel) {
+                $flat[$kel] = $kel . " (Kec. $kec)";
+            }
+        }
+
+        return $flat;
+    }
+
+
+
+
     /** RUMAH SAKIT */
     public function storeRs(Request $r)
     {
+        $kecamatanKeys = array_keys($this->depokKecamatanOptions());
+        $kelurahanKeys = array_keys($this->depokKelurahanOptions());
+
         $data = $r->validate([
             'pic_name'  => 'required|string|max:255',
             'email'     => 'required|email|max:255|unique:users,email',
             'password'  => 'required|string|min:6',
             'phone'     => 'nullable|string|max:50',
-            'nama'      => 'required|string|max:255',   // nama RS
-            'kecamatan' => 'required|string|max:255',
-            'kelurahan' => 'required|string|max:255',
-            'lokasi'    => 'nullable|string',           // alamat
+            'nama'      => 'required|string|max:255',
+            'kecamatan' => 'required|string|in:' . implode(',', $kecamatanKeys),
+            'kelurahan' => 'required|string|in:' . implode(',', $kelurahanKeys),
+            'lokasi'    => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($data) {
+
             $userId = DB::table('users')->insertGetId([
                 'name'       => $data['pic_name'],
                 'email'      => $data['email'],
                 'password'   => Hash::make($data['password']),
                 'phone'      => $data['phone'] ?? null,
                 'address'    => $data['lokasi'] ?? null,
-                'role_id'    => $this->roleId('rs'),   // ✅ pakai 'rs', sesuai isi tabel roles
+                'role_id'    => $this->roleId('rs'),
                 'status'     => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -101,6 +196,7 @@ class RoleRegistrationController extends Controller
         return redirect()->route('login')
             ->with('ok', 'Pengajuan akun Rumah Sakit terkirim. Menunggu persetujuan DINKES.');
     }
+
 
     /** BIDAN */
     public function storeBidan(Request $r)
