@@ -100,6 +100,14 @@ class RoleRegistrationController extends Controller
         ]);
     }
 
+    public function showRsRegisterForm()
+    {
+        return view('auth.register-rs', [
+            'rsKecamatanOptions'     => $this->depokKecamatanOptions(),
+            'rsKelurahanByKecamatan' => $this->depokKelurahanByKecamatan(),
+        ]);
+    }
+
     private function depokKecamatanOptions(): array
     {
         return [

@@ -49,15 +49,8 @@ Route::middleware('guest')->group(function () {
     // ======================================================
     // ===============  RUMAH SAKIT  ========================
     // ======================================================
-    Route::get('register-rs', function () {
-
-        $c = app(\App\Http\Controllers\Auth\RoleRegistrationController::class);
-
-        return view('auth.register-rs', [
-            'rsKecamatanOptions' => $c->depokKecamatanOptions(),
-            'rsKelurahanByKecamatan' => $c->depokKelurahanByKecamatan(),
-        ]);
-    })->name('rs.register');
+    Route::get('register-rs', [RoleRegistrationController::class, 'showRsRegisterForm'])
+    ->name('rs.register');
 
 
     Route::post('register-rs', [RoleRegistrationController::class, 'storeRs'])

@@ -87,32 +87,42 @@ class AkunBaruController extends Controller
             $roleName = optional($user->role)->nama_role; // 'bidan' | 'rs' | 'puskesmas'
 
             if ($roleName === 'puskesmas') {
-                DB::table('puskesmas')->updateOrInsert(
-                    ['user_id' => $user->id],
-                    [
+                // JANGAN overwrite data yg sudah dibuat RoleRegistrationController
+                $exists = DB::table('puskesmas')
+                    ->where('user_id', $user->id)
+                    ->exists();
+
+                if (!$exists) {
+                    DB::table('puskesmas')->insert([
+                        'user_id'        => $user->id,
                         'nama_puskesmas' => $user->name ?? 'Belum diisi',
                         'lokasi'         => 'Belum diisi',
                         'kecamatan'      => 'Belum diisi',
                         'is_mandiri'     => 0,
                         'created_at'     => now(),
                         'updated_at'     => now(),
-                    ]
-                );
+                    ]);
+                }
             } elseif ($roleName === 'rs') {
-                DB::table('rumah_sakits')->updateOrInsert(
-                    ['user_id' => $user->id],
-                    [
+                // Sama: cek dulu apakah sudah ada detail rumah_sakits dari RoleRegistrationController
+                $exists = DB::table('rumah_sakits')
+                    ->where('user_id', $user->id)
+                    ->exists();
+
+                if (!$exists) {
+                    DB::table('rumah_sakits')->insert([
+                        'user_id'    => $user->id,
                         'nama'       => $user->name ?? 'Belum diisi',
                         'lokasi'     => 'Belum diisi',
                         'kecamatan'  => 'Belum diisi',
                         'kelurahan'  => 'Belum diisi',
                         'created_at' => now(),
                         'updated_at' => now(),
-                    ]
-                );
+                    ]);
+                }
             } elseif ($roleName === 'bidan') {
-                // ❗ Untuk bidan, detail sudah dibuat saat registrasi (storeBidan),
-                // jadi di sini kita cukup mengaktifkan user saja.
+                // Untuk bidan: detail sudah dibuat saat registrasi (storeBidan),
+                // jadi di sini cukup aktifkan user saja.
             }
         });
 

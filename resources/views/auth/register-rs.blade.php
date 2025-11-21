@@ -5,7 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pengajuan Akun Rumah Sakit - DeLISA</title>
-    @vite('resources/css/app.css')
+    @vite([
+        'resources/css/app.css',
+        'resources/js/app.js',
+        'resources/js/dinkes/data-master-form.js', {{-- dipakai untuk filter kecamatan → kelurahan --}}
+    ])
 </head>
 
 <body class="bg-gray-100">
@@ -28,64 +32,138 @@
                 </div>
             @endif
 
-            <form action="{{ route('rs.register.store') }}" method="POST" class="mt-6 space-y-5">
+            <form
+                action="{{ route('rs.register.store') }}"
+                method="POST"
+                class="mt-6 space-y-5"
+                data-rs-kelurahan-map='@json($rsKelurahanByKecamatan ?? [])'
+                data-old-kecamatan="{{ old('kecamatan') }}"
+                data-old-kelurahan="{{ old('kelurahan') }}"
+            >
                 @csrf
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Nama Lengkap PIC</label>
-                        <input name="pic_name" type="text" value="{{ old('pic_name') }}" placeholder="Nama anda"
-                            class="mt-1 w-full px-4 py-3 rounded-full border @error('pic_name') @else border-[#D91A8B] @enderror focus:outline-none">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Nama Lengkap PIC
+                        </label>
+                        <input
+                            name="pic_name"
+                            type="text"
+                            value="{{ old('pic_name') }}"
+                            placeholder="Nama anda"
+                            class="mt-1 w-full px-4 py-3 rounded-full border border-[#D91A8B] focus:outline-none"
+                        >
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Nomor Telepon PIC</label>
-                        <input name="phone" type="text" value="{{ old('phone') }}"
+                        <label class="block text-sm font-medium text-gray-700">
+                            Nomor Telepon PIC
+                        </label>
+                        <input
+                            name="phone"
+                            type="text"
+                            value="{{ old('phone') }}"
                             placeholder="Masukan Nomor Telp"
-                            class="mt-1 w-full px-4 py-3 rounded-full border @error('phone') @else border-[#D91A8B] @enderror focus:outline-none">
+                            class="mt-1 w-full px-4 py-3 rounded-full border border-[#D91A8B] focus:outline-none"
+                        >
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Email PIC</label>
-                        <input name="email" type="email" value="{{ old('email') }}"
+                        <label class="block text-sm font-medium text-gray-700">
+                            Email PIC
+                        </label>
+                        <input
+                            name="email"
+                            type="email"
+                            value="{{ old('email') }}"
                             placeholder="Masukan Email Anda"
-                            class="mt-1 w-full px-4 py-3 rounded-full border @error('email') @else border-[#D91A8B] @enderror focus:outline-none">
+                            class="mt-1 w-full px-4 py-3 rounded-full border border-[#D91A8B] focus:outline-none"
+                        >
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Nama Rumah Sakit</label>
-                        <input name="nama" type="text" value="{{ old('nama') }}"
+                        <label class="block text-sm font-medium text-gray-700">
+                            Nama Rumah Sakit
+                        </label>
+                        <input
+                            name="nama"
+                            type="text"
+                            value="{{ old('nama') }}"
                             placeholder="Masukan Nama Rumah Sakit"
-                            class="mt-1 w-full px-4 py-3 rounded-full border @error('nama') @else border-[#D91A8B] @enderror focus:outline-none">
+                            class="mt-1 w-full px-4 py-3 rounded-full border border-[#D91A8B] focus:outline-none"
+                        >
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Password</label>
-                    <input name="password" type="password" placeholder="Masukan Password"
-                        class="mt-1 w-full px-4 py-3 rounded-full border @error('password') @else border-[#D91A8B] @enderror focus:outline-none">
+                    <label class="block text-sm font-medium text-gray-700">
+                        Password
+                    </label>
+                    <input
+                        name="password"
+                        type="password"
+                        placeholder="Masukan Password"
+                        class="mt-1 w-full px-4 py-3 rounded-full border border-[#D91A8B] focus:outline-none"
+                    >
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- KECAMATAN (dropdown, master Depok) --}}
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Kecamatan</label>
-                        <input name="kecamatan" type="text" value="{{ old('kecamatan') }}"
-                            placeholder="Masukan Kecamatan"
-                            class="mt-1 w-full px-4 py-3 rounded-full border @error('kecamatan') @else border-[#D91A8B] @enderror focus:outline-none">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Kecamatan
+                        </label>
+                        <select
+                            name="kecamatan"
+                            id="rsKecamatanCreate"
+                            class="mt-1 w-full px-4 py-3 rounded-full border border-[#D91A8B] bg-white focus:outline-none"
+                        >
+                            <option value="">-- Pilih Kecamatan --</option>
+                            @foreach ($rsKecamatanOptions as $value => $label)
+                                <option
+                                    value="{{ $value }}"
+                                    {{ old('kecamatan') === $value ? 'selected' : '' }}
+                                >
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
+
+                    {{-- KELURAHAN (akan diisi JS berdasarkan kecamatan) --}}
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Kelurahan</label>
-                        <input name="kelurahan" type="text" value="{{ old('kelurahan') }}"
-                            placeholder="Masukan Kelurahan"
-                            class="mt-1 w-full px-4 py-3 rounded-full border @error('kelurahan') @else border-[#D91A8B] @enderror focus:outline-none">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Kelurahan
+                        </label>
+                        <select
+                            name="kelurahan"
+                            id="rsKelurahanCreate"
+                            class="mt-1 w-full px-4 py-3 rounded-full border border-[#D91A8B] bg-white focus:outline-none"
+                        >
+                            <option value="">-- Pilih Kelurahan --</option>
+                            {{-- opsi lain akan di-generate oleh data-master-form.js --}}
+                        </select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Alamat</label>
-                    <textarea name="lokasi" rows="4" placeholder="Isi Alamat"
-                        class="mt-1 w-full px-4 py-3 rounded-lg border @error('lokasi') @else border-[#D91A8B] @enderror focus:outline-none">{{ old('lokasi') }}</textarea>
+                    <label class="block text-sm font-medium text-gray-700">
+                        Alamat
+                    </label>
+                    <textarea
+                        name="lokasi"
+                        rows="4"
+                        placeholder="Isi Alamat"
+                        class="mt-1 w-full px-4 py-3 rounded-lg border border-[#D91A8B] focus:outline-none"
+                    >{{ old('lokasi') }}</textarea>
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit"
-                        class="w-full py-3 rounded-full bg-[#D91A8B] text-white font-semibold hover:bg-[#c4177c]">
+                    <button
+                        type="submit"
+                        class="w-full py-3 rounded-full bg-[#D91A8B] text-white font-semibold hover:bg-[#c4177c]"
+                    >
                         SUBMIT
                     </button>
                 </div>
