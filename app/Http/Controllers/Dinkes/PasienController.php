@@ -140,7 +140,7 @@ class PasienController extends Controller
             }
         }
 
-        return view('dinkes.dasbor.pasien-show', [
+        return view('dinkes.pasien.pasien-show', [
             'pasien'            => $pasien,
             'skrining'          => $skrining,      // punya ->tanggal & ->tanggal_waktu
             'kondisi'           => $kondisi,
