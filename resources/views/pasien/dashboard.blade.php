@@ -131,7 +131,7 @@
                         data-search-url="{{ route('pasien.puskesmas.search') }}"
                         class="inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70] w-full md:w-[220px] md:ml-3 flex-none">
                             <span class="text-base leading-none">+</span>
-                            <span class="leading-none">Ajukan Skrining</span>
+                            <span class="leading-none">Tambah Skrining</span>
                         </a>
                     </div>
                 </div>

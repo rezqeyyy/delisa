@@ -223,8 +223,7 @@
                             <thead class="text-[#7C7C7C]">
                                 <tr class="text-left">
                                     <th class="px-3 py-2 w-10"><input type="checkbox" class="rounded"></th>
-                                    <th class="px-3 py-2">No. Rujukan</th>
-                                    <th class="px-3 py-2">ID Skrining</th>
+                                    <th class="px-3 py-2">ID Rujukan</th>
                                     <th class="px-3 py-2">NIK Pasien</th>
                                     <th class="px-3 py-2">Nama Pasien</th>
                                     <th class="px-3 py-2">Tanggal</th>
@@ -239,7 +238,6 @@
                                     <tr>
                                         <td class="px-3 py-3"><input type="checkbox" name="selected[]" value="{{ $p->rujukan_id ?? '' }}" class="rounded"></td>
                                         <td class="px-3 py-3 font-medium tabular-nums">#{{ $p->rujukan_id ?? '-' }}</td>
-                                        <td class="px-3 py-3 font-medium tabular-nums">#{{ $p->skrining_id ?? '-' }}</td>
                                         <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $p->nik ?? '-' }}</td>
                                         <td class="px-3 py-3">{{ $p->nama ?? '-' }}</td>
                                         <td class="px-3 py-3">{{ optional($p->tanggal)->format('d/m/Y') ?? ($p->tanggal ?? '-') }}</td>

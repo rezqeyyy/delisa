@@ -1,8 +1,32 @@
-@extends('layouts.puskesmas')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puskesmas — Dashboard</title>
+    
+    @vite([
+        'resources/css/app.css', 
+        'resources/js/app.js', 
+        'resources/js/dropdown.js', 
+        'resources/js/puskesmas/sidebar-toggle.js'
+        ])
 
-@section('title', 'Laporan - Puskesmas')
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
+</head>
 
-@section('content')
+<body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
+    <div class="flex min-h-screen" x-data="{ openSidebar: false }">
+        
+        <x-puskesmas.sidebar />
+
+        <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
+
 <div class="flex-1 flex flex-col">
     <!-- Header -->
     <header class="mb-6">
@@ -89,4 +113,10 @@
         -->
     </div>
 </div>
-@endsection
+ <footer class="text-center text-xs text-[#7C7C7C] py-6">
+                © 2025 Dinas Kesehatan Kota Depok — DeLISA
+            </footer>
+        </main>
+    </div>
+</body>
+</html>
