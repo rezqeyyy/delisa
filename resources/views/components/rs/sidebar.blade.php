@@ -42,6 +42,11 @@
                     <span>Skrining</span>
                 </a>
 
+                <a href="{{ route('rs.penerimaan-rujukan.index') }}" class="{{ $is('rs.penerimaan-rujukan.*') ? $active : $idle }}">
+                    <img src="{{ asset('icons/Iconly/Regular/Light/Document.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Penerimaan Rujukan">
+                    <span>Rujukan</span>
+                </a>
+
                 <a href="{{ route('rs.pasien-nifas.index') }}" class="{{ $is('rs.pasien-nifas.*') ? $active : $idle }}">
                     <img src="{{ asset('icons/Iconly/Regular/Light/2 User.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Pasien Nifas">
                     <span>Pasien Nifas</span>

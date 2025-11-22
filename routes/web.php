@@ -8,6 +8,7 @@ use App\Http\Controllers\Puskesmas\DashboardController as PuskesmasDashboardCont
 use App\Http\Controllers\Bidan\DashboardController as BidanDashboardController;
 use App\Http\Controllers\Rs\DashboardController as RsDashboardController;
 use App\Http\Controllers\Rs\SkriningController as RsSkriningController;
+use App\Http\Controllers\Rs\RujukanController as RsRujukanController;
 use App\Http\Controllers\Rs\PasienNifasController as RsPasienNifasController;
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
 use App\Http\Controllers\Pasien\SkriningController as PasienSkriningController;
@@ -158,6 +159,11 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/skrining/{id}/edit', [RsSkriningController::class, 'edit'])->name('skrining.edit');
             Route::get('/skrining/{id}', [RsSkriningController::class, 'show'])->name('skrining.show');
             Route::put('/skrining/{id}', [RsSkriningController::class, 'update'])->name('skrining.update');
+
+            // Penerimaan Rujukan
+            Route::get('/penerimaan-rujukan', [RsRujukanController::class, 'index'])->name('penerimaan-rujukan.index');
+            Route::post('/penerimaan-rujukan/{id}/accept', [RsRujukanController::class, 'accept'])->name('penerimaan-rujukan.accept');
+            Route::post('/penerimaan-rujukan/{id}/reject', [RsRujukanController::class, 'reject'])->name('penerimaan-rujukan.reject');
 
             // Pasien Nifas
             Route::post('/pasien-nifas/{id}/anak', [RsPasienNifasController::class, 'storeAnakPasien'])->name('pasien-nifas.store-anak');

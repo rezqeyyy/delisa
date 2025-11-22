@@ -18,6 +18,7 @@ class SkriningController extends Controller
 
         $skrinings = RujukanRs::with(['skrining.pasien.user'])
             ->where('rs_id', $rsId)
+            ->where('done_status', true)
             ->orderByDesc('created_at')
             ->paginate(10);
 
@@ -170,4 +171,5 @@ class SkriningController extends Controller
             ->route('rs.skrining.show', $id)
             ->with('success', 'Data berhasil disimpan!');
     }
+
 }
