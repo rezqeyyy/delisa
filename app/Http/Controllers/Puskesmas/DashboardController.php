@@ -3,13 +3,15 @@
 namespace App\Http\Controllers\Puskesmas;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // Pastikan controller puskesmas menampilkan view puskesmas
-        return view('puskesmas.dashboard'); // resources/views/puskesmas/dashboard.blade.php
-    }
+
+            return view('puskesmas.dashboard');
+        }
 }

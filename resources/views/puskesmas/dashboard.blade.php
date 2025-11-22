@@ -217,9 +217,10 @@
                             <thead class="text-[#7C7C7C]">
                                 <tr class="text-left">
                                     <th class="px-3 py-2 w-10"><input type="checkbox" class="rounded"></th>
-                                    <th class="px-3 py-2">ID Pasien</th>
+                                    <th class="px-3 py-2">ID Skrining</th>
                                     <th class="px-3 py-2">Nama Pasien</th>
-                                    <th class="px-3 py-2">Tanggal</th>
+                                    <th class="px-3 py-2">NIK</th>
+                                    <th class="px-3 py-2">Tanggal Lahir</th>
                                     <th class="px-3 py-2">Alamat</th>
                                     <th class="px-3 py-2">No Telp</th>
                                     <th class="px-3 py-2">Kesimpulan</th>
@@ -232,6 +233,7 @@
                                         <td class="px-3 py-3"><input type="checkbox" name="selected[]" value="{{ $p->id ?? '' }}" class="rounded"></td>
                                         <td class="px-3 py-3 font-medium tabular-nums">#{{ $p->id ?? '-' }}</td>
                                         <td class="px-3 py-3">{{ $p->nama ?? '-' }}</td>
+                                        <td class="px-3 py-3 tabular-nums">{{ $p->nik ?? '-' }}</td>
                                         <td class="px-3 py-3">{{ optional($p->tanggal)->format('d/m/Y') ?? ($p->tanggal ?? '-') }}</td>
                                         <td class="px-3 py-3">{{ $p->alamat ?? '-' }}</td>
                                         <td class="px-3 py-3">{{ $p->telp ?? '-' }}</td>
@@ -245,12 +247,20 @@
                                             </span>
                                         </td>
                                         <td class="px-3 py-3">
-                                            <a href="{{ $p->detail_url ?? '#' }}" class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">View</a>
+                                            <div x-data="{ open:false }" class="relative inline-block">
+                                                <button @click="open=!open" class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">View</button>
+                                                <div x-show="open" @click.outside="open=false" x-transition class="mt-2 p-3 border border-[#E9E9E9] rounded-lg bg-[#FAFAFA] text-xs text-[#1D1D1D] w-max max-w-[60ch] shadow">
+                                                    <div class="font-semibold mb-1">Hasil Akhir</div>
+                                                    <div class="mb-2">{{ $p->hasil_akhir ?? '-' }}</div>
+                                                    <div class="font-semibold mb-1">Rekomendasi</div>
+                                                    <div>{{ $p->rekomendasi ?? '-' }}</div>
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada data pasien pre eklampsia.</td>
+                                        <td colspan="9" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada data pasien pre eklampsia.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
