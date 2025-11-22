@@ -50,7 +50,7 @@ class DashboardController extends Controller
 
         // ===================== 1. ASAL PASIEN (DEPOK vs NON) =====================
 
-        $depok = DB::table('pasiens as p')
+        $asalDepok = DB::table('pasiens as p')
             ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'")
             ->whereExists(function ($q) {
                 $q->select(DB::raw(1))
@@ -59,7 +59,7 @@ class DashboardController extends Controller
             })
             ->count();
 
-        $non = DB::table('pasiens as p')
+        $asalNonDepok = DB::table('pasiens as p')
             ->whereRaw("(p.\"PKabupaten\" IS NULL OR p.\"PKabupaten\" NOT ILIKE '%Depok%')")
             ->whereExists(function ($q) {
                 $q->select(DB::raw(1))
@@ -67,6 +67,10 @@ class DashboardController extends Controller
                     ->whereColumn('s.pasien_id', 'p.id');
             })
             ->count();
+
+        // versi pendek (kalau masih dipakai di view lain)
+        $depok = $asalDepok;
+        $non   = $asalNonDepok;
 
         // ===================== 2. KF PER BULAN (12 SLOT) =====================
 
@@ -85,81 +89,54 @@ class DashboardController extends Controller
 
         // ===================== 3. RISIKO PRE-EKLAMPSIA (LATEST ONLY) =====================
 
-        $normal = DB::query()
+        $resikoNormal = DB::query()
             ->from(DB::raw($latestSkriningSql))
             ->whereRaw("COALESCE(status_pre_eklampsia, '') ILIKE 'normal'")
             ->count();
 
-        $risk = DB::query()
+        $resikoPreeklampsia = DB::query()
             ->from(DB::raw($latestSkriningSql))
             ->whereRaw("COALESCE(status_pre_eklampsia, '') NOT ILIKE 'normal'")
             ->count();
 
-        // ===================== 4. DONUT NIFAS (KF) =====================
+        // versi pendek
+        $normal = $resikoNormal;
+        $risk   = $resikoPreeklampsia;
 
-        $dkfMonth = $request->query('dkf_month'); // 1..12 | null
-        $dkfYear  = $request->query('dkf_year');  // int | null
+        // ===================== 4. DATA NIFAS (TOTAL & SUDAH KFI) =====================
 
-        $dkfMonth = is_numeric($dkfMonth) && (int) $dkfMonth >= 1 && (int) $dkfMonth <= 12
-            ? (int) $dkfMonth
-            : null;
+        // Total pasien nifas = distinct pasien_id dari dua sumber (bidan + rs)
+        $unionNifas = DB::table('pasien_nifas_bidan')->select('pasien_id')
+            ->union(DB::table('pasien_nifas_rs')->select('pasien_id'));
 
-        $dkfYear  = is_numeric($dkfYear)
-            ? (int) $dkfYear
-            : null;
+        $totalNifas = DB::query()
+            ->fromSub($unionNifas, 't')
+            ->distinct()
+            ->count('pasien_id');
 
-        $isDonutFiltered = !is_null($dkfYear) || !is_null($dkfMonth);
+        // Sudah KFI = pasien yang punya minimal 4 kunjungan nifas (KF1-4)
+        $sudahKFI = DB::table('kf')
+            ->whereIn('kunjungan_nifas_ke', [1, 2, 3, 4])
+            ->select('id_nifas')
+            ->groupBy('id_nifas')
+            ->havingRaw('COUNT(DISTINCT kunjungan_nifas_ke) >= 4')
+            ->count();
 
-        if ($isDonutFiltered) {
-            $kfPeriod = DB::table('kf as k');
+        // ===================== 5. HADIR / MANGKIR (LATEST SKRINING) =====================
 
-            if (!is_null($dkfYear)) {
-                $kfPeriod->whereYear('k.tanggal_kunjungan', $dkfYear);
-            }
-            if (!is_null($dkfMonth)) {
-                $kfPeriod->whereMonth('k.tanggal_kunjungan', $dkfMonth);
-            }
-
-            $totalNifas = (clone $kfPeriod)
-                ->leftJoin('pasien_nifas_bidan as pnb', 'pnb.id', '=', 'k.id_nifas')
-                ->leftJoin('pasien_nifas_rs as pnr', 'pnr.id', '=', 'k.id_nifas')
-                ->where(function ($w) {
-                    $w->whereNotNull('pnb.pasien_id')
-                        ->orWhereNotNull('pnr.pasien_id');
-                })
-                ->selectRaw('COUNT(DISTINCT COALESCE(pnb.pasien_id, pnr.pasien_id)) as total')
-                ->value('total');
-
-            $kf1 = (clone $kfPeriod)->where('k.kunjungan_nifas_ke', 1)->count();
-            $kf2 = (clone $kfPeriod)->where('k.kunjungan_nifas_ke', 2)->count();
-            $kf3 = (clone $kfPeriod)->where('k.kunjungan_nifas_ke', 3)->count();
-            $kf4 = (clone $kfPeriod)->where('k.kunjungan_nifas_ke', 4)->count();
-        } else {
-            $union = DB::table('pasien_nifas_bidan')->select('pasien_id')
-                ->union(DB::table('pasien_nifas_rs')->select('pasien_id'));
-
-            $totalNifas = DB::query()
-                ->fromSub($union, 't')
-                ->distinct()
-                ->count('pasien_id');
-
-            $kf1 = DB::table('kf')->where('kunjungan_nifas_ke', 1)->count();
-            $kf2 = DB::table('kf')->where('kunjungan_nifas_ke', 2)->count();
-            $kf3 = DB::table('kf')->where('kunjungan_nifas_ke', 3)->count();
-            $kf4 = DB::table('kf')->where('kunjungan_nifas_ke', 4)->count();
-        }
-
-        // ===================== 5. HADIR / MANGKIR (LATEST) =====================
-
-        $hadir = DB::query()
+        $pasienHadir = DB::query()
             ->from(DB::raw($latestSkriningSql))
             ->where('checked_status', true)
             ->count();
 
-        $mangkir = DB::query()
+        $pasienTidakHadir = DB::query()
             ->from(DB::raw($latestSkriningSql))
             ->where('checked_status', false)
             ->count();
+
+        // versi pendek
+        $hadir   = $pasienHadir;
+        $mangkir = $pasienTidakHadir;
 
         // Absensi per bulan – dari tanggal skrining terbaru
         $absensiPerBulan = DB::query()
@@ -176,15 +153,27 @@ class DashboardController extends Controller
 
         // ===================== 6. PEMANTAUAN KF =====================
 
-        $sehat     = DB::table('kf')->where('kesimpulan_pantauan', 'Sehat')->count();
-        $dirujuk   = DB::table('kf')->where('kesimpulan_pantauan', 'Dirujuk')->count();
-        $meninggal = DB::table('kf')->where('kesimpulan_pantauan', 'Meninggal')->count();
+        $pemantauanSehat = DB::table('kf')
+            ->where('kesimpulan_pantauan', 'Sehat')
+            ->count();
+
+        $pemantauanDirujuk = DB::table('kf')
+            ->where('kesimpulan_pantauan', 'Dirujuk')
+            ->count();
+
+        $pemantauanMeninggal = DB::table('kf')
+            ->where('kesimpulan_pantauan', 'Meninggal')
+            ->count();
+
+        // versi pendek
+        $sehat     = $pemantauanSehat;
+        $dirujuk   = $pemantauanDirujuk;
+        $meninggal = $pemantauanMeninggal;
 
         // ===================== 7. TABEL PE (LATEST PER PASIEN) =====================
 
         [$peQuery, $filters] = $this->buildPeQuery($request, $latestSkriningSql);
 
-        // ---- Paginate untuk tampilan tabel
         $peList = $peQuery
             ->orderByDesc('ls.created_at')
             ->paginate(10)
@@ -200,35 +189,46 @@ class DashboardController extends Controller
         // ===================== 9. RENDER VIEW =====================
 
         return view('dinkes.dasbor.dashboard', [
-            'depok'          => $depok,
-            'non'            => $non,
+            // Asal pasien (versi baru + pendek)
+            'asalDepok'   => $asalDepok,
+            'asalNonDepok'=> $asalNonDepok,
+            'depok'       => $depok,
+            'non'         => $non,
 
+            // Chart KF per bulan
             'seriesBulanan'  => $seriesBulanan,
             'selectedYear'   => $selectedYear,
             'availableYears' => $availableYears,
 
-            'totalNifas'     => $totalNifas,
-            'kf1'            => $kf1,
-            'kf2'            => $kf2,
-            'kf3'            => $kf3,
-            'kf4'            => $kf4,
-            'dkfMonth'       => $dkfMonth,
-            'dkfYear'        => $dkfYear,
-            'isDonutFiltered' => $isDonutFiltered,
+            // Nifas
+            'totalNifas' => $totalNifas,
+            'sudahKFI'   => $sudahKFI,
 
-            'normal'         => $normal,
-            'risk'           => $risk,
-            'hadir'          => $hadir,
-            'mangkir'        => $mangkir,
-            'seriesAbsensi'  => $seriesAbsensi,
-            'sehat'          => $sehat,
-            'dirujuk'        => $dirujuk,
-            'meninggal'      => $meninggal,
+            // Risiko Pre-Eklampsia
+            'resikoNormal'       => $resikoNormal,
+            'resikoPreeklampsia' => $resikoPreeklampsia,
+            'normal'             => $normal,
+            'risk'               => $risk,
 
-            'peList'         => $peList,
-            'puskesmasList'  => $puskesmasList,
+            // Hadir / Tidak Hadir
+            'pasienHadir'      => $pasienHadir,
+            'pasienTidakHadir' => $pasienTidakHadir,
+            'hadir'            => $hadir,
+            'mangkir'          => $mangkir,
+            'seriesAbsensi'    => $seriesAbsensi,
 
-            'filters'        => $filters,
+            // Pemantauan
+            'pemantauanSehat'     => $pemantauanSehat,
+            'pemantauanDirujuk'   => $pemantauanDirujuk,
+            'pemantauanMeninggal' => $pemantauanMeninggal,
+            'sehat'               => $sehat,
+            'dirujuk'             => $dirujuk,
+            'meninggal'           => $meninggal,
+
+            // Tabel PE
+            'peList'        => $peList,
+            'puskesmasList' => $puskesmasList,
+            'filters'       => $filters,
         ]);
     }
 
@@ -372,7 +372,6 @@ class DashboardController extends Controller
         $riwayatSelected = array_filter($riwayatSelected); // buang string kosong kalau ada
 
         if (!empty($riwayatSelected)) {
-            // mapping kode -> nama_pertanyaan (harus sama persis seperti di controller pasien)
             $rpMap = [
                 'hipertensi'  => 'Hipertensi',
                 'alergi'      => 'Alergi',
@@ -408,7 +407,6 @@ class DashboardController extends Controller
                     ->whereColumn('jk.skrining_id', 'ls.id')
                     ->where('kp.status_soal', 'individu')
                     ->where(function ($w) use ($namaPertanyaan, $filterLainnya) {
-                        // penyakit spesifik (hipertensi, jantung, dll)
                         if (!empty($namaPertanyaan)) {
                             $w->where(function ($w2) use ($namaPertanyaan) {
                                 $w2->whereIn('kp.nama_pertanyaan', $namaPertanyaan)
@@ -416,7 +414,6 @@ class DashboardController extends Controller
                             });
                         }
 
-                        // opsi "Lainnya" → jawaban true + jawaban_lainnya tidak kosong
                         if ($filterLainnya) {
                             $w->orWhere(function ($w2) {
                                 $w2->where('kp.nama_pertanyaan', 'Lainnya')
@@ -448,7 +445,6 @@ class DashboardController extends Controller
      */
     public function exportPe(Request $request)
     {
-        // pakai subquery + filter yang sama persis
         $latestSkriningSql = <<<SQL
             (
                 SELECT DISTINCT ON (pasien_id)
@@ -472,9 +468,9 @@ class DashboardController extends Controller
             ->get();
 
         $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+        $sheet       = $spreadsheet->getActiveSheet();
 
-        // ========== 1. Judul di baris 1: merge A1–M1 ==========
+        // ========== 1. Judul ==========
         $sheet->mergeCells('A1:M1');
         $sheet->setCellValue('A1', 'Laporan Data Pasien Keseluruhan');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
@@ -486,9 +482,9 @@ class DashboardController extends Controller
         // Baris 2 kosong
         $sheet->getRowDimension(2)->setRowHeight(5);
 
-        // ========== 2. Header kolom di baris 3 ==========
+        // ========== 2. Header ==========
         $headerRow = 3;
-        $headers = [
+        $headers   = [
             'A' => 'ID Skrining',
             'B' => 'Nama Lengkap',
             'C' => 'NIK',
@@ -505,21 +501,19 @@ class DashboardController extends Controller
         ];
 
         foreach ($headers as $col => $text) {
-            $cell = $col . $headerRow;
-            $sheet->setCellValue($cell, $text);
+            $sheet->setCellValue($col . $headerRow, $text);
         }
 
-        // Styling header: background biru + font putih + bold
         $headerRange = 'A' . $headerRow . ':M' . $headerRow;
         $sheet->getStyle($headerRange)->getFont()
             ->setBold(true)
             ->getColor()->setARGB('FFFFFFFF');
         $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)
-            ->getStartColor()->setARGB('FF4F81BD'); // biru mirip Excel
+            ->getStartColor()->setARGB('FF4F81BD');
         $sheet->getStyle($headerRange)->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        // Lebar kolom (boleh kamu tweak lagi biar pas)
+        // Lebar kolom
         $sheet->getColumnDimension('A')->setWidth(12);
         $sheet->getColumnDimension('B')->setWidth(25);
         $sheet->getColumnDimension('C')->setWidth(20);
@@ -534,11 +528,11 @@ class DashboardController extends Controller
         $sheet->getColumnDimension('L')->setWidth(20);
         $sheet->getColumnDimension('M')->setWidth(20);
 
-        // Format NIK & No HP sebagai text (biar nggak jadi 1.23E+17)
+        // NIK & HP sebagai text
         $sheet->getStyle('C')->getNumberFormat()->setFormatCode('@');
         $sheet->getStyle('D')->getNumberFormat()->setFormatCode('@');
 
-        // ========== 3. Data mulai baris 4 ==========
+        // ========== 3. Data ==========
         $rowIndex = $headerRow + 1;
 
         foreach ($rows as $row) {
@@ -564,25 +558,19 @@ class DashboardController extends Controller
         }
 
         $lastDataRow = $rowIndex - 1;
-
-        // Kalau tidak ada data, tetap bikin border minimal header saja
         if ($lastDataRow < $headerRow) {
             $lastDataRow = $headerRow;
         }
 
-        // ========== 4. Border grid seluruh tabel (header + data) ==========
         $tableRange = 'A' . $headerRow . ':M' . $lastDataRow;
         $sheet->getStyle($tableRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
-        // Tinggi baris data agak rapi
         for ($r = $headerRow; $r <= $lastDataRow; $r++) {
             $sheet->getRowDimension($r)->setRowHeight(18);
         }
 
-        // Freeze pane di bawah header (biar header tetap kelihatan kalau scroll)
         $sheet->freezePane('A' . ($headerRow + 1));
 
-        // Nama file: data-pasien-keseluruhan-2025-11-19.xlsx (format: Y-m-d)
         $fileName = 'data-pasien-keseluruhan-' . now()->format('Y-m-d') . '.xlsx';
 
         $writer = new Xlsx($spreadsheet);

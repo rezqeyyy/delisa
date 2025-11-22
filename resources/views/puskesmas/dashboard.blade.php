@@ -175,7 +175,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
                         </button>
                     </div>
-                    <div class="flex items-center text-center divide-x divide-x-2 divide-[#E9E9E9]">
+                    <div class="flex items-center text-center divide-x-2 divide-[#E9E9E9]">
                         <div class="flex-1 px-4">
                             <div class="text-xs text-[#7C7C7C]">Sehat</div>
                             <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanSehat ?? 0 }}</div>

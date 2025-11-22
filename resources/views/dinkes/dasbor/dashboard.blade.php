@@ -78,433 +78,157 @@
                 </div>
             </div>
 
-            <!-- GRID KPI -->
-            <section class="grid grid-cols-12 gap-4 sm:gap-6 lg:auto-rows-[280px]">
-                <!-- KIRI ATAS: Daerah Asal Pasien -->
-                <div
-                    class="col-span-12 lg:col-span-7 bg-white rounded-2xl p-5 shadow-md grid grid-rows-[auto_1fr] gap-4 overflow-hidden">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="inline-flex w-6 h-6 items-center justify-center rounded-full bg-[#F5F5F5]">
-                                <img src="{{ asset('icons/Iconly/Sharp/Light/Location.svg') }}"
-                                    class="sm:block w-3.5 h-3.5" alt="">
-                            </span>
-                            <h2 class="font-semibold text-lg">Daerah Asal Pasien</h2>
-                        </div>
-                    </div>
+            <!-- GRID KPI (LAYOUT 1,5 BARIS KIRI vs 3 KARTU KANAN) -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-6 gap-4 sm:gap-6">
 
-                    @php
-                        $depok = $depok ?? 0;
-                        $non = $non ?? 0;
-                        $total = max($depok + $non, 1);
-                        $pDepok = round(($depok / $total) * 100);
-                        $pNon = 100 - $pDepok;
-                    @endphp
-
-                    <div
-                        class="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center justify-items-center px-2 md:px-6 gap-6 sm:gap-0">
-                        <!-- Depok -->
-                        <div class="w-full flex flex-col items-center gap-3">
-                            <div class="text-sm font-medium">Depok</div>
-                            <div
-                                class="relative aspect-square w-[min(160px,45vw)] sm:w-[min(130px,40vw)] max-w-[200px]">
-                                <div class="absolute inset-0 rounded-full border-[12px] border-[#F1F1F1]"></div>
-                                <div class="absolute inset-0 rounded-full"
-                                    style="background: conic-gradient(#B9257F {{ $pDepok }}%, #F1F1F1 0 100%);">
-                                </div>
-                                <div class="absolute inset-[10px] bg-white rounded-full"></div>
-                                <div class="absolute inset-0 grid place-items-center text-center">
-                                    <div>
-                                        <div class="text-3xl font-extrabold leading-none tabular-nums">
-                                            {{ $pDepok }}%</div>
-                                        <div class="text-xs text-[#7C7C7C] mt-0.5">Proporsi</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-sm flex items-center gap-2">
-                                <span class="text-[#7C7C7C]">Jumlah:</span>
-                                <span class="font-semibold tabular-nums">{{ $depok }}</span>
-                            </div>
-                        </div>
-
-                        <div class="sm:block w-px self-stretch bg-[#E5E5E5] mx-2"></div>
-
-                        <!-- Non Depok -->
-                        <div class="w-full flex flex-col items-center gap-3">
-                            <div class="text-sm font-medium">Non Depok</div>
-                            <div
-                                class="relative aspect-square w-[min(160px,45vw)] sm:w-[min(130px,40vw)] max-w-[200px]">
-                                <div class="absolute inset-0 rounded-full border-[12px] border-[#F1F1F1]"></div>
-                                <div class="absolute inset-0 rounded-full"
-                                    style="background: conic-gradient(#E9A9CD {{ $pNon }}%, #F1F1F1 0 100%);">
-                                </div>
-                                <div class="absolute inset-[10px] bg-white rounded-full"></div>
-                                <div class="absolute inset-0 grid place-items-center text-center">
-                                    <div>
-                                        <div class="text-3xl font-extrabold leading-none tabular-nums">
-                                            {{ $pNon }}%</div>
-                                        <div class="text-xs text-[#7C7C7C] mt-0.5">Proporsi</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-sm flex items-center gap-2">
-                                <span class="text-[#7C7C7C]">Jumlah:</span>
-                                <span class="font-semibold tabular-nums">{{ $non }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KANAN ATAS: Risiko Pre-Eklampsia -->
-                <div class="col-span-12 lg:col-span-5 bg-white rounded-2xl p-5 shadow-md grid grid-rows-[auto_1fr]">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="inline-flex w-6 h-6 items-center justify-center rounded-full bg-[#F5F5F5]">
-                                <img src="{{ asset('icons/Iconly/Sharp/Light/Group 36721.svg') }}"
-                                    class="sm:block w-3.5 h-3.5" alt="">
-                            </span>
-                            <h2 class="font-semibold text-lg">Resiko Pre-Eklampsia</h2>
-                        </div>
-                    </div>
-
-                    @php
-                        $normal = $normal ?? 0;
-                        $risk = $risk ?? 0;
-                        $sum = max(($normal ?? 0) + ($risk ?? 0), 1);
-                        $pRisk = round(($risk / $sum) * 100);
-                    @endphp
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center text-center">
-                        <div class="relative w-28 h-28 sm:w-36 sm:h-36 place-self-center">
-                            <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
-                                <circle cx="18" cy="18" r="16" fill="none" stroke="#F0F0F0"
-                                    stroke-width="4"></circle>
-                                <circle cx="18" cy="18" r="16" fill="none" stroke="#B9257F"
-                                    stroke-width="4" stroke-dasharray="{{ $pRisk }},100"
-                                    stroke-linecap="round"></circle>
-                            </svg>
-                            <div class="absolute inset-0 grid place-content-center text-center">
-                                <span class="text-xl sm:text-2xl font-bold tabular-nums">{{ $pRisk }}%</span>
-                                <span class="text-[11px] sm:text-xs text-[#7C7C7C] -mt-1">Beresiko</span>
-                            </div>
-                        </div>
-
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2"><span
-                                        class="w-3 h-3 rounded-sm bg-[#F0F0F0]"></span>Normal</div>
-                                <span class="font-semibold tabular-nums">{{ $normal }}</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2"><span
-                                        class="w-3 h-3 rounded-sm bg-[#B9257F]"></span>Beresiko</div>
-                                <span class="font-semibold tabular-nums">{{ $risk }}</span>
-                            </div>
-                            <div class="flex items-center justify-between text-sm text-[#7C7C7C] border-t pt-2">
-                                <span>Total</span><span class="tabular-nums">{{ $normal + $risk }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KIRI BAWAH: Data Pasien Nifas -->
-                <div
-                    class="col-span-12 lg:col-span-7 lg:row-span-2 bg-white rounded-2xl p-5 shadow-md grid grid-rows-[auto_1fr_auto] gap-4 relative">
-                    <!-- Header -->
-                    <div class="flex flex-wrap items-center gap-3 justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="inline-flex w-6 h-6 items-center justify-center rounded-full bg-[#F5F5F5]">
-                                <img src="{{ asset('icons/Iconly/Regular/Light/3 User.svg') }}"
-                                    class="sm:block w-3.5 h-3.5" alt="">
-                            </span>
-                            <h2 class="font-semibold text-lg">Data Pasien Nifas</h2>
-
-                            @if ($isDonutFiltered ?? false)
-                                <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-[#F5F5F5] text-[#4B4B4B]">
-                                    Periode:
-                                    @if ($dkfMonth)
-                                        {{ str_pad($dkfMonth, 2, '0', STR_PAD_LEFT) }}/
-                                    @endif
-                                    {{ $dkfYear ?? '—' }}
+                {{-- 1. KIRI ATAS: Daerah Asal Pasien (span 3 dari 6 row) --}}
+                <div class="lg:row-span-3">
+                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5 h-full flex flex-col">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
+                                    <img src="{{ asset('icons/Iconly/Sharp/Light/Location.svg') }}"
+                                        class="sm:block w-3.5 h-3.5" alt="">
                                 </span>
-                            @else
-                                <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-[#F5F5F5] text-[#4B4B4B]">
-                                    Semua data (tanpa filter)
+                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Daerah Asal Pasien</h3>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-1 items-center justify-center text-center divide-x divide-[#E9E9E9]">
+                            <div class="flex-1 px-4">
+                                <div class="text-lg lg:text-xl font-semibold text-[#7C7C7C]">Depok</div>
+                                <br>
+                                <div class="tabular-nums leading-none text-6xl lg:text-7xl font-bold text-[#1D1D1D]">
+                                    {{ $asalDepok ?? 0 }}
+                                </div>
+                            </div>
+                            <div class="flex-1 px-4">
+                                <div class="text-lg lg:text-xl font-semibold text-[#7C7C7C]">Non Depok</div>
+                                <br>
+                                <div class="tabular-nums leading-none text-6xl lg:text-7xl font-bold text-[#1D1D1D]">
+                                    {{ $asalNonDepok ?? 0 }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 2. KANAN ATAS: Resiko Preeklampsia (span 2 row) --}}
+                <div class="lg:row-span-2">
+                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5 h-full flex flex-col">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
+                                    <img src="{{ asset('icons/Iconly/Sharp/Light/Group 36721.svg') }}"
+                                        class="sm:block w-3.5 h-3.5" alt="">
                                 </span>
-                            @endif
-                        </div>
-
-                        <button id="btnDataKfFilter" type="button"
-                            class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm">
-                            Filter
-                        </button>
-                    </div>
-
-                    <!-- Panel filter -->
-                    <div id="dataKfFilterPanel"
-                        class="hidden absolute right-4 sm:right-5 top-16 z-20 w-[calc(100%-2rem)] sm:w-72 bg-white border border-[#E5E7EB] rounded-2xl shadow-xl p-4">
-                        <form method="GET" class="grid grid-cols-1 gap-3">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label for="dkf_month"
-                                        class="block text-sm font-medium text-[#4B4B4B] mb-1">Bulan</label>
-                                    <select id="dkf_month" name="dkf_month"
-                                        class="w-full border border-[#CAC7C7] rounded-xl px-3 py-2 text-sm focus:outline-none">
-                                        <option value="">Semua</option>
-                                        @php $bulanList = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Agu',8=>'Sep',9=>'Okt',10=>'Nov',11=>'Des']; @endphp
-                                        @foreach ($bulanList as $m => $label)
-                                            <option value="{{ $m }}" @selected(($dkfMonth ?? null) === $m)>
-                                                {{ $label }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="dkf_year"
-                                        class="block text-sm font-medium text-[#4B4B4B] mb-1">Tahun</label>
-                                    <select id="dkf_year" name="dkf_year"
-                                        class="w-full border border-[#CAC7C7] rounded-xl px-3 py-2 text-sm focus:outline-none">
-                                        <option value="">Semua</option>
-                                        @foreach ($availableYears ?? [now()->year] as $y)
-                                            <option value="{{ $y }}" @selected(($dkfYear ?? null) === $y)>
-                                                {{ $y }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center justify-between pt-1">
-                                <a href="{{ request()->fullUrlWithQuery(['dkf_month' => null, 'dkf_year' => null]) }}"
-                                    class="text-sm text-[#B9257F] hover:underline">Reset</a>
-                                <button type="submit"
-                                    class="bg-[#B9257F] text-white text-sm px-4 py-2 rounded-xl">Terapkan</button>
-                            </div>
-                        </form>
-                    </div>
-
-                    @php
-                        $totalNifas = $totalNifas ?? 0;
-                        $kf1 = $kf1 ?? 0;
-                        $kf2 = $kf2 ?? 0;
-                        $kf3 = $kf3 ?? 0;
-                        $kf4 = $kf4 ?? 0;
-                        $sumTargetBase = max(1, $totalNifas * 4);
-                        $coverage = max(0, min(100, round((($kf1 + $kf2 + $kf3 + $kf4) / $sumTargetBase) * 100)));
-                        $sum = max($totalNifas, 1);
-                        $p1 = round(($kf1 / $sum) * 100);
-                        $p2 = round(($kf2 / $sum) * 100);
-                        $p3 = round(($kf3 / $sum) * 100);
-                        $p4 = round(($kf4 / $sum) * 100);
-                    @endphp
-
-                    <!-- Donut & detail -->
-                    <div class="grid grid-cols-12 gap-6">
-                        <!-- Donut besar (NON-absolute, aman di mobile) -->
-                        <div class="col-span-12 lg:col-span-7 grid grid-rows-[auto_1fr]">
-                            <div class="flex items-baseline gap-3 mb-3">
-                                <span class="text-3xl sm:text-4xl font-bold tabular-nums">{{ $totalNifas }}</span>
-                                <span class="text-sm text-[#7C7C7C]">total pasien nifas</span>
-                            </div>
-
-                            <div class="w-full grid place-items-center">
-                                <div class="relative aspect-square w-[min(220px,80vw)] sm:w-[min(360px,100%)]">
-                                    <div class="relative w-full h-full rounded-full"
-                                        style="background: conic-gradient(#B9257F {{ $coverage }}%, #F1F1F1 {{ $coverage }}% 100%);">
-                                        <div class="absolute inset-0 m-[11%] bg-white rounded-full"></div>
-                                        <div class="absolute inset-0 grid place-items-center text-center">
-                                            <div>
-                                                <div class="text-2xl sm:text-3xl font-bold tabular-nums">
-                                                    {{ $coverage }}%</div>
-                                                <div class="text-xs text-[#7C7C7C]">Cakupan Kunjungan (KF1–KF4)</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Resiko Preeklampsia</h3>
                             </div>
                         </div>
 
-                        <!-- Donut kecil KF1–KF4 -->
-                        <div class="col-span-12 lg:col-span-5 grid grid-cols-2 gap-4 content-start">
-                            @php
-                                $kfs = [
-                                    ['label' => 'KF1', 'val' => $kf1, 'pct' => $p1, 'col' => '#B9257F'],
-                                    ['label' => 'KF2', 'val' => $kf2, 'pct' => $p2, 'col' => '#D24A97'],
-                                    ['label' => 'KF3', 'val' => $kf3, 'pct' => $p3, 'col' => '#E178B3'],
-                                    ['label' => 'KF4', 'val' => $kf4, 'pct' => $p4, 'col' => '#F0A6CF'],
-                                ];
-                            @endphp
-                            @foreach ($kfs as $k)
-                                <div class="bg-[#FAFAFA] rounded-xl p-3 grid grid-rows-[auto_1fr_auto]">
-                                    <div class="text-[11px] sm:text-xs text-[#7C7C7C]">{{ $k['label'] }}</div>
-                                    <div class="relative w-full h-full grid place-items-center py-2">
-                                        <div
-                                            class="relative aspect-square w-full max-w-[min(160px,100%)] sm:max-w-[min(180px,100%)]">
-                                            <div class="relative w-full h-full rounded-full"
-                                                style="background: conic-gradient({{ $k['col'] }} {{ $k['pct'] }}%, #F1F1F1 {{ $k['pct'] }}% 100%);">
-                                                <div class="absolute inset-0 m-[18%] sm:m-[14%] bg-white rounded-full">
-                                                </div>
-                                                <div class="absolute inset-0 grid place-items-center">
-                                                    <div class="text-base sm:text-lg font-semibold tabular-nums">
-                                                        {{ $k['pct'] }}%</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center justify-between text-sm">
-                                        <span>Jumlah</span>
-                                        <span class="font-semibold tabular-nums">{{ $k['val'] }}</span>
-                                    </div>
-                                </div>
-                            @endforeach
+                        <div class="space-y-3 flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Pasien Normal</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $resikoNormal ?? 0 }}</span>
+                            </div>
+                            <hr class="border-[#E9E9E9]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Pasien Beresiko Preeklampsia</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $resikoPreeklampsia ?? 0 }}</span>
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- Footer legend -->
-                    <div class="flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-center gap-3 text-sm flex-wrap">
-                            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm"
-                                    style="background:#B9257F"></span>KF1</span>
-                            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm"
-                                    style="background:#D24A97"></span>KF2</span>
-                            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm"
-                                    style="background:#E178B3"></span>KF3</span>
-                            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm"
-                                    style="background:#F0A6CF"></span>KF4</span>
-                        </div>
-                        <div class="text-xs text-[#7C7C7C]">Target 4× kunjungan per pasien</div>
                     </div>
                 </div>
 
-                <!-- KANAN TENGAH: Pasien Hadir -->
-                <div
-                    class="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-2 bg-white rounded-2xl p-5 shadow-md grid grid-rows-[auto_1fr_auto]">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
-                                <img src="{{ asset('icons/Iconly/Regular/Light/Graph.svg') }}"
-                                    class="sm:block w-3.5 h-3.5" alt="Hadir">
-                            </span>
-                            <h2 class="font-semibold text-lg">Pasien Hadir</h2>
-                        </div>
-                    </div>
-
-                    @php
-                        $hadir = $hadir ?? 0;
-                        $mangkir = $mangkir ?? 0;
-                        $totalA = max($hadir + $mangkir, 1);
-                        $pHadir = round(($hadir / $totalA) * 100);
-                        $pMangkir = 100 - $pHadir;
-                        /* $seriesAbsensi = $seriesAbsensi ?? array_fill(0, 12, 0);
-                        if (count($seriesAbsensi) < 12) {
-                            $seriesAbsensi = array_pad($seriesAbsensi, 12, 0);
-                        } */
-                    @endphp
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
-                        <div class="relative w-full h-full grid place-content-center">
-                            <svg viewBox="0 0 36 36" class="w-28 h-28 sm:w-40 sm:h-40 -rotate-90 mx-auto">
-                                <circle cx="18" cy="18" r="16" fill="none" stroke="#F0F0F0"
-                                    stroke-width="4"></circle>
-                                <circle cx="18" cy="18" r="16" fill="none" stroke="#B9257F"
-                                    stroke-width="4" stroke-dasharray="{{ $pHadir }},100"
-                                    stroke-linecap="round"></circle>
-                            </svg>
-                            <div class="absolute inset-0 grid place-content-center text-center">
-                                <span class="text-xl sm:text-3xl font-bold tabular-nums">{{ $pHadir }}%</span>
-                                <span class="text-xs text-[#7C7C7C] -mt-1">Hadir</span>
+                {{-- 3. KANAN TENGAH: Pasien Hadir (span 2 row) --}}
+                <div class="lg:row-span-2">
+                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5 h-full flex flex-col">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
+                                    <img src="{{ asset('icons/Iconly/Regular/Light/Graph.svg') }}"
+                                        class="sm:block w-3.5 h-3.5" alt="">
+                                </span>
+                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Pasien Hadir</h3>
                             </div>
                         </div>
 
-                        <div class="flex flex-col justify-center gap-4">
-                            <div class="h-4 w-full rounded-full bg-[#F1F1F1] overflow-hidden">
-                                <div class="h-full bg-[#39E93F] inline-block" style="width: {{ $pHadir }}%">
-                                </div>
-                                <div class="h-full bg-[#E20D0D] inline-block" style="width: {{ $pMangkir }}%">
-                                </div>
+                        <div class="space-y-3 flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Pasien Hadir</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $pasienHadir ?? 0 }}</span>
                             </div>
-
-                            <div class="text-sm space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2"><span
-                                            class="w-3 h-3 rounded-sm bg-[#39E93F]"></span>Pasien Hadir</div>
-                                    <div class="font-semibold tabular-nums">{{ $hadir }}</div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2"><span
-                                            class="w-3 h-3 rounded-sm bg-[#E20D0D]"></span>Pasien Belum Hadir</div>
-                                    <div class="font-semibold tabular-nums">{{ $mangkir }}</div>
-                                </div>
+                            <hr class="border-[#E9E9E9]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Pasien Tidak Hadir</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $pasienTidakHadir ?? 0 }}</span>
                             </div>
-
-                            {{-- <div class="grid grid-cols-12 gap-1 items-end h-14">
-                                @foreach ($seriesAbsensi as $v)
-                                    @php $h = 10 + min(100, (int) $v); @endphp
-                                    <div class="rounded-[6px] bg-[#B9257F]/60" style="height: {{ $h }}%">
-                                    </div>
-                                @endforeach
-                            </div> --}}
                         </div>
-                    </div>
-
-                    <div class="text-xs text-[#7C7C7C] flex justify-between">
-                        <span>Total</span>
-                        <span class="tabular-nums">{{ $hadir + $mangkir }}</span>
                     </div>
                 </div>
 
-                <!-- KANAN BAWAH: Pemantauan -->
-                <div
-                    class="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-3 bg-white rounded-2xl p-5 shadow-md grid grid-rows-[auto_1fr_auto]">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
-                                <img src="{{ asset('icons/Iconly/Sharp/Outline/Activity.svg') }}"
-                                    class="sm:block w-3.5 h-3.5" alt="Pemantauan">
-                            </span>
-                            <h2 class="font-semibold text-lg">Pemantauan</h2>
+                {{-- 4. KIRI BAWAH: Data Pasien Nifas (span 3 row) --}}
+                <div class="lg:row-span-3">
+                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5 h-full flex flex-col">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
+                                    <img src="{{ asset('icons/Iconly/Regular/Light/3 User.svg') }}"
+                                        class="sm:block w-3.5 h-3.5" alt="">
+                                </span>
+                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Data Pasien Nifas</h3>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Total Pasien Nifas</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $totalNifas ?? 0 }}</span>
+                            </div>
+                            <hr class="border-[#E9E9E9]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Sudah KFI</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $sudahKFI ?? 0 }}</span>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    @php
-                        $sehat = $sehat ?? 0;
-                        $dirujuk = $dirujuk ?? 0;
-                        $meninggal = $meninggal ?? 0;
-                        $sumP = max($sehat + $dirujuk + $meninggal, 1);
-                        $pSehat = round(($sehat / $sumP) * 100);
-                        $pDirujuk = round(($dirujuk / $sumP) * 100);
-                        $pMeninggal = round(($meninggal / $sumP) * 100);
-                    @endphp
-
-                    <div class="grid grid-cols-3 gap-3 sm:gap-4 items-center justify-items-center">
-                        @foreach ([['label' => 'Sehat', 'val' => $sehat, 'p' => $pSehat, 'color' => '#39E93F'], ['label' => 'Total Dirujuk', 'val' => $dirujuk, 'p' => $pDirujuk, 'color' => '#F5A524'], ['label' => 'Meninggal', 'val' => $meninggal, 'p' => $pMeninggal, 'color' => '#E20D0D']] as $i)
-                            <div class="flex flex-col items-center gap-2">
-                                <div class="relative w-24 h-24 sm:w-32 sm:h-32">
-                                    <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
-                                        <circle cx="18" cy="18" r="16" fill="none" stroke="#F0F0F0"
-                                            stroke-width="4"></circle>
-                                        <circle cx="18" cy="18" r="16" fill="none"
-                                            stroke="{{ $i['color'] }}" stroke-width="4"
-                                            stroke-dasharray="{{ $i['p'] }},100" stroke-linecap="round">
-                                        </circle>
-                                    </svg>
-                                    <div class="absolute inset-0 grid place-content-center leading-tight text-center">
-                                        <span
-                                            class="text-lg sm:text-xl font-bold tabular-nums">{{ $i['val'] }}</span>
-                                        <span
-                                            class="text-[12px] sm:text-[13px] text-[#7C7C7C]">{{ $i['label'] }}</span>
-                                    </div>
-                                </div>
+                {{-- 5. KANAN BAWAH: Pemantauan (span 2 row) --}}
+                <div class="lg:row-span-2">
+                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5 h-full flex flex-col">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
                                 <span
-                                    class="block w-20 sm:w-24 text-center text-xs text-[#7C7C7C] tabular-nums">{{ $i['p'] }}%</span>
+                                    class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F5F5]">
+                                    <img src="{{ asset('icons/Iconly/Sharp/Outline/Activity.svg') }}"
+                                        class="sm:block w-3.5 h-3.5" alt="">
+                                </span>
+                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan</h3>
                             </div>
-                        @endforeach
-                    </div>
+                        </div>
 
-                    <div class="text-xs text-[#7C7C7C] flex justify-between">
-                        <span>Total</span>
-                        <span class="tabular-nums">{{ $sehat + $dirujuk + $meninggal }}</span>
+                        <div class="flex-1 flex items-center text-center divide-x-2 divide-[#E9E9E9]">
+                            <div class="flex-1 px-4">
+                                <div class="text-xs text-[#7C7C7C]">Sehat</div>
+                                <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanSehat ?? 0 }}</div>
+                            </div>
+                            <div class="flex-1 px-4">
+                                <div class="text-xs text-[#7C7C7C]">Total Dirujuk</div>
+                                <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanDirujuk ?? 0 }}</div>
+                            </div>
+                            <div class="flex-1 px-4">
+                                <div class="text-xs text-[#7C7C7C]">Meninggal</div>
+                                <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanMeninggal ?? 0 }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
             </section>
+
+
+
 
             {{-- Kunjungan Nifas per Bulan (KF) --}}
             <section class="bg-white rounded-2xl p-5 shadow-md relative">
