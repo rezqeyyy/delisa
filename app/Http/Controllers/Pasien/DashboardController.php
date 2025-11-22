@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Pasien;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\Skrining;
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 
@@ -100,6 +101,7 @@ class DashboardController extends Controller
 
             $s->conclusion_display = $conclusion;
             $s->badge_class        = $badgeClasses[$key] ?? 'bg-[#E9E9E9] text-[#1D1D1D]';
+            $s->has_referral       = DB::table('rujukan_rs')->where('skrining_id', $s->id)->exists();
             return $s;
         });
 

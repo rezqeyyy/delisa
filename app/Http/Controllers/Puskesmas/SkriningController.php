@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Skrining;
+use App\Models\RumahSakit;
+use App\Models\RujukanRs;
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 
 class SkriningController extends Controller
@@ -168,8 +170,73 @@ class SkriningController extends Controller
         $alamat  = optional(optional($skrining->pasien)->user)->address ?? '-';
         $telp    = optional(optional($skrining->pasien)->user)->phone ?? '-';
 
+        $hasReferral = DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists();
+
         return view('puskesmas.skrining.show', compact(
-            'skrining','nama','nik','tanggal','alamat','telp','conclusion','cls','sebabSedang','sebabTinggi'
+            'skrining','nama','nik','tanggal','alamat','telp','conclusion','cls','sebabSedang','sebabTinggi','hasReferral'
         ));
+    }
+
+    public function rsSearch(Request $request)
+    {
+        $q = trim($request->get('q',''));
+        $rs = RumahSakit::query()
+            ->when($q !== '', function ($qr) use ($q) {
+                $qr->where(function ($w) use ($q) {
+                    $w->where('nama', 'like', "%{$q}%")
+                      ->orWhere('kecamatan', 'like', "%{$q}%")
+                      ->orWhere('kelurahan', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy('nama')
+            ->limit(30)
+            ->get(['id','nama','kecamatan','kelurahan']);
+
+        $list = $rs->map(function ($row) {
+            return [
+                'id'        => $row->id,
+                'nama'      => $row->nama,
+                'kecamatan' => $row->kecamatan,
+                'kelurahan' => $row->kelurahan,
+            ];
+        })->values();
+
+        return response()->json($list);
+    }
+
+    public function rujuk(Request $request, Skrining $skrining)
+    {
+        $userId = optional(Auth::user())->id;
+        $ps = DB::table('puskesmas')->select('id','kecamatan')->where('user_id', $userId)->first();
+        abort_unless($ps, 404);
+
+        $kecPasien = optional($skrining->pasien)->PKecamatan;
+        $allowed = (($skrining->puskesmas_id === $ps->id) || ($kecPasien === $ps->kecamatan));
+        abort_unless($allowed, 403);
+
+        // Pastikan skrining lengkap
+        abort_unless($this->isSkriningCompleteForSkrining($skrining), 404);
+
+        $validated = $request->validate([
+            'rs_id' => 'required|exists:rumah_sakits,id',
+        ]);
+
+        // Cegah duplikasi rujukan untuk skrining yang sama
+        $already = RujukanRs::where('skrining_id', $skrining->id)->exists();
+        if ($already) {
+            return redirect()->route('puskesmas.skrining.show', $skrining->id)
+                ->with('status', 'Rujukan sudah diajukan untuk skrining ini.');
+        }
+
+        RujukanRs::create([
+            'pasien_id'   => $skrining->pasien_id,
+            'rs_id'       => $validated['rs_id'],
+            'skrining_id' => $skrining->id,
+            'is_rujuk'    => true,
+            'done_status' => false,
+        ]);
+
+        return redirect()->route('puskesmas.skrining.show', $skrining->id)
+            ->with('status', 'Permintaan rujukan dikirim ke rumah sakit.');
     }
 }

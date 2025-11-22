@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Puskesmas — Detail Skrining</title>
-    @vite(['resources/css/app.css', 'resources/js/puskesmas/sidebar-toggle.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/puskesmas/sidebar-toggle.js', 'resources/js/puskesmas/rujukan-picker.js'])
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
         body { font-family: 'Poppins', sans-serif; }
@@ -62,7 +62,15 @@
 
                 <div class="mt-6 flex items-center gap-3">
                     <a href="{{ route('pasien.skrining.show', $skrining->id) }}" class="px-4 py-2 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-sm">Lihat Detail Skrining</a>
-                    <button type="button" class="px-4 py-2 rounded-full bg-[#B9257F] text-white text-sm">Ajukan Rujukan</button>
+                    <button id="btnAjukanRujukan"
+                            data-submit-url="{{ route('puskesmas.skrining.rujuk', $skrining->id) }}"
+                            data-search-url="{{ route('puskesmas.rs.search') }}"
+                            data-csrf="{{ csrf_token() }}"
+                            type="button"
+                            class="px-4 py-2 rounded-full bg-[#B9257F] text-white text-sm"
+                            {{ $hasReferral ? 'disabled' : '' }}>
+                        {{ $hasReferral ? 'Sudah Diajukan' : 'Ajukan Rujukan' }}
+                    </button>
                 </div>
             </div>
 

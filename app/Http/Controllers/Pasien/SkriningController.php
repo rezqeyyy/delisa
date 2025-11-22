@@ -215,6 +215,12 @@ class SkriningController extends Controller
     {
         $this->authorizeAccess($skrining);
 
+        $locked = \Illuminate\Support\Facades\DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists();
+        if ($locked) {
+            return redirect()->route('pasien.skrining.show', $skrining->id)
+                ->with('error', 'Skrining sudah diajukan rujukan dan tidak dapat diedit.');
+        }
+
         return redirect()->route('pasien.data-diri', ['skrining_id' => $skrining->id]);
     }
 
@@ -240,6 +246,12 @@ class SkriningController extends Controller
     public function destroy(Skrining $skrining)
     {
         $this->authorizeAccess($skrining);
+
+        $locked = \Illuminate\Support\Facades\DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists();
+        if ($locked) {
+            return redirect()->route('pasien.skrining.show', $skrining->id)
+                ->with('error', 'Skrining sudah diajukan rujukan dan tidak dapat dihapus.');
+        }
 
         DB::transaction(function () use ($skrining) {
             DB::table('jawaban_kuisioners')->where('skrining_id', $skrining->id)->delete();
