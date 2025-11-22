@@ -39,12 +39,13 @@
                             </form>
                         </section>
 
-                        {{-- <a href="#"
+                        <a href="{{ route('dinkes.pasien-nifas.export', ['q' => $q ?? null]) }}"
                             class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#B61E7B] px-4 py-2 text-sm font-semibold text-white hover:bg-[#B9257F] transition">
                             <img src="{{ asset('icons/Iconly/Regular/Outline/Paper Download.svg') }}" alt="Download"
                                 class="w-5 h-5">
-                            <span>Download Data</span>
-                        </a> --}}
+                            <span>Unduh Data</span>
+                        </a>
+
                     </div>
                 </header>
 

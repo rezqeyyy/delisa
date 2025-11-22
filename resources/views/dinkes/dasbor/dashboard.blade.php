@@ -180,7 +180,7 @@
                             </div>
                         </div>
 
-                        <div class="space-y-3 flex-1">
+                        <div class="space-y-3 flex-1 pt-8">
                             <div class="flex items-center justify-between">
                                 <span class="text-[#7C7C7C]">Total Pasien Nifas</span>
                                 <span class="font-bold text-[#1D1D1D]">{{ $totalNifas ?? 0 }}</span>
@@ -254,8 +254,9 @@
                     class="hidden absolute right-4 sm:right-5 top-16 z-20 w-[calc(100%-2rem)] sm:w-64 bg-white border border-[#E5E7EB] rounded-2xl shadow-xl p-4">
                     <form method="GET" class="space-y-3">
                         <div>
-                            <label for="year" class="block text-sm font-medium text-[#4B4B4B] mb-1">Pilih
-                                Tahun</label>
+                            <label for="year" class="block text-sm font-medium text-[#4B4B4B] mb-1">
+                                Pilih Tahun
+                            </label>
                             <select id="year" name="year"
                                 class="w-full border border-[#CAC7C7] rounded-xl px-3 py-2 text-sm focus:outline-none">
                                 @foreach ($availableYears ?? [now()->year] as $y)
@@ -266,8 +267,9 @@
                         </div>
                         <div class="flex items-center justify-between pt-1">
                             <a href="{{ url()->current() }}" class="text-sm text-[#B9257F] hover:underline">Reset</a>
-                            <button type="submit"
-                                class="bg-[#B9257F] text-white text-sm px-4 py-2 rounded-xl">Terapkan</button>
+                            <button type="submit" class="bg-[#B9257F] text-white text-sm px-4 py-2 rounded-xl">
+                                Terapkan
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -277,16 +279,23 @@
                     $data = $seriesBulanan ?? array_fill(0, 12, 0);
                     $max = max($data) ?: 1;
                     $sum = array_sum($data);
+
                     $H = 260;
                     $padT = 12;
                     $padB = 40;
                     $innerH = $H - $padT - $padB;
+
                     $W = 1200;
+                    // Skala tetap konsisten dengan sumbu Y (0–80),
+                    // jika data di atas 80, bar akan proporsional sampai atas.
                     $scale = max(80, $max);
+
                     $gridColor = '#1F2937';
                     $gridOpacity = 0.45;
                     $gridWidth = 1.5;
                     $gridDash = '4,4';
+
+                    // Y-ticks yang diminta: 0, 20, 40, 60, 80
                     $yTicks = [0, 20, 40, 60, 80];
                 @endphp
 
@@ -299,9 +308,11 @@
                                 $padR = 48;
                                 $innerW = $W - $padL - $padR;
                                 $n = 12;
+
                                 $barPx = 50;
                                 $minGap = 12;
                                 $needMin = $n * $barPx + ($n - 1) * $minGap;
+
                                 if ($needMin <= $innerW) {
                                     $extra = $innerW - $needMin;
                                     $gap = $minGap + $extra / ($n - 1);
@@ -311,32 +322,47 @@
                                     $gap = $minGap;
                                     $barWidthF = array_fill(0, $n, $barPxFit);
                                 }
+
                                 $barWInt = array_map(fn($w) => (int) floor($w), $barWidthF);
                                 $sumBars = array_sum($barWInt);
                                 $gapInt = (int) floor($gap);
                                 $remainder = (int) round($innerW - ($sumBars + $gapInt * ($n - 1)));
+
                                 for ($i = 0; $i < $remainder; $i++) {
                                     $barWInt[$i % $n] += 1;
                                 }
+
                                 $gapAdds = array_fill(0, $n - 1, $gapInt);
                                 $remain2 = (int) round($innerW - (array_sum($barWInt) + $gapInt * ($n - 1)));
+
                                 for ($i = 0; $i < $remain2; $i++) {
                                     $gapAdds[$i % ($n - 1)] += 1;
                                 }
+
                                 $barWidths = $barWInt;
                             @endphp
 
-                            {{-- GRID --}}
+                            {{-- GRID + LABEL Y --}}
                             @foreach ($yTicks as $tick)
                                 @php
                                     $ratio = $tick / $scale;
                                     $yLine = $padT + ($innerH - $ratio * $innerH);
                                 @endphp
+
+                                {{-- Garis grid --}}
                                 <line x1="{{ $padL }}" y1="{{ $yLine }}" x2="{{ $W - $padR }}"
                                     y2="{{ $yLine }}" stroke="{{ $gridColor }}"
                                     stroke-opacity="{{ $gridOpacity }}" stroke-width="{{ $gridWidth }}"
                                     stroke-linecap="round" stroke-dasharray="{{ $gridDash }}" />
+
+                                {{-- Label angka di sumbu Y --}}
+                                <text x="{{ $padL - 10 }}" y="{{ $yLine + 4 }}" {{-- +4 untuk kira-kira tengah garis --}}
+                                    text-anchor="end" font-size="10" fill="#6B7280">
+                                    {{ $tick }}
+                                </text>
                             @endforeach
+
+                            {{-- Garis dasar (0) --}}
                             <line x1="{{ $padL }}" y1="{{ $padT + $innerH }}" x2="{{ $W - $padR }}"
                                 y2="{{ $padT + $innerH }}" stroke="{{ $gridColor }}" stroke-opacity="0.55"
                                 stroke-width="2" stroke-linecap="round" />
@@ -346,30 +372,47 @@
                                 $xAcc = $padL;
                                 $n = 12;
                             @endphp
+
                             @if ($sum > 0)
                                 @foreach ($data as $i => $val)
                                     @php
                                         $myW = $barWidths[$i];
+
+                                        // Tinggi bar berdasarkan skala yang sama dengan sumbu Y
                                         $hVal = ($val / $scale) * $innerH;
+
                                         $yTop = $padT + ($innerH - $hVal);
                                         $yBot = $yTop + $hVal;
                                         $r = min($myW / 2, 16, $hVal);
+
                                         $xL = $xAcc;
                                         $xR = $xAcc + $myW;
                                     @endphp
-                                    <path d="M {{ $xL }},{{ $yBot }} L {{ $xL }},{{ $yTop + $r }}
-                                         Q {{ $xL }},{{ $yTop }} {{ $xL + $r }},{{ $yTop }}
-                                         L {{ $xR - $r }},{{ $yTop }}
-                                         Q {{ $xR }},{{ $yTop }} {{ $xR }},{{ $yTop + $r }}
-                                         L {{ $xR }},{{ $yBot }} Z" fill="#B9257F" />
-                                    @if ($val > 0)
-                                        <text x="{{ $xAcc + $myW / 2 }}" y="{{ max(14, $yTop - 8) }}"
-                                            text-anchor="middle" font-size="10"
-                                            fill="#B9257F">{{ $val }}</text>
-                                    @endif
-                                    @php $xAcc += $myW + ($i < $n-1 ? $gapAdds[$i] : 0); @endphp
+
+                                    <g class="kf-chart-bar">
+                                        <path d="M {{ $xL }},{{ $yBot }}
+                                     L {{ $xL }},{{ $yTop + $r }}
+                                     Q {{ $xL }},{{ $yTop }} {{ $xL + $r }},{{ $yTop }}
+                                     L {{ $xR - $r }},{{ $yTop }}
+                                     Q {{ $xR }},{{ $yTop }} {{ $xR }},{{ $yTop + $r }}
+                                     L {{ $xR }},{{ $yBot }} Z" fill="#B9257F" />
+
+                                        @if ($val > 0)
+                                            {{-- Label nilai, hanya muncul saat hover --}}
+                                            <text class="kf-chart-bar-label" x="{{ $xAcc + $myW / 2 }}"
+                                                y="{{ max(14, $yTop - 8) }}" text-anchor="middle" font-size="10"
+                                                fill="#B9257F">
+                                                {{ $val }}
+                                            </text>
+                                        @endif
+                                    </g>
+
+                                    @php
+                                        $xAcc += $myW + ($i < $n - 1 ? $gapAdds[$i] : 0);
+                                    @endphp
                                 @endforeach
                             @else
+                                {{-- Placeholder jika belum ada data --}}
                                 @for ($i = 0; $i < $n; $i++)
                                     @php
                                         $myW = $barWidths[$i];
@@ -380,12 +423,17 @@
                                         $xL = $xAcc;
                                         $xR = $xAcc + $myW;
                                     @endphp
-                                    <path d="M {{ $xL }},{{ $yBot }} L {{ $xL }},{{ $yTop + $r }}
-                                         Q {{ $xL }},{{ $yTop }} {{ $xL + $r }},{{ $yTop }}
-                                         L {{ $xR - $r }},{{ $yTop }}
-                                         Q {{ $xR }},{{ $yTop }} {{ $xR }},{{ $yTop + $r }}
-                                         L {{ $xR }},{{ $yBot }} Z" fill="#B9257F" />
-                                    @php $xAcc += $myW + ($i < $n-1 ? $gapAdds[$i] : 0); @endphp
+
+                                    <path d="M {{ $xL }},{{ $yBot }}
+                                 L {{ $xL }},{{ $yTop + $r }}
+                                 Q {{ $xL }},{{ $yTop }} {{ $xL + $r }},{{ $yTop }}
+                                 L {{ $xR - $r }},{{ $yTop }}
+                                 Q {{ $xR }},{{ $yTop }} {{ $xR }},{{ $yTop + $r }}
+                                 L {{ $xR }},{{ $yBot }} Z" fill="#B9257F" />
+
+                                    @php
+                                        $xAcc += $myW + ($i < $n - 1 ? $gapAdds[$i] : 0);
+                                    @endphp
                                 @endfor
                             @endif
 
@@ -396,9 +444,15 @@
                                     $myW = $barWidths[$i];
                                     $cx = $xAcc + $myW / 2;
                                 @endphp
+
                                 <text x="{{ $cx }}" y="{{ $H - 10 }}" text-anchor="middle"
-                                    font-size="11" fill="#6B7280">{{ $label }}</text>
-                                @php $xAcc += $myW + ($i < $n-1 ? $gapAdds[$i] : 0); @endphp
+                                    font-size="11" fill="#6B7280">
+                                    {{ $label }}
+                                </text>
+
+                                @php
+                                    $xAcc += $myW + ($i < $n - 1 ? $gapAdds[$i] : 0);
+                                @endphp
                             @endforeach
                         </svg>
                     </div>
@@ -410,6 +464,7 @@
                     @endif
                 </div>
             </section>
+
 
             <!-- Tabel: Data Pasien Pre-Eklampsia -->
             <section class="bg-white rounded-2xl p-5 shadow-md">
@@ -451,7 +506,7 @@
                         {{-- TOMBOL UNDUH (PAKAI FILTER YANG SAMA) --}}
                         <a href="{{ route('dinkes.dashboard.pe-export', request()->query()) }}"
                             class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm whitespace-nowrap">
-                            Unduh
+                            Unduh Data
                         </a>
 
                         <button id="btnPeFilter" type="button"

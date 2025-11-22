@@ -38,3 +38,28 @@
   width: 0;
   height: 0;
 }
+
+/* ===== KF chart (Kunjungan Nifas per Bulan) ===== */
+.kf-chart-bar {
+    cursor: pointer;
+}
+
+.kf-chart-bar path {
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+}
+
+.kf-chart-bar:hover path {
+    opacity: 0.85;
+}
+
+.kf-chart-bar-label {
+    opacity: 0;
+    pointer-events: none;
+    font-weight: 600;
+    transition: opacity 0.15s ease-out;
+}
+
+/* Saat bar di-hover, tampilkan label angkanya */
+.kf-chart-bar:hover .kf-chart-bar-label {
+    opacity: 1;
+}
