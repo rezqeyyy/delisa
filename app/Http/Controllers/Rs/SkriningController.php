@@ -29,14 +29,15 @@ class SkriningController extends Controller
             $raw = strtolower(trim($skr->kesimpulan ?? $skr->status_pre_eklampsia ?? ''));
             $isHigh = ($skr->jumlah_resiko_tinggi ?? 0) > 0 || in_array($raw, ['beresiko','berisiko','risiko tinggi','tinggi']);
             $isMed  = ($skr->jumlah_resiko_sedang ?? 0) > 0 || in_array($raw, ['waspada','menengah','sedang','risiko sedang']);
-            $rujukan->risk_display = $isHigh ? 'Beresiko' : ($isMed ? 'Waspada' : 'Tidak Berisiko');
-            $rujukan->tanggal_display = optional($skr->created_at)->format('d/m/Y');
-            $rujukan->nik_display = $pas->nik ?? '-';
-            $rujukan->nama_display = $usr->name ?? 'Nama Tidak Tersedia';
-            $rujukan->alamat_display = $pas->PKecamatan ?? $pas->PWilayah ?? '-';
-            $rujukan->telp_display = $usr->phone ?? $pas->no_telepon ?? '-';
+
+            $rujukan->nik        = $pas->nik ?? '-';
+            $rujukan->nama       = $usr->name ?? 'Nama Tidak Tersedia';
+            $rujukan->tanggal    = optional($skr->created_at)->format('d/m/Y');
+            $rujukan->alamat     = $pas->PKecamatan ?? $pas->PWilayah ?? '-';
+            $rujukan->telp       = $usr->phone ?? $pas->no_telepon ?? '-';
+            $rujukan->kesimpulan = $isHigh ? 'Beresiko' : ($isMed ? 'Waspada' : 'Tidak Berisiko');
             $rujukan->detail_url = route('rs.skrining.show', $skr->id ?? 0);
-            $rujukan->process_url = route('rs.skrining.edit', $skr->id ?? 0);
+            $rujukan->process_url= route('rs.skrining.edit', $skr->id ?? 0);
             return $rujukan;
         });
 
