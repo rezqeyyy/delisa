@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pasien;
 use App\Models\PasienNifas;
 use App\Models\PasienPreEklampsia;
+use App\Models\Skrining;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -39,20 +40,30 @@ class DashboardController extends Controller
         $pemantauanDirujuk = 0;
         $pemantauanMeninggal = 0;
 
-        // Data Pasien Pre Eklampsia (5 terbaru) - dari tabel pasiens
-        $pasienPreEklampsia = Pasien::with('user')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
+        // Data Pasien Pre Eklampsia — hanya skrining yang lengkap/selesai
+        $pePatients = Skrining::with(['pasien.user'])
+            ->where(function ($q) {
+                $q->whereNotNull('kesimpulan')
+                  ->orWhereNotNull('status_pre_eklampsia');
+            })
+            ->orderByDesc('created_at')
+            ->take(10)
             ->get()
-            ->map(function($item) {
-                return [
-                    'id' => $item->id,
-                    'id_pasien' => $item->nik ?? $item->id,
-                    'nama' => $item->user->name ?? 'Nama Tidak Tersedia',
-                    'tanggal' => $item->tanggal_lahir ? Carbon::parse($item->tanggal_lahir)->format('d/m/Y') : '-',
-                    'status' => $item->PKabupaten ?? 'N/A',
-                    'no_telp' => $item->no_telepon ?? '0000000000',
-                    'klasifikasi' => 'Beresiko'
+            ->map(function ($s) {
+                $pasien = $s->pasien;
+                $user   = optional($pasien)->user;
+                $kes    = $s->kesimpulan ?? $s->status_pre_eklampsia ?? 'Normal';
+
+                return (object) [
+                    'id'          => $pasien->id ?? null,
+                    'nik'         => $pasien->nik ?? '-',
+                    'nama'        => $user->name ?? 'Nama Tidak Tersedia',
+                    'tanggal'     => optional($s->created_at)->format('d/m/Y') ?? '-',
+                    'alamat'      => $pasien->PKecamatan ?? $pasien->PWilayah ?? '-',
+                    'telp'        => $user->phone ?? $pasien->no_telepon ?? '-',
+                    'kesimpulan'  => ucfirst($kes),
+                    'detail_url'  => route('rs.skrining.show', $s->id),
+                    'process_url' => route('rs.dashboard.proses-nifas', $pasien->id ?? 0),
                 ];
             });
 
@@ -68,7 +79,7 @@ class DashboardController extends Controller
             'pemantauanSehat',
             'pemantauanDirujuk',
             'pemantauanMeninggal',
-            'pasienPreEklampsia'
+            'pePatients'
         ));
     }
 
@@ -145,7 +156,7 @@ class DashboardController extends Controller
      */
     private function getRsId()
     {
-        $user = auth()->user();
+        $user = Auth::user();
         
         if (isset($user->rumah_sakit_id) && !is_null($user->rumah_sakit_id)) {
             return $user->rumah_sakit_id;

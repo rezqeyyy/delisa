@@ -215,6 +215,12 @@ class SkriningController extends Controller
     {
         $this->authorizeAccess($skrining);
 
+        $locked = \Illuminate\Support\Facades\DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists();
+        if ($locked) {
+            return redirect()->route('pasien.skrining.show', $skrining->id)
+                ->with('error', 'Skrining sudah diajukan rujukan dan tidak dapat diedit.');
+        }
+
         return redirect()->route('pasien.data-diri', ['skrining_id' => $skrining->id]);
     }
 
@@ -241,6 +247,12 @@ class SkriningController extends Controller
     {
         $this->authorizeAccess($skrining);
 
+        $locked = \Illuminate\Support\Facades\DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists();
+        if ($locked) {
+            return redirect()->route('pasien.skrining.show', $skrining->id)
+                ->with('error', 'Skrining sudah diajukan rujukan dan tidak dapat dihapus.');
+        }
+
         DB::transaction(function () use ($skrining) {
             DB::table('jawaban_kuisioners')->where('skrining_id', $skrining->id)->delete();
             DB::table('riwayat_kehamilans')->where('skrining_id', $skrining->id)->delete();
@@ -260,23 +272,54 @@ class SkriningController extends Controller
      */
     public function puskesmasSearch(Request $request)
     {
-        // Pencarian puskesmas untuk modal pengajuan:
-        // - Parameter query "q" (opsional) akan dicocokkan ke kolom nama/kecamatan/lokasi.
-        // - Mengembalikan maksimal 20 baris dengan field: id, nama_puskesmas, kecamatan.
-        
         $q = trim($request->query('q', ''));
 
-        $rows = Puskesmas::query()
+        $puskesmas = Puskesmas::query()
             ->when($q !== '', function ($qr) use ($q) {
-                $qr->where('nama_puskesmas', 'like', "%{$q}%")
-                   ->orWhere('kecamatan', 'like', "%{$q}%")
-                   ->orWhere('lokasi', 'like', "%{$q}%");
+                $qr->where(function ($w) use ($q) {
+                    $w->where('nama_puskesmas', 'like', "%{$q}%")
+                      ->orWhere('kecamatan', 'like', "%{$q}%")
+                      ->orWhere('lokasi', 'like', "%{$q}%");
+                });
             })
             ->orderBy('nama_puskesmas')
             ->limit(20)
-            ->get(['id', 'nama_puskesmas', 'kecamatan']);
+            ->get(['id', 'nama_puskesmas', 'kecamatan'])
+            ->map(function ($row) {
+                return [
+                    'id' => $row->id,
+                    'nama_puskesmas' => $row->nama_puskesmas,
+                    'kecamatan' => $row->kecamatan,
+                    'type' => 'puskesmas',
+                ];
+            });
 
-        return response()->json($rows);
+        $bidan = DB::table('bidans as b')
+            ->join('users as u', 'u.id', '=', 'b.user_id')
+            ->join('puskesmas as p', 'p.id', '=', 'b.puskesmas_id')
+            ->when($q !== '', function ($qr) use ($q) {
+                $qr->where(function ($w) use ($q) {
+                    $w->where('u.name', 'like', "%{$q}%")
+                      ->orWhere('p.nama_puskesmas', 'like', "%{$q}%")
+                      ->orWhere('p.kecamatan', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy('u.name')
+            ->limit(20)
+            ->get(['b.id as id', 'u.name as klinik_nama', 'p.kecamatan as kecamatan', 'p.id as puskesmas_id'])
+            ->map(function ($row) {
+                return [
+                    'id' => $row->id,
+                    'klinik_nama' => $row->klinik_nama,
+                    'kecamatan' => $row->kecamatan,
+                    'puskesmas_id' => $row->puskesmas_id,
+                    'type' => 'bidan',
+                ];
+            });
+
+        $combined = $puskesmas->merge($bidan)->take(20)->values();
+
+        return response()->json($combined);
     }
 
     /* {{-- ========== AUTH — AUTHORIZE ACCESS ========== --}} */

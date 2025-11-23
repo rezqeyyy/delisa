@@ -8,6 +8,7 @@ use App\Http\Controllers\Puskesmas\DashboardController as PuskesmasDashboardCont
 use App\Http\Controllers\Bidan\DashboardController as BidanDashboardController;
 use App\Http\Controllers\Rs\DashboardController as RsDashboardController;
 use App\Http\Controllers\Rs\SkriningController as RsSkriningController;
+use App\Http\Controllers\Rs\RujukanController as RsRujukanController;
 use App\Http\Controllers\Rs\PasienNifasController as RsPasienNifasController;
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
 use App\Http\Controllers\Pasien\SkriningController as PasienSkriningController;
@@ -27,7 +28,6 @@ use App\Http\Controllers\Pasien\Skrining\KondisiKesehatanPasienController;
 use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitPasienController;
 use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitKeluargaController;
 use App\Http\Controllers\Pasien\Skrining\PreeklampsiaController;
-use App\Http\Controllers\Dinkes\AnalyticsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,7 +43,7 @@ Route::get('/', function () {
             'dinkes'      => redirect()->route('dinkes.dashboard'),
             'puskesmas'   => redirect()->route('puskesmas.dashboard'),
             'bidan'       => redirect()->route('bidan.dashboard'),
-            'rumah_sakit' => redirect()->route('rs.dashboard'),
+            'rumah_sakit', 'rs' => redirect()->route('rs.dashboard'),
             'pasien'      => redirect()->route('pasien.dashboard'),
             default       => redirect()->route('login'),
         };
@@ -66,6 +66,8 @@ Route::middleware(['auth'])->group(function () {
             // Dashboard
             Route::get('/dashboard', [DinkesDashboardController::class, 'index'])->name('dashboard');
             Route::get('/pasien/{pasien}', [PasienController::class, 'show'])->name('pasien.show');
+            Route::get('/dashboard/export-pe', [DinkesDashboardController::class, 'exportPe'])
+                ->name('dashboard.pe-export');
 
             // Data Master
             Route::get('/data-master', [DataMasterController::class, 'index'])->name('data-master');
@@ -91,23 +93,38 @@ Route::middleware(['auth'])->group(function () {
 
             // Pasien Nifas
             Route::get('/pasien-nifas', [PasienNifasController::class, 'index'])->name('pasien-nifas');
+            Route::get('/pasien-nifas/download/xlsx', [PasienNifasController::class, 'export'])->name('pasien-nifas.export');
             Route::delete('/pasien-nifas/{pasien}', [PasienNifasController::class, 'destroy'])->name('pasien-nifas.destroy');
 
             // Profile Dinkes
             Route::get('/profile', [DinkesProfileController::class, 'edit'])->name('profile.edit');
             Route::put('/profile', [DinkesProfileController::class, 'update'])->name('profile.update');
             Route::delete('/profile/photo', [DinkesProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
-
         });
 
     // ================== PUSKESMAS ==================
     Route::middleware('role:puskesmas')
-        ->prefix('puskesmas')->as('puskesmas.')
-        ->group(function () {
-            Route::get('/dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
-            Route::get('/skrining', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'index'])->name('skrining');
-            Route::get('/laporan', [\App\Http\Controllers\Puskesmas\LaporanController::class, 'index'])->name('laporan');
-            Route::get('/pasien-nifas', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'index'])->name('pasien-nifas');
+    ->prefix('puskesmas')->as('puskesmas.')
+    ->group(function () {
+        Route::get('/dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/skrining', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'index'])->name('skrining');
+        Route::get('/skrining/{skrining}', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'show'])->name('skrining.show');
+        
+        // ✅ RUTE RUJUKAN - DIPINDAH KE RUJUKAN CONTROLLER
+        Route::get('/rs/search', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'searchRS'])->name('rs.search');
+        Route::post('/skrining/{skrining}/rujuk', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'ajukanRujukan'])->name('skrining.rujuk');
+        
+        // ✅ RUTE MANAGEMENT RUJUKAN
+        Route::get('/rujukan', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'index'])->name('rujukan.index');
+        Route::get('/rujukan/{id}', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'show'])->name('rujukan.show');
+        
+        Route::get('/laporan', [\App\Http\Controllers\Puskesmas\LaporanController::class, 'index'])->name('laporan');
+        Route::get('/pasien-nifas', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'index'])->name('pasien-nifas');
+
+        Route::get('/profile/edit', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile/update', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile/photo', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'destroyPhoto'])
+            ->name('profile.photo.destroy');
         });
 
     // ================== BIDAN ==================
@@ -140,20 +157,26 @@ Route::middleware(['auth'])->group(function () {
         });
 
     // ================== RUMAH SAKIT ==================
-    Route::middleware('role:rumah_sakit')
+    // Izinkan dua nama role: "rumah_sakit" dan "rs"
+    Route::middleware('role:rumah_sakit,rs')
         ->prefix('rs')->as('rs.')
         ->group(function () {
             Route::get('/dashboard', [RsDashboardController::class, 'index'])->name('dashboard');
             Route::post('/dashboard/proses-nifas/{id}', [RsDashboardController::class, 'prosesPasienNifas'])->name('dashboard.proses-nifas');
 
             Route::get('/pasien/{id}', [RsDashboardController::class, 'showPasien'])->name('pasien.show');
-            
-            
+
+
             // Skrining
             Route::get('/skrining', [RsSkriningController::class, 'index'])->name('skrining.index');
-            Route::get('/skrining/{id}/edit', [RsSkriningController::class, 'edit'])->name('skrining.edit'); 
+            Route::get('/skrining/{id}/edit', [RsSkriningController::class, 'edit'])->name('skrining.edit');
             Route::get('/skrining/{id}', [RsSkriningController::class, 'show'])->name('skrining.show');
             Route::put('/skrining/{id}', [RsSkriningController::class, 'update'])->name('skrining.update');
+
+            // Penerimaan Rujukan
+            Route::get('/penerimaan-rujukan', [RsRujukanController::class, 'index'])->name('penerimaan-rujukan.index');
+            Route::post('/penerimaan-rujukan/{id}/accept', [RsRujukanController::class, 'accept'])->name('penerimaan-rujukan.accept');
+            Route::post('/penerimaan-rujukan/{id}/reject', [RsRujukanController::class, 'reject'])->name('penerimaan-rujukan.reject');
 
             // Pasien Nifas
             Route::post('/pasien-nifas/{id}/anak', [RsPasienNifasController::class, 'storeAnakPasien'])->name('pasien-nifas.store-anak');
@@ -161,13 +184,14 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/pasien-nifas/create', [RsPasienNifasController::class, 'create'])->name('pasien-nifas.create');
             Route::get('/pasien-nifas/download/pdf', [RsPasienNifasController::class, 'downloadPDF'])->name('pasien-nifas.download-pdf');
             Route::get('/pasien-nifas/{id}', [RsPasienNifasController::class, 'show'])->name('pasien-nifas.show');
-            
+
 
             Route::post('/pasien-nifas/cek-nik', [RsPasienNifasController::class, 'cekNik'])->name('pasien-nifas.cek-nik');
             Route::post('/pasien-nifas/store', [RsPasienNifasController::class, 'store'])->name('pasien-nifas.store');
             Route::get('/pasien-nifas/{id}/detail', [RsPasienNifasController::class, 'detail'])->name('pasien-nifas.detail');
-            Route::get('/rs/dashboard', function () {return view('rs.skrining.dashboard');})->name('rs.dashboard');
-
+            /*             Route::get('/rs/dashboard', function () {
+                return view('rs.skrining.dashboard');
+            })->name('rs.dashboard'); */
         });
 
     // ================== PASIEN ==================

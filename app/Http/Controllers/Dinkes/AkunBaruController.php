@@ -87,32 +87,42 @@ class AkunBaruController extends Controller
             $roleName = optional($user->role)->nama_role; // 'bidan' | 'rs' | 'puskesmas'
 
             if ($roleName === 'puskesmas') {
-                DB::table('puskesmas')->updateOrInsert(
-                    ['user_id' => $user->id],
-                    [
+                // JANGAN overwrite data yg sudah dibuat RoleRegistrationController
+                $exists = DB::table('puskesmas')
+                    ->where('user_id', $user->id)
+                    ->exists();
+
+                if (!$exists) {
+                    DB::table('puskesmas')->insert([
+                        'user_id'        => $user->id,
                         'nama_puskesmas' => $user->name ?? 'Belum diisi',
                         'lokasi'         => 'Belum diisi',
                         'kecamatan'      => 'Belum diisi',
                         'is_mandiri'     => 0,
                         'created_at'     => now(),
                         'updated_at'     => now(),
-                    ]
-                );
+                    ]);
+                }
             } elseif ($roleName === 'rs') {
-                DB::table('rumah_sakits')->updateOrInsert(
-                    ['user_id' => $user->id],
-                    [
+                // Sama: cek dulu apakah sudah ada detail rumah_sakits dari RoleRegistrationController
+                $exists = DB::table('rumah_sakits')
+                    ->where('user_id', $user->id)
+                    ->exists();
+
+                if (!$exists) {
+                    DB::table('rumah_sakits')->insert([
+                        'user_id'    => $user->id,
                         'nama'       => $user->name ?? 'Belum diisi',
                         'lokasi'     => 'Belum diisi',
                         'kecamatan'  => 'Belum diisi',
                         'kelurahan'  => 'Belum diisi',
                         'created_at' => now(),
                         'updated_at' => now(),
-                    ]
-                );
+                    ]);
+                }
             } elseif ($roleName === 'bidan') {
-                // ❗ Untuk bidan, detail sudah dibuat saat registrasi (storeBidan),
-                // jadi di sini kita cukup mengaktifkan user saja.
+                // Untuk bidan: detail sudah dibuat saat registrasi (storeBidan),
+                // jadi di sini cukup aktifkan user saja.
             }
         });
 
@@ -122,23 +132,34 @@ class AkunBaruController extends Controller
     // Tolak pengajuan: hapus user pending
     public function reject($id)
     {
-        // pastikan ambil juga role, supaya tahu detail mana yang harus dibersihkan
         $user = User::with('role')
-            ->where('status', false)
+            ->where('status', false) // hanya akun pending
             ->findOrFail($id);
 
         $name = $user->name;
-        $role = optional($user->role)->nama_role; // 'bidan' | 'rs' | 'puskesmas'
+        $roleName = optional($user->role)->nama_role; // 'bidan' | 'rs' | 'puskesmas' | null
 
-        DB::transaction(function () use ($user, $role) {
-            if ($role === 'bidan') {
-                DB::table('bidans')->where('user_id', $user->id)->delete();
-            } elseif ($role === 'rs') {
-                DB::table('rumah_sakits')->where('user_id', $user->id)->delete();
-            } elseif ($role === 'puskesmas') {
-                DB::table('puskesmas')->where('user_id', $user->id)->delete();
+        DB::transaction(function () use ($user, $roleName) {
+            switch ($roleName) {
+                case 'bidan':
+                    DB::table('bidans')
+                        ->where('user_id', $user->id)
+                        ->delete();
+                    break;
+
+                case 'rs':
+                    DB::table('rumah_sakits')
+                        ->where('user_id', $user->id)
+                        ->delete();
+                    break;
+
+                case 'puskesmas':
+                    DB::table('puskesmas')
+                        ->where('user_id', $user->id)
+                        ->delete();
+                    break;
             }
-            // terakhir: hapus user-nya
+
             $user->delete();
         });
 

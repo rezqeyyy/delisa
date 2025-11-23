@@ -18,6 +18,10 @@ class DataDiriController extends Controller
     public function create(Request $request)
     {
         $puskesmasId = (int) $request->query('puskesmas_id');
+        $bidanId = (int) $request->query('bidan_id');
+        if (!$puskesmasId && $bidanId) {
+            $puskesmasId = (int) DB::table('bidans')->where('id', $bidanId)->value('puskesmas_id');
+        }
         $user        = Auth::user();
         $pasienId    = optional($user->pasien)->id;
 

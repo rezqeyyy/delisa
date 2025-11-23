@@ -33,7 +33,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nama Lengkap PIC</label>
                         <input name="pic_name" type="text" value="{{ old('pic_name') }}" placeholder="Nama anda"
-                            class="mt-1 w-full px-4 py-3 rounded-full border @error('pic_name') @else border-[#D91A8B] @enderror focus:outline-none">
+                            class="mt-1 w-full px-4 py-3 rounded-full border @error('pic_name')  @else border-[#D91A8B] @enderror focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nomor Telepon PIC</label>
@@ -47,47 +47,38 @@
                             placeholder="Masukan Email Anda"
                             class="mt-1 w-full px-4 py-3 rounded-full border @error('email') @else border-[#D91A8B] @enderror focus:outline-none">
                     </div>
+
+                    {{-- NAMA PUSKESMAS: sekarang jadi dropdown, sekaligus mewakili kecamatan --}}
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Nama Puskesmas</label>
-                        <input name="nama" type="text" value="{{ old('nama') }}"
-                            placeholder="Masukan Nama Puskesmas"
-                            class="mt-1 w-full px-4 py-3 rounded-full border @error('nama') @else border-[#D91A8B] @enderror focus:outline-none">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Nama Puskesmas / Kecamatan
+                        </label>
+                        <select name="nama"
+                            class="mt-1 w-full px-4 py-3 rounded-full border @error('nama') @else border-[#D91A8B] @enderror focus:outline-none bg-white">
+                            <option value="">-- Pilih Puskesmas Kecamatan di Kota Depok --</option>
+                            @foreach ($kecamatanOptions as $value => $label)
+                                <option value="{{ $value }}" @selected(old('nama') === $value)>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        @error('nama')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Password</label>
                     <input name="password" type="password" placeholder="Masukan Password"
-                        class="mt-1 w-full px-4 py-3 rounded-full border @error('password')  @else border-[#D91A8B] @enderror focus:outline-none">
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Kecamatan</label>
-                        <input name="kecamatan" type="text" value="{{ old('kecamatan') }}"
-                            placeholder="Masukan Kecamatan"
-                            class="mt-1 w-full px-4 py-3 rounded-full border @error('kecamatan') @else border-[#D91A8B] @enderror focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Kelurahan</label>
-                        {{-- kolom ini tidak dipakai di controller puskesmas; jika perlu, tambahkan ke validasi & DB. Dihilangkan saja/hanya placeholder. --}}
-                        <input type="text" placeholder="(opsional)"
-                            class="mt-1 w-full px-4 py-3 rounded-full border @error('kelurahan') @else border-[#D91A8B] @enderror focus:outline-none">
-                    </div>
+                        class="mt-1 w-full px-4 py-3 rounded-full border @error('password') @else border-[#D91A8B] @enderror focus:outline-none">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Alamat</label>
                     <textarea name="lokasi" rows="4" placeholder="Isi Alamat"
                         class="mt-1 w-full px-4 py-3 rounded-lg border @error('lokasi') @else border-[#D91A8B] @enderror focus:outline-none">{{ old('lokasi') }}</textarea>
-                </div>
-
-                <div>
-                    <label class="inline-flex items-center gap-2 text-sm">
-                        <input type="checkbox" name="is_mandiri" value="1" class="rounded"
-                            {{ old('is_mandiri') ? 'checked' : '' }}>
-                        Puskesmas Mandiri
-                    </label>
                 </div>
 
                 <div class="pt-2">
@@ -97,6 +88,7 @@
                     </button>
                 </div>
             </form>
+
         </div>
     </div>
 </body>

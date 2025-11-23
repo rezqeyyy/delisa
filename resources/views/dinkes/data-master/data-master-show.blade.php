@@ -31,6 +31,22 @@
                 <div class="font-medium break-all">{{ $data->email }}</div>
             </div>
 
+            {{-- Tambahan: No Telepon --}}
+            @if (!empty($data->phone))
+                <div>
+                    <span class="text-[#7C7C7C] text-xs sm:text-sm">No. Telepon</span>
+                    <div class="font-medium break-words">{{ $data->phone }}</div>
+                </div>
+            @endif
+
+            {{-- Tambahan: Alamat (address user) --}}
+            @if (!empty($data->address))
+                <div>
+                    <span class="text-[#7C7C7C] text-xs sm:text-sm">Alamat Akun</span>
+                    <div class="font-medium break-words">{{ $data->address }}</div>
+                </div>
+            @endif
+
             {{-- Row password --}}
             <div id="dmPasswordSection" data-user-id="{{ $data->id }}"
                 @if (session('new_password') && session('pw_user_id') == $data->id) data-init-password="{{ session('new_password') }}" @endif>
@@ -50,9 +66,10 @@
                     {{-- Pesan default kalau belum pernah ada reset otomatis --}}
                     <div id="dmPasswordEmptyInfo" class="text-xs sm:text-sm text-[#7C7C7C]">
                         Password hanya akan ditampilkan jika Anda melakukan
-                        <span class="font-semibold">Reset Password</span> tanpa mengisi password baru
-                        (sistem akan membuat password acak).
-                        Jika Anda mengisi password manual, password tidak akan ditampilkan demi keamanan.
+                        <span class="font-semibold">Reset Password</span>.
+                        Saat ini, setiap reset akan mengatur password ke
+                        <span class="font-semibold">12345678</span>.
+
                     </div>
                 </div>
 
@@ -62,9 +79,7 @@
                 @endif
             </div>
 
-
-
-
+            {{-- DETAIL PER ROLE --}}
             @if ($tab === 'rs')
                 <div>
                     <span class="text-[#7C7C7C] text-xs sm:text-sm">Nama RS</span>
@@ -81,7 +96,7 @@
                     </div>
                 </div>
                 <div>
-                    <span class="text-[#7C7C7C] text-xs sm:text-sm">Lokasi</span>
+                    <span class="text-[#7C7C7C] text-xs sm:text-sm">Alamat</span>
                     <div class="font-medium">{{ $data->lokasi }}</div>
                 </div>
             @elseif($tab === 'puskesmas')
@@ -89,35 +104,39 @@
                     <span class="text-[#7C7C7C] text-xs sm:text-sm">Nama Puskesmas</span>
                     <div class="font-medium">{{ $data->nama_puskesmas ?? $data->nama }}</div>
                 </div>
-                <div class="grid sm:grid-cols-2 gap-3">
-                    <div>
-                        <span class="text-[#7C7C7C] text-xs sm:text-sm">Kecamatan</span>
-                        <div class="font-medium">{{ $data->kecamatan }}</div>
-                    </div>
-                    <div>
-                        <span class="text-[#7C7C7C] text-xs sm:text-sm">Mandiri</span>
-                        <div class="font-medium">{{ !empty($data->is_mandiri) ? 'Ya' : 'Tidak' }}</div>
-                    </div>
-                </div>
+
                 <div>
-                    <span class="text-[#7C7C7C] text-xs sm:text-sm">Lokasi</span>
+                    <span class="text-[#7C7C7C] text-xs sm:text-sm">Kecamatan</span>
+                    <div class="font-medium">{{ $data->kecamatan }}</div>
+                </div>
+
+                <div>
+                    <span class="text-[#7C7C7C] text-xs sm:text-sm">Alamat</span>
                     <div class="font-medium">{{ $data->lokasi }}</div>
                 </div>
             @else
-                <div class="grid sm:grid-cols-2 gap-3">
-                    <div>
-                        <span class="text-[#7C7C7C] text-xs sm:text-sm">No Izin Praktek</span>
-                        <div class="font-medium break-words">{{ $data->nomor_izin_praktek }}</div>
-                    </div>
-                    <div>
-                        <span class="text-[#7C7C7C] text-xs sm:text-sm">Puskesmas</span>
-                        <div class="font-medium break-words">{{ $data->nama_puskesmas ?? '-' }}</div>
-                    </div>
-                </div>
+                {{-- BIDAN --}}
                 <div>
-                    <span class="text-[#7C7C7C] text-xs sm:text-sm">Alamat</span>
-                    <div class="font-medium">{{ $data->address }}</div>
+                    <span class="text-[#7C7C7C] text-xs sm:text-sm">Nomor Izin Praktek</span>
+                    <div class="font-medium break-words">
+                        {{ $data->nomor_izin_praktek ?? '—' }}
+                    </div>
                 </div>
+
+                <div>
+                    <span class="text-[#7C7C7C] text-xs sm:text-sm">Puskesmas</span>
+                    <div class="font-medium break-words">
+                        {{ $data->nama_puskesmas ?? '—' }}
+                    </div>
+                </div>
+
+                {{-- Untuk bidan, alamat utama bisa dari users.address jika ada --}}
+                @if (!empty($data->address))
+                    <div>
+                        <span class="text-[#7C7C7C] text-xs sm:text-sm">Alamat Praktik / Domisili</span>
+                        <div class="font-medium break-words">{{ $data->address }}</div>
+                    </div>
+                @endif
             @endif
         </div>
 
@@ -125,29 +144,13 @@
         <div class="mt-4 sm:mt-6 bg-white rounded-2xl shadow p-4 sm:p-6">
             <h2 class="text-sm sm:text-base font-semibold mb-2">Reset Password Akun</h2>
             <p class="text-[11px] sm:text-xs text-[#7C7C7C] mb-3">
-                Isi password baru jika ingin menentukan sendiri
-                (<span class="font-semibold">minimal 8 karakter</span>).
-                Jika dikosongkan, sistem akan membuatkan password acak yang kuat.
+                Saat ini, setiap reset akan mengatur password ke
+                <span class="font-semibold">12345678</span>.
             </p>
 
             <form action="{{ route('dinkes.data-master.reset', ['user' => $data->id, 'tab' => $tab]) }}" method="POST"
                 class="space-y-3">
                 @csrf
-
-                <div class="space-y-1">
-                    <label for="new_password" class="text-xs sm:text-sm text-[#7C7C7C]">
-                        Password baru (opsional, minimal 8 karakter)
-                    </label>
-                    <input id="new_password" name="new_password" type="text"
-                        class="w-full rounded-xl border border-[#D9D9D9] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1677FF33]"
-                        placeholder="Kosongkan untuk generate otomatis">
-
-                    @error('new_password')
-                        <p class="text-[11px] sm:text-xs text-red-600 mt-1">
-                            {{ $message }}
-                        </p>
-                    @enderror
-                </div>
 
                 <button type="submit"
                     class="inline-flex items-center justify-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-[#1677FF] text-white hover:bg-[#125FCC] transition">

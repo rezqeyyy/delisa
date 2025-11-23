@@ -1,16 +1,25 @@
 # 🩺 DeLISA -- Depok Peduli Preeklampsia
 
-![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat-square&logo=laravel&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-Bundler-646CFF?style=flat-square&logo=vite&logoColor=white)
-![PHP](https://img.shields.io/badge/PHP-8.2-blue?style=flat-square&logo=php&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
-![Status](https://img.shields.io/badge/Status-Stable-success?style=flat-square)
-
 > **DeLISA** adalah sistem informasi berbasis web untuk deteksi dini preeklampsia dan
 > pemantauan kesehatan ibu nifas, dikembangkan menggunakan **Laravel
 > 12** dan **Vite** dengan arsitektur modular, aman, dan terintegrasi
 > lintas fasilitas kesehatan.
+
+------------------------------------------------------------------------
+
+## 🧰 Tech Stack
+
+### 🎨 Frontend
+![Vite](https://img.shields.io/badge/Vite-Bundler-646CFF?style=flat-square&logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)
+![Alpine.js](https://img.shields.io/badge/Alpine.js-3.x-77C1D2?style=flat-square&logo=alpinelinux&logoColor=white)
+
+
+### 🛠 Backend
+![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat-square&logo=laravel&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-8.2-blue?style=flat-square&logo=php&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16.x-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Postman](https://img.shields.io/badge/Postman-API_Testing-FF6C37?style=flat-square&logo=postman&logoColor=white)
 
 ------------------------------------------------------------------------
 

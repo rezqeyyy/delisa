@@ -131,7 +131,7 @@
                         data-search-url="{{ route('pasien.puskesmas.search') }}"
                         class="inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70] w-full md:w-[220px] md:ml-3 flex-none">
                             <span class="text-base leading-none">+</span>
-                            <span class="leading-none">Ajukan Skrining</span>
+                            <span class="leading-none">Tambah Skrining</span>
                         </a>
                     </div>
                 </div>
@@ -180,22 +180,23 @@
                                     </td>
                                     <td class="px-3 py-3 md:px-6 md:py-4">
                                         <div class="flex items-center gap-2">
-                                            <a href="{{ $editUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">
-                                                Edit
-                                            </a>
-                                            <a href="{{ $viewUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">
-                                                View
-                                            </a>
+                                            @if(empty($skrining->has_referral))
+                                                <a href="{{ $editUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">Edit</a>
+                                            @else
+                                                <span class="px-4 py-1.5 rounded-full bg-[#F2F2F2] border border-[#E5E5E5] text-[#7C7C7C]">Edit</span>
+                                            @endif
 
-                                            <form method="POST"
-                                                action="{{ route('pasien.skrining.destroy', $skrining->id) }}"
-                                                onsubmit="return confirm('Yakin hapus data skrining?')">
+                                            <a href="{{ $viewUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">View</a>
+
+                                            @if(empty($skrining->has_referral))
+                                            <form method="POST" action="{{ route('pasien.skrining.destroy', $skrining->id) }}" onsubmit="return confirm('Yakin hapus data skrining?')">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="rounded-full border px-4 py-2 text-red-600 hover:bg-red-50">
-                                                    Hapus
-                                                </button>
+                                                <button type="submit" class="rounded-full border px-4 py-2 text-red-600 hover:bg-red-50">Hapus</button>
                                             </form>
+                                            @else
+                                                <span class="px-4 py-1.5 rounded-full bg-[#F2F2F2] border border-[#E5E5E5] text-[#7C7C7C]">Hapus</span>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
