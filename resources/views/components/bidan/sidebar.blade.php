@@ -1,46 +1,69 @@
-<aside class="fixed inset-y-0 left-0 z-10 w-64 flex-col border-r bg-white shadow-lg lg:flex hidden">
-    <div class="flex h-20 items-center justify-center flex-shrink-0 px-4">
-        <h1 class="text-3xl font-bold text-pink-500">DeLISA</h1>
-    </div>
+@props(['current' => request()->route()->getName()])
 
-    <nav class="flex-1 overflow-y-auto">
-        <div class="space-y-2 px-4 py-4">
-            
-            <a href="{{ route('bidan.dashboard') }}"
-               class="flex items-center gap-3 rounded-lg px-3 py-3 font-medium
-                      {{ request()->routeIs('bidan.dashboard') 
-                         ? 'bg-pink-500 text-white shadow-md' 
-                         : 'text-gray-600 hover:bg-gray-100' }}">
-                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                <span>Dashboard</span>
-            </a>
+@php
+    $active = 'group flex items-center gap-3 w-full px-6 py-3 bg-[#B9257F] text-white font-medium rounded-xl transition';
+    $idle   = 'group flex items-center gap-3 w-full px-6 py-3 hover:text-white hover:font-medium hover:bg-[#B9257F] rounded-xl transition';
+    $is     = fn($pattern) => request()->routeIs($pattern);
+@endphp
 
-            <a href="{{ route('bidan.skrining') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 font-medium
-                      {{ request()->routeIs('bidan.skrining') /* INI JADI OTOMATIS AKTIF */
-                         ? 'bg-pink-500 text-white shadow-md' 
-                         : 'text-gray-600 hover:bg-gray-100' }}">
-                
-                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                <span>Skrining</span>
+<aside id="sidebar" aria-label="Navigasi Bidan"
+    class="fixed top-0 left-0 z-50 h-screen w-[260px] bg-white shadow-lg flex flex-col transform transition-transform duration-200 -translate-x-full lg:translate-x-0">
+    <div class="shrink-0">
+        <div class="flex items-center justify-between gap-3 p-6 border-b border-[#CAC7C7]">
+            <a href="{{ route('bidan.dashboard') }}" class="inline-flex items-center gap-3">
+                <img src="{{ asset('images/logo_fulltext.png') }}" alt="DeLISA" class="w-42 h-auto object-contain">
             </a>
-
-            <a href="#" {{-- Ganti '#' dengan route('bidan.laporan') jika sudah ada --}}
-               class="flex items-center gap-3 rounded-lg px-3 py-3 font-medium
-                      {{ request()->routeIs('bidan.laporan') 
-                         ? 'bg-pink-500 text-white shadow-md' 
-                         : 'text-gray-600 hover:bg-gray-100' }}">
-                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                <span>Laporan</span>
-            </a>
-
-            <a href="#" {{-- Ganti '#' dengan route('bidan.pasien-nifas') jika sudah ada --}}
-               class="flex items-center gap-3 rounded-lg px-3 py-3 font-medium
-                      {{ request()->routeIs('bidan.pasien-nifas') 
-                         ? 'bg-pink-500 text-white shadow-md' 
-                         : 'text-gray-600 hover:bg-gray-100' }}">
-                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                <span>Pasien Nifas</span>
-            </a>
+            <button id="sidebarCloseBtn" class="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[#E5E5E5] bg-white hover:bg-[#F8F8F8] transition" aria-label="Tutup menu">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#1D1D1D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
         </div>
-    </nav>
+
+        <nav class="mt-4 px-3 pb-4 overflow-y-auto max-h-[calc(100vh-150px)] space-y-4">
+            <div class="space-y-2">
+                <p class="px-6 text-[13px] leading-[46px] font-medium text-black/50 tracking-[0.15em] uppercase">HOME</p>
+
+                <a href="{{ route('bidan.dashboard') }}" class="{{ $is('bidan.dashboard*') ? $active : $idle }}">
+                    <img src="{{ asset('icons/Group 36729.png') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Dashboard">
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="{{ route('bidan.skrining') }}" class="{{ $is('bidan.skrining*') ? $active : $idle }}">
+                    <img src="{{ asset('icons/Group 36805.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Skrining">
+                    <span>Skrining</span>
+                </a>
+
+                <a href="{{ route('bidan.pasien-nifas') }}" class="{{ $is('bidan.pasien-nifas*') ? $active : $idle }}">
+                    <img src="{{ asset('icons/Iconly/Regular/Light/2 User.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Pasien Nifas">
+                    <span>Pasien Nifas</span>
+                </a>
+            </div>
+
+            <div class="space-y-2 pt-2">
+                <p class="px-6 text-[13px] leading-[46px] font-medium text-black/50 tracking-[0.15em] uppercase">ACCOUNT</p>
+
+                <a href="{{ route('bidan.profile.edit') }}" class="{{ $is('bidan.profile*') ? $active : $idle }}">
+                    <img src="{{ asset('icons/Iconly/Regular/Outline/Setting.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Pengaturan">
+                    <span>Pengaturan</span>
+                </a>
+
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="{{ $idle }} text-[#E53935] underline underline-offset-4 decoration-2 hover:text-white">
+                        <img src="{{ asset('icons/Iconly/Regular/Outline/Logout.svg') }}" alt="Keluar" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert">
+                        <span>Keluar</span>
+                    </button>
+                </form>
+            </div>
+        </nav>
+    </div>
 </aside>
+
+<button id="sidebarOpenBtn" class="lg:hidden fixed z-40 left-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-20 rounded-r-xl bg-white border border-[#E5E5E5] shadow focus:outline-none focus:ring-2 focus:ring-black/10" aria-controls="sidebar" aria-label="Buka menu">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    <span class="sr-only">Buka menu</span>
+</button>

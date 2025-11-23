@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Skrining;
 use App\Models\Bidan;
-use Illuminate\Support\Carbon; // <-- Import Carbon untuk format tanggal
+use Illuminate\Support\Carbon; 
+use Illuminate\Support\Facades\DB;
 
 class SkriningController extends Controller
 {
@@ -25,8 +26,20 @@ class SkriningController extends Controller
         $skrinings = Skrining::where('puskesmas_id', $puskesmasId)
                             ->with(['pasien.user'])
                             ->latest()
-                            ->paginate(10); 
-        return view('bidan.skrining', compact('skrinings'));
+                            ->paginate(10);
+
+        $skrinings->getCollection()->transform(function ($s) {
+            $label = strtolower(trim($s->kesimpulan ?? ''));
+            $isRisk = in_array($label, ['beresiko','berisiko','risiko tinggi','tinggi']);
+            $isWarn = in_array($label, ['waspada','menengah','sedang','risiko sedang']);
+            $display = $isRisk ? 'Beresiko' : ($isWarn ? 'Waspada' : ($label === 'aman' ? 'Aman' : ($s->kesimpulan ?? 'Normal')));
+            $variant = $isRisk ? 'risk' : ($isWarn ? 'warn' : 'safe');
+            $s->setAttribute('conclusion_display', $display);
+            $s->setAttribute('badge_variant', $variant);
+            return $s;
+        });
+
+        return view('bidan.skrining.index', compact('skrinings'));
     }
 
     /**
@@ -44,7 +57,27 @@ class SkriningController extends Controller
         $skrining->load(['pasien.user', 'kondisiKesehatan', 'riwayatKehamilanGpa']);
 
         // Tampilkan view detailnya (file baru di langkah 6)
-        return view('bidan.skrining-show', compact('skrining'));
+        $riwayatPenyakitPasien = DB::table('jawaban_kuisioners as j')
+            ->join('kuisioner_pasiens as k','k.id','=','j.kuisioner_id')
+            ->where('j.skrining_id', $skrining->id)
+            ->where('k.status_soal','individu')
+            ->where('j.jawaban', true)
+            ->select('k.nama_pertanyaan','j.jawaban_lainnya')
+            ->get()
+            ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: '.$r->jawaban_lainnya) : $r->nama_pertanyaan)
+            ->values()->all();
+
+        $riwayatPenyakitKeluarga = DB::table('jawaban_kuisioners as j')
+            ->join('kuisioner_pasiens as k','k.id','=','j.kuisioner_id')
+            ->where('j.skrining_id', $skrining->id)
+            ->where('k.status_soal','keluarga')
+            ->where('j.jawaban', true)
+            ->select('k.nama_pertanyaan','j.jawaban_lainnya')
+            ->get()
+            ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: '.$r->jawaban_lainnya) : $r->nama_pertanyaan)
+            ->values()->all();
+
+        return view('bidan.skrining.show', compact('skrining','riwayatPenyakitPasien','riwayatPenyakitKeluarga'));
     }
 
     /**

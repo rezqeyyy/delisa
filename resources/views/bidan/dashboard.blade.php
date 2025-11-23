@@ -4,212 +4,264 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bidan — Dashboard</title>
-    @vite('resources/css/app.css')
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    @vite([
+        'resources/css/app.css', 
+        'resources/js/app.js', 
+        'resources/js/dropdown.js', 
+        ])
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
 </head>
-<body class="bg-gray-100">
-    <div class="flex min-h-screen">
+
+<body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
+    <div class="flex min-h-screen" x-data="{ openSidebar: false }">
         
         <x-bidan.sidebar />
 
-        <div class="flex-1 flex flex-col lg:pl-64">
-            <header class="sticky top-0 z-10 flex h-20 items-center justify-between border-b bg-white px-4 sm:px-6 lg:px-8">
-                <div class="flex-1">
-                    <div class="relative w-full max-w-md">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+        <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
+            <div class="flex items-center gap-3 flex-nowrap">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <div class="relative w-full">
+                        <span class="absolute inset-y-0 left-3 flex items-center">
+                            <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60" alt="Search">
                         </span>
-                        <input type="search" placeholder="Search..."
-                               class="w-full rounded-full border-gray-300 pl-10 pr-4 py-2 text-sm focus:border-pink-500 focus:ring-pink-500">
+                        <input type="text" placeholder="Search..."
+                            class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4">
-                    <button class="text-gray-500 hover:text-gray-700">
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341A6.002 6.002 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                    </button>
+                <div class="flex items-center gap-3 flex-none justify-end">
+                    <a href="{{ route('puskesmas.dashboard') }}" class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
+                        <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90" alt="Setting">
+                    </a>
 
-                    <div x-data="{ open: false }" class="relative">
-                        <button @click="open = !open" class="flex items-center gap-2">
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&color=F472B6&background=FCE7F3"
-                                 alt="Avatar"
-                                 class="h-10 w-10 rounded-full border-2 border-pink-100">
-                            <div class="text-left hidden md:block">
-                                <div class="text-sm font-medium text-gray-700">{{ Auth::user()->name }}</div>
-                                <div class="text-xs text-gray-500">{{ Auth::user()->role->nama_role }}</div>
+                    <div id="profileWrapper" class="relative">
+                        <button id="profileBtn" class="flex items-center gap-3 pl-2 pr-3 py-1.5 bg-white border border-[#E5E5E5] rounded-full hover:bg-[#F8F8F8]">
+                            
+                            @if (Auth::user()?->photo)
+                                <img src="{{ Storage::url(Auth::user()->photo) . '?t=' . optional(Auth::user()->updated_at)->timestamp }}"
+                                    class="w-8 h-8 rounded-full object-cover" alt="{{ Auth::user()->name }}">
+                            @else
+                                <span
+                                    class="w-8 h-8 rounded-full bg-pink-50 ring-2 ring-pink-100 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                        class="w-4 h-4 text-pink-500" fill="currentColor" aria-hidden="true">
+                                        <path
+                                            d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.42 0-8 2.24-8 5v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1c0-2.76-3.58-5-8-5Z" />
+                                    </svg>
+                                </span>
+                            @endif
+
+                            <div class="leading-tight pr-1 text-left">
+                                <p class="text-[13px] font-semibold text-[#1D1D1D]">
+                                    {{ auth()->user()->name ?? 'Puskesmas' }}
+                                </p>
                             </div>
+                            <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Down 2.svg') }}"
+                                class="w-4 h-4 opacity-70" alt="More" />
                         </button>
 
-                        <div x-show="open"
-                             @click.away="open = false"
-                             class="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-                             x-transition>
-                            <a href="{{ route('bidan.profile.edit') }}"
-                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                Profile
-                            </a>
-
+                        <div id="profileMenu" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
+                            <div class="px-4 py-3 border-b border-[#F0F0F0]">
+                                <p class="text-sm font-medium text-[#1D1D1D]">
+                                    {{ auth()->user()->name ?? 'Puskesmas' }}
+                                </p>
+                            </div>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit"
-                                        class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100">
-                                    Log Out
+                                    class="w-full text-left px-4 py-3 text-sm hover:bg-[#F9F9F9] flex items-center gap-2">
+                                    Logout
                                 </button>
                             </form>
                         </div>
                     </div>
                 </div>
-            </header>
+            </div>
 
-            <main class="flex-1 p-4 sm:p-6 lg:p-8">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                    <div class="md:col-span-1 space-y-6">
-                        <div class="bg-white p-6 rounded-lg shadow-lg">
-                            <h3 class="font-semibold text-lg mb-4 text-gray-700">Daerah Asal Pasien</h3>
-                            <div class="flex justify-around text-center">
-                                <div>
-                                    <div class="text-5xl font-bold text-gray-900">{{ $daerahAsal->depok ?? 0 }}</div>
-                                    <div class="text-gray-500">Depok</div>
-                                </div>
-                                <div>
-                                    <div class="text-5xl font-bold text-gray-900">{{ $daerahAsal->non_depok ?? 0 }}</div>
-                                    <div class="text-gray-500">Non Depok</div>
-                                </div>
-                            </div>
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5 lg:row-span-2 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Daerah Asal Pasien</h3>
+                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+                        </button>
+                    </div>
+                    <div class="flex flex-1 items-center justify-center text-center divide-x divide-[#E9E9E9]">
+                        <div class="flex-1 px-4">
+                            <div class="text-lg lg:text-xl font-semibold text-[#7C7C7C]">Depok</div>
+                            <br>
+                            <div class="tabular-nums leading-none text-6xl lg:text-7xl font-bold text-[#1D1D1D]">{{ $daerahAsal->depok ?? 0 }}</div>
                         </div>
-                        
-                        <div class="bg-white p-6 rounded-lg shadow-lg">
-                            <h3 class="font-semibold text-lg mb-4 text-gray-700">Data Pasien Nifas</h3>
-                            <div class="space-y-2">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-600">Total Pasien Nifas</span>
-                                    <span class="font-bold text-xl text-gray-900">{{ $totalNifas ?? 0 }}</span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-600">Sudah KF1</span>
-                                    <span class="font-bold text-xl text-gray-900">{{ $sudahKf1 ?? 0 }}</span>
-                                </div>
-                            </div>
+                        <div class="flex-1 px-4">
+                            <div class="text-lg lg:text-xl font-semibold text-[#7C7C7C]">Non Depok</div>
+                            <br>
+                            <div class="tabular-nums leading-none text-6xl lg:text-7xl font-bold text-[#1D1D1D]">{{ $daerahAsal->non_depok ?? 0 }}</div>
                         </div>
                     </div>
-                    
-                    <div class="md:col-span-1 space-y-6">
-                        <div class="bg-white p-6 rounded-lg shadow-lg">
-                            <h3 class="font-semibold text-lg mb-4 text-gray-700">Resiko Eklampsia</h3>
-                            <div class="space-y-2">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-600">Pasien Normal</span>
-                                    <span class="font-bold text-xl text-gray-900">{{ $resiko->normal ?? 0 }}</span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-600">Pasien Beresiko Eklampsia</span>
-                                    <span class="font-bold text-xl text-gray-900">{{ $resiko->beresiko ?? 0 }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-white p-6 rounded-lg shadow-lg">
-                            <h3 class="font-semibold text-lg mb-4 text-gray-700">Pasien Hadir</h3>
-                            <div class="space-y-2">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-600">Pasien Hadir</span>
-                                    <span class="font-bold text-xl text-gray-900">{{ $pasienHadir ?? 0 }}</span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-600">Pasien Tidak Hadir</span>
-                                    <span class="font-bold text-xl text-gray-900">{{ $pasienTidakHadir ?? 0 }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="md:col-span-1 space-y-6">
-                        <div class="bg-white p-6 rounded-lg shadow-lg">
-                            <h3 class="font-semibold text-lg mb-4 text-gray-700">Pemantauan (Nifas)</h3>
-                            <div class="flex justify-around text-center">
-                                <div>
-                                    <div class="text-3xl font-bold text-green-600">{{ $pemantauanSehat ?? 0 }}</div>
-                                    <div class="text-gray-500">Sehat</div>
-                                </div>
-                                <div>
-                                    <div class="text-3xl font-bold text-yellow-600">{{ $pemantauanDirujuk ?? 0 }}</div>
-                                    <div class="text-gray-500">Dirujuk</div>
-                                </div>
-                                <div>
-                                    <div class="text-3xl font-bold text-red-600">{{ $pemantauanMeninggal ?? 0 }}</div>
-                                    <div class="text-gray-500">Meninggal</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div> 
-                
-                <div class="mt-8 bg-white p-6 rounded-lg shadow-lg overflow-x-auto">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-semibold text-lg text-gray-700">Data Pasien Pre Eklampsia (Terbaru)</h3>
-                        <a href="#" class="text-sm text-pink-600 hover:text-pink-800 font-medium">View All &rarr;</a>
-                    </div>
-                    
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Pasien (NIK)</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Pasien</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl. Skrining</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alamat (Kec)</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Telp</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kesimpulan</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @forelse($pasienTerbaru as $skrining)
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $skrining->pasien->nik ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $skrining->pasien->user->name ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $skrining->created_at->format('d/m/Y') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $skrining->pasien->PKecamatan ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $skrining->pasien->user->phone ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @php
-                                            $badgeColor = 'bg-gray-100 text-gray-800'; // Default
-                                            if ($skrining->kesimpulan == 'Beresiko') $badgeColor = 'bg-red-100 text-red-800';
-                                            if ($skrining->kesimpulan == 'Aman') $badgeColor = 'bg-green-100 text-green-800';
-                                            if ($skrining->kesimpulan == 'Waspada') $badgeColor = 'bg-yellow-100 text-yellow-800';
-                                            if ($skrining->kesimpulan == 'Normal') $badgeColor = 'bg-blue-100 text-blue-800';
-                                        @endphp
-                                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $badgeColor }}">
-                                            {{ $skrining->kesimpulan ?? 'N/A' }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <a href="#"
-                                           class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                                            View
-                                        </a>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
-                                        Belum ada data pasien skrining.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
                 </div>
 
-            </main>
-        </div>
+                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Resiko Preeklampsia</h3>
+                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#7C7C7C]">Pasien Normal</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $resiko->normal ?? 0 }}</span>
+                        </div>
+                        <hr class="border-[#E9E9E9]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#7C7C7C]">Pasien Beresiko Preeklampsia</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $resiko->beresiko ?? 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Pasien Hadir</h3>
+                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#7C7C7C]">Pasien Hadir</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $pasienHadir ?? 0 }}</span>
+                        </div>
+                        <hr class="border-[#E9E9E9]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#7C7C7C]">Pasien Tidak Hadir</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $pasienTidakHadir ?? 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Data Pasien Nifas</h3>
+                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#7C7C7C]">Total Pasien Nifas</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $totalNifas ?? 0 }}</span>
+                        </div>
+                        <hr class="border-[#E9E9E9]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#7C7C7C]">Sudah KFI</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $sudahKFI ?? 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan</h3>
+                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+                        </button>
+                    </div>
+                    <div class="flex items-center text-center divide-x-2 divide-[#E9E9E9]">
+                        <div class="flex-1 px-4">
+                            <div class="text-xs text-[#7C7C7C]">Sehat</div>
+                            <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanSehat ?? 0 }}</div>
+                        </div>
+                        <div class="flex-1 px-4">
+                            <div class="text-xs text-[#7C7C7C]">Total Dirujuk</div>
+                            <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanDirujuk ?? 0 }}</div>
+                        </div>
+                        <div class="flex-1 px-4">
+                            <div class="text-xs text-[#7C7C7C]">Meninggal</div>
+                            <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanMeninggal ?? 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="space-y-4">
+                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-2 sm:p-4">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-start gap-3">
+                            <span class="w-10 h-10 grid place-items-center rounded-full bg-[#F5F5F5]">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-[#1D1D1D]" fill="currentColor"><path d="M6 2a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2H6Zm2 5h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
+                            </span>
+                            <div>
+                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Pre Eklampsia</h2>
+                                <p class="text-xs text-[#7C7C7C]">Daftar pasien skrining preeklampsia terbaru</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <a href="{{ route('bidan.skrining') }}" class="px-5 py-2 rounded-full border border-[#D9D9D9] bg-white text-[#1D1D1D] font-semibold flex items-center gap-2">
+                                View All
+                                <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}" class="w-4 h-4 opacity-80" alt="Arrow" />
+                            </a>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="text-[#7C7C7C]">
+                                <tr class="text-left">
+                                    <th class="px-3 py-2">No</th>
+                                    <th class="px-3 py-2">Nama Pasien</th>
+                                    <th class="px-3 py-2">NIK</th>
+                                    <th class="px-3 py-2">Tanggal Skrining</th>
+                                    <th class="px-3 py-2">Alamat</th>
+                                    <th class="px-3 py-2">No Telp</th>
+                                    <th class="px-3 py-2">Kesimpulan</th>
+                                    <th class="px-3 py-2">View Detail</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[#E9E9E9]">
+                                @forelse(($pasienTerbaru ?? []) as $skrining)
+                                    <tr>
+                                        <td class="px-3 py-3 font-medium tabular-nums">{{ $loop->iteration }}</td>
+                                        <td class="px-3 py-3">{{ $skrining->pasien->user->name ?? '-' }}</td>
+                                        <td class="px-3 py-3 tabular-nums">{{ $skrining->pasien->nik ?? '-' }}</td>
+                                        <td class="px-3 py-3">{{ optional($skrining->created_at)->format('d/m/Y') ?? '-' }}</td>
+                                        <td class="px-3 py-3">{{ $skrining->pasien->PKecamatan ?? '-' }}</td>
+                                        <td class="px-3 py-3">{{ $skrining->pasien->user->phone ?? '-' }}</td>
+                                        <td class="px-3 py-3">
+                                            @php($label = strtolower(trim($skrining->kesimpulan ?? '')))
+                                            @php($isRisk = in_array($label, ['beresiko','berisiko','risiko tinggi','tinggi']))
+                                            @php($isWarn = in_array($label, ['waspada','menengah','sedang','risiko sedang']))
+                                            @php($display = $isRisk ? 'Beresiko' : ($isWarn ? 'Waspada' : ($label === 'aman' ? 'Aman' : ($skrining->kesimpulan ?? '-'))))
+                                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $isRisk ? 'bg-[#E20D0D] text-white' : ($isWarn ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">
+                                                {{ $display }}
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            <a href="{{ route('bidan.skrining.show', $skrining->id) }}" class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">View</a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada data pasien pre eklampsia.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+    
+            <footer class="text-center text-xs text-[#7C7C7C] py-6">
+                © 2025 Dinas Kesehatan Kota Depok — DeLISA
+            </footer>
+        </main>
     </div>
 </body>
 </html>
