@@ -1,642 +1,308 @@
 @extends('layouts.rs')
 
-@section('title', 'Tambah Data Nifas')
+@section('title', 'Detail Pasien Nifas')
 
 @section('content')
-<div class="dashboard-wrapper">
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <div class="logo-icon">D</div>
-                <div class="logo-text">
-                    <h3>DeLISA</h3>
-                    <small>Deteksi Dini Pre Eklampsia</small>
-                </div>
-            </div>
-        </div>
+    <div class="flex min-h-screen" x-data="{ openSidebar: false }">
+        {{-- Sidebar RS --}}
+        <x-rs.sidebar />
 
-        <div class="sidebar-menu">
-            <div class="menu-section">
-                <span class="menu-label">HOME</span>
-                <a href="{{ route('rs.dashboard') }}" class="menu-item">
-                    <i class="fas fa-th-large"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="{{ route('rs.skrining.index') }}" class="menu-item">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Skrining</span>
-                </a>
-                <a href="{{ route('rs.pasien-nifas.index') }}" class="menu-item active">
-                    <i class="fas fa-users"></i>
-                    <span>Pasien Nifas</span>
-                </a>
-            </div>
+        {{-- MAIN CONTENT --}}
+        <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
 
-            <div class="menu-section mt-4">
-                <span class="menu-label">ACCOUNT</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Header -->
-        <div class="content-header">
-            <div class="header-left">
-                <a href="{{ route('rs.pasien-nifas.index') }}" class="btn-back">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-                <h2 class="page-title">Data Nifas Pasien</h2>
-            </div>
-        </div>
-
-        @if(session('success'))
-        <div class="alert alert-success">
-            <i class="fas fa-check-circle"></i>
-            {{ session('success') }}
-        </div>
-        @endif
-
-        @if(session('error'))
-        <div class="alert alert-danger">
-            <i class="fas fa-exclamation-circle"></i>
-            {{ session('error') }}
-        </div>
-        @endif
-
-        <!-- Content -->
-        <div class="skrining-content">
-            <!-- Info Pasien -->
-           
-            <!-- List Anak yang Sudah Ada -->
-            @if($pasienNifas->anakPasien->count() > 0)
-            <div class="dashboard-card">
-                <div class="card-header-flex">
-                    <h3 class="card-title-simple">Data Anak yang Sudah Terdaftar</h3>
-                    <a href="{{ route('rs.pasien-nifas.detail', $pasienNifas->id) }}" class="btn btn-view">
-                        <i class="fas fa-eye"></i>
-                        Lihat Detail
+            {{-- HEADER ATAS --}}
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('rs.pasien-nifas.index') }}"
+                       class="inline-flex items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-3 py-1.5 text-xs sm:text-sm text-[#4B4B4B] hover:bg-[#F8F8F8]">
+                        <span class="inline-flex w-5 h-5 items-center justify-center rounded-full bg-[#F5F5F5]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2">
+                                <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                        </span>
+                        <span>Kembali</span>
                     </a>
-                </div>
-                
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="anak-table">
-                            <thead>
-                                <tr>
-                                    <th>Anak Ke</th>
-                                    <th>Nama Anak</th>
-                                    <th>Jenis Kelamin</th>
-                                    <th>Tanggal Lahir</th>
-                                    <th>Berat Lahir</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($pasienNifas->anakPasien as $anak)
-                                <tr>
-                                    <td>{{ $anak->anak_ke }}</td>
-                                    <td>{{ $anak->nama_anak }}</td>
-                                    <td>{{ $anak->jenis_kelamin }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($anak->tanggal_lahir)->format('d/m/Y') }}</td>
-                                    <td>{{ $anak->berat_lahir_anak }} kg</td>
-                                    <td><span class="badge badge-success">Terdaftar</span></td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                    <div class="min-w-0">
+                        <h1 class="text-lg sm:text-xl font-semibold text-[#1D1D1D] truncate">
+                            Data Pasien Nifas — {{ $pasienNifas->pasien->user->name ?? 'N/A' }}
+                        </h1>
+                        <p class="text-xs text-[#7C7C7C]">
+                            Ringkasan nifas ibu, riwayat persalinan, dan kondisi bayi
+                        </p>
                     </div>
                 </div>
+
+                <a href="{{ route('rs.pasien-nifas.show', $pasienNifas->id) }}"
+                   class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#C2185B]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14" />
+                        <path d="M5 12h14" />
+                    </svg>
+                    <span>Tambah Data Anak</span>
+                </a>
             </div>
+
+            {{-- ALERT SUKSES --}}
+            @if (session('success'))
+                <div
+                    class="alert flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs sm:text-sm text-emerald-800">
+                    <span class="mt-0.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="m9 12 2 2 4-4" />
+                        </svg>
+                    </span>
+                    <span>{{ session('success') }}</span>
+                </div>
             @endif
 
-            <!-- Form Tambah Anak Baru -->
-            <div class="dashboard-card">
-                <div class="card-header-simple">
-                    <h3 class="card-title-simple">Tambah Data Anak {{ $pasienNifas->anakPasien->count() > 0 ? 'Baru' : '' }}</h3>
+            @php
+                $anakPertama = $pasienNifas->anakPasien->first();
+
+                $totalAnak = $pasienNifas->anakPasien->count();
+                $anakBBLR = $pasienNifas->anakPasien->filter(fn($a) => $a->berat_lahir_anak < 2.5)->count();
+                $anakPreterm = $pasienNifas->anakPasien
+                    ->filter(function ($a) {
+                        $usia = (int) filter_var($a->usia_kehamilan_saat_lahir, FILTER_SANITIZE_NUMBER_INT);
+                        return $usia < 37;
+                    })
+                    ->count();
+                $anakRiwayat = $pasienNifas->anakPasien
+                    ->filter(fn($a) => $a->riwayat_penyakit && count($a->riwayat_penyakit) > 0)
+                    ->count();
+
+                $adaResiko = $anakBBLR > 0 || $anakPreterm > 0 || $anakRiwayat > 0;
+                $statusResikoText = $adaResiko
+                    ? 'Terdapat faktor risiko pada sebagian anak, perlu pemantauan ketat dan kunjungan rutin.'
+                    : 'Tidak ada faktor risiko berat yang terdeteksi. Kondisi anak-anak dalam batas normal.';
+            @endphp
+
+            {{-- =========================
+                 1. INFORMASI PASIEN (STYLE SEPERTI GAMBAR 1)
+               ========================== --}}
+            <section class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">
+                        Informasi Pasien dan Data Kehamilan
+                    </h2>
                 </div>
-                
-                <div class="card-body">
-                    <form action="{{ route('rs.pasien-nifas.store-anak', $pasienNifas->id) }}" method="POST" id="formAnakPasien">
-                        @csrf
-                        
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label">Anak Ke</label>
-                                <input type="number" name="anak_ke" class="form-input" 
-                                    placeholder="Masukkan Data..." 
-                                    value="{{ old('anak_ke', $pasienNifas->anakPasien->count() + 1) }}" 
-                                    required>
-                            </div>
 
-                            <div class="form-col">
-                                <label class="form-label">Tanggal Lahir</label>
-                                <input type="date" name="tanggal_lahir" class="form-input" 
-                                    value="{{ old('tanggal_lahir') }}" 
-                                    required>
+                <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
+                    {{-- Header bar --}}
+                    <div
+                        class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
+                        <div class="px-4 sm:px-6 py-3 border-r border-[#F0F0F0]">
+                            Informasi
+                        </div>
+                        <div class="px-4 sm:px-6 py-3">
+                            Data
+                        </div>
+                    </div>
+
+                    {{-- Rows --}}
+                    <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
+                        {{-- Tanggal Pemeriksaan (pakai tanggal mulai nifas) --}}
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                Tanggal Pemeriksaan
+                            </div>
+                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
+                                @if ($pasienNifas->tanggal_mulai_nifas)
+                                    {{ \Carbon\Carbon::parse($pasienNifas->tanggal_mulai_nifas)->translatedFormat('d F Y') }}
+                                @else
+                                    -
+                                @endif
                             </div>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label">Jenis Kelamin</label>
-                                <select name="jenis_kelamin" class="form-input" required>
-                                    <option value="">Pilih Jenis Kelamin</option>
-                                    <option value="Laki-laki" {{ old('jenis_kelamin') == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
-                                    <option value="Perempuan" {{ old('jenis_kelamin') == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
-                                </select>
+                        {{-- Nama --}}
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                Nama
                             </div>
-
-                            <div class="form-col">
-                                <label class="form-label">Usia Kehamilan Saat Lahir (Dalam Minggu)</label>
-                                <input type="text" name="usia_kehamilan_saat_lahir" class="form-input" 
-                                    placeholder="Masukkan Data..." 
-                                    value="{{ old('usia_kehamilan_saat_lahir') }}" 
-                                    required>
+                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
+                                {{ $pasienNifas->pasien->user->name ?? '-' }}
                             </div>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label">Berat Lahir Anak</label>
-                                <input type="number" step="0.01" name="berat_lahir_anak" class="form-input" 
-                                    placeholder="Pilih Data Ya/Tidak" 
-                                    value="{{ old('berat_lahir_anak') }}" 
-                                    required>
+                        {{-- NIK --}}
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                NIK
                             </div>
-
-                            <div class="form-col">
-                                <label class="form-label">Panjang Lahir Anak</label>
-                                <input type="number" step="0.01" name="panjang_lahir_anak" class="form-input" 
-                                    placeholder="Masukkan Data..." 
-                                    value="{{ old('panjang_lahir_anak') }}" 
-                                    required>
+                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
+                                {{ $pasienNifas->pasien->nik ?? '-' }}
                             </div>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label">Lingkar Kepala Anak</label>
-                                <input type="number" step="0.01" name="lingkar_kepala_anak" class="form-input" 
-                                    placeholder="Masukkan Data..." 
-                                    value="{{ old('lingkar_kepala_anak') }}" 
-                                    required>
+                        {{-- Usia Kehamilan (pakai data anak pertama bila ada) --}}
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                Usia Kehamilan
                             </div>
-
-                            <div class="form-col">
-                                <label class="form-label">Memiliki Buku KIA</label>
-                                <select name="memiliki_buku_kia" class="form-input" required>
-                                    <option value="">Pilih Data Ya/Tidak</option>
-                                    <option value="1" {{ old('memiliki_buku_kia') == '1' ? 'selected' : '' }}>Ya</option>
-                                    <option value="0" {{ old('memiliki_buku_kia') == '0' ? 'selected' : '' }}>Tidak</option>
-                                </select>
+                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
+                                @if ($anakPertama)
+                                    {{ $anakPertama->usia_kehamilan_saat_lahir }} Minggu
+                                @else
+                                    -
+                                @endif
                             </div>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label">Memiliki Buku KIA Bayi Kecil</label>
-                                <select name="buku_kia_bayi_kecil" class="form-input" required>
-                                    <option value="">Pilih Data Ya/Tidak</option>
-                                    <option value="1" {{ old('buku_kia_bayi_kecil') == '1' ? 'selected' : '' }}>Ya</option>
-                                    <option value="0" {{ old('buku_kia_bayi_kecil') == '0' ? 'selected' : '' }}>Tidak</option>
-                                </select>
+                        {{-- Alamat --}}
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                Alamat
                             </div>
-
-                            <div class="form-col">
-                                <label class="form-label">IMD</label>
-                                <select name="imd" class="form-input" required>
-                                    <option value="">Pilih Data Ya/Tidak</option>
-                                    <option value="1" {{ old('imd') == '1' ? 'selected' : '' }}>Ya</option>
-                                    <option value="0" {{ old('imd') == '0' ? 'selected' : '' }}>Tidak</option>
-                                </select>
+                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D] leading-relaxed">
+                                {{ $pasienNifas->pasien->PWilayah ?? '-' }},
+                                {{ $pasienNifas->pasien->PKecamatan ?? '-' }},
+                                {{ $pasienNifas->pasien->PKabupaten ?? '-' }},
+                                {{ $pasienNifas->pasien->PProvinsi ?? '-' }}
                             </div>
                         </div>
 
-                        <div class="divider"></div>
-
-                        <div class="form-group-full">
-                            <label class="form-label">Riwayat Penyakit atau Komplikasi Ibu (Penyebab BBLR/Preterm)</label>
-                            <div class="checkbox-grid">
-                                @foreach(['Hipertensi','Infeksi','KPD','Masalah Plasenta','Inkompetensi Serviks','Masalah Lainnya'] as $item)
-                                    <label class="checkbox-item">
-                                        <input type="checkbox" name="riwayat_penyakit[]" value="{{ $item }}" 
-                                            {{ in_array($item, old('riwayat_penyakit', [])) ? 'checked' : '' }}>
-                                        <span>{{ $item }}</span>
-                                    </label>
-                                @endforeach
+                        {{-- Nomor Telepon --}}
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                Nomor Telepon
+                            </div>
+                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
+                                {{ $pasienNifas->pasien->user->phone ?? ($pasienNifas->pasien->no_telepon ?? '-') }}
                             </div>
                         </div>
+                    </div> {{-- end divide --}}
+                </div> {{-- end card --}}
+            </section>
 
-                        <div class="form-group-full">
-                            <label class="form-label">Keterangan Masalah Lain (Opsional)</label>
-                            <textarea name="keterangan_masalah_lain" class="form-input" rows="4" 
-                                placeholder="Masukkan Keterangan Lain...">{{ old('keterangan_masalah_lain') }}</textarea>
-                        </div>
-                    </form>
+            {{-- =========================
+                 2. DATA ANAK (RINGKASAN)
+               ========================== --}}
+            <section class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
+                <div class="mb-4">
+                    <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">
+                        Data Anak
+                    </h2>
                 </div>
-            </div>
 
-            <!-- Button Actions -->
-            <div class="form-actions">
-                <a href="{{ route('rs.pasien-nifas.index') }}" class="btn btn-secondary">
-                    Kembali
+                <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
+                    {{-- Header bar --}}
+                    <div
+                        class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
+                        <div class="px-4 sm:px-6 py-3 border-r border-[#F0F0F0]">
+                            Informasi
+                        </div>
+                        <div class="px-4 sm:px-6 py-3">
+                            Data
+                        </div>
+                    </div>
+
+                    <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
+                        {{-- Jumlah Anak --}}
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                Jumlah Anak
+                            </div>
+                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
+                                {{ $totalAnak }}
+                            </div>
+                        </div>
+
+                        {{-- Jumlah BBLR --}}
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                Jumlah BBLR (&lt; 2,5 kg)
+                            </div>
+                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
+                                {{ $anakBBLR }}
+                            </div>
+                        </div>
+
+                        {{-- Jumlah Prematur --}}
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                Jumlah Prematur (&lt; 37 minggu)
+                            </div>
+                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
+                                {{ $anakPreterm }}
+                            </div>
+                        </div>
+
+                        {{-- Jumlah Riwayat Komplikasi --}}
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                Jumlah dengan Riwayat Komplikasi Ibu
+                            </div>
+                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
+                                {{ $anakRiwayat }}
+                            </div>
+                        </div>
+
+                        {{-- Status Risiko Anak --}}
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                Status Risiko Anak
+                            </div>
+                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
+                                <p>{{ $statusResikoText }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {{-- =========================
+                 3. DATA PER ANAK (CARD RINGKAS)
+               ========================== --}}
+            
+
+            {{-- TOMBOL AKSI BAWAH --}}
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
+                <a href="{{ route('rs.pasien-nifas.index') }}"
+                   class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] w-full sm:w-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                    <span>Kembali ke List</span>
                 </a>
-                <button type="submit" form="formAnakPasien" class="btn btn-primary">
-                    <i class="fas fa-save"></i>
-                    Simpan Data
-                </button>
+
+                @if ($pasienNifas->anakPasien->count() > 0)
+                    <button type="button" onclick="window.print()"
+                            class="inline-flex items-center justify-center gap-2 rounded-full bg-[#10B981] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#059669] w-full sm:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2">
+                            <path d="M6 9V2h12v7" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                            <path d="M6 14h12v8H6z" />
+                        </svg>
+                        <span>Cetak Data</span>
+                    </button>
+                @endif
             </div>
-        </div>
+
+            <footer class="text-center text-[11px] text-[#7C7C7C] py-4 print:hidden">
+                © 2025 Dinas Kesehatan Kota Depok — DeLISA
+            </footer>
+        </main>
     </div>
-</div>
-
-@push('styles')
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #fafafa;
-    font-size: 14px;
-}
-
-.dashboard-wrapper {
-    display: flex;
-    min-height: 100vh;
-}
-
-/* Sidebar */
-.sidebar {
-    width: 220px;
-    background: white;
-    border-right: 1px solid #e8e8e8;
-    padding: 1.5rem 1rem;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
-}
-
-.sidebar-header {
-    margin-bottom: 2rem;
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.logo-icon {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.25rem;
-    font-weight: 700;
-}
-
-.logo-text h3 {
-    color: #e91e8c;
-    font-size: 1.125rem;
-    font-weight: 700;
-    margin: 0;
-    line-height: 1.2;
-}
-
-.logo-text small {
-    color: #888;
-    font-size: 0.625rem;
-    display: block;
-    line-height: 1.2;
-}
-
-.menu-label {
-    font-size: 0.625rem;
-    color: #999;
-    font-weight: 700;
-    letter-spacing: 1px;
-    display: block;
-    margin-bottom: 0.75rem;
-    text-transform: uppercase;
-}
-
-.menu-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.625rem 0.875rem;
-    color: #666;
-    text-decoration: none;
-    border-radius: 8px;
-    margin-bottom: 0.375rem;
-    transition: all 0.2s ease;
-    font-weight: 500;
-    font-size: 0.875rem;
-}
-
-.menu-item:hover {
-    background: #f8f8f8;
-    color: #333;
-}
-
-.menu-item.active {
-    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
-    color: white;
-}
-
-.menu-item i {
-    font-size: 1rem;
-    width: 18px;
-}
-
-.mt-4 {
-    margin-top: 1.5rem;
-}
-
-/* Main Content */
-.main-content {
-    flex: 1;
-    background: #fafafa;
-    min-height: 100vh;
-}
-
-.content-header {
-    background: white;
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid #e8e8e8;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.btn-back {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    background: #f8f9fa;
-    border: 1px solid #e8e8e8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #666;
-    text-decoration: none;
-    transition: all 0.2s ease;
-}
-
-.btn-back:hover {
-    background: #e8e8e8;
-}
-
-.page-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #1a1a1a;
-    margin: 0;
-}
-
-/* Alert */
-.alert {
-    margin: 1.5rem 2rem 0;
-    padding: 1rem 1.25rem;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 0.875rem;
-}
-
-.alert-success {
-    background: #d1fae5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
-}
-
-.alert-danger {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
-}
-
-.alert i {
-    font-size: 1.125rem;
-}
-
-/* Content */
-.skrining-content {
-    padding: 1.5rem 2rem 3rem;
-}
-
-.dashboard-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    overflow: hidden;
-    border: 1px solid #f0f0f0;
-    margin-bottom: 1.5rem;
-}
-
-.card-header-simple {
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid #f0f0f0;
-    background: #fafafa;
-}
-
-.card-title-simple {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1a1a1a;
-    margin: 0;
-}
-
-.card-body {
-    padding: 1.5rem;
-}
-
-/* Form */
-.form-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem;
-    margin-bottom: 1.25rem;
-}
-
-.form-col {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group-full {
-    margin-bottom: 1.25rem;
-}
-
-.form-label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #666;
-    margin-bottom: 0.5rem;
-}
-
-.form-input {
-    width: 100%;
-    padding: 0.625rem 0.875rem;
-    border: 1px solid #e8e8e8;
-    border-radius: 6px;
-    font-size: 0.8125rem;
-    transition: all 0.2s ease;
-    background: white;
-    color: #333;
-}
-
-.form-input:focus {
-    outline: none;
-    border-color: #e91e8c;
-    box-shadow: 0 0 0 3px rgba(233, 30, 140, 0.1);
-}
-
-.form-input::placeholder {
-    color: #999;
-}
-
-textarea.form-input {
-    resize: none;
-    font-family: inherit;
-}
-
-/* Divider */
-.divider {
-    height: 1px;
-    background: #f0f0f0;
-    margin: 1.5rem 0;
-}
-
-/* Checkbox Grid */
-.checkbox-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
-    margin-top: 0.5rem;
-}
-
-.checkbox-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 0.875rem;
-    border: 1px solid #e8e8e8;
-    border-radius: 6px;
-    font-size: 0.8125rem;
-    color: #666;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background: white;
-}
-
-.checkbox-item:hover {
-    border-color: #e91e8c;
-}
-
-.checkbox-item input[type="checkbox"]:checked + span {
-    color: #e91e8c;
-    font-weight: 600;
-}
-
-.checkbox-item input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-}
-
-/* Form Actions */
-.form-actions {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-}
-
-.btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn-secondary {
-    background: white;
-    color: #666;
-    border: 1px solid #e8e8e8;
-}
-
-.btn-secondary:hover {
-    background: #f8f9fa;
-}
-
-.btn-primary {
-    background: #e91e8c;
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #c2185b;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .dashboard-wrapper {
-        flex-direction: column;
-    }
-    
-    .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-    }
-    
-    .content-header {
-        padding: 1rem 1.25rem;
-    }
-    
-    .skrining-content {
-        padding: 1rem 1.25rem 2rem;
-    }
-    
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-    
-    .checkbox-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .form-actions {
-        flex-direction: column;
-    }
-}
-</style>
-@endpush
-
 @endsection
+
+@push('scripts')
+    <script>
+        // Auto-hide alert sukses setelah 5 detik
+        document.addEventListener('DOMContentLoaded', function () {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    alert.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => alert.remove(), 300);
+                }, 5000);
+            });
+        });
+    </script>
+@endpush

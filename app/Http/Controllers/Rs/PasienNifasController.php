@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Rs;
 
 use App\Http\Controllers\Controller;
-use App\Models\PasienNifas;
+use App\Models\PasienNifasRs;
 use App\Models\AnakPasien;
 use App\Models\Pasien;
 use App\Models\User;
@@ -20,7 +20,7 @@ class PasienNifasController extends Controller
      */
     public function index()
     {
-        $pasienNifas = PasienNifas::with(['pasien.user', 'rs'])
+        $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -129,7 +129,7 @@ class PasienNifasController extends Controller
             $rs_id = $this->getRsId();
 
             // Cek apakah pasien nifas ini sudah terdaftar di RS ini
-            $existingNifas = PasienNifas::where('pasien_id', $pasien->id)
+            $existingNifas = PasienNifasRs::where('pasien_id', $pasien->id)
                 ->where('rs_id', $rs_id)
                 ->first();
 
@@ -148,7 +148,7 @@ class PasienNifasController extends Controller
                 'tanggal_mulai_nifas' => now(),
             ];
 
-            $pasienNifas = PasienNifas::create($pasienNifasData);
+            $pasienNifas = PasienNifasRs::create($pasienNifasData);
 
             DB::commit();
 
@@ -193,10 +193,10 @@ class PasienNifasController extends Controller
      */
     public function show($id)
     {
-        $pasienNifas = PasienNifas::with(['pasien.user', 'rs', 'anakPasien'])
+        $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs', 'anakPasien'])
             ->findOrFail($id);
 
-        return view('rs.pasien-nifas.show', compact('pasienNifas'));
+        return view('rs.pasien-nifas.edit', compact('pasienNifas'));
     }
 
     /**
@@ -221,7 +221,7 @@ class PasienNifasController extends Controller
         ]);
 
         try {
-            $pasienNifas = PasienNifas::findOrFail($id);
+            $pasienNifas = PasienNifasRs::findOrFail($id);
 
             AnakPasien::create([
                 'nifas_id'                  => $pasienNifas->id,
@@ -257,7 +257,7 @@ class PasienNifasController extends Controller
      */
     public function detail($id)
     {
-        $pasienNifas = PasienNifas::with([
+        $pasienNifas = PasienNifasRs::with([
             'pasien.user',
             'rs',
             'anakPasien'
@@ -265,7 +265,7 @@ class PasienNifasController extends Controller
 
         $anakPasien = $pasienNifas->anakPasien->first();
 
-        return view('rs.pasien-nifas.detail', compact('pasienNifas', 'anakPasien'));
+        return view('rs.pasien-nifas.show', compact('pasienNifas', 'anakPasien'));
     }
 
     /**
@@ -274,7 +274,7 @@ class PasienNifasController extends Controller
     public function downloadPDF()
     {
         try {
-            $pasienNifas = PasienNifas::with(['pasien.user', 'rs'])
+            $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs'])
                 ->orderBy('created_at', 'desc')
                 ->get();
 
