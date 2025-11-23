@@ -111,6 +111,11 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/skrining', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'index'])->name('skrining');
             Route::get('/laporan', [\App\Http\Controllers\Puskesmas\LaporanController::class, 'index'])->name('laporan');
             Route::get('/pasien-nifas', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'index'])->name('pasien-nifas');
+
+            Route::get('/profile/edit', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('/profile/update', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'update'])->name('profile.update');
+            Route::delete('/profile/photo', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'destroyPhoto'])
+            ->name('profile.photo.destroy');
         });
 
     // ================== BIDAN ==================

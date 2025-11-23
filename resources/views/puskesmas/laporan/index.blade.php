@@ -30,8 +30,6 @@
                 <select id="jenis_laporan" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 text-sm">
                     <option>Skrining Ibu Hamil</option>
                     <option>Pasien Nifas</option>
-                    <option>Imunisasi</option>
-                    <option>Kunjungan ANC</option>
                 </select>
             </div>
 
@@ -72,7 +70,7 @@
         </div>
 
         <!-- Optional: Recent Reports (bisa ditambahkan nanti) -->
-        <!--
+
         <div class="mt-6">
             <h3 class="text-sm font-medium text-gray-700 mb-2">Laporan Terakhir</h3>
             <div class="text-xs text-gray-500 space-y-1">
@@ -86,7 +84,7 @@
                 </div>
             </div>
         </div>
-        -->
+
     </div>
 </div>
 @endsection
