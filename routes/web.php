@@ -20,6 +20,8 @@ use App\Http\Controllers\Dinkes\ProfileController as DinkesProfileController;
 use App\Http\Controllers\Dinkes\PasienController;
 
 use App\Http\Controllers\Bidan\ProfileController as BidanProfileController; // <-- TAMBAHAN
+use App\Http\Controllers\Rs\ProfileController as RsProfileController;
+
 
 use App\Http\Controllers\WilayahController;
 use App\Http\Controllers\Pasien\Skrining\DataDiriController;
@@ -192,9 +194,12 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/pasien-nifas/cek-nik', [RsPasienNifasController::class, 'cekNik'])->name('pasien-nifas.cek-nik');
             Route::post('/pasien-nifas/store', [RsPasienNifasController::class, 'store'])->name('pasien-nifas.store');
             Route::get('/pasien-nifas/{id}/detail', [RsPasienNifasController::class, 'detail'])->name('pasien-nifas.detail');
-            /*             Route::get('/rs/dashboard', function () {
-                return view('rs.skrining.dashboard');
-            })->name('rs.dashboard'); */
+
+            // Profile Rs
+            Route::get('/profile', [RsProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('/profile', [RsProfileController::class, 'update'])->name('profile.update');
+            Route::delete('/profile/photo', [RsProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
+
         });
 
     // ================== PASIEN ==================

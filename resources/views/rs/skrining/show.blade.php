@@ -130,12 +130,12 @@
                                     Pasien Datang
                                 </div>
                                 <div class="flex-1 px-4 sm:px-5 py-3">
-                                    @if($rujukan->pasien_datang === 1)
+                                    @if($rujukan->pasien_datang == 1)
                                         <span class="inline-flex items-center gap-1.5 rounded-full bg-[#D1FAE5] text-[#059669] px-3 py-1 text-[11px] font-semibold">
                                             <i class="fas fa-check-circle text-[11px]"></i>
                                             <span>Ya</span>
                                         </span>
-                                    @elseif($rujukan->pasien_datang === 0)
+                                    @elseif($rujukan->pasien_datang == 0)
                                         <span class="inline-flex items-center gap-1.5 rounded-full bg-[#FEE2E2] text-[#DC2626] px-3 py-1 text-[11px] font-semibold">
                                             <i class="fas fa-times-circle text-[11px]"></i>
                                             <span>Tidak</span>
@@ -172,12 +172,12 @@
                                     Perlu Pemeriksaan Lanjutan
                                 </div>
                                 <div class="flex-1 px-4 sm:px-5 py-3">
-                                    @if($rujukan->perlu_pemeriksaan_lanjut === 1)
+                                    @if($rujukan->perlu_pemeriksaan_lanjut == 1)
                                         <span class="inline-flex items-center gap-1.5 rounded-full bg-[#FEF3C7] text-[#D97706] px-3 py-1 text-[11px] font-semibold">
                                             <i class="fas fa-exclamation-triangle text-[11px]"></i>
                                             <span>Ya</span>
                                         </span>
-                                    @elseif($rujukan->perlu_pemeriksaan_lanjut === 0)
+                                    @elseif($rujukan->perlu_pemeriksaan_lanjut == 0)
                                         <span class="inline-flex items-center gap-1.5 rounded-full bg-[#D1FAE5] text-[#059669] px-3 py-1 text-[11px] font-semibold">
                                             <i class="fas fa-check text-[11px]"></i>
                                             <span>Tidak</span>
@@ -245,13 +245,13 @@
                                         <th class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
                                             No
                                         </th>
-                                        <th class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]>
+                                        <th class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
                                             Nama Obat
                                         </th>
-                                        <th class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]>
+                                        <th class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
                                             Dosis
                                         </th>
-                                        <th class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]>
+                                        <th class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
                                             Cara Penggunaan
                                         </th>
                                     </tr>

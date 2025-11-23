@@ -57,7 +57,7 @@
             <div class="space-y-2 pt-2">
                 <p class="px-6 text-[13px] leading-[46px] font-medium text-black/50 tracking-[0.15em] uppercase">ACCOUNT</p>
 
-                <a href="{{ route('rs.dashboard') }}" class="{{ $is('rs.profile*') ? $active : $idle }}">
+                <a href="{{ route('rs.profile.edit') }}" class="{{ $is('rs.profile*') ? $active : $idle }}">
                     <img src="{{ asset('icons/Iconly/Regular/Outline/Setting.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Pengaturan">
                     <span>Pengaturan</span>
                 </a>

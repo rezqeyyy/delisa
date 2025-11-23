@@ -13,6 +13,7 @@ class RujukanController extends Controller
     {
         $rsId = Auth::user()->rumahSakit->id ?? null;
 
+        // Rujukan MASUK ke RS ini, belum diterima/ditolak
         $skrinings = RujukanRs::with(['skrining.pasien.user'])
             ->where('rs_id', $rsId)
             ->where('done_status', false)
@@ -23,9 +24,23 @@ class RujukanController extends Controller
             $skr = $rujukan->skrining;
             $pas = optional($skr)->pasien;
             $usr = optional($pas)->user;
+
+            if (!$skr) {
+                $rujukan->nik        = '-';
+                $rujukan->nama       = 'Data Skrining Tidak Tersedia';
+                $rujukan->tanggal    = '-';
+                $rujukan->alamat     = '-';
+                $rujukan->telp       = '-';
+                $rujukan->kesimpulan = '-';
+                $rujukan->detail_url = '#';
+                return $rujukan;
+            }
+
             $raw = strtolower(trim($skr->kesimpulan ?? $skr->status_pre_eklampsia ?? ''));
-            $isHigh = ($skr->jumlah_resiko_tinggi ?? 0) > 0 || in_array($raw, ['beresiko','berisiko','risiko tinggi','tinggi']);
-            $isMed  = ($skr->jumlah_resiko_sedang ?? 0) > 0 || in_array($raw, ['waspada','menengah','sedang','risiko sedang']);
+            $isHigh = ($skr->jumlah_resiko_tinggi ?? 0) > 0
+                || in_array($raw, ['beresiko','berisiko','risiko tinggi','tinggi']);
+            $isMed  = ($skr->jumlah_resiko_sedang ?? 0) > 0
+                || in_array($raw, ['waspada','menengah','sedang','risiko sedang']);
 
             $rujukan->nik        = $pas->nik ?? '-';
             $rujukan->nama       = $usr->name ?? 'Nama Tidak Tersedia';
@@ -34,6 +49,7 @@ class RujukanController extends Controller
             $rujukan->telp       = $usr->phone ?? $pas->no_telepon ?? '-';
             $rujukan->kesimpulan = $isHigh ? 'Beresiko' : ($isMed ? 'Waspada' : 'Tidak Berisiko');
             $rujukan->detail_url = route('rs.skrining.show', $skr->id ?? 0);
+
             return $rujukan;
         });
 
@@ -43,20 +59,39 @@ class RujukanController extends Controller
     public function accept($id)
     {
         $rsId = Auth::user()->rumahSakit->id ?? null;
-        $rujukan = RujukanRs::where('skrining_id', $id)->where('rs_id', $rsId)->firstOrFail();
+
+        // $id di sini dianggap skrining_id
+        $rujukan = RujukanRs::where('skrining_id', $id)
+            ->where('rs_id', $rsId)
+            ->where('done_status', false)
+            ->firstOrFail();
+
         $rujukan->done_status = true;
         $rujukan->save();
 
-        return redirect()->route('rs.penerimaan-rujukan.index')->with('success', 'Rujukan diterima.');
+        return redirect()
+            ->route('rs.penerimaan-rujukan.index')
+            ->with('success', 'Rujukan diterima.');
     }
 
     public function reject($id)
     {
         $rsId = Auth::user()->rumahSakit->id ?? null;
-        $rujukan = RujukanRs::where('skrining_id', $id)->where('rs_id', $rsId)->firstOrFail();
+
+        // $id di sini juga dianggap skrining_id
+        $rujukan = RujukanRs::where('skrining_id', $id)
+            ->where('rs_id', $rsId)
+            ->where('done_status', false)
+            ->firstOrFail();
+
+        // Hapus resep obat yang terkait dengan rujukan ini (jika ada)
         ResepObat::where('rujukan_rs_id', $rujukan->id)->delete();
+
+        // Hapus rujukan
         $rujukan->delete();
 
-        return redirect()->route('rs.penerimaan-rujukan.index')->with('success', 'Rujukan ditolak.');
+        return redirect()
+            ->route('rs.penerimaan-rujukan.index')
+            ->with('success', 'Rujukan ditolak.');
     }
 }

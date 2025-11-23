@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Pasien;
 use App\Models\PasienNifasRs;
 use App\Models\Skrining;
-use App\Models\RumahSakit; // <-- TAMBAHAN
+use App\Models\RumahSakit;
+use App\Models\RujukanRs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,67 +18,230 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Data Daerah Asal Pasien (berdasarkan PKabupaten)
-        $pasienDepok = Pasien::where('PKabupaten', 'LIKE', '%Depok%')->count();
-        $pasienNonDepok = Pasien::where('PKabupaten', 'NOT LIKE', '%Depok%')
-            ->orWhereNull('PKabupaten')
-            ->count();
+        // RS yang sedang login
+        $rsId = $this->getRsId();
 
-        // Data Resiko Eklampsia (sementara 0 dulu)
-        $pasienNormal = 0;
-        $pasienBeresikoEklampsia = 0;
+        /**
+         * ==============================
+         * 1. BASIS DATA RUJUKAN RS
+         * ==============================
+         * Semua rujukan ke RS ini, dipisah:
+         * - acceptedRujukan: rujukan yang SUDAH diterima (done_status = true)
+         * - pendingRujukan : rujukan yang BELUM diterima (done_status = false)
+         */
+        $allRujukanForRs = RujukanRs::with(['skrining.pasien.user'])
+            ->where('rs_id', $rsId)
+            ->get();
 
-        // Data Pasien Hadir (sementara 0 dulu)
-        $pasienHadir = 0;
-        $pasienTidakHadir = 0;
+        $acceptedRujukan = $allRujukanForRs->where('done_status', true);
+        $pendingRujukan  = $allRujukanForRs->where('done_status', false);
 
-        // Data Pasien Nifas
-        $totalPasienNifas = PasienNifasRs::count();
-        $sudahKF1 = 0;
+        /**
+         * ==============================
+         * 2. DATA PASIEN RUJUKAN / NON RUJUKAN (CARD "Data Pasien")
+         * ==============================
+         * - Pasien Rujukan    = pasien yang punya rujukan ke RS ini dan
+         *                       minimal satu rujukannya SUDAH diterima.
+         * - Pasien Non Rujukan= pasien yang punya rujukan ke RS ini tetapi
+         *                       BELUM ada satupun rujukannya yang diterima.
+         */
 
-        // Data Pemantauan (sementara 0 dulu)
-        $pemantauanSehat = 0;
-        $pemantauanDirujuk = 0;
-        $pemantauanMeninggal = 0;
+        // Pasien yang punya rujukan diterima
+        $acceptedPatientIds = $acceptedRujukan
+            ->pluck('pasien_id')
+            ->filter()
+            ->unique();
 
-        // Data Pasien Pre Eklampsia — skrining yang sudah ada kesimpulan/status
-        $pePatients = Skrining::with(['pasien.user'])
-            ->where(function ($q) {
-                $q->whereNotNull('kesimpulan')
-                  ->orWhereNotNull('status_pre_eklampsia');
-            })
+        // Pasien yang punya rujukan pending
+        $pendingPatientIds = $pendingRujukan
+            ->pluck('pasien_id')
+            ->filter()
+            ->unique();
+
+        // Non rujukan = pasien yang hanya punya rujukan pending, dan BELUM pernah diterima
+        $nonRujukanPatientIds = $pendingPatientIds
+            ->diff($acceptedPatientIds);
+
+        $pasienRujukan    = $acceptedPatientIds->count();
+        $pasienNonRujukan = $nonRujukanPatientIds->count();
+
+        /**
+         * ==============================
+         * 3. DATA PASIEN RUJUKAN (CARD "Data Pasien Rujukan")
+         * ==============================
+         * - Setelah Melahirkan  => pasien rujukan yang sudah masuk data nifas RS ini
+         * - Berisiko            => rujukan KE RS INI yang status skrining-nya berisiko / waspada
+         */
+        $rujukanSetelahMelahirkan = PasienNifasRs::where('rs_id', $rsId)->count();
+
+        $rujukanBeresiko     = 0;
+        $resikoNormal        = 0;
+        $resikoPreeklampsia  = 0; // kartu khusus "Resiko Preeklampsia"
+
+        foreach ($acceptedRujukan as $rujukan) {
+            $skr = $rujukan->skrining;
+
+            if (!$skr) {
+                continue;
+            }
+
+            $raw = strtolower(trim($skr->kesimpulan ?? $skr->status_pre_eklampsia ?? ''));
+
+            $isHigh = ($skr->jumlah_resiko_tinggi ?? 0) > 0
+                || in_array($raw, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']);
+
+            $isMed = ($skr->jumlah_resiko_sedang ?? 0) > 0
+                || in_array($raw, ['waspada', 'menengah', 'sedang', 'risiko sedang']);
+
+            if ($isHigh || $isMed) {
+                $rujukanBeresiko++;
+                $resikoPreeklampsia++;  // Semua yang tidak normal kita hitung sebagai "beresiko preeklampsia"
+            } else {
+                $resikoNormal++;
+            }
+        }
+
+        /**
+         * ==============================
+         * 4. PASIEN HADIR / TIDAK HADIR (CARD "Pasien Hadir")
+         * ==============================
+         * Definisi baru:
+         * - Pasien Hadir       = pasien yang rujukannya SUDAH diterima DAN
+         *                        SUDAH dilakukan pemeriksaan lanjutan
+         *                        (minimal satu field lanjutan di rujukan_rs terisi)
+         * - Pasien Tidak Hadir = pasien yang rujukannya SUDAH diterima tetapi
+         *                        BELUM ada pemeriksaan lanjutan sama sekali
+         *                        (semua field lanjutan masih null)
+         *
+         * Field lanjutan yang dicek:
+         *   - pasien_datang
+         *   - riwayat_tekanan_darah
+         *   - hasil_protein_urin
+         *   - perlu_pemeriksaan_lanjut
+         *   - catatan_rujukan
+         */
+        $pasienHadir = $acceptedRujukan->filter(function (RujukanRs $r) {
+            return !is_null($r->pasien_datang)
+                || !is_null($r->riwayat_tekanan_darah)
+                || !is_null($r->hasil_protein_urin)
+                || !is_null($r->perlu_pemeriksaan_lanjut)
+                || !is_null($r->catatan_rujukan);
+        })->count();
+
+        $totalAccepted = $acceptedRujukan->count();
+        $pasienTidakHadir = max(0, $totalAccepted - $pasienHadir);
+
+        /**
+         * ==============================
+         * 5. DATA PASIEN NIFAS (CARD "Data Pasien Nifas")
+         * ==============================
+         */
+        $totalNifas = PasienNifasRs::where('rs_id', $rsId)->count();
+
+        $pasienNifasIds = PasienNifasRs::where('rs_id', $rsId)->pluck('id');
+
+        if ($pasienNifasIds->isNotEmpty()) {
+            // Nifas yang sudah punya kunjungan KF1
+            $sudahKF1 = DB::table('kf')
+                ->whereIn('id_nifas', $pasienNifasIds)
+                ->where('kunjungan_nifas_ke', 1)
+                ->distinct('id_nifas')
+                ->count('id_nifas');
+
+            /**
+             * ==============================
+             * 6. PEMANTAUAN (CARD "Pemantauan")
+             * ==============================
+             */
+            $kfBase = DB::table('kf')->whereIn('id_nifas', $pasienNifasIds);
+
+            $pemantauanSehat = (clone $kfBase)
+                ->where('kesimpulan_pantauan', 'Sehat')
+                ->count();
+
+            $pemantauanDirujuk = (clone $kfBase)
+                ->where('kesimpulan_pantauan', 'Dirujuk')
+                ->count();
+
+            $pemantauanMeninggal = (clone $kfBase)
+                ->where('kesimpulan_pantauan', 'Meninggal')
+                ->count();
+        } else {
+            $sudahKF1           = 0;
+            $pemantauanSehat    = 0;
+            $pemantauanDirujuk  = 0;
+            $pemantauanMeninggal= 0;
+        }
+
+        /**
+         * ==============================
+         * 7. TABEL DATA PASIEN RUJUKAN PRE EKLAMPSIA
+         * ==============================
+         * HANYA:
+         * - rujukan ke RS ini (rs_id = $rsId)
+         * - sudah diterima (done_status = true)
+         * ==============================
+         */
+        $pePatients = RujukanRs::with(['skrining.pasien.user'])
+            ->where('rs_id', $rsId)
+            ->where('done_status', true)
             ->orderByDesc('created_at')
-            ->take(10)
+            ->limit(50)
             ->get()
-            ->map(function ($s) {
-                $pasien = $s->pasien;
-                $user   = optional($pasien)->user;
-                $kes    = $s->kesimpulan ?? $s->status_pre_eklampsia ?? 'Normal';
+            ->map(function (RujukanRs $rujukan) {
+                $skr = $rujukan->skrining;
+                $pas = optional($skr)->pasien;
+                $usr = optional($pas)->user;
+
+                if (!$skr) {
+                    return (object) [
+                        'id'          => null,
+                        'rujukan_id'  => $rujukan->id,
+                        'nik'         => '-',
+                        'nama'        => 'Data Skrining Tidak Tersedia',
+                        'tanggal'     => '-',
+                        'alamat'      => '-',
+                        'telp'        => '-',
+                        'kesimpulan'  => '-',
+                        'detail_url'  => '#',
+                        'process_url' => null,
+                    ];
+                }
+
+                $raw = strtolower(trim($skr->kesimpulan ?? $skr->status_pre_eklampsia ?? ''));
+
+                $isHigh = ($skr->jumlah_resiko_tinggi ?? 0) > 0
+                    || in_array($raw, ['beresiko','berisiko','risiko tinggi','tinggi']);
+
+                $isMed  = ($skr->jumlah_resiko_sedang ?? 0) > 0
+                    || in_array($raw, ['waspada','menengah','sedang','risiko sedang']);
 
                 return (object) [
-                    'id'          => $pasien->id ?? null,
-                    'rujukan_id'  => $s->id,
-                    'nik'         => $pasien->nik ?? '-',
-                    'nama'        => $user->name ?? 'Nama Tidak Tersedia',
-                    'tanggal'     => optional($s->created_at)->format('d/m/Y') ?? '-',
-                    'alamat'      => $pasien->PKecamatan ?? $pasien->PWilayah ?? '-',
-                    'telp'        => $user->phone ?? $pasien->no_telepon ?? '-',
-                    'kesimpulan'  => ucfirst($kes),
-                    'detail_url'  => route('rs.skrining.edit', $s->id),
-                    'process_url' => $pasien && $pasien->id
-                        ? route('rs.dashboard.proses-nifas', ['id' => $pasien->id])
+                    'id'          => $pas->id ?? null,
+                    'rujukan_id'  => $rujukan->id,
+                    'nik'         => $pas->nik ?? '-',
+                    'nama'        => $usr->name ?? 'Nama Tidak Tersedia',
+                    'tanggal'     => optional($skr->created_at)->format('d/m/Y') ?? '-',
+                    'alamat'      => $pas->PKecamatan ?? $pas->PWilayah ?? '-',
+                    'telp'        => $usr->phone ?? $pas->no_telepon ?? '-',
+                    'kesimpulan'  => $isHigh ? 'Beresiko' : ($isMed ? 'Waspada' : 'Tidak Berisiko'),
+                    'detail_url'  => route('rs.skrining.edit', $skr->id ?? 0),
+                    'process_url' => $pas && $pas->id
+                        ? route('rs.dashboard.proses-nifas', ['id' => $pas->id])
                         : null,
                 ];
             });
 
         return view('rs.dashboard', compact(
-            'pasienDepok',
-            'pasienNonDepok',
-            'pasienNormal',
-            'pasienBeresikoEklampsia',
+            'rujukanSetelahMelahirkan',
+            'rujukanBeresiko',
+            'resikoNormal',
+            'resikoPreeklampsia',
+            'pasienRujukan',
+            'pasienNonRujukan',
             'pasienHadir',
             'pasienTidakHadir',
-            'totalPasienNifas',
+            'totalNifas',
             'sudahKF1',
             'pemantauanSehat',
             'pemantauanDirujuk',

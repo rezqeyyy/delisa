@@ -36,7 +36,7 @@
                 </div>
 
                 <div class="flex items-center gap-3 flex-none justify-end">
-                    <a href="{{ route('rs.dashboard') }}"
+                    <a href="{{ route('rs.profile.edit') }}"
                         class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90"
                             alt="Setting">
@@ -161,7 +161,7 @@
 
                 <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
                     <div class="flex items-center gap-3 mb-3">
-                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Pasien Hadir</h3>
+                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Pasien yang Hadir Pemeriksaan</h3>
                     </div>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
@@ -243,9 +243,6 @@
                                 </svg>
                                 Filter
                             </button>
-
-                            <a href="#" class="px-5 py-2 rounded-full bg-[#B9257F] text-white font-semibold">+
-                                Tambah Akun</a>
                         </div>
                     </div>
 
