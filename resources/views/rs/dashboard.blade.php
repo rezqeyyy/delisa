@@ -246,14 +246,6 @@
 
                             <a href="#" class="px-5 py-2 rounded-full bg-[#B9257F] text-white font-semibold">+
                                 Tambah Akun</a>
-
-                            <button
-                                class="w-10 h-10 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5"
-                                    fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M4 4v6h6M20 20v-6h-6M5 19A9 9 0 0 0 19 5" />
-                                </svg>
-                            </button>
                         </div>
                     </div>
 
