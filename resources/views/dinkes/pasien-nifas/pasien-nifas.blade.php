@@ -5,7 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DINKES – Pasien Nifas</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/dinkes/pasien-nifas.js', 'resources/js/dinkes/sidebar-toggle.js'])
+    @vite([
+        'resources/css/app.css',
+        'resources/js/app.js',
+        'resources/js/dropdown.js',
+        'resources/js/dinkes/pasien-nifas.js',
+        'resources/js/dinkes/sidebar-toggle.js'
+    ])
 </head>
 
 <body class="bg-[#F5F5F5] font-[Poppins] text-[#000000CC]">
@@ -16,9 +22,12 @@
             <div class="flex-1">
                 <header class="w-full space-y-3 sm:space-y-4">
                     <div>
-                        <h1 class="text-[22px] sm:text-[28px] font-bold leading-tight text-[#000000]">Data Pasien Nifas
+                        <h1 class="text-[22px] sm:text-[28px] font-bold leading-tight text-[#000000]">
+                            Data Pasien Nifas
                         </h1>
-                        <p class="text-xs sm:text-sm text-[#7C7C7C]">Kelola Data Pasien Nifas Anda</p>
+                        <p class="text-xs sm:text-sm text-[#7C7C7C]">
+                            Kelola Data Pasien Nifas Anda
+                        </p>
                     </div>
 
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -26,8 +35,7 @@
                             <form action="{{ route('dinkes.pasien-nifas') }}" method="GET"
                                 class="flex w-full md:w-auto items-center gap-3">
                                 <div class="relative w-full md:w-[360px]">
-                                    <input type="text" name="q" value="{{ $q ?? '' }}"
-                                        placeholder="Search data..."
+                                    <input type="text" name="q" value="{{ $q ?? '' }}" placeholder="Search data..."
                                         class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
                                     <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}"
                                         class="absolute left-3 top-2.5 w-4 h-4 opacity-60" alt="search">
@@ -45,7 +53,6 @@
                                 class="w-5 h-5">
                             <span>Unduh Data</span>
                         </a>
-
                     </div>
                 </header>
 
@@ -58,8 +65,9 @@
                                     <div class="text-xs text-[#7C7C7C]">#{{ $rows->firstItem() + $idx }}</div>
                                     <h3 class="font-semibold text-base leading-snug truncate">{{ $row->name }}</h3>
                                     <div class="text-xs text-[#7C7C7C] break-all">NIK: {{ $row->nik }}</div>
-                                    <div class="text-xs mt-1"><span class="text-[#7C7C7C]">Role:</span>
-                                        {{ $row->role_penanggung }}</div>
+                                    <div class="text-xs mt-1">
+                                        <span class="text-[#7C7C7C]">Role:</span> {{ $row->role_penanggung }}
+                                    </div>
                                     <div class="text-xs mt-1">
                                         <span class="text-[#7C7C7C]">TTL:</span>
                                         @php
@@ -68,30 +76,24 @@
                                                 $ttl[] = $row->tempat_lahir;
                                             }
                                             if ($row->tanggal_lahir) {
-                                                $ttl[] = \Carbon\Carbon::parse($row->tanggal_lahir)->translatedFormat(
-                                                    'd F Y',
-                                                );
+                                                $ttl[] = \Carbon\Carbon::parse($row->tanggal_lahir)->translatedFormat('d F Y');
                                             }
                                         @endphp
                                         {{ implode(', ', $ttl) }}
                                     </div>
                                 </div>
                                 <div class="flex flex-col gap-2">
-                                    <form class="form-delete"
-                                        action="{{ route('dinkes.pasien-nifas.destroy', $row->id) }}" method="POST"
-                                        data-confirm="Hapus data pasien {{ $row->name }}? Tindakan ini tidak dapat dibatalkan.">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="h-8 border border-[#D9D9D9] rounded-md px-3 text-xs text-[#E20D0D] hover:bg-[#FFF0F0]">
-                                            Hapus
-                                        </button>
-                                    </form>
+                                    <a href="{{ route('dinkes.pasien-nifas.show', $row->id) }}"
+                                        class="h-8 border border-[#D9D9D9] rounded-md px-3 text-xs flex items-center justify-center hover:bg-[#F5F5F5] transition">
+                                        View
+                                    </a>
                                 </div>
                             </div>
                         </article>
                     @empty
-                        <div class="text-center text-[#7C7C7C] py-6">Tidak ada data pasien nifas.</div>
+                        <div class="text-center text-[#7C7C7C] py-6">
+                            Tidak ada data pasien nifas.
+                        </div>
                     @endforelse
 
                     @if ($rows->hasPages())
@@ -112,7 +114,7 @@
                                     <th class="px-4 py-3 font-semibold">NIK</th>
                                     <th class="px-4 py-3 font-semibold">Role Penanggung</th>
                                     <th class="px-4 py-3 font-semibold">Tempat, Tanggal Lahir</th>
-                                    <th class="px-4 py-3 font-semibold text-center w-[180px]">Aksi</th>
+                                    <th class="px-4 py-3 font-semibold text-center w-[180px]">Detail</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -129,33 +131,25 @@
                                                     $ttl[] = $row->tempat_lahir;
                                                 }
                                                 if ($row->tanggal_lahir) {
-                                                    $ttl[] = \Carbon\Carbon::parse(
-                                                        $row->tanggal_lahir,
-                                                    )->translatedFormat('d F Y');
+                                                    $ttl[] = \Carbon\Carbon::parse($row->tanggal_lahir)->translatedFormat('d F Y');
                                                 }
                                             @endphp
                                             {{ implode(', ', $ttl) }}
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex items-center justify-center gap-2">
-                                                <form class="form-delete"
-                                                    action="{{ route('dinkes.pasien-nifas.destroy', $row->id) }}"
-                                                    method="POST"
-                                                    data-confirm="Hapus data pasien {{ $row->name }}? Tindakan ini tidak dapat dibatalkan.">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
-                                                        class="h-8 border border-[#D9D9D9] rounded-md px-3 text-xs text-[#E20D0D] hover:bg-[#FFF0F0]">
-                                                        Hapus
-                                                    </button>
-                                                </form>
+                                                <a href="{{ route('dinkes.pasien-nifas.show', $row->id) }}"
+                                                    class="px-5 py-2 rounded-full bg-[#B9257F] text-white text-sm font-medium hover:bg-[#a31f70] transition">
+                                                    View
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="px-6 py-6 text-center text-[#7C7C7C]">Tidak ada data
-                                            pasien nifas.</td>
+                                        <td colspan="6" class="px-6 py-6 text-center text-[#7C7C7C]">
+                                            Tidak ada data pasien nifas.
+                                        </td>
                                     </tr>
                                 @endforelse
                             </tbody>

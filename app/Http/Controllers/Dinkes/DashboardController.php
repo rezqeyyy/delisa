@@ -124,15 +124,18 @@ class DashboardController extends Controller
 
         // ===================== 5. HADIR / MANGKIR (LATEST SKRINING) =====================
 
-        $pasienHadir = DB::query()
-            ->from(DB::raw($latestSkriningSql))
-            ->where('checked_status', true)
-            ->count();
+        // 1) Hitung seluruh pasien yang sudah membuat akun (role pasien)
+        $totalPasienTerdaftar = DB::table('pasiens')->count();
 
-        $pasienTidakHadir = DB::query()
-            ->from(DB::raw($latestSkriningSql))
-            ->where('checked_status', false)
-            ->count();
+        // 2) Hitung pasien yang hadir (sudah melakukan skrining & checked_status = true)
+        $pasienHadir = DB::table('skrinings')
+            // ->where('checked_status', true)
+            ->distinct('pasien_id')
+            ->count('pasien_id');
+
+        // 3) Pasien tidak hadir = terdaftar - hadir
+        $pasienTidakHadir = $totalPasienTerdaftar - $pasienHadir;
+
 
         // versi pendek
         $hadir   = $pasienHadir;

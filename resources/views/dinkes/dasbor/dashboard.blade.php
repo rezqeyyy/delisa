@@ -160,7 +160,7 @@
                             </div>
                             <hr class="border-[#E9E9E9]">
                             <div class="flex items-center justify-between">
-                                <span class="text-[#7C7C7C]">Pasien Tidak Hadir</span>
+                                <span class="text-[#7C7C7C]">Pasien Belum Hadir</span>
                                 <span class="font-bold text-[#1D1D1D]">{{ $pasienTidakHadir ?? 0 }}</span>
                             </div>
                         </div>
@@ -226,9 +226,6 @@
                 </div>
 
             </section>
-
-
-
 
             {{-- Kunjungan Nifas per Bulan (KF) --}}
             <section class="bg-white rounded-2xl p-5 shadow-md relative">

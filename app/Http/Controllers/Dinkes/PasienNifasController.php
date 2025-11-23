@@ -33,7 +33,7 @@ class PasienNifasController extends Controller
     /**
      * Query dasar untuk pasien nifas (dipakai index & export).
      */
-    private function buildPasienNifasQuery(?string $q = '') 
+    private function buildPasienNifasQuery(?string $q = '')
     {
         $q = trim($q ?? '');
 
@@ -47,11 +47,13 @@ class PasienNifasController extends Controller
                 'p.nik',
                 'p.tempat_lahir',
                 'p.tanggal_lahir',
-                DB::raw("CASE 
-                            WHEN pnb.id IS NOT NULL THEN 'Bidan'
-                            WHEN pnr.id IS NOT NULL THEN 'Rumah Sakit'
-                            ELSE 'Puskesmas'
-                         END as role_penanggung")
+                DB::raw(<<<'SQL'
+                    CASE 
+                        WHEN pnb.id IS NOT NULL THEN 'Bidan'
+                        WHEN pnr.id IS NOT NULL THEN 'Rumah Sakit'
+                        ELSE 'Puskesmas'
+                    END as role_penanggung
+                SQL)
             )
             // ❗ hanya pasien yang benar-benar nifas (punya record di salah satu tabel nifas)
             ->where(function ($w) {
@@ -68,6 +70,88 @@ class PasienNifasController extends Controller
         }
 
         return $query->orderBy('u.name');
+    }
+
+    /**
+     * Tampilkan detail satu pasien nifas untuk Dinkes.
+     */
+    public function show($pasienId)
+    {
+        // ========== 1. Data utama pasien + penanggung nifas ==========
+        $pasien = DB::table('pasiens as p')
+            ->join('users as u', 'u.id', '=', 'p.user_id')
+            ->leftJoin('pasien_nifas_bidan as pnb', 'pnb.pasien_id', '=', 'p.id')
+            ->leftJoin('pasien_nifas_rs as pnr', 'pnr.pasien_id', '=', 'p.id')
+            ->leftJoin('bidans as b', 'b.id', '=', 'pnb.bidan_id')
+            ->leftJoin('puskesmas as pk', 'pk.id', '=', 'b.puskesmas_id')
+            ->leftJoin('rumah_sakits as rs', 'rs.id', '=', 'pnr.rs_id')
+            ->selectRaw("
+                p.id,
+                u.name,
+                u.email,
+                u.phone,
+                u.address,
+                p.nik,
+                p.tempat_lahir,
+                p.tanggal_lahir,
+                p.\"PKecamatan\" as \"PKecamatan\",
+                p.\"PKabupaten\" as \"PKabupaten\",
+                p.\"PProvinsi\" as \"PProvinsi\",
+                CASE 
+                    WHEN pnb.id IS NOT NULL THEN 'Bidan'
+                    WHEN pnr.id IS NOT NULL THEN 'Rumah Sakit'
+                    ELSE 'Puskesmas'
+                END as role_penanggung,
+                pnb.tanggal_mulai_nifas as tanggal_mulai_nifas_bidan,
+                pnr.tanggal_mulai_nifas as tanggal_mulai_nifas_rs,
+                pk.nama_puskesmas,
+                rs.nama as nama_rs
+            ")
+            ->where('p.id', $pasienId)
+            ->first();
+
+        abort_unless($pasien, 404);
+
+        // Normalisasi tanggal lahir & mulai nifas biar enak dipakai di Blade
+        $pasien->tanggal_lahir_formatted = $pasien->tanggal_lahir
+            ? Carbon::parse($pasien->tanggal_lahir)->translatedFormat('d F Y')
+            : null;
+
+        $tanggalMulaiNifas = $pasien->tanggal_mulai_nifas_bidan ?? $pasien->tanggal_mulai_nifas_rs;
+        $pasien->tanggal_mulai_nifas_formatted = $tanggalMulaiNifas
+            ? Carbon::parse($tanggalMulaiNifas)->translatedFormat('d F Y')
+            : null;
+
+        // ========== 2. Data anak nifas (anak_pasien) ==========
+        $anakList = DB::table('anak_pasien')
+            ->where('nifas_id', $pasienId)
+            ->orderBy('anak_ke')
+            ->get();
+
+        // ========== 3. Riwayat penyakit nifas ==========
+        $riwayatPenyakit = DB::table('riwayat_penyakit_nifas')
+            ->where('nifas_id', $pasienId)
+            ->orderBy('id')
+            ->get();
+
+        // ========== 4. Kunjungan nifas (KF) ==========
+        $kunjunganNifas = DB::table('kf')
+            ->leftJoin('anak_pasien as a', 'a.id', '=', 'kf.id_anak')
+            ->where('kf.id_nifas', $pasienId)
+            ->orderBy('kf.tanggal_kunjungan')
+            ->selectRaw('
+                kf.*,
+                a.nama_anak,
+                a.anak_ke
+            ')
+            ->get();
+
+        return view('dinkes.pasien-nifas.show', [
+            'pasien'          => $pasien,
+            'anakList'        => $anakList,
+            'riwayatPenyakit' => $riwayatPenyakit,
+            'kunjunganNifas'  => $kunjunganNifas,
+        ]);
     }
 
     /**
