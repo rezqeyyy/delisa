@@ -104,19 +104,26 @@ Route::middleware(['auth'])->group(function () {
 
     // ================== PUSKESMAS ==================
     Route::middleware('role:puskesmas')
-        ->prefix('puskesmas')->as('puskesmas.')
-        ->group(function () {
-            Route::get('/dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
-            Route::get('/skrining', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'index'])->name('skrining');
-            Route::get('/skrining/{skrining}', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'show'])->name('skrining.show');
-            Route::get('/skrining/rs/search', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'rsSearch'])->name('rs.search');
-            Route::post('/skrining/{skrining}/rujuk', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'rujuk'])->name('skrining.rujuk');
-            Route::get('/laporan', [\App\Http\Controllers\Puskesmas\LaporanController::class, 'index'])->name('laporan');
-            Route::get('/pasien-nifas', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'index'])->name('pasien-nifas');
+    ->prefix('puskesmas')->as('puskesmas.')
+    ->group(function () {
+        Route::get('/dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/skrining', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'index'])->name('skrining');
+        Route::get('/skrining/{skrining}', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'show'])->name('skrining.show');
+        
+        // ✅ RUTE RUJUKAN - DIPINDAH KE RUJUKAN CONTROLLER
+        Route::get('/rs/search', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'searchRS'])->name('rs.search');
+        Route::post('/skrining/{skrining}/rujuk', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'ajukanRujukan'])->name('skrining.rujuk');
+        
+        // ✅ RUTE MANAGEMENT RUJUKAN
+        Route::get('/rujukan', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'index'])->name('rujukan.index');
+        Route::get('/rujukan/{id}', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'show'])->name('rujukan.show');
+        
+        Route::get('/laporan', [\App\Http\Controllers\Puskesmas\LaporanController::class, 'index'])->name('laporan');
+        Route::get('/pasien-nifas', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'index'])->name('pasien-nifas');
 
-            Route::get('/profile/edit', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'edit'])->name('profile.edit');
-            Route::put('/profile/update', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'update'])->name('profile.update');
-            Route::delete('/profile/photo', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'destroyPhoto'])
+        Route::get('/profile/edit', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile/update', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile/photo', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'destroyPhoto'])
             ->name('profile.photo.destroy');
         });
 

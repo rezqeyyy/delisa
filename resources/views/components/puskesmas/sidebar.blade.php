@@ -38,6 +38,11 @@
                     <span>Skrining</span>
                 </a>
 
+                <a href="{{ route('puskesmas.rujukan.index') }}" class="{{ $is('puskesmas.rujukan*') ? $active : $idle }}">
+    <img src="{{ asset('icons/Iconly/Sharp/Light/Paper.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Rujukan">
+    <span>Rujukan</span>
+</a>
+
                 <a href="{{ route('puskesmas.laporan') }}" class="{{ $is('puskesmas.laporan*') ? $active : $idle }}">
                     <img src="{{ asset('icons/Iconly/Regular/Light/Message.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Laporan">
                     <span>Laporan</span>
