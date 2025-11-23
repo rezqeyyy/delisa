@@ -18,3 +18,48 @@
 /* Scrollbar manis biar rapi seperti mockup */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 999px; }
+/* Matikan tombol clear bawaan hanya untuk search PE di dashboard */
+#peSearchInput[type="search"] {
+  -webkit-appearance: none;
+          appearance: none;
+}
+
+/* Chromium/WebKit: sembunyikan ikon cancel & dekorasi bawaan */
+#peSearchInput::-webkit-search-cancel-button,
+#peSearchInput::-webkit-search-decoration {
+  -webkit-appearance: none;
+          appearance: none;
+  display: none;
+}
+
+/* Legacy Edge/IE (aman kalau masih ada): */
+#peSearchInput::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* ===== KF chart (Kunjungan Nifas per Bulan) ===== */
+.kf-chart-bar {
+    cursor: pointer;
+}
+
+.kf-chart-bar path {
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+}
+
+.kf-chart-bar:hover path {
+    opacity: 0.85;
+}
+
+.kf-chart-bar-label {
+    opacity: 0;
+    pointer-events: none;
+    font-weight: 600;
+    transition: opacity 0.15s ease-out;
+}
+
+/* Saat bar di-hover, tampilkan label angkanya */
+.kf-chart-bar:hover .kf-chart-bar-label {
+    opacity: 1;
+}

@@ -12,19 +12,18 @@
     modal.innerHTML = `
         <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-lg">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-[#1D1D1D]">Pilih Puskesmas</h3>
+                <h3 class="text-lg font-semibold text-[#1D1D1D]">Pilih Fasilitas</h3>
                 <button type="button" id="closePuskesmasModal" class="text-[#B9257F] hover:underline">Tutup</button>
             </div>
-            <p class="text-sm text-[#6B7280]">Pilih Puskesmas tempat Anda melakukan skrining.</p>
+            <p class="text-sm text-[#6B7280]">Pilih Puskesmas atau klinik Bidan tempat Anda melakukan skrining.</p>
             <div class="mt-3">
-                <input id="puskesmasSearchInput" type="text" placeholder="Ketik untuk mencari puskesmas..."
+                <input id="puskesmasSearchInput" type="text" placeholder="Ketik untuk mencari puskesmas atau klinik bidan..."
                        class="w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]">
             </div>
             <div id="puskesmasList" class="mt-3 max-h-64 overflow-y-auto border border-[#D9D9D9] rounded-xl"></div>
             <div class="mt-4 flex justify-end">
                 <button type="button" id="startSkriningBtn"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-400 text-white disabled:opacity-60 disabled:cursor-not-allowed">
-                    <span class="inline-block w-4 h-4 bg-white/40 rounded"></span>
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-400 text-white disabled:opacity-60 disabled:cursor-not-allowed">                    
                     Mulai Skrining
                 </button>
             </div>
@@ -37,7 +36,7 @@
     const list     = modal.querySelector('#puskesmasList');
     const btnStart = modal.querySelector('#startSkriningBtn');
 
-    let selectedId = null;
+    let selected = null;
 
     function setBtnStyle(enabled) {
         // reset kelas warna
@@ -55,7 +54,7 @@
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         input.value = '';
-        selectedId = null;
+        selected = null;
         setBtnStyle(false);
         loadOptions('');
         setTimeout(() => input.focus(), 50);
@@ -63,7 +62,7 @@
     function closeModal() {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-        selectedId = null;
+        selected = null;
         btnStart.disabled = true;
         list.innerHTML = '';
     }
@@ -86,13 +85,18 @@
             list.innerHTML = '<div class="p-3 text-sm text-[#6B7280]">Tidak ada hasil.</div>';
             return;
         }
-        list.innerHTML = items.map(item => `
-            <button type="button" data-id="${item.id}"
+        list.innerHTML = items.map(item => {
+            const isBidan = item.type === 'bidan';
+            const title = isBidan ? (item.klinik_nama || '-') : (item.nama_puskesmas || '-');
+            const subtitle = isBidan ? `Bidan Mandiri — Kec. ${item.kecamatan ?? '-'}` : `Puskesmas — Kec. ${item.kecamatan ?? '-'}`;
+            return `
+            <button type="button" data-id="${item.id}" data-type="${item.type}"
                     class="w-full text-left px-4 py-2 hover:bg-[#F9E5F1] border-b last:border-b-0">
-                <div class="font-medium text-[#1D1D1D]">${item.nama_puskesmas}</div>
-                <div class="text-xs text-[#6B7280]">Kec. ${item.kecamatan ?? '-'}</div>
+                <div class="font-medium text-[#1D1D1D]">${title}</div>
+                <div class="text-xs text-[#6B7280]">${subtitle}</div>
             </button>
-        `).join('');
+            `;
+        }).join('');
         list.querySelectorAll('button[data-id]').forEach(it => {
             it.addEventListener('click', () => {
                 // Tandai terpilih
@@ -102,8 +106,10 @@
                 it.classList.add('bg-[#F9E5F1]', 'border', 'border-[#B9257F]/40');
 
                 // Simpan pilihan & aktifkan tombol mulai
-                selectedId = it.getAttribute('data-id') || null;
-                setBtnStyle(Boolean(selectedId));
+                const selId = it.getAttribute('data-id') || null;
+                const selType = it.getAttribute('data-type') || 'puskesmas';
+                selected = selId ? { id: selId, type: selType } : null;
+                setBtnStyle(Boolean(selected));
             });
         });
     }
@@ -125,9 +131,13 @@
     });
 
     btnStart.addEventListener('click', () => {
-        if (!selectedId) return;
+        if (!selected) return;
         const target = new URL(startUrl, window.location.origin);
-        target.searchParams.set('puskesmas_id', selectedId);
+        if (selected.type === 'bidan') {
+            target.searchParams.set('bidan_id', selected.id);
+        } else {
+            target.searchParams.set('puskesmas_id', selected.id);
+        }
         window.location.href = target.toString();
     });
 })();

@@ -1,168 +1,110 @@
-@extends('layouts.puskesmas')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puskesmas — Dashboard</title>
+    
+    @vite([
+        'resources/css/app.css', 
+        'resources/js/app.js', 
+        'resources/js/dropdown.js', 
+        'resources/js/puskesmas/sidebar-toggle.js'
+        ])
 
-@section('title', 'Skrining Ibu Hamil')
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
+</head>
 
-@section('content')
-<div class="flex-1 flex flex-col">
-    <!-- Header -->
-    <header class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">List Skrining Ibu Hamil</h1>
-    </header>
+<body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
+    <div class="flex min-h-screen" x-data="{ openSidebar: false }">
+        
+        <x-puskesmas.sidebar />
 
-    <!-- Main Card -->
-    <div class="bg-white rounded-xl shadow-sm p-6 flex-1">
-        <!-- Data Pasien Header -->
-        <div class="flex items-center gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10v-2a3 3 0 00-5.356-1.857M7 3h10v3M7 6h10v3" />
-            </svg>
-            <div>
-                <h2 class="font-semibold text-lg">Data Pasien Ibu Hamil</h2>
-                <p class="text-xs text-gray-500">Data pasien yang melakukan pengecekan pada puskesmas ini</p>
-            </div>
-        </div>
+        <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
 
-        <!-- Table -->
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead>
-                    <tr>
-                        <!-- Checkbox Select All -->
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <input type="checkbox" class="rounded text-pink-600 focus:ring-pink-500">
-                        </th>
-                        <!-- Nama Pasien -->
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <div class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a3 3 0 100-6 3 3 0 000 6z" />
-                                </svg>
-                                Nama Pasien
-                            </div>
-                        </th>
-                        <!-- Tanggal -->
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <div class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                Tanggal
-                            </div>
-                        </th>
-                        <!-- Alamat -->
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <div class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                Alamat
-                            </div>
-                        </th>
-                        <!-- No Telp -->
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <div class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" />
-                                </svg>
-                                No Telp
-                            </div>
-                        </th>
-                        <!-- Kesimpulan -->
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <div class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Kesimpulan
-                            </div>
-                        </th>
-                        <!-- Action -->
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <div class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-.426 1.038-.426 1.464 0l1.596 1.596m-7.5 7.5l1.596 1.596m0 0a11.25 11.25 0 1015.912-15.912L16.5 16.5M12 12l4.5 4.5" />
-                                </svg>
-                                Action
-                            </div>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @for($i = 0; $i < 8; $i++)
-                    <tr class="hover:bg-gray-50 transition">
-                        <!-- Checkbox per baris -->
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <input type="checkbox" class="rounded text-pink-600 focus:ring-pink-500">
-                        </td>
-                        <!-- Nama Pasien -->
-                        <td class="px-4 py-3 whitespace-nowrap text-sm flex items-center">
-                            <div class="w-8 h-8 bg-gray-300 rounded-full mr-2 flex items-center justify-center text-xs">A</div>
-                            Asep Dadang
-                        </td>
-                        <!-- Tanggal -->
-                        <td class="px-4 py-3 whitespace-nowrap text-sm">01/01/2025</td>
-                        <!-- Alamat -->
-                        <td class="px-4 py-3 whitespace-nowrap text-sm">Beji</td>
-                        <!-- No Telp -->
-                        <td class="px-4 py-3 whitespace-nowrap text-sm">0000000000</td>
-                        <!-- Kesimpulan -->
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            @php
-                                $kesimpulan = ['Beresiko', 'Aman', 'Waspadai'][$i % 3];
-                                $color = match($kesimpulan) {
-                                    'Beresiko' => 'bg-red-500 text-white',
-                                    'Aman' => 'bg-green-500 text-white',
-                                    'Waspadai' => 'bg-yellow-500 text-black',
-                                };
-                            @endphp
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $color }}">
-                                {{ $kesimpulan }}
+            <!-- Header -->
+            <header class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">List Skrining Ibu Hamil</h1>
+            </header>
+
+            <section class="space-y-4">
+                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-2 sm:p-4">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-start gap-3">
+                            <span class="w-10 h-10 grid place-items-center rounded-full bg-[#F5F5F5]">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-[#1D1D1D]" fill="currentColor"><path d="M6 2a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2H6Zm2 5h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
                             </span>
-                        </td>
-                        <!-- Action -->
-                        <td class="px-4 py-3 whitespace-nowrap text-sm">
-                            <a href="#" class="inline-flex items-center px-3 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                View
-                            </a>
-                        </td>
-                    </tr>
-                    @endfor
-                </tbody>
-            </table>
-        </div>
-        <!-- Pagination -->
-        <div class="mt-6 flex items-center justify-between">
-            <div class="text-sm text-gray-700">
-                Menampilkan <span class="font-medium">1</span> sampai <span class="font-medium">8</span> dari <span class="font-medium">24</span> pasien
-            </div>
+                            <div>
+                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Pre Eklampsia</h2>
+                                <p class="text-xs text-[#7C7C7C]">Daftar pasien skrining preeklampsia terbaru</p>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
+                                <tr class="text-left">
+                                    <th class="px-3 py-2 w-10"><input type="checkbox" class="rounded"></th>
+                                    <th class="px-3 py-2">No</th>
+                                    <th class="px-3 py-2">Nama Pasien</th>
+                                    <th class="px-3 py-2">NIK</th>
+                                    <th class="px-3 py-2">Tanggal Pengisian</th>
+                                    <th class="px-3 py-2">Alamat</th>
+                                    <th class="px-3 py-2">No Telp</th>
+                                    <th class="px-3 py-2">Kesimpulan</th>
+                                    <th class="px-3 py-2">View Detail</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[#E9E9E9]">
+                                @forelse(($skrinings ?? []) as $skrining)
+                                    <tr>
+                                        <td class="px-3 py-3"><input type="checkbox" name="selected[]" value="{{ $skrining->id ?? '' }}" class="rounded"></td>
+                                        <td class="px-3 py-3 font-medium tabular-nums">{{ $loop->iteration }}</td>
+                                        @php
+                                            $nama = optional(optional($skrining->pasien)->user)->name ?? '-';
+                                            $nik = optional($skrining->pasien)->nik ?? '-';
+                                            $tanggal = \Carbon\Carbon::parse($skrining->created_at)->format('d/m/Y');
+                                            $alamat = optional(optional($skrining->pasien)->user)->address ?? '-';
+                                            $telp = optional(optional($skrining->pasien)->user)->phone ?? '-';
+                                            $conclusion = $skrining->conclusion_display ?? ($skrining->kesimpulan ?? 'Normal');
+                                            $cls = $skrining->badge_class ?? 'bg-[#2EDB58] text-white';
+                                        @endphp
+                                        <td class="px-3 py-3">{{ $nama }}</td>
+                                        <td class="px-3 py-3 tabular-nums">{{ $nik }}</td>
+                                        <td class="px-3 py-3">{{ $tanggal }}</td>
+                                        <td class="px-3 py-3">{{ $alamat }}</td>
+                                        <td class="px-3 py-3">{{ $telp }}</td>
+                                        <td class="px-3 py-3">
+                                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $cls }}">
+                                                {{ $conclusion }}
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            <a href="{{ route('puskesmas.skrining.show', $skrining->id) }}" class="px-4 py-1.5 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">View</a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="9" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada data skrining yang lengkap.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
 
-            <nav class="flex items-center space-x-1" aria-label="Pagination">
-                <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                    Previous
-                </a>
-
-                <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">1</a>
-                <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">2</a>
-                <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">3</a>
-                <span class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700">...</span>
-                <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">8</a>
-
-                <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50">
-                    Next
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </a>
-            </nav>
-        </div>
+            <footer class="text-center text-xs text-[#7C7C7C] py-6">
+                © 2025 Dinas Kesehatan Kota Depok — DeLISA
+            </footer>
+        </main>
     </div>
-</div>
-@endsection
+</body>
+</html>
+    

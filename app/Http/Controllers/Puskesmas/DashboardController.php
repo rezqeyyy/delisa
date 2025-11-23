@@ -3,75 +3,74 @@
 namespace App\Http\Controllers\Puskesmas;
 
 use App\Http\Controllers\Controller;
-use App\Models\Skrining; // Import model Skrining
-use App\Models\Pasien;   // Import model Pasien jika diperlukan secara terpisah
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // Ambil semua skrining (Anda mungkin ingin filter berdasarkan puskesmas tertentu nanti)
-        // Gunakan with('pasien') untuk mengambil data pasien terkait secara efisien (eager loading)
-        $skriningQuery = Skrining::with('pasien');
-        $allSkrining = $skriningQuery->get();
+        // Versi SANGAT AMAN - tanpa DB::raw yang kompleks
+        $pePatients = DB::table('skrinings')
+            ->join('pasiens', 'skrinings.pasien_id', '=', 'pasiens.id')
+            ->select(
+                'skrinings.id',
+                'skrinings.status_pre_eklampsia',
+                'skrinings.kesimpulan',
+                'skrinings.tindak_lanjut',
+                'skrinings.created_at',
+                'pasiens.nik',
+                'pasiens.tempat_lahir',
+                'pasiens.tanggal_lahir',
+                'pasiens.PKecamatan'
+            )
+            ->orderBy('skrinings.created_at', 'desc')
+            ->get();
 
-        // 1. Daerah Asal Pasien (Contoh: berdasarkan PKabupaten)
-        $depokCount = $allSkrining->where('pasien.PKabupaten', 'Kota Depok')->count();
-        $nonDepokCount = $allSkrining->count() - $depokCount; // Hitung sisanya sebagai Non Depok
+        // Manipulasi data collection untuk memenuhi kebutuhan view
+        $pePatients = $pePatients->map(function ($item) {
+            return (object) [
+                'id' => $item->id,
+                'nama' => $item->tempat_lahir,
+                'nik' => $item->nik,
+                'tanggal' => $item->created_at,
+                'alamat' => $item->PKecamatan,
+                'telp' => '-',
+                'kesimpulan' => $item->kesimpulan,
+                'hasil_akhir' => $item->kesimpulan,
+                'rekomendasi' => '-',
+                'status_pre_eklampsia' => $item->status_pre_eklampsia,
+                'tindak_lanjut' => $item->tindak_lanjut
+            ];
+        });
 
-        // 2. Data Pasien Nifas (Asumsikan kolom status_nifas ada di tabel skrinings)
-        // Jika kolom ini belum ada, Anda perlu menambahkannya dan mengisi nilainya saat skrining dibuat
-        // $totalNifas = $allSkrining->where('status_nifas', true)->count(); // Ganti 'status_nifas' dengan nama kolom yang benar
-        // $sudahKFI = $allSkrining->where('status_nifas', true)->where('sudah_kfi', true)->count(); // Ganti 'sudah_kfi' dengan nama kolom yang benar
-        // Sementara, jika kolom belum ada, gunakan 0
-        $totalNifas = 0;
+        // ========== DATA PASIEN NIFAS - VERSI SEDERHANA & AMAN ==========
+        // Point 1: Total Pasien Nifas (gabungan dari kedua tabel)
+        $totalNifasBidan = DB::table('pasien_nifas_bidan')->count();
+        $totalNifasRS = DB::table('pasien_nifas_rs')->count();
+        $totalNifas = $totalNifasBidan + $totalNifasRS;
+        
+        // Point 2: Sudah KFI - sementara set 0 untuk menghindari error
         $sudahKFI = 0;
+        // ========== END DATA PASIEN NIFAS ==========
 
-        // 3. Resiko Eklampsia (Berdasarkan kolom kesimpulan di tabel skrinings)
-        // SESUAIKAN DENGAN NILAI YANG ADA DI DATABASE
-        $normalEklampsia = $allSkrining->where('kesimpulan', 'Normal')->count(); // Ganti nilai sesuai data Anda
-        $waspadaiEklampsia = $allSkrining->where('kesimpulan', 'Waspada')->count(); // <- GANTI INI
-        $beresikoEklampsia = $allSkrining->where('kesimpulan', 'Beresiko')->count(); // <- GANTI INI JUGA, ATAU BUAT LAIN JIKA ADA
+        $data = [
+            'asalDepok' => DB::table('pasiens')->where('PKabupaten', 'Depok')->count(),
+            'asalNonDepok' => DB::table('pasiens')->where('PKabupaten', '!=', 'Depok')->count(),
+            'resikoNormal' => DB::table('skrinings')->where('status_pre_eklampsia', 'Normal')->count(),
+            'resikoPreeklampsia' => DB::table('skrinings')->where('status_pre_eklampsia', '!=', 'Normal')->count(),
+            'pasienHadir' => DB::table('skrinings')->count(),
+            'pasienTidakHadir' => 0,
+            
+            // DUA POINT UTAMA YANG DIMINTA:
+            'totalNifas' => $totalNifas,    // Point 1: Total Pasien Nifas
+            'sudahKFI' => $sudahKFI,        // Point 2: Sudah KFI
+            
+            'pemantauanSehat' => DB::table('skrinings')->where('kesimpulan', 'like', '%aman%')->orWhere('kesimpulan', 'like', '%tidak%')->count(),
+            'pemantauanDirujuk' => DB::table('skrinings')->where('tindak_lanjut', true)->count(),
+            'pemantauanMeninggal' => 0,
+            'pePatients' => $pePatients
+        ];
 
-        // 4. Pasien Hadir (Asumsikan kolom hadir ada di tabel skrinings)
-        // Jika kolom ini belum ada, Anda perlu menambahkannya
-        // $hadir = $allSkrining->where('hadir', true)->count(); // Ganti 'hadir' dengan nama kolom yang benar
-        // $tidakHadir = $allSkrining->where('hadir', false)->count();
-        // Sementara, jika kolom belum ada, gunakan 0
-        $hadir = 0;
-        $tidakHadir = 0;
-
-        // 5. Pemantauan (Asumsikan kolom pemantauan_status ada di tabel skrinings)
-        // Jika kolom ini belum ada, Anda perlu menambahkannya
-        // $sehat = $allSkrining->where('pemantauan_status', 'Sehat')->count(); // Ganti 'pemantauan_status' dengan nama kolom yang benar
-        // $dirujuk = $allSkrining->where('pemantauan_status', 'Dirujuk')->count();
-        // $meninggal = $allSkrining->where('pemantauan_status', 'Meninggal')->count();
-        // Sementara, jika kolom belum ada, gunakan 0
-        $sehat = 0;
-        $dirujuk = 0;
-        $meninggal = 0;
-
-        // 6. Tabel Data Pasien Pre Eklampsia (ambil 5 skrining dengan kesimpulan 'Beresiko')
-        // SESUAIKAN DENGAN NILAI YANG ADA DI DATABASE
-        $preEklampsiaData = $skriningQuery->where('kesimpulan', 'Waspada')->take(5)->get(); // <- GANTI INI JUGA
-
-        // Kirim semua data ke view
-        return view('puskesmas.dashboard.index', compact(
-            'depokCount',
-            'nonDepokCount',
-            'totalNifas',
-            'sudahKFI',
-            'normalEklampsia',
-            'waspadaiEklampsia',
-            'beresikoEklampsia',
-            'hadir',
-            'tidakHadir',
-            'sehat',
-            'dirujuk',
-            'meninggal',
-            'preEklampsiaData'
-        ));
+        return view('puskesmas.dashboard.index', $data);
     }
 }

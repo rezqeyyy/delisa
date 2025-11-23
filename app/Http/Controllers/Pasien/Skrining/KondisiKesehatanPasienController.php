@@ -13,7 +13,11 @@ use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 class KondisiKesehatanPasienController extends Controller
 {
     use SkriningHelpers;  
+    
+    /* {{-- ========== KONDISI KESEHATAN — FORM ========== --}} */
 
+    // Halaman kondisi kesehatan:
+    // - Menarik data kondisi (jika ada) untuk prefill form.
     public function kondisiKesehatanPasien(Request $request)
     {
         $skrining = $this->requireSkriningForPasien((int) $request->query('skrining_id'));
@@ -21,7 +25,14 @@ class KondisiKesehatanPasienController extends Controller
 
         return view('pasien.skrining.kondisi-kesehatan-pasien', compact('kk'));
     }
+    
+    /* {{-- ========== KONDISI KESEHATAN — STORE ========== --}} */
 
+    // Penyimpanan kondisi kesehatan:
+    // - Hitung IMT (kg/m^2) dan kategorinya, serta anjuran kenaikan BB.
+    // - Hitung MAP dari SDP/DBP, usia kehamilan (minggu), dan TPP (HPHT + 280 hari).
+    // - Simpan ke tabel kondisi_kesehatans, set step_form=3.
+    // - Rehitung status preeklampsia dan lanjut ke riwayat penyakit pasien.
     public function store(Request $request)
     {
         $data = $request->validate([

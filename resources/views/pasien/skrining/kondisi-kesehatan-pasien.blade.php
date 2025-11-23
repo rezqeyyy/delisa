@@ -12,7 +12,9 @@
         'resources/js/pasien/imt.js', 
         'resources/js/pasien/map.js', 
         'resources/js/pasien/usia-kehamilan.js',
-        'resources/js/pasien/perkiraan-persalinan.js'
+        'resources/js/pasien/perkiraan-persalinan.js',
+        'resources/js/pasien/list-filter.js',
+        'resources/js/pasien/sidebar-toggle.js'
         ])
 
     <style>
@@ -25,25 +27,7 @@
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
-        <x-pasien.sidebar class="hidden xl:flex z-30" />
-
-        <x-pasien.sidebar
-            x-cloak
-            x-show="openSidebar"
-            class="xl:hidden z-50 transform"
-            x-transition:enter="transform ease-out duration-300"
-            x-transition:enter-start="-translate-x-full"
-            x-transition:enter-end="translate-x-0"
-            x-transition:leave="transform ease-in duration-200"
-            x-transition:leave-start="translate-x-0"
-            x-transition:leave-end="-translate-x-full"
-        />
-        <div
-            x-cloak
-            x-show="openSidebar"
-            class="fixed inset-0 z-40 bg-black/40 xl:hidden"
-            @click="openSidebar = false">
-        </div>
+        <x-pasien.sidebar />
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
             <div class="flex items-center">
@@ -161,11 +145,12 @@
                             <label class="block text-sm font-medium text-[#1D1D1D]">Pemeriksaan Protein Urine</label>
                             <select name="pemeriksaan_protein_urine"
                                     class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm text-[#1D1D1D] focus:outline-none focus:ring-2 focus:ring-[#B9257F]">
-                                <option value="Negatif">Negatif</option>
-                                <option value="Positif 1">Positif 1</option>
-                                <option value="Positif 2">Positif 2</option>
-                                <option value="Positif 3">Positif 3</option>
-                                <option value="Belum dilakukan Pemeriksaan">Belum dilakukan Pemeriksaan</option>
+                                @php($pu = old('pemeriksaan_protein_urine', optional($kk)->pemeriksaan_protein_urine))
+                                <option value="Negatif" {{ $pu === 'Negatif' ? 'selected' : '' }}>Negatif</option>
+                                <option value="Positif 1" {{ $pu === 'Positif 1' ? 'selected' : '' }}>Positif 1</option>
+                                <option value="Positif 2" {{ $pu === 'Positif 2' ? 'selected' : '' }}>Positif 2</option>
+                                <option value="Positif 3" {{ $pu === 'Positif 3' ? 'selected' : '' }}>Positif 3</option>
+                                <option value="Belum dilakukan Pemeriksaan" {{ $pu === 'Belum dilakukan Pemeriksaan' ? 'selected' : '' }}>Belum dilakukan Pemeriksaan</option>
                             </select>
                         </div>
 
@@ -206,7 +191,7 @@
                     </a>
                     <button type="submit"
                         class="rounded-full bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a51f73]">
-                        Lanjut
+                        Simpan & lanjut
                     </button>
                 </div>
             </form>

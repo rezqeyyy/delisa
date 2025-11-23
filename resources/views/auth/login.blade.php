@@ -73,10 +73,10 @@
                     </form>
 
                     <div class="mt-8 flex justify-between items-center text-sm">
-                        <a href="{{ route('password.request') }}" class="font-medium text-gray-600 hover:text-gray-900">
+                        {{-- <a href="{{ route('password.request') }}" class="font-medium text-gray-600 hover:text-gray-900">
                             Lupa password? <span class="font-semibold text-[#D91A8B] hover:text-[#c4177c]">Klik
                                 disini</span>
-                        </a>
+                        </a> --}}
                         <button id="openRoleModal" class="font-medium text-gray-600 hover:text-gray-900">
                             Belum punya akun? <span class="font-semibold text-[#D91A8B] hover:text-[#c4177c]">Ajukan
                                 disini</span>

@@ -83,8 +83,16 @@
             <!-- Ringkasan Status -->
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
                 <!-- Status Skrining Terbaru -->
-                <div class="bg-white rounded-2xl shadow-md p-4 sm:p-5">
+                <div class="bg-white rounded-2xl shadow-md p-4 sm:p-5 relative">
                     <h2 class="font-semibold mb-3">Status Skrining Terbaru</h2>
+
+                    {{-- Tanggal input di pojok kanan atas --}}
+                    @if ($skrining?->tanggal_waktu)
+                        <span class="absolute top-5 right-5 text-xs text-[#7C7C7C]">
+                            Diinput {{ $skrining->tanggal_waktu }}
+                        </span>
+                    @endif
+
                     @if ($skrining)
                         @php
                             $risk =
@@ -95,20 +103,27 @@
                                         : 'Normal');
                             $riskColor = ['Normal' => '#39E93F', 'Sedang' => '#E2D30D', 'Tinggi' => '#E20D0D'][$risk];
                         @endphp
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-5">
+                            {{-- Puskesmas --}}
                             <div>
-                                <div class="text-sm text-[#7C7C7C]">Tanggal Input Skrining</div>
-                                <div class="font-semibold">
-                                    {{ $skrining->tanggal ?? '—' }}
+                                <div class="text-sm text-[#7C7C7C] mb-1">Puskesmas</div>
+                                <div class="font-semibold break-words">
+                                    {{ $skrining->puskesmas_nama ?? '—' }}
                                 </div>
                             </div>
+
+                            {{-- Status --}}
                             <div>
                                 <div class="text-sm text-[#7C7C7C] mb-1">Status</div>
                                 <span class="inline-block px-2.5 py-1 rounded-full text-sm"
-                                    style="background: {{ $skrining->checked_status ? '#39E93F33' : '#E20D0D33' }}; color: {{ $skrining->checked_status ? '#39E93F' : '#E20D0D' }};">
+                                    style="background: {{ $skrining->checked_status ? '#39E93F33' : '#E20D0D33' }};
+                           color: {{ $skrining->checked_status ? '#39E93F' : '#E20D0D' }};">
                                     {{ $skrining->checked_status ? 'Hadir' : 'Mangkir' }}
                                 </span>
                             </div>
+
+                            {{-- Risiko --}}
                             <div>
                                 <div class="text-sm text-[#7C7C7C] mb-1">Risiko</div>
                                 <span class="inline-block px-2.5 py-1 rounded-full text-sm"
@@ -118,7 +133,7 @@
                             </div>
                         </div>
                     @else
-                        <p class="text-sm text-[#7C7C7C]">Belum ada data skrining.</p>
+                        <p class="text-sm text-[#7C7C7C] mt-2">Belum ada data skrining.</p>
                     @endif
                 </div>
 
@@ -214,6 +229,49 @@
                     </div>
                 @else
                     <p class="text-sm text-[#7C7C7C]">Belum ada catatan kondisi kesehatan.</p>
+                @endif
+            </section>
+
+            <!-- Riwayat Penyakit -->
+            <section class="bg-white rounded-2xl shadow-md p-4 sm:p-5">
+                <h2 class="font-semibold mb-4">Riwayat Penyakit</h2>
+
+                @if ($skrining && (count($riwayatPenyakit) || $penyakitLainnya))
+                    <div class="space-y-3 text-sm">
+                        {{-- Daftar penyakit yang dipilih --}}
+                        <div class="flex flex-wrap gap-2">
+                            @forelse ($riwayatPenyakit as $nama)
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 rounded-full bg-[#FFF0F6] text-[#B9257F] text-xs sm:text-sm">
+                                    {{ $nama }}
+                                </span>
+                            @empty
+                                <p class="text-[#7C7C7C]">Tidak ada penyakit spesifik yang dicentang.</p>
+                            @endforelse
+                        </div>
+
+                        {{-- Penyakit lainnya (free text) --}}
+                        @if ($penyakitLainnya)
+                            <div class="mt-2">
+                                <div class="text-[#7C7C7C] mb-0.5">Penyakit Lainnya</div>
+                                <div class="font-semibold break-words">
+                                    {{ $penyakitLainnya }}
+                                </div>
+                            </div>
+                        @endif
+
+                        <p class="text-xs text-[#9E9E9E] mt-2">
+                            Sumber data: isian riwayat penyakit pada skrining terakhir pasien.
+                        </p>
+                    </div>
+                @elseif ($skrining)
+                    <p class="text-sm text-[#7C7C7C]">
+                        Belum ada riwayat penyakit yang diisi pada skrining terakhir.
+                    </p>
+                @else
+                    <p class="text-sm text-[#7C7C7C]">
+                        Belum ada data skrining sehingga riwayat penyakit tidak tersedia.
+                    </p>
                 @endif
             </section>
 

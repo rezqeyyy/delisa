@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Dinkes;
 
 use App\Http\Controllers\Controller;
@@ -10,8 +11,8 @@ class PasienController extends Controller
     {
         // ===================== Identitas & alamat =====================
         $pasien = DB::table('pasiens as p')
-            ->join('users as u','u.id','=','p.user_id')
-            ->leftJoin('roles as r','r.id','=','u.role_id')
+            ->join('users as u', 'u.id', '=', 'p.user_id')
+            ->leftJoin('roles as r', 'r.id', '=', 'u.role_id')
             ->selectRaw("
                 p.*,
                 u.name, u.email, u.photo, u.phone, u.address,
@@ -23,13 +24,15 @@ class PasienController extends Controller
         abort_unless($pasien, 404);
 
         // ===================== Skrining TERBARU + tanggal terformat =====================
-        // Catatan: alias 'tanggal' agar langsung kebaca di blade (mis. {{ $skrining->tanggal ?? '—' }})
+        // Catatan: alias 'tanggal' dan 'tanggal_waktu' agar langsung kebaca di blade
         $skrining = DB::table('skrinings as s')
+            ->leftJoin('puskesmas as pk', 'pk.id', '=', 's.puskesmas_id')
             ->where('s.pasien_id', $pasienId)
             ->orderByDesc('s.created_at')
             ->selectRaw("
                 s.*,
-                to_char(COALESCE(s.created_at, s.updated_at), 'DD/MM/YYYY')      as tanggal,
+                pk.nama_puskesmas as puskesmas_nama,
+                to_char(COALESCE(s.created_at, s.updated_at), 'DD/MM/YYYY')         as tanggal,
                 to_char(COALESCE(s.created_at, s.updated_at), 'DD/MM/YYYY HH24:MI') as tanggal_waktu
             ")
             ->first();
@@ -81,22 +84,73 @@ class PasienController extends Controller
 
         // ===================== Rujukan RS terakhir =====================
         $rujukan = DB::table('rujukan_rs as rr')
-            ->leftJoin('rumah_sakits as rs','rs.id','=','rr.rs_id')
+            ->leftJoin('rumah_sakits as rs', 'rs.id', '=', 'rr.rs_id')
             ->selectRaw('rr.*, rs.nama as rs_nama')
             ->where('rr.pasien_id', $pasienId)
             ->orderByDesc('rr.created_at')
             ->limit(5)
             ->get();
 
-        return view('dinkes.dasbor.pasien-show', [
-            'pasien'           => $pasien,
-            'skrining'         => $skrining,      // punya ->tanggal & ->tanggal_waktu
-            'kondisi'          => $kondisi,
-            'gpa'              => $gpa,
-            'riwayatKehamilan' => $riwayatKehamilan,
-            'kfSummary'        => $kfSummary,
-            'kfPantauan'       => $kfPantauan,
-            'rujukan'          => $rujukan,
+        // ===================== Riwayat Penyakit (skrining terbaru) =====================
+        $riwayatPenyakit = [];
+        $penyakitLainnya = null;
+
+        if ($skrining) {
+            // Mapping kode -> nama pertanyaan (harus sama dengan controller pasien)
+            $map = [
+                'hipertensi'  => 'Hipertensi',
+                'alergi'      => 'Alergi',
+                'tiroid'      => 'Tiroid',
+                'tb'          => 'TB',
+                'jantung'     => 'Jantung',
+                'hepatitis_b' => 'Hepatitis B',
+                'jiwa'        => 'Jiwa',
+                'autoimun'    => 'Autoimun',
+                'sifilis'     => 'Sifilis',
+                'diabetes'    => 'Diabetes',
+                'asma'        => 'Asma',
+                'lainnya'     => 'Lainnya',
+            ];
+
+            // Ambil kuisioner yang relevan (status_soal = individu)
+            $kuisioner = DB::table('kuisioner_pasiens')
+                ->where('status_soal', 'individu')
+                ->whereIn('nama_pertanyaan', array_values($map))
+                ->get(['id', 'nama_pertanyaan'])
+                ->keyBy('nama_pertanyaan');
+
+            // Ambil jawaban untuk skrining tersebut
+            $jawaban = DB::table('jawaban_kuisioners')
+                ->where('skrining_id', $skrining->id)
+                ->whereIn('kuisioner_id', $kuisioner->pluck('id')->all())
+                ->get(['kuisioner_id', 'jawaban', 'jawaban_lainnya'])
+                ->keyBy('kuisioner_id');
+
+            foreach ($map as $code => $nama) {
+                $qid = optional($kuisioner->get($nama))->id;
+                $row = $qid ? $jawaban->get($qid) : null;
+
+                if ($row && $row->jawaban) {
+                    if ($code === 'lainnya') {
+                        $penyakitLainnya = $row->jawaban_lainnya;
+                    } else {
+                        $riwayatPenyakit[] = $nama;
+                    }
+                }
+            }
+        }
+
+        return view('dinkes.pasien.pasien-show', [
+            'pasien'            => $pasien,
+            'skrining'          => $skrining,      // punya ->tanggal & ->tanggal_waktu
+            'kondisi'           => $kondisi,
+            'gpa'               => $gpa,
+            'riwayatKehamilan'  => $riwayatKehamilan,
+            'kfSummary'         => $kfSummary,
+            'kfPantauan'        => $kfPantauan,
+            'rujukan'           => $rujukan,
+            'riwayatPenyakit'   => $riwayatPenyakit,
+            'penyakitLainnya'   => $penyakitLainnya,
         ]);
     }
 }

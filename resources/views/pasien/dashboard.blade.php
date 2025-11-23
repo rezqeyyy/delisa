@@ -10,7 +10,7 @@
         'resources/js/app.js', 
         'resources/js/dropdown.js', 
         'resources/js/pasien/puskesmas-picker.js', 
-        'resources/js/pasien/sidebar.js', 
+        'resources/js/pasien/sidebar-toggle.js', 
         'resources/js/pasien/list-filter.js'])
 
     <style>
@@ -24,39 +24,11 @@
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
         
-        <x-pasien.sidebar class="hidden xl:flex z-30" />
-
-        <x-pasien.sidebar
-            x-cloak
-            x-show="openSidebar"
-            class="xl:hidden z-50 transform"
-            x-transition:enter="transform ease-out duration-300"
-            x-transition:enter-start="-translate-x-full"
-            x-transition:enter-end="translate-x-0"
-            x-transition:leave="transform ease-in duration-200"
-            x-transition:leave-start="translate-x-0"
-            x-transition:leave-end="-translate-x-full"
-        />
-        <div
-            x-cloak
-            x-show="openSidebar"
-            class="fixed inset-0 z-40 bg-black/40 xl:hidden"
-            @click="openSidebar = false">
-        </div>
-        
+        <x-pasien.sidebar />
             
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
             <div class="flex items-center gap-3 flex-nowrap">
                 <div class="flex items-center gap-2 flex-1 min-w-0">
-                    <button
-                        id="pasienSidebarOpen"
-                        class="xl:hidden inline-flex items-center justify-center p-2 rounded-md bg-white border border-[#E5E5E5] shadow"
-                        @click="openSidebar = true">
-                        <svg class="h-6 w-6 text-[#1D1D1D]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-
                     <div class="relative w-full">
                         <span class="absolute inset-y-0 left-3 flex items-center">
                             <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60" alt="Search">
@@ -67,14 +39,9 @@
                 </div>
 
                 <div class="flex items-center gap-3 flex-none justify-end">
-                    <a class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
+                    <a href="{{ route('pasien.profile.edit') }}" class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90" alt="Setting">
                     </a>
-
-                    <button class="relative w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Notification.svg') }}" class="w-4 h-4 opacity-90" alt="Notif">
-                        <span class="absolute top-1.5 right-1.5 inline-block w-2.5 h-2.5 bg-[#B9257F] rounded-full ring-2 ring-white"></span>
-                    </button>
 
                     <div id="profileWrapper" class="relative">
                         <button id="profileBtn" class="flex items-center gap-3 pl-2 pr-3 py-1.5 bg-white border border-[#E5E5E5] rounded-full hover:bg-[#F8F8F8]">
@@ -126,26 +93,30 @@
                     <div class="flex items-center gap-3 flex-none">
                         <div class="leading-tight">
                             <h2 class="text-xl font-semibold text-[#1D1D1D]">List Skrining</h2>
-                            <p class="text-xs text-[#B9257F]">Jika Status Eklampsia masih kosong, berarti skrining belum selesai terisi</p>
+                            <p class="text-xs text-[#B9257F]">*Selesaikan skrining sebelum membuat skrining baru</p>
                         </div>
                     </div>
 
-                    <!-- Grup aksi (dropdown + ajukan) selalu bersama -->
-                    <div class="flex items-center gap-2 w-full md:w-auto min-w-0 flex-wrap md:justify-end">
-                        <!-- Dropdown status -->
-                        <form id="skriningFilterForm" action="{{ route('pasien.dashboard') }}" method="GET"
-                            class="w-full md:w-[220px]">
-                            <div class="relative w-full">
-                                @php $currentStatus = $status ?? ''; @endphp
-                                <select id="statusSelect" name="status"
-                                        class="w-full pl-3 pr-9 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
-                                    <option value="" {{ $currentStatus === '' ? 'selected' : '' }}>Cari Berdasarkan Status</option>
-                                    <option value="" {{ ($status ?? '') === '' ? 'selected' : '' }}>Semua</option>
-                                    <option value="Normal" {{ $currentStatus === 'Normal' ? 'selected' : '' }}>Tidak Berisiko</option>
-                                    <option value="Waspada" {{ $currentStatus === 'Waspada' ? 'selected' : '' }}>Waspada</option>
-                                    <option value="Berisiko" {{ $currentStatus === 'Berisiko' ? 'selected' : '' }}>Berisiko</option>
-                                </select>
-                            </div>
+                    <div class="flex items-center gap-2 w-full md:w-auto min-w-0 flex-wrap md:justify-start">
+                        <form id="skriningFilterForm" action="{{ route('pasien.dashboard') }}" method="GET" class="w-full md:w-auto">
+                            <!-- <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"> -->
+                                <div class="relative">
+                                    @php $currentStatus = $status ?? ''; @endphp
+                                    <select id="statusSelect" name="status"
+                                            class="w-full pl-3 pr-9 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+                                        <option value="" {{ $currentStatus === '' ? 'selected' : '' }}>Cari Berdasarkan Status</option>
+                                        <option value="Tidak berisiko preeklampsia" {{ $currentStatus === 'Tidak berisiko preeklampsia' ? 'selected' : '' }}>Tidak berisiko preeklampsia</option>
+                                        <option value="Berisiko preeklampsia" {{ $currentStatus === 'Berisiko preeklampsia' ? 'selected' : '' }}>Berisiko preeklampsia</option>
+                                        <option value="Skrining belum selesai" {{ $currentStatus === 'Skrining belum selesai' ? 'selected' : '' }}>Skrining belum selesai</option>
+                                    </select>
+                                </div>
+                                <!-- <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}"
+                                       class="w-full pl-3 pr-3 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40"
+                                       onchange="if(this.value && this.form.date_to.value) this.form.submit();" />
+                                <input type="date" name="date_to" value="{{ $dateTo ?? '' }}"
+                                       class="w-full pl-3 pr-3 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40"
+                                       onchange="if(this.value && this.form.date_from.value) this.form.submit();" />
+                            </div> -->
                         </form>
 
                         <!-- Tombol Ajukan Skrining -->
@@ -158,9 +129,9 @@
                         id="btnAjukanSkrining"
                         data-start-url="{{ route('pasien.data-diri') }}"
                         data-search-url="{{ route('pasien.puskesmas.search') }}"
-                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70] w-full md:w-[220px]">
+                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70] w-full md:w-[220px] md:ml-3 flex-none">
                             <span class="text-base leading-none">+</span>
-                            <span class="leading-none">Ajukan Skrining</span>
+                            <span class="leading-none">Tambah Skrining</span>
                         </a>
                     </div>
                 </div>
@@ -209,22 +180,23 @@
                                     </td>
                                     <td class="px-3 py-3 md:px-6 md:py-4">
                                         <div class="flex items-center gap-2">
-                                            <a href="{{ $editUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">
-                                                Edit
-                                            </a>
-                                            <a href="{{ $viewUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">
-                                                View
-                                            </a>
+                                            @if(empty($skrining->has_referral))
+                                                <a href="{{ $editUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">Edit</a>
+                                            @else
+                                                <span class="px-4 py-1.5 rounded-full bg-[#F2F2F2] border border-[#E5E5E5] text-[#7C7C7C]">Edit</span>
+                                            @endif
 
-                                            <form method="POST"
-                                                action="{{ route('pasien.skrining.destroy', $skrining->id) }}"
-                                                onsubmit="return confirm('Yakin hapus data skrining?')">
+                                            <a href="{{ $viewUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">View</a>
+
+                                            @if(empty($skrining->has_referral))
+                                            <form method="POST" action="{{ route('pasien.skrining.destroy', $skrining->id) }}" onsubmit="return confirm('Yakin hapus data skrining?')">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="rounded-full border px-4 py-2 text-red-600 hover:bg-red-50">
-                                                    Hapus
-                                                </button>
+                                                <button type="submit" class="rounded-full border px-4 py-2 text-red-600 hover:bg-red-50">Hapus</button>
                                             </form>
+                                            @else
+                                                <span class="px-4 py-1.5 rounded-full bg-[#F2F2F2] border border-[#E5E5E5] text-[#7C7C7C]">Hapus</span>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -248,9 +220,9 @@
 
             <!-- Ringkasan Total Skrining & Resiko Preeklamsia -->           
             <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white rounded-2xl p-6 shadow-md">
-                    <h2 class="font-semibold text-[#1D1D1D] mb-3">Total Skrining</h2>
-                    <div class="space-y-3 text-sm">
+                <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col h-full">
+                    <h2 class="text-xl font-semibold text-[#1D1D1D] mb-3">Total Skrining</h2>
+                    <div class="text-base flex-1 flex flex-col justify-center space-y-3">
                         <div class="flex items-center justify-between">
                             <span class="text-[#1D1D1D]">Sudah Selesai</span>
                             <span class="font-semibold tabular-nums">{{ $totalSelesai ?? 0 }}</span>
@@ -263,13 +235,23 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl p-6 shadow-md">
-                    <h2 class="font-semibold text-[#1D1D1D] mb-3">Risiko Preeklamsia</h2>
-                    <div class="rounded-xl {{ $riskBoxClass ?? 'bg-[#E9E9E9] text-[#1D1D1D]' }} p-6 text-center">
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h2 class="text-xl font-semibold text-[#1D1D1D] mb-3">Risiko Preeklamsia</h2>
+                    <div class="rounded-xl {{ $riskBoxClass ?? 'bg-[#E9E9E9] text-[#1D1D1D]' }} p-4 text-center">
                         <span class="text-lg font-semibold">
                             {{ $riskPreeklampsia ? $riskPreeklampsia : 'Belum ada' }}
                         </span>
                     </div>
+
+                    @php $riskLower = strtolower($riskPreeklampsia ?? ''); @endphp
+                    @if(in_array($riskLower, ['berisiko preeklampsia','berisiko','beresiko','risiko tinggi','resiko tinggi']))
+                        <p class="text-xs text-red-600 mt-3">*Segera Menuju ke RS di Bawah Untuk Penanganan Lebih Lanjut</p>
+                        <div class="rounded-xl bg-[#E9E9E9] text-[#1D1D1D] p-4 text-center mt-2">
+                            <span class="font-medium">
+                                {{ ($referralAccepted ?? false) && ($referralHospital ?? null) ? $referralHospital : 'Tunggu Hasil Rujukan' }}
+                            </span>
+                        </div>
+                    @endif
                 </div>
             </section>
 

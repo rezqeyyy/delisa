@@ -12,12 +12,16 @@ use App\Models\Skrining;
 use App\Models\Puskesmas;
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 
+
+
 class SkriningController extends Controller
 {
     use SkriningHelpers;    
 
-    /**
-     * Lihat hasil skrining (setelah ada kesimpulan).
+    /* {{-- ========== SKRINING — SHOW ========== --}} */
+
+    /* 
+     * Menampilkan halaman hasil skrining setelah ada kesimpulan
      */
     public function show(Skrining $skrining)
     {
@@ -29,13 +33,21 @@ class SkriningController extends Controller
                 ->with('error', 'Silakan lakukan skrining preeklampsia terlebih dahulu untuk melihat hasil.');
         }
 
+        $this->recalcPreEklampsia($skrining);
         $data = $this->buildSkriningShowData($skrining);
 
         return view('pasien.skrining-show', $data);
     }
 
+    /* {{-- ========== SKRINING — BUILD SHOW DATA ========== --}} */
     private function buildSkriningShowData(Skrining $skrining): array
     {
+        /* 
+         * Menyusun data tampilan hasil: identitas, kondisi, GPA,
+         * ringkasan risiko, pemicu sedang/tinggi, dan rekomendasi
+         * Kesimpulan: Berisiko jika tinggi ≥1 atau sedang ≥2; jika belum lengkap → "Skrining belum selesai"
+         */
+
         $pasien = optional($skrining->pasien);
         $kk     = optional($skrining->kondisiKesehatan);
         $gpa    = optional($skrining->riwayatKehamilanGpa);
@@ -52,6 +64,7 @@ class SkriningController extends Controller
         $sistol  = $kk->sdp ?? null;
         $diastol = $kk->dbp ?? null;
         $map     = $kk->map ?? (($sistol && $diastol) ? round(($diastol + (($sistol - $diastol) / 3)), 2) : null);
+        $proteinUrine = $kk->pemeriksaan_protein_urine ?? null;
 
         $usiaKehamilan      = $kk->usia_kehamilan ?? '-';
         $taksiranPersalinan = $kk->tanggal_perkiraan_persalinan ?? null;
@@ -69,12 +82,12 @@ class SkriningController extends Controller
         $kesimpulan = (!$isComplete)
             ? 'Skrining belum selesai'
             : (($resikoTinggi >= 1 || $resikoSedang >= 2)
-                ? 'Berisiko'
-                : (($resikoSedang >= 1) ? 'Waspada' : 'Tidak berisiko'));
+                ? 'Berisiko Preeklampsia'
+                : 'Tidak berisiko');
 
-        $rekomendasi  = ($resikoTinggi > 0)
-            ? 'Rujuk segera sesuai standar kebidanan/obstetri.'
-            : 'Lanjutkan ANC sesuai standar, ulang skrining di trimester berikutnya.';
+        $rekomendasi  = ($resikoTinggi >= 1 || $resikoSedang >= 2)
+            ? 'Beresiko preeklampsia. Silahkan untuk menghubungi petugas Puskesmas untuk mendapatkan rujukan Dokter atau Rumah Sakit untuk pengobatan lanjutan.'
+            : 'Kondisi normal. Lanjutkan ANC sesuai standar dan ulang skrining di trimester berikutnya.';
         $catatan      = $skrining->catatan ?? null;
 
         // ===== Pemicu risiko =====
@@ -105,18 +118,19 @@ class SkriningController extends Controller
             $sebabSedang[] = 'IMT ' . number_format(floatval($kk->imt), 2) . ' kg/m² (>30)';
         }
 
-        // MAP > 90 mmHg
-        if ($map !== null && $map > 90) {
-            $sebabSedang[] = 'MAP ' . number_format($map, 2) . ' mmHg (>90)';
+        // Tensi ≥ 130/90 mmHg
+        if (($sistol !== null && $sistol >= 130) || ($diastol !== null && $diastol >= 90)) {
+            $sebabTinggi[] = 'Tekanan darah di atas 130/90 mHg';
         }
 
-        // ===== Risiko sedang dari Preeklampsia (Q1–Q4) =====
+        // Risiko sedang dari Preeklampsia (non-overlap, pakai nama tetap)
         $preModerateNames = [
             'Apakah kehamilan ini adalah kehamilan kedua/lebih tetapi bukan dengan suami pertama (Pernikahan kedua atau lebih)',
             'Apakah kehamilan ini dengan Teknologi Reproduksi Berbantu (Bayi tabung, Obat induksi ovulasi)',
             'Apakah kehamilan ini berjarak 10 tahun dari kehamilan sebelumnya',
             'Apakah ibu kandung atau saudara perempuan anda memiliki riwayat pre-eklampsia',
         ];
+
         $preModerateLabels = [
             $preModerateNames[0] => 'Kehamilan kedua/lebih bukan dengan suami pertama',
             $preModerateNames[1] => 'Teknologi reproduksi berbantu',
@@ -143,44 +157,25 @@ class SkriningController extends Controller
             }
         }
 
-        // Risiko tinggi dari kuisioner individu
-        $kuisNames = ['Hipertensi Kronik', 'Ginjal', 'Autoimun, SLE', 'Anti Phospholipid Syndrome'];
-        $kuisioner = DB::table('kuisioner_pasiens')
-            ->where('status_soal', 'individu')
-            ->whereIn('nama_pertanyaan', $kuisNames)
-            ->get(['id', 'nama_pertanyaan'])
-            ->keyBy('nama_pertanyaan');
-
-        $jawaban = DB::table('jawaban_kuisioners')
-            ->where('skrining_id', $skrining->id)
-            ->whereIn('kuisioner_id', $kuisioner->pluck('id')->all())
-            ->get(['kuisioner_id', 'jawaban'])
-            ->keyBy('kuisioner_id');
-
-        $qidHipertensi = optional($kuisioner->get('Hipertensi Kronik'))->id;
-        $qidGinjal     = optional($kuisioner->get('Ginjal'))->id;
-        $qidSle        = optional($kuisioner->get('Autoimun, SLE'))->id;
-        $qidAps        = optional($kuisioner->get('Anti Phospholipid Syndrome'))->id;
-
-        if ($qidHipertensi && (bool) optional($jawaban->get($qidHipertensi))->jawaban) {
-            $sebabTinggi[] = 'Hipertensi kronik';
-        }
-        if ($qidGinjal && (bool) optional($jawaban->get($qidGinjal))->jawaban) {
-            $sebabTinggi[] = 'Riwayat penyakit ginjal';
-        }
-        if ($qidSle && (bool) optional($jawaban->get($qidSle))->jawaban) {
-            $sebabTinggi[] = 'Autoimun/SLE';
-        }
-        if ($qidAps && (bool) optional($jawaban->get($qidAps))->jawaban) {
-            $sebabTinggi[] = 'Antiphospholipid Syndrome (APS)';
-        }
-
-        // Risiko tinggi dari Preeklampsia (Q5–Q7)
+        // Risiko tinggi dari Preeklampsia (pakai nama tetap)
         $preHighNames = [
             'Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya',
             'Apakah kehamilan anda saat ini adalah kehamilan kembar',
             'Apakah anda memiliki diabetes dalam masa kehamilan',
+            'Apakah anda memiliki penyakit ginjal',
+            'Apakah anda memiliki penyakit autoimun, SLE',
+            'Apakah anda memiliki penyakit Anti Phospholipid Syndrome',
         ];
+
+        $preHighLabels = [
+            $preHighNames[0] => 'Riwayat preeklampsia sebelumnya',
+            $preHighNames[1] => 'Kehamilan kembar',
+            $preHighNames[2] => 'Diabetes dalam kehamilan',
+            $preHighNames[3] => 'Penyakit ginjal',
+            $preHighNames[4] => 'Penyakit autoimun (SLE)',
+            $preHighNames[5] => 'Anti Phospholipid Syndrome',
+        ];
+
         $preKuisHigh = DB::table('kuisioner_pasiens')
             ->where('status_soal', 'pre_eklampsia')
             ->whereIn('nama_pertanyaan', $preHighNames)
@@ -193,36 +188,46 @@ class SkriningController extends Controller
             ->get(['kuisioner_id', 'jawaban'])
             ->keyBy('kuisioner_id');
 
-        if (($id = optional($preKuisHigh->get($preHighNames[0]))->id) && (bool) optional($preJawabHigh->get($id))->jawaban) {
-            $sebabTinggi[] = 'Riwayat preeklampsia sebelumnya';
+        foreach ($preHighNames as $nm) {
+            $id = optional($preKuisHigh->get($nm))->id;
+            if ($id && (bool) optional($preJawabHigh->get($id))->jawaban) {
+                $sebabTinggi[] = $preHighLabels[$nm] ?? $nm;
+            }
         }
-        if (($id = optional($preKuisHigh->get($preHighNames[1]))->id) && (bool) optional($preJawabHigh->get($id))->jawaban) {
-            $sebabTinggi[] = 'Kehamilan kembar';
-        }
-        if (($id = optional($preKuisHigh->get($preHighNames[2]))->id) && (bool) optional($preJawabHigh->get($id))->jawaban) {
-            $sebabTinggi[] = 'Diabetes dalam kehamilan';
-        }
+
+        $sebabSedang = array_values(array_unique($sebabSedang));
+        $sebabTinggi = array_values(array_unique($sebabTinggi));
 
         return compact(
             'skrining','nama','nik','tanggal','berat','tinggi','imt','anjuranBb',
-            'sistol','diastol','map','usiaKehamilan','taksiranPersalinan',
+            'sistol','diastol','map','proteinUrine','usiaKehamilan','taksiranPersalinan',
             'gravida','para','abortus','resikoSedang','resikoTinggi','kesimpulan',
             'rekomendasi','catatan','sebabSedang','sebabTinggi'
         );
     }
 
-    /**
-     * Mulai edit skrining: arahkan ke langkah Data Diri (stepper akan ikut skrining_id).
+    /* {{-- ========== SKRINING — EDIT ========== --}} */
+
+    /* 
+     * Arahkan ke langkah Data Diri dengan membawa skrining_id
      */
     public function edit(Skrining $skrining)
     {
         $this->authorizeAccess($skrining);
 
+        $locked = \Illuminate\Support\Facades\DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists();
+        if ($locked) {
+            return redirect()->route('pasien.skrining.show', $skrining->id)
+                ->with('error', 'Skrining sudah diajukan rujukan dan tidak dapat diedit.');
+        }
+
         return redirect()->route('pasien.data-diri', ['skrining_id' => $skrining->id]);
     }
 
-    /**
-     * Contoh endpoint update (tidak digunakan untuk mengubah data langkah).
+    /* {{-- ========== SKRINING — UPDATE ========== --}} */
+    
+    /* 
+     * Tidak digunakan untuk mengubah data langkah, hanya redirect
      */
     public function update(Request $request, Skrining $skrining)
     {
@@ -233,12 +238,20 @@ class SkriningController extends Controller
             ->with('ok', 'Puskesmas tetap sama seperti saat pengajuan.');
     }
 
-    /**
-     * Hapus skrining dan child records terkait.
+    /* {{-- ========== SKRINING — DESTROY ========== --}} */
+    
+    /* 
+     * Hapus skrining beserta relasi jawaban, riwayat, dan kondisi
      */
     public function destroy(Skrining $skrining)
     {
         $this->authorizeAccess($skrining);
+
+        $locked = \Illuminate\Support\Facades\DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists();
+        if ($locked) {
+            return redirect()->route('pasien.skrining.show', $skrining->id)
+                ->with('error', 'Skrining sudah diajukan rujukan dan tidak dapat dihapus.');
+        }
 
         DB::transaction(function () use ($skrining) {
             DB::table('jawaban_kuisioners')->where('skrining_id', $skrining->id)->delete();
@@ -252,28 +265,67 @@ class SkriningController extends Controller
         return redirect()->route('pasien.dashboard')->with('ok', 'Skrining berhasil dihapus.');
     }
 
-    /**
-     * Pencarian puskesmas untuk modal pemilihan pengajuan.
+    /* {{-- ========== PUSKESMAS — SEARCH ========== --}} */
+    
+    /* 
+     * Pencarian untuk modal pengajuan berdasarkan kata kunci
      */
     public function puskesmasSearch(Request $request)
     {
         $q = trim($request->query('q', ''));
 
-        $rows = Puskesmas::query()
+        $puskesmas = Puskesmas::query()
             ->when($q !== '', function ($qr) use ($q) {
-                $qr->where('nama_puskesmas', 'like', "%{$q}%")
-                   ->orWhere('kecamatan', 'like', "%{$q}%")
-                   ->orWhere('lokasi', 'like', "%{$q}%");
+                $qr->where(function ($w) use ($q) {
+                    $w->where('nama_puskesmas', 'like', "%{$q}%")
+                      ->orWhere('kecamatan', 'like', "%{$q}%")
+                      ->orWhere('lokasi', 'like', "%{$q}%");
+                });
             })
             ->orderBy('nama_puskesmas')
             ->limit(20)
-            ->get(['id', 'nama_puskesmas', 'kecamatan']);
+            ->get(['id', 'nama_puskesmas', 'kecamatan'])
+            ->map(function ($row) {
+                return [
+                    'id' => $row->id,
+                    'nama_puskesmas' => $row->nama_puskesmas,
+                    'kecamatan' => $row->kecamatan,
+                    'type' => 'puskesmas',
+                ];
+            });
 
-        return response()->json($rows);
+        $bidan = DB::table('bidans as b')
+            ->join('users as u', 'u.id', '=', 'b.user_id')
+            ->join('puskesmas as p', 'p.id', '=', 'b.puskesmas_id')
+            ->when($q !== '', function ($qr) use ($q) {
+                $qr->where(function ($w) use ($q) {
+                    $w->where('u.name', 'like', "%{$q}%")
+                      ->orWhere('p.nama_puskesmas', 'like', "%{$q}%")
+                      ->orWhere('p.kecamatan', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy('u.name')
+            ->limit(20)
+            ->get(['b.id as id', 'u.name as klinik_nama', 'p.kecamatan as kecamatan', 'p.id as puskesmas_id'])
+            ->map(function ($row) {
+                return [
+                    'id' => $row->id,
+                    'klinik_nama' => $row->klinik_nama,
+                    'kecamatan' => $row->kecamatan,
+                    'puskesmas_id' => $row->puskesmas_id,
+                    'type' => 'bidan',
+                ];
+            });
+
+        $combined = $puskesmas->merge($bidan)->take(20)->values();
+
+        return response()->json($combined);
     }
 
-    /**
-     * Pastikan skrining milik pasien yang login.
+    /* {{-- ========== AUTH — AUTHORIZE ACCESS ========== --}} */
+    
+    /* 
+     * Memastikan skrining milik pasien yang sedang login
      */
     private function authorizeAccess(Skrining $skrining): void
     {
@@ -281,8 +333,10 @@ class SkriningController extends Controller
         abort_unless($skrining->pasien_id === $userPasienId, 403);
     }
 
-    /**
-     * Helper: ambil skrining berdasarkan query skrining_id atau latest milik pasien.
+    /* {{-- ========== HELPER — GET SKRINING FROM QUERY ========== --}} */
+    
+    /* 
+     * Ambil skrining berdasarkan skrining_id atau latest milik pasien
      * Return: [Skrining|null, int $pasienId]
      */
     private function getSkriningFromQuery($skriningId): array
