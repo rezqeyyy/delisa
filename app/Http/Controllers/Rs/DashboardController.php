@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Rs;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pasien;
-use App\Models\PasienNifas;
-use App\Models\PasienPreEklampsia;
+use App\Models\PasienNifasRs;
 use App\Models\Skrining;
+use App\Models\RumahSakit; // <-- TAMBAHAN
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,24 +23,24 @@ class DashboardController extends Controller
             ->orWhereNull('PKabupaten')
             ->count();
 
-        // Data Resiko Eklampsia (sesuaikan dengan kolom yang ada)
+        // Data Resiko Eklampsia (sementara 0 dulu)
         $pasienNormal = 0;
         $pasienBeresikoEklampsia = 0;
 
-        // Data Pasien Hadir (sesuaikan dengan kolom status_perkawinan atau status lain)
+        // Data Pasien Hadir (sementara 0 dulu)
         $pasienHadir = 0;
         $pasienTidakHadir = 0;
 
         // Data Pasien Nifas
-        $totalPasienNifas = PasienNifas::count();
-        $sudahKF1 = 0; // Sesuaikan dengan kolom yang ada
+        $totalPasienNifas = PasienNifasRs::count();
+        $sudahKF1 = 0;
 
-        // Data Pemantauan (sesuaikan dengan kolom yang ada)
+        // Data Pemantauan (sementara 0 dulu)
         $pemantauanSehat = 0;
         $pemantauanDirujuk = 0;
         $pemantauanMeninggal = 0;
 
-        // Data Pasien Pre Eklampsia — hanya skrining yang lengkap/selesai
+        // Data Pasien Pre Eklampsia — skrining yang sudah ada kesimpulan/status
         $pePatients = Skrining::with(['pasien.user'])
             ->where(function ($q) {
                 $q->whereNotNull('kesimpulan')
@@ -56,14 +56,17 @@ class DashboardController extends Controller
 
                 return (object) [
                     'id'          => $pasien->id ?? null,
+                    'rujukan_id'  => $s->id,
                     'nik'         => $pasien->nik ?? '-',
                     'nama'        => $user->name ?? 'Nama Tidak Tersedia',
                     'tanggal'     => optional($s->created_at)->format('d/m/Y') ?? '-',
                     'alamat'      => $pasien->PKecamatan ?? $pasien->PWilayah ?? '-',
                     'telp'        => $user->phone ?? $pasien->no_telepon ?? '-',
                     'kesimpulan'  => ucfirst($kes),
-                    'detail_url'  => route('rs.skrining.show', $s->id),
-                    'process_url' => route('rs.dashboard.proses-nifas', $pasien->id ?? 0),
+                    'detail_url'  => route('rs.skrining.edit', $s->id),
+                    'process_url' => $pasien && $pasien->id
+                        ? route('rs.dashboard.proses-nifas', ['id' => $pasien->id])
+                        : null,
                 ];
             });
 
@@ -90,9 +93,8 @@ class DashboardController extends Controller
     {
         try {
             $pasien = Pasien::with('user')->findOrFail($id);
-            
+
             return view('rs.show', compact('pasien'));
-            
         } catch (\Exception $e) {
             return redirect()
                 ->route('rs.dashboard')
@@ -115,22 +117,22 @@ class DashboardController extends Controller
             $rs_id = $this->getRsId();
 
             // Cek apakah pasien sudah ada di data nifas
-            $existingNifas = PasienNifas::where('pasien_id', $pasien->id)
-                                        ->where('rs_id', $rs_id)
-                                        ->first();
-            
+            $existingNifas = PasienNifasRs::where('pasien_id', $pasien->id)
+                ->where('rs_id', $rs_id)
+                ->first();
+
             if ($existingNifas) {
                 DB::commit();
-                
+
                 return redirect()
                     ->route('rs.pasien-nifas.show', $existingNifas->id)
                     ->with('info', 'Pasien sudah terdaftar dalam data nifas.');
             }
 
             // Buat data pasien nifas baru
-            $pasienNifas = PasienNifas::create([
-                'rs_id' => $rs_id,
-                'pasien_id' => $pasien->id,
+            $pasienNifas = PasienNifasRs::create([
+                'rs_id'               => $rs_id,
+                'pasien_id'           => $pasien->id,
                 'tanggal_mulai_nifas' => now(),
             ]);
 
@@ -139,12 +141,11 @@ class DashboardController extends Controller
             return redirect()
                 ->route('rs.pasien-nifas.show', $pasienNifas->id)
                 ->with('success', 'Pasien berhasil diproses ke data nifas! Silakan tambah data anak.');
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             Log::error('Error Proses Pasien Nifas: ' . $e->getMessage());
-            
+
             return redirect()
                 ->route('rs.dashboard')
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -157,19 +158,37 @@ class DashboardController extends Controller
     private function getRsId()
     {
         $user = Auth::user();
-        
-        if (isset($user->rumah_sakit_id) && !is_null($user->rumah_sakit_id)) {
+
+        if (!$user) {
+            throw new \RuntimeException('User belum login.');
+        }
+
+        // 1) Kalau user punya kolom rumah_sakit_id → pakai itu
+        if (!empty($user->rumah_sakit_id)) {
             return $user->rumah_sakit_id;
         }
-        
-        if (isset($user->rs_id) && !is_null($user->rs_id)) {
+
+        // 2) Atau kolom rs_id
+        if (!empty($user->rs_id)) {
             return $user->rs_id;
         }
-        
-        if (isset($user->puskesmas_id) && !is_null($user->puskesmas_id)) {
-            return $user->puskesmas_id;
+
+        // 3) Kalau di model User ada relasi rumahSakit(), coba pakai
+        if (method_exists($user, 'rumahSakit')) {
+            $rs = $user->rumahSakit()->first();
+            if ($rs) {
+                return $rs->id;
+            }
         }
-        
-        return 1;
+
+        // 4) Fallback: ambil RS pertama yang benar-benar ada di tabel rumah_sakits
+        $rs = RumahSakit::query()->orderBy('id')->first();
+
+        if (!$rs) {
+            // Ini benar-benar darurat: tidak ada data rumah sakit sama sekali
+            throw new \RuntimeException('Belum ada data rumah sakit di tabel rumah_sakits.');
+        }
+
+        return $rs->id;
     }
 }

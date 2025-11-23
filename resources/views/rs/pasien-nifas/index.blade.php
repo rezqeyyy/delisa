@@ -41,7 +41,6 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <a href="{{ route('rs.pasien-nifas.create') }}" class="px-5 py-2 rounded-full bg-[#E91E8C] text-white font-semibold">Tambah Akun</a>
                             <a href="{{ route('rs.pasien-nifas.download-pdf') }}" class="px-5 py-2 rounded-full bg-[#E9E9E9] text-[#1D1D1D] font-semibold">Download Data</a>
                         </div>
                     </div>
@@ -80,7 +79,7 @@
                                         </td>
                                         <td class="px-3 py-3">
                                             <div class="flex items-center gap-2">
-                                                <a href="{{ route('rs.pasien-nifas.show', $pn->id) }}" class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">View</a>
+                                                <a href="{{ route('rs.pasien-nifas.show', $pn->id) }}" class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">Edit</a>
                                                 <a href="{{ route('rs.pasien-nifas.detail', $pn->id) }}" class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">Detail</a>
                                             </div>
                                         </td>

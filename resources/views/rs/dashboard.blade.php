@@ -1,19 +1,16 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rumah Sakit — Dashboard</title>
-    
-    @vite([
-        'resources/css/app.css', 
-        'resources/js/app.js', 
-        'resources/js/dropdown.js', 
-        'resources/js/rs/sidebar-toggle.js'
-        ])
+
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js'])
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
         body {
             font-family: 'Poppins', sans-serif;
         }
@@ -22,7 +19,7 @@
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
-        
+
         <x-rs.sidebar />
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
@@ -30,7 +27,8 @@
                 <div class="flex items-center gap-2 flex-1 min-w-0">
                     <div class="relative w-full">
                         <span class="absolute inset-y-0 left-3 flex items-center">
-                            <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60" alt="Search">
+                            <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60"
+                                alt="Search">
                         </span>
                         <input type="text" placeholder="Search..."
                             class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
@@ -38,13 +36,16 @@
                 </div>
 
                 <div class="flex items-center gap-3 flex-none justify-end">
-                    <a href="{{ route('rs.dashboard') }}" class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
-                        <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90" alt="Setting">
+                    <a href="{{ route('rs.dashboard') }}"
+                        class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
+                        <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90"
+                            alt="Setting">
                     </a>
 
                     <div id="profileWrapper" class="relative">
-                        <button id="profileBtn" class="flex items-center gap-3 pl-2 pr-3 py-1.5 bg-white border border-[#E5E5E5] rounded-full hover:bg-[#F8F8F8]">
-                            
+                        <button id="profileBtn"
+                            class="flex items-center gap-3 pl-2 pr-3 py-1.5 bg-white border border-[#E5E5E5] rounded-full hover:bg-[#F8F8F8]">
+
                             @if (Auth::user()?->photo)
                                 <img src="{{ Storage::url(Auth::user()->photo) . '?t=' . optional(Auth::user()->updated_at)->timestamp }}"
                                     class="w-8 h-8 rounded-full object-cover" alt="{{ Auth::user()->name }}">
@@ -68,7 +69,8 @@
                                 class="w-4 h-4 opacity-70" alt="More" />
                         </button>
 
-                        <div id="profileMenu" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
+                        <div id="profileMenu"
+                            class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
                             <div class="px-4 py-3 border-b border-[#F0F0F0]">
                                 <p class="text-sm font-medium text-[#1D1D1D]">
                                     {{ auth()->user()->name ?? 'Rumah Sakit' }}
@@ -86,6 +88,25 @@
                 </div>
             </div>
 
+            @if (session('success'))
+                <div class="mb-4 rounded-lg bg-green-100 border border-green-200 text-green-800 px-4 py-2 text-sm">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if (session('info'))
+                <div class="mb-4 rounded-lg bg-blue-100 border border-blue-200 text-blue-800 px-4 py-2 text-sm">
+                    {{ session('info') }}
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="mb-4 rounded-lg bg-red-100 border border-red-200 text-red-800 px-4 py-2 text-sm">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            {{-- Kartu-kartu ringkasan --}}
             <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
                 <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
                     <div class="flex items-center gap-3 mb-3">
@@ -167,7 +188,7 @@
                         <hr class="border-[#E9E9E9]">
                         <div class="flex items-center justify-between">
                             <span class="text-[#7C7C7C]">Sudah KFI</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $sudahKFI ?? 0 }}</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $sudahKF1 ?? 0 }}</span>
                         </div>
                     </div>
                 </div>
@@ -176,7 +197,7 @@
                     <div class="flex items-center gap-3 mb-3">
                         <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan</h3>
                     </div>
-                    <div class="flex items-center text-center divide-x divide-x-2 divide-[#E9E9E9]">
+                    <div class="flex items-center text-center divide-x-2 divide-[#E9E9E9]">
                         <div class="flex-1 px-4">
                             <div class="text-xs text-[#7C7C7C]">Sehat</div>
                             <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanSehat ?? 0 }}</div>
@@ -193,36 +214,58 @@
                 </div>
             </section>
 
+            {{-- Tabel Pasien Rujukan Pre Eklampsia --}}
             <section class="space-y-4">
                 <div class="bg-white rounded-2xl border border-[#E9E9E9] p-2 sm:p-4">
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex items-start gap-3">
                             <span class="w-10 h-10 grid place-items-center rounded-full bg-[#F5F5F5]">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-[#1D1D1D]" fill="currentColor"><path d="M6 2a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2H6Zm2 5h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                    class="w-5 h-5 text-[#1D1D1D]" fill="currentColor">
+                                    <path
+                                        d="M6 2a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2H6Zm2 5h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z" />
+                                </svg>
                             </span>
                             <div>
                                 <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Rujukan Pre Eklampsia</h2>
-                                <p class="text-xs text-[#7C7C7C]">Pilih satu atau lebih untuk memindahkan pasien rujukan</p>
+                                <p class="text-xs text-[#7C7C7C]">
+                                    Pilih satu atau lebih untuk memindahkan pasien rujukan
+                                </p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <button class="px-5 py-2 rounded-full border border-[#D9D9D9] bg-white text-[#1D1D1D] font-semibold">Proses</button>
-                            <button class="px-5 py-2 rounded-full border border-[#E9E9E9] bg-white font-semibold flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+
+                            <button
+                                class="px-5 py-2 rounded-full border border-[#E9E9E9] bg-white font-semibold flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4"
+                                    fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M6 12h12M10 18h4" />
+                                </svg>
                                 Filter
                             </button>
-                            <a href="#" class="px-5 py-2 rounded-full bg-[#B9257F] text-white font-semibold">+ Tambah Akun</a>
-                            <button class="w-10 h-10 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M5 19A9 9 0 0 0 19 5"/></svg>
+
+                            <a href="#" class="px-5 py-2 rounded-full bg-[#B9257F] text-white font-semibold">+
+                                Tambah Akun</a>
+
+                            <button
+                                class="w-10 h-10 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5"
+                                    fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4v6h6M20 20v-6h-6M5 19A9 9 0 0 0 19 5" />
+                                </svg>
                             </button>
                         </div>
                     </div>
+
                     <br>
+
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="text-[#7C7C7C]">
                                 <tr class="text-left">
-                                    <th class="px-3 py-2 w-10"><input type="checkbox" class="rounded"></th>
+                                    <th class="px-3 py-2 w-10">
+                                        <input type="checkbox" class="rounded">
+                                    </th>
                                     <th class="px-3 py-2">ID Rujukan</th>
                                     <th class="px-3 py-2">NIK Pasien</th>
                                     <th class="px-3 py-2">Nama Pasien</th>
@@ -230,38 +273,68 @@
                                     <th class="px-3 py-2">Alamat</th>
                                     <th class="px-3 py-2">No Telp</th>
                                     <th class="px-3 py-2">Kesimpulan</th>
-                                    <th class="px-3 py-2">View Detail</th>
+                                    <th class="px-3 py-2">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#E9E9E9]">
                                 @forelse(($pePatients ?? []) as $p)
                                     <tr>
-                                        <td class="px-3 py-3"><input type="checkbox" name="selected[]" value="{{ $p->rujukan_id ?? '' }}" class="rounded"></td>
-                                        <td class="px-3 py-3 font-medium tabular-nums">#{{ $p->rujukan_id ?? '-' }}</td>
-                                        <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $p->nik ?? '-' }}</td>
-                                        <td class="px-3 py-3">{{ $p->nama ?? '-' }}</td>
-                                        <td class="px-3 py-3">{{ optional($p->tanggal)->format('d/m/Y') ?? ($p->tanggal ?? '-') }}</td>
-                                        <td class="px-3 py-3">{{ $p->alamat ?? '-' }}</td>
-                                        <td class="px-3 py-3">{{ $p->telp ?? '-' }}</td>
+                                        <td class="px-3 py-3">
+                                            <input type="checkbox" name="selected[]"
+                                                value="{{ $p->rujukan_id ?? '' }}" class="rounded">
+                                        </td>
+                                        <td class="px-3 py-3 font-medium tabular-nums">
+                                            #{{ $p->rujukan_id ?? '-' }}
+                                        </td>
+                                        <td class="px-3 py-3 font-medium text-[#1D1D1D]">
+                                            {{ $p->nik ?? '-' }}
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            {{ $p->nama ?? '-' }}
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            {{ $p->tanggal ?? '-' }}
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            {{ $p->alamat ?? '-' }}
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            {{ $p->telp ?? '-' }}
+                                        </td>
                                         <td class="px-3 py-3">
                                             @php($label = strtolower(trim($p->kesimpulan ?? '')))
-                                            @php($isRisk = in_array($label, ['beresiko','berisiko','risiko tinggi','tinggi']))
-                                            @php($isWarn = in_array($label, ['waspada','menengah','sedang','risiko sedang']))
+                                            @php($isRisk = in_array($label, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']))
+                                            @php($isWarn = in_array($label, ['waspada', 'menengah', 'sedang', 'risiko sedang']))
                                             @php($display = $isRisk ? 'Beresiko' : ($isWarn ? 'Waspada' : 'Tidak Berisiko'))
-                                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $isRisk ? 'bg-[#E20D0D] text-white' : ($isWarn ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">
+                                            <span
+                                                class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $isRisk ? 'bg-[#E20D0D] text-white' : ($isWarn ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">
                                                 {{ $display }}
                                             </span>
                                         </td>
                                         <td class="px-3 py-3">
                                             <div class="flex items-center gap-2">
-                                                <a href="{{ $p->detail_url ?? '#' }}" class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">View</a>
-                                                <a href="{{ $p->process_url ?? '#' }}" class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">Proses</a>
+                                                <a href="{{ $p->detail_url ?? '#' }}"
+                                                    class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">
+                                                    Periksa
+                                                </a>
+
+                                                @if (!empty($p->process_url))
+                                                    <form method="POST" action="{{ $p->process_url }}">
+                                                        @csrf
+                                                        <button type="submit"
+                                                            class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">
+                                                            Proses Nifas
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada data pasien pre eklampsia.</td>
+                                        <td colspan="9" class="px-3 py-6 text-center text-[#7C7C7C]">
+                                            Belum ada data pasien pre eklampsia.
+                                        </td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -277,4 +350,5 @@
 
     </div>
 </body>
+
 </html>
