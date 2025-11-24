@@ -1,616 +1,237 @@
-@extends('layouts.rs')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Pasien - DELISA</title>
+    
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js'])
 
-@section('title', 'Detail Pasien')
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
 
-@section('content')
-<div class="dashboard-wrapper">
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <div class="logo-icon">D</div>
-                <div class="logo-text">
-                    <h3>DeLISA</h3>
-                    <small>Deteksi Dini Pre Eklampsia</small>
+        @media print {
+            .print-hidden {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
+    <div class="flex min-h-screen" x-data="{ openSidebar: false }">
+        
+        <x-rs.sidebar />
+
+        <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
+
+            {{-- Header --}}
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print-hidden">
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('rs.dashboard') }}"
+                       class="inline-flex items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-3 py-1.5 text-xs sm:text-sm text-[#4B4B4B] hover:bg-[#F8F8F8]">
+                        <span class="inline-flex w-5 h-5 items-center justify-center rounded-full bg-[#F5F5F5]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2">
+                                <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                        </span>
+                        <span>Kembali</span>
+                    </a>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-semibold text-[#1D1D1D]">
+                            Detail Pasien
+                        </h1>
+                        <p class="text-xs text-[#7C7C7C]">
+                            Informasi lengkap data pasien
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="sidebar-menu">
-            <div class="menu-section">
-                <span class="menu-label">HOME</span>
-                <a href="{{ route('rs.dashboard') }}" class="menu-item">
-                    <i class="fas fa-th-large"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="{{ route('rs.skrining.index') }}" class="menu-item">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Skrining</span>
-                </a>
-                <a href="{{ route('rs.pasien-nifas.index') }}" class="menu-item">
-                    <i class="fas fa-users"></i>
-                    <span>Pasien Nifas</span>
-                </a>
-            </div>
-
-            <div class="menu-section mt-4">
-                <span class="menu-label">ACCOUNT</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Header -->
-        <div class="content-header">
-            <div class="header-left">
-                <a href="{{ route('rs.dashboard') }}" class="btn-back">
-                    <i class="fas fa-arrow-left"></i>
-                    Kembali
-                </a>
-                <h2 class="page-title">Detail Pasien</h2>
-            </div>
-        </div>
-
-        <!-- Content -->
-        <div class="detail-content">
-            <!-- Card Profile -->
-            <div class="profile-card">
-                <div class="profile-header">
-                    <div class="profile-avatar">
+            {{-- Profile Card --}}
+            <div class="bg-gradient-to-r from-[#E91E8C] to-[#C2185B] rounded-2xl p-5 sm:p-6 shadow-lg">
+                <div class="flex flex-col sm:flex-row items-center gap-4">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold text-[#E91E8C]">
                         {{ substr($pasien->user->name ?? 'P', 0, 1) }}
                     </div>
-                    <div class="profile-info">
-                        <h3>{{ $pasien->user->name ?? 'Nama Pasien' }}</h3>
-                        <p>NIK: {{ $pasien->nik ?? '-' }}</p>
+                    <div class="text-center sm:text-left">
+                        <h2 class="text-xl sm:text-2xl font-bold text-white">
+                            {{ $pasien->user->name ?? 'Nama Pasien' }}
+                        </h2>
+                        <p class="text-white/90 text-sm">
+                            NIK: {{ $pasien->nik ?? '-' }}
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <div class="row g-3">
-                <!-- Data Pribadi -->
-                <div class="col-lg-6">
-                    <div class="detail-card">
-                        <div class="card-header-detail">
-                            <i class="fas fa-user"></i>
-                            <h4>Data Pribadi</h4>
+            {{-- Data Cards Container --}}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                
+                {{-- Data Pribadi --}}
+                <section class="bg-white rounded-2xl border border-[#E9E9E9] overflow-hidden">
+                    <div class="flex items-center gap-3 px-4 sm:px-5 py-3 bg-[#FAFAFA] border-b border-[#F0F0F0]">
+                        <span class="w-8 h-8 rounded-full bg-[#FCE7F3] flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#E91E8C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </span>
+                        <h3 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Data Pribadi</h3>
+                    </div>
+                    <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Nama Lengkap</div>
+                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->user->name ?? '-' }}</div>
                         </div>
-                        <div class="card-body-detail">
-                            <div class="detail-item">
-                                <span class="detail-label">Nama Lengkap</span>
-                                <span class="detail-value">{{ $pasien->user->name ?? '-' }}</span>
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">NIK</div>
+                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->nik ?? '-' }}</div>
+                        </div>
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Tempat Lahir</div>
+                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->tempat_lahir ?? '-' }}</div>
+                        </div>
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Tanggal Lahir</div>
+                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">
+                                @if($pasien->tanggal_lahir)
+                                    {{ \Carbon\Carbon::parse($pasien->tanggal_lahir)->format('d/m/Y') }}
+                                @else
+                                    -
+                                @endif
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">NIK</span>
-                                <span class="detail-value">{{ $pasien->nik ?? '-' }}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Tempat Lahir</span>
-                                <span class="detail-value">{{ $pasien->tempat_lahir ?? '-' }}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Tanggal Lahir</span>
-                                <span class="detail-value">
-                                    @if($pasien->tanggal_lahir)
-                                        {{ \Carbon\Carbon::parse($pasien->tanggal_lahir)->format('d/m/Y') }}
-                                    @else
-                                        -
-                                    @endif
-                                </span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Status Perkawinan</span>
-                                <span class="detail-value">{{ $pasien->status_perkawinan ?? '-' }}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Pekerjaan</span>
-                                <span class="detail-value">{{ $pasien->pekerjaan ?? '-' }}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Pendidikan</span>
-                                <span class="detail-value">{{ $pasien->pendidikan ?? '-' }}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Golongan Darah</span>
-                                <span class="detail-value">{{ $pasien->golongan_darah ?? '-' }}</span>
-                            </div>
+                        </div>
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Status Perkawinan</div>
+                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->status_perkawinan ?? '-' }}</div>
+                        </div>
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Pekerjaan</div>
+                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->pekerjaan ?? '-' }}</div>
+                        </div>
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Pendidikan</div>
+                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->pendidikan ?? '-' }}</div>
+                        </div>
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Golongan Darah</div>
+                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->golongan_darah ?? '-' }}</div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- Data Kontak & Alamat -->
-                <div class="col-lg-6">
-                    <div class="detail-card">
-                        <div class="card-header-detail">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <h4>Kontak & Alamat</h4>
+                {{-- Kontak & Alamat --}}
+                <div class="space-y-4 sm:space-y-6">
+                    <section class="bg-white rounded-2xl border border-[#E9E9E9] overflow-hidden">
+                        <div class="flex items-center gap-3 px-4 sm:px-5 py-3 bg-[#FAFAFA] border-b border-[#F0F0F0]">
+                            <span class="w-8 h-8 rounded-full bg-[#FCE7F3] flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#E91E8C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                    <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                            </span>
+                            <h3 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Kontak & Alamat</h3>
                         </div>
-                        <div class="card-body-detail">
-                            <div class="detail-item">
-                                <span class="detail-label">No. Telepon</span>
-                                <span class="detail-value">{{ $pasien->no_telepon ?? '-' }}</span>
+                        <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
+                            <div class="grid grid-cols-2">
+                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">No. Telepon</div>
+                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->no_telepon ?? '-' }}</div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">No. JKN</span>
-                                <span class="detail-value">{{ $pasien->no_jkn ?? '-' }}</span>
+                            <div class="grid grid-cols-2">
+                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">No. JKN</div>
+                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->no_jkn ?? '-' }}</div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Provinsi</span>
-                                <span class="detail-value">{{ $pasien->PProvinsi ?? '-' }}</span>
+                            <div class="grid grid-cols-2">
+                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Provinsi</div>
+                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->PProvinsi ?? '-' }}</div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Kabupaten/Kota</span>
-                                <span class="detail-value">{{ $pasien->PKabupaten ?? '-' }}</span>
+                            <div class="grid grid-cols-2">
+                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Kabupaten/Kota</div>
+                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->PKabupaten ?? '-' }}</div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Kecamatan</span>
-                                <span class="detail-value">{{ $pasien->PKecamatan ?? '-' }}</span>
+                            <div class="grid grid-cols-2">
+                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Kecamatan</div>
+                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->PKecamatan ?? '-' }}</div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Kelurahan/Wilayah</span>
-                                <span class="detail-value">{{ $pasien->PWilayah ?? '-' }}</span>
+                            <div class="grid grid-cols-2">
+                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Kelurahan/Wilayah</div>
+                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->PWilayah ?? '-' }}</div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">RT / RW</span>
-                                <span class="detail-value">
+                            <div class="grid grid-cols-2">
+                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">RT / RW</div>
+                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">
                                     {{ $pasien->rt ? 'RT ' . $pasien->rt : '-' }} / 
                                     {{ $pasien->rw ? 'RW ' . $pasien->rw : '-' }}
-                                </span>
+                                </div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Kode Pos</span>
-                                <span class="detail-value">{{ $pasien->kode_pos ?? '-' }}</span>
+                            <div class="grid grid-cols-2">
+                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Kode Pos</div>
+                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->kode_pos ?? '-' }}</div>
                             </div>
                         </div>
-                    </div>
+                    </section>
 
-                    <!-- Data Pelayanan -->
-                    <div class="detail-card mt-3">
-                        <div class="card-header-detail">
-                            <i class="fas fa-hospital"></i>
-                            <h4>Data Pelayanan</h4>
+                    {{-- Data Pelayanan --}}
+                    <section class="bg-white rounded-2xl border border-[#E9E9E9] overflow-hidden">
+                        <div class="flex items-center gap-3 px-4 sm:px-5 py-3 bg-[#FAFAFA] border-b border-[#F0F0F0]">
+                            <span class="w-8 h-8 rounded-full bg-[#FCE7F3] flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#E91E8C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                    <polyline points="9,22 9,12 15,12 15,22"/>
+                                </svg>
+                            </span>
+                            <h3 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Data Pelayanan</h3>
                         </div>
-                        <div class="card-body-detail">
-                            <div class="detail-item">
-                                <span class="detail-label">Pelayanan</span>
-                                <span class="detail-value">{{ $pasien->PPelayanan ?? '-' }}</span>
+                        <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
+                            <div class="grid grid-cols-2">
+                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Pelayanan</div>
+                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->PPelayanan ?? '-' }}</div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Karakteristik</span>
-                                <span class="detail-value">{{ $pasien->PKarakteristik ?? '-' }}</span>
+                            <div class="grid grid-cols-2">
+                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Karakteristik</div>
+                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->PKarakteristik ?? '-' }}</div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Pembiayaan Kesehatan</span>
-                                <span class="detail-value">{{ $pasien->pembiayaan_kesehatan ?? '-' }}</span>
+                            <div class="grid grid-cols-2">
+                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Pembiayaan Kesehatan</div>
+                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->pembiayaan_kesehatan ?? '-' }}</div>
                             </div>
                         </div>
-                    </div>
+                    </section>
                 </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <a href="{{ route('rs.dashboard') }}" class="btn-secondary">
-                    <i class="fas fa-arrow-left"></i>
-                    Kembali ke Dashboard
+            {{-- Action Buttons --}}
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-3 pt-4 border-t border-[#E9E9E9] print-hidden">
+                <a href="{{ route('rs.dashboard') }}"
+                   class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-5 py-2.5 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] w-full sm:w-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                    <span>Kembali ke Dashboard</span>
                 </a>
-                <button onclick="window.print()" class="btn-primary">
-                    <i class="fas fa-print"></i>
-                    Cetak Data
+
+                <button type="button" onclick="window.print()"
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-5 py-2.5 text-xs sm:text-sm font-semibold text-white hover:bg-[#C2185B] w-full sm:w-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2">
+                        <path d="M6 9V2h12v7" />
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                        <path d="M6 14h12v8H6z" />
+                    </svg>
+                    <span>Cetak Data</span>
                 </button>
             </div>
-        </div>
+
+            <footer class="text-center text-[11px] text-[#7C7C7C] py-4 print-hidden">
+                © 2025 Dinas Kesehatan Kota Depok — DeLISA
+            </footer>
+        </main>
     </div>
-</div>
-
-@push('styles')
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #fafafa;
-    font-size: 14px;
-}
-
-.dashboard-wrapper {
-    display: flex;
-    min-height: 100vh;
-}
-
-/* Sidebar - Copy dari dashboard.blade.php */
-.sidebar {
-    width: 220px;
-    background: white;
-    border-right: 1px solid #e8e8e8;
-    padding: 1.5rem 1rem;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
-}
-
-.sidebar-header {
-    margin-bottom: 2rem;
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.logo-icon {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.25rem;
-    font-weight: 700;
-}
-
-.logo-text h3 {
-    color: #e91e8c;
-    font-size: 1.125rem;
-    font-weight: 700;
-    margin: 0;
-    line-height: 1.2;
-}
-
-.logo-text small {
-    color: #888;
-    font-size: 0.625rem;
-    display: block;
-    line-height: 1.2;
-}
-
-.menu-label {
-    font-size: 0.625rem;
-    color: #999;
-    font-weight: 700;
-    letter-spacing: 1px;
-    display: block;
-    margin-bottom: 0.75rem;
-    text-transform: uppercase;
-}
-
-.menu-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.625rem 0.875rem;
-    color: #666;
-    text-decoration: none;
-    border-radius: 8px;
-    margin-bottom: 0.375rem;
-    transition: all 0.2s ease;
-    font-weight: 500;
-    font-size: 0.875rem;
-}
-
-.menu-item:hover {
-    background: #f8f8f8;
-    color: #333;
-}
-
-.menu-item.active {
-    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
-    color: white;
-}
-
-.menu-item i {
-    font-size: 1rem;
-    width: 18px;
-}
-
-.mt-4 {
-    margin-top: 1.5rem;
-}
-
-/* Main Content */
-.main-content {
-    flex: 1;
-    background: #fafafa;
-}
-
-.content-header {
-    background: white;
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid #e8e8e8;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.btn-back {
-    background: white;
-    border: 1px solid #e0e0e0;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    color: #666;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.btn-back:hover {
-    background: #f5f5f5;
-    border-color: #d0d0d0;
-}
-
-.page-title {
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: #1a1a1a;
-    margin: 0;
-}
-
-/* Detail Content */
-.detail-content {
-    padding: 1.5rem 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-.profile-card {
-    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
-    border-radius: 12px;
-    padding: 2rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 4px 12px rgba(233, 30, 140, 0.2);
-}
-
-.profile-header {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-}
-
-.profile-avatar {
-    width: 80px;
-    height: 80px;
-    background: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #e91e8c;
-}
-
-.profile-info h3 {
-    color: white;
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0 0 0.5rem 0;
-}
-
-.profile-info p {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.875rem;
-    margin: 0;
-}
-
-/* Grid */
-.row {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 1rem;
-}
-
-.col-lg-6 {
-    grid-column: span 6;
-}
-
-.g-3 {
-    gap: 1rem;
-}
-
-/* Detail Card */
-.detail-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    overflow: hidden;
-    border: 1px solid #f0f0f0;
-}
-
-.card-header-detail {
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid #f0f0f0;
-    background: #fafafa;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.card-header-detail i {
-    color: #e91e8c;
-    font-size: 1.125rem;
-}
-
-.card-header-detail h4 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
-}
-
-.card-body-detail {
-    padding: 1.5rem;
-}
-
-.detail-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 0.875rem 0;
-    border-bottom: 1px solid #f5f5f5;
-}
-
-.detail-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.detail-item:first-child {
-    padding-top: 0;
-}
-
-.detail-label {
-    font-size: 0.875rem;
-    color: #888;
-    font-weight: 500;
-    flex: 0 0 45%;
-}
-
-.detail-value {
-    font-size: 0.875rem;
-    color: #333;
-    font-weight: 600;
-    flex: 1;
-    text-align: right;
-}
-
-.mt-3 {
-    margin-top: 1rem;
-}
-
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid #e8e8e8;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
-    color: white;
-    border: none;
-    padding: 0.875rem 2rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s ease;
-    font-size: 0.9375rem;
-    text-decoration: none;
-}
-
-.btn-primary:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
-}
-
-.btn-secondary {
-    background: white;
-    color: #666;
-    border: 1px solid #e8e8e8;
-    padding: 0.875rem 2rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s ease;
-    font-size: 0.9375rem;
-    text-decoration: none;
-}
-
-.btn-secondary:hover {
-    background: #f8f9fa;
-}
-
-/* Print Styles */
-@media print {
-    .sidebar,
-    .content-header,
-    .action-buttons {
-        display: none !important;
-    }
-    
-    .main-content {
-        margin: 0;
-        padding: 0;
-    }
-    
-    .detail-content {
-        padding: 0;
-    }
-}
-
-/* Responsive */
-@media (max-width: 992px) {
-    .col-lg-6 {
-        grid-column: span 12;
-    }
-}
-
-@media (max-width: 768px) {
-    .dashboard-wrapper {
-        flex-direction: column;
-    }
-    
-    .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-    }
-    
-    .detail-content {
-        padding: 1rem 1.25rem;
-    }
-    
-    .profile-header {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .profile-info h3 {
-        font-size: 1.25rem;
-    }
-    
-    .detail-label,
-    .detail-value {
-        font-size: 0.8125rem;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-    }
-    
-    .btn-primary,
-    .btn-secondary {
-        width: 100%;
-        justify-content: center;
-    }
-}
-</style>
-@endpush
-
-@endsection
+</body>
+</html>
