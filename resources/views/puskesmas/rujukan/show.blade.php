@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Puskesmas — Detail Rujukan</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-        body { font-family: 'Poppins', sans-serif; }
-    </style>
+
 </head>
 <body class="bg-[#FFF7FC] min-h-screen">
     <div class="flex min-h-screen">

@@ -7,21 +7,6 @@
     
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js'])
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
-
-        @media print {
-            .print-hidden {
-                display: none !important;
-            }
-        }
-    </style>
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
