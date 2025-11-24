@@ -41,43 +41,48 @@ class PasienNifasController extends Controller
             ->join('users as u', 'u.id', '=', 'p.user_id')
             ->leftJoin('pasien_nifas_bidan as pnb', 'pnb.pasien_id', '=', 'p.id')
             ->leftJoin('pasien_nifas_rs as pnr', 'pnr.pasien_id', '=', 'p.id')
-            ->select(
-                'p.id',
-                'u.name',
-                'p.nik',
-                'p.tempat_lahir',
-                'p.tanggal_lahir',
-                DB::raw(<<<'SQL'
-                    CASE 
-                        WHEN pnb.id IS NOT NULL THEN 'Bidan'
-                        WHEN pnr.id IS NOT NULL THEN 'Rumah Sakit'
-                        ELSE 'Puskesmas'
-                    END as role_penanggung
-                SQL)
-            )
-            // ❗ hanya pasien yang benar-benar nifas (punya record di salah satu tabel nifas)
-            ->where(function ($w) {
-                $w->whereNotNull('pnb.id')
-                  ->orWhereNotNull('pnr.id');
-            });
+            ->selectRaw(<<<'SQL'
+            p.id as pasien_id,
+            u.name,
+            p.nik,
+            p.tempat_lahir,
+            p.tanggal_lahir,
+            CASE 
+                WHEN pnb.id IS NOT NULL THEN 'Bidan'
+                WHEN pnr.id IS NOT NULL THEN 'Rumah Sakit'
+                ELSE 'Puskesmas'
+            END as role_penanggung,
+            COALESCE(pnb.id, pnr.id) as nifas_id,
+            CASE
+                WHEN pnb.id IS NOT NULL THEN 'bidan'
+                WHEN pnr.id IS NOT NULL THEN 'rs'
+                ELSE NULL
+            END as sumber_nifas
+        SQL);
+
+        // hanya pasien yang benar-benar nifas
+        $query->where(function ($w) {
+            $w->whereNotNull('pnb.id')
+                ->orWhereNotNull('pnr.id');
+        });
 
         if ($q !== '') {
-            // untuk Postgres -> ILIKE; jika MySQL ganti ke LIKE
             $query->where(function ($w) use ($q) {
                 $w->where('u.name', 'ILIKE', "%{$q}%")
-                  ->orWhere('p.nik', 'ILIKE', "%{$q}%");
+                    ->orWhere('p.nik', 'ILIKE', "%{$q}%");
             });
         }
 
         return $query->orderBy('u.name');
     }
 
+
     /**
      * Tampilkan detail satu pasien nifas untuk Dinkes.
      */
-    public function show($pasienId)
+    public function show($nifasId)
     {
-        // ========== 1. Data utama pasien + penanggung nifas ==========
+        // 1) Data utama pasien + penanggung nifas (berdasarkan ID nifas)
         $pasien = DB::table('pasiens as p')
             ->join('users as u', 'u.id', '=', 'p.user_id')
             ->leftJoin('pasien_nifas_bidan as pnb', 'pnb.pasien_id', '=', 'p.id')
@@ -86,33 +91,36 @@ class PasienNifasController extends Controller
             ->leftJoin('puskesmas as pk', 'pk.id', '=', 'b.puskesmas_id')
             ->leftJoin('rumah_sakits as rs', 'rs.id', '=', 'pnr.rs_id')
             ->selectRaw("
-                p.id,
-                u.name,
-                u.email,
-                u.phone,
-                u.address,
-                p.nik,
-                p.tempat_lahir,
-                p.tanggal_lahir,
-                p.\"PKecamatan\" as \"PKecamatan\",
-                p.\"PKabupaten\" as \"PKabupaten\",
-                p.\"PProvinsi\" as \"PProvinsi\",
-                CASE 
-                    WHEN pnb.id IS NOT NULL THEN 'Bidan'
-                    WHEN pnr.id IS NOT NULL THEN 'Rumah Sakit'
-                    ELSE 'Puskesmas'
-                END as role_penanggung,
-                pnb.tanggal_mulai_nifas as tanggal_mulai_nifas_bidan,
-                pnr.tanggal_mulai_nifas as tanggal_mulai_nifas_rs,
-                pk.nama_puskesmas,
-                rs.nama as nama_rs
-            ")
-            ->where('p.id', $pasienId)
+            p.id,
+            u.name,
+            u.email,
+            u.phone,
+            u.address,
+            p.nik,
+            p.tempat_lahir,
+            p.tanggal_lahir,
+            p.\"PKecamatan\" as \"PKecamatan\",
+            p.\"PKabupaten\" as \"PKabupaten\",
+            p.\"PProvinsi\" as \"PProvinsi\",
+            CASE 
+                WHEN pnb.id IS NOT NULL THEN 'Bidan'
+                WHEN pnr.id IS NOT NULL THEN 'Rumah Sakit'
+                ELSE 'Puskesmas'
+            END as role_penanggung,
+            pnb.tanggal_mulai_nifas as tanggal_mulai_nifas_bidan,
+            pnr.tanggal_mulai_nifas as tanggal_mulai_nifas_rs,
+            pk.nama_puskesmas,
+            rs.nama as nama_rs
+        ")
+            ->where(function ($q) use ($nifasId) {
+                $q->where('pnb.id', $nifasId)
+                    ->orWhere('pnr.id', $nifasId);
+            })
             ->first();
 
         abort_unless($pasien, 404);
 
-        // Normalisasi tanggal lahir & mulai nifas biar enak dipakai di Blade
+        // Normalisasi tanggal lahir & mulai nifas
         $pasien->tanggal_lahir_formatted = $pasien->tanggal_lahir
             ? Carbon::parse($pasien->tanggal_lahir)->translatedFormat('d F Y')
             : null;
@@ -122,28 +130,55 @@ class PasienNifasController extends Controller
             ? Carbon::parse($tanggalMulaiNifas)->translatedFormat('d F Y')
             : null;
 
-        // ========== 2. Data anak nifas (anak_pasien) ==========
+        // 2) Data anak nifas: nifas_id = ID nifas (bukan ID pasien)
         $anakList = DB::table('anak_pasien')
-            ->where('nifas_id', $pasienId)
+            ->where('nifas_id', $nifasId)
             ->orderBy('anak_ke')
             ->get();
 
-        // ========== 3. Riwayat penyakit nifas ==========
-        $riwayatPenyakit = DB::table('riwayat_penyakit_nifas')
-            ->where('nifas_id', $pasienId)
-            ->orderBy('id')
-            ->get();
+        // 3) Riwayat penyakit nifas (diambil dari tabel anak_pasien)
+        $riwayatPenyakitRaw = DB::table('anak_pasien')
+            ->where('nifas_id', $nifasId)
+            ->get(['riwayat_penyakit', 'keterangan_masalah_lain']);
 
-        // ========== 4. Kunjungan nifas (KF) ==========
+        // Ubah menjadi collection berisi object { nama_penyakit, keterangan_penyakit_lain }
+        $riwayatPenyakit = collect($riwayatPenyakitRaw)
+            ->flatMap(function ($row) {
+                $list = $row->riwayat_penyakit;
+
+                // Kalau dari DB bentuknya masih string JSON → decode dulu
+                if (is_string($list)) {
+                    $decoded = json_decode($list, true);
+                    $list = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+                }
+
+                if (!is_array($list)) {
+                    return [];
+                }
+
+                // Setiap item di array dianggap nama penyakit
+                return collect($list)->map(function ($nama) use ($row) {
+                    return (object) [
+                        'nama_penyakit'           => $nama,
+                        'keterangan_penyakit_lain' => $row->keterangan_masalah_lain,
+                    ];
+                });
+            })
+            // Optional: kalau mau hilangkan duplikat penyakit
+            ->unique('nama_penyakit')
+            ->values();
+
+
+        // 4) Kunjungan nifas (KF)
         $kunjunganNifas = DB::table('kf')
             ->leftJoin('anak_pasien as a', 'a.id', '=', 'kf.id_anak')
-            ->where('kf.id_nifas', $pasienId)
+            ->where('kf.id_nifas', $nifasId)
             ->orderBy('kf.tanggal_kunjungan')
             ->selectRaw('
-                kf.*,
-                a.nama_anak,
-                a.anak_ke
-            ')
+            kf.*,
+            a.nama_anak,
+            a.anak_ke
+        ')
             ->get();
 
         return view('dinkes.pasien-nifas.show', [
@@ -153,6 +188,7 @@ class PasienNifasController extends Controller
             'kunjunganNifas'  => $kunjunganNifas,
         ]);
     }
+
 
     /**
      * EXPORT: Unduh semua data pasien Nifas (sesuai filter) dalam bentuk .xlsx
@@ -221,7 +257,7 @@ class PasienNifasController extends Controller
                 ? Carbon::parse($row->tanggal_lahir)->format('d-m-Y')
                 : '';
 
-            $sheet->setCellValue('A' . $rowIndex, $row->id);
+            $sheet->setCellValue('A' . $rowIndex, $row->pasien_id);
             $sheet->setCellValue('B' . $rowIndex, $row->name);
             $sheet->setCellValueExplicit(
                 'C' . $rowIndex,

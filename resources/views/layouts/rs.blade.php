@@ -11,6 +11,7 @@
         'resources/js/app.js',
         'resources/js/dropdown.js',
         'resources/js/rs/sidebar-toggle.js',
+        'resources/js/rs/skrinning-edit.js'
     ])
 
     {{-- Slot untuk style tambahan per-halaman --}}

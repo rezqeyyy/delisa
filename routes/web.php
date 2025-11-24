@@ -96,7 +96,7 @@ Route::middleware(['auth'])->group(function () {
             // Pasien Nifas
             Route::get('/pasien-nifas', [PasienNifasController::class, 'index'])->name('pasien-nifas');
             Route::get('/pasien-nifas/download/xlsx', [PasienNifasController::class, 'export'])->name('pasien-nifas.export');
-            Route::get('/pasien-nifas/{pasien}', [PasienNifasController::class, 'show'])->name('pasien-nifas.show');
+            Route::get('/pasien-nifas/{nifasId}', [PasienNifasController::class, 'show'])->name('pasien-nifas.show');
 
 
             // Profile Dinkes

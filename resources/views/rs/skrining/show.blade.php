@@ -284,7 +284,7 @@
             <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden">
                 <div class="px-4 sm:px-5 py-3 border-b border-[#F0F0F0] bg-[#FAFAFA]">
                     <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D] flex items-center gap-2">
-                        <span>Kesimpulan Skrining Awal (dari Puskesmas)</span>
+                        <span>Kesimpulan Skrining Awal</span>
                     </h2>
                 </div>
 

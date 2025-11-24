@@ -66,7 +66,6 @@
                                 </td>
                                 <td class="px-3 py-3">
                                     <div class="flex items-center gap-2">
-                                        <a href="{{ route('rs.skrining.show', $skr->id) }}" class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">View</a>
                                         @if(!$r->done_status)
                                             <form method="POST" action="{{ route('rs.penerimaan-rujukan.accept', $skr->id) }}">
                                                 @csrf

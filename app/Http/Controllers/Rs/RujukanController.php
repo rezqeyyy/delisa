@@ -16,7 +16,7 @@ class RujukanController extends Controller
         // Rujukan MASUK ke RS ini, belum diterima/ditolak
         $skrinings = RujukanRs::with(['skrining.pasien.user'])
             ->where('rs_id', $rsId)
-            ->where('done_status', false)
+            ->where('done_status', false) // hanya yang belum diterima
             ->orderByDesc('created_at')
             ->paginate(10);
 
@@ -38,9 +38,9 @@ class RujukanController extends Controller
 
             $raw = strtolower(trim($skr->kesimpulan ?? $skr->status_pre_eklampsia ?? ''));
             $isHigh = ($skr->jumlah_resiko_tinggi ?? 0) > 0
-                || in_array($raw, ['beresiko','berisiko','risiko tinggi','tinggi']);
+                || in_array($raw, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']);
             $isMed  = ($skr->jumlah_resiko_sedang ?? 0) > 0
-                || in_array($raw, ['waspada','menengah','sedang','risiko sedang']);
+                || in_array($raw, ['waspada', 'menengah', 'sedang', 'risiko sedang']);
 
             $rujukan->nik        = $pas->nik ?? '-';
             $rujukan->nama       = $usr->name ?? 'Nama Tidak Tersedia';
@@ -60,19 +60,30 @@ class RujukanController extends Controller
     {
         $rsId = Auth::user()->rumahSakit->id ?? null;
 
-        // $id di sini dianggap skrining_id
+        // $id di sini adalah skrining_id
         $rujukan = RujukanRs::where('skrining_id', $id)
             ->where('rs_id', $rsId)
             ->where('done_status', false)
             ->firstOrFail();
 
-        $rujukan->done_status = true;
-        $rujukan->save();
+        // Terima rujukan:
+        // - tandai sudah diterima (done_status = true)
+        // - reset SEMUA field lanjutan ke NULL
+        $rujukan->update([
+            'is_rujuk'                 => true,
+            'done_status'              => true,
+            'pasien_datang'           => null,
+            'riwayat_tekanan_darah'   => null,
+            'hasil_protein_urin'      => null,
+            'perlu_pemeriksaan_lanjut' => null,
+            'catatan_rujukan'         => null,
+        ]);
 
         return redirect()
             ->route('rs.penerimaan-rujukan.index')
-            ->with('success', 'Rujukan diterima.');
+            ->with('success', 'Rujukan berhasil diterima. Pasien masuk ke daftar rujukan pre eklampsia di dashboard.');
     }
+
 
     public function reject($id)
     {

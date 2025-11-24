@@ -105,7 +105,7 @@ class DashboardController extends Controller
          * ==============================
          * 4. PASIEN HADIR / TIDAK HADIR (CARD "Pasien Hadir")
          * ==============================
-         * Definisi baru:
+         * Definisi:
          * - Pasien Hadir       = pasien yang rujukannya SUDAH diterima DAN
          *                        SUDAH dilakukan pemeriksaan lanjutan
          *                        (minimal satu field lanjutan di rujukan_rs terisi)
@@ -128,7 +128,7 @@ class DashboardController extends Controller
                 || !is_null($r->catatan_rujukan);
         })->count();
 
-        $totalAccepted = $acceptedRujukan->count();
+        $totalAccepted   = $acceptedRujukan->count();
         $pasienTidakHadir = max(0, $totalAccepted - $pasienHadir);
 
         /**
@@ -167,10 +167,10 @@ class DashboardController extends Controller
                 ->where('kesimpulan_pantauan', 'Meninggal')
                 ->count();
         } else {
-            $sudahKF1           = 0;
-            $pemantauanSehat    = 0;
-            $pemantauanDirujuk  = 0;
-            $pemantauanMeninggal= 0;
+            $sudahKF1            = 0;
+            $pemantauanSehat     = 0;
+            $pemantauanDirujuk   = 0;
+            $pemantauanMeninggal = 0;
         }
 
         /**
@@ -180,6 +180,11 @@ class DashboardController extends Controller
          * HANYA:
          * - rujukan ke RS ini (rs_id = $rsId)
          * - sudah diterima (done_status = true)
+         *
+         * Di sini kita TIDAK lagi memfilter field lanjutan,
+         * supaya semua pasien rujukan yang sudah diterima
+         * tetap muncul di tabel ini, baik sudah diperiksa
+         * maupun belum.
          * ==============================
          */
         $pePatients = RujukanRs::with(['skrining.pasien.user'])
@@ -225,6 +230,7 @@ class DashboardController extends Controller
                     'alamat'      => $pas->PKecamatan ?? $pas->PWilayah ?? '-',
                     'telp'        => $usr->phone ?? $pas->no_telepon ?? '-',
                     'kesimpulan'  => $isHigh ? 'Beresiko' : ($isMed ? 'Waspada' : 'Tidak Berisiko'),
+                    // Periksa = form lanjutan
                     'detail_url'  => route('rs.skrining.edit', $skr->id ?? 0),
                     'process_url' => $pas && $pas->id
                         ? route('rs.dashboard.proses-nifas', ['id' => $pas->id])

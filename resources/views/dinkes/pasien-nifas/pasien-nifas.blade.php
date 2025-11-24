@@ -83,7 +83,7 @@
                                     </div>
                                 </div>
                                 <div class="flex flex-col gap-2">
-                                    <a href="{{ route('dinkes.pasien-nifas.show', $row->id) }}"
+                                    <a href="{{ route('dinkes.pasien-nifas.show', $row->nifas_id) }}"
                                         class="h-8 border border-[#D9D9D9] rounded-md px-3 text-xs flex items-center justify-center hover:bg-[#F5F5F5] transition">
                                         View
                                     </a>
@@ -138,7 +138,7 @@
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex items-center justify-center gap-2">
-                                                <a href="{{ route('dinkes.pasien-nifas.show', $row->id) }}"
+                                                <a href="{{ route('dinkes.pasien-nifas.show', $row->nifas_id) }}"
                                                     class="px-5 py-2 rounded-full bg-[#B9257F] text-white text-sm font-medium hover:bg-[#a31f70] transition">
                                                     View
                                                 </a>
