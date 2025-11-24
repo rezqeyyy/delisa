@@ -24,6 +24,18 @@ class PasienNifasController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
+        // ✅ Transform data untuk menambahkan status_display
+        $pasienNifas->getCollection()->transform(function ($pn) {
+            $raw = strtolower(trim($pn->status_kunjungan ?? ''));
+            $isLate = in_array($raw, ['telat', 'late', 'terlambat']);
+            $isWarn = in_array($raw, ['menengah', 'sedang', 'waspada']);
+            
+            // Set label status yang konsisten
+            $pn->status_display = $isLate ? 'Telat' : ($isWarn ? 'Waspada' : 'Tepat Waktu');
+            
+            return $pn;
+        });
+
         return view('rs.pasien-nifas.index', compact('pasienNifas'));
     }
 

@@ -63,10 +63,9 @@
                                 @forelse($pasienNifas as $pn)
                                     @php($pas = optional($pn)->pasien)
                                     @php($usr = optional($pas)->user)
-                                    @php($raw = strtolower(trim($pn->status_kunjungan ?? '')))
-                                    @php($isLate = in_array($raw, ['telat','late','terlambat']))
-                                    @php($isWarn = in_array($raw, ['menengah','sedang','waspada']))
-                                    @php($display = $isLate ? 'Telat' : ($isWarn ? 'Waspada' : 'Aman'))
+                                    @php($statusDisplay = $pn->status_display ?? 'Tepat Waktu')
+                                    @php($isLate = $statusDisplay === 'Telat')
+                                    @php($isWarn = $statusDisplay === 'Waspada')
                                     <tr>
                                         <td class="px-3 py-3"><input type="checkbox" class="rounded"></td>
                                         <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $pas->nik ?? '-' }}</td>
@@ -75,7 +74,9 @@
                                         <td class="px-3 py-3">{{ $pas->PKecamatan ?? $pas->PWilayah ?? '-' }}</td>
                                         <td class="px-3 py-3">{{ $usr->phone ?? '-' }}</td>
                                         <td class="px-3 py-3">
-                                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $isLate ? 'bg-[#E20D0D] text-white' : ($isWarn ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">{{ $display }}</span>
+                                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $isLate ? 'bg-[#E20D0D] text-white' : ($isWarn ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">
+                                                {{ $statusDisplay }}
+                                            </span>
                                         </td>
                                         <td class="px-3 py-3">
                                             <div class="flex items-center gap-2">

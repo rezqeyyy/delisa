@@ -73,10 +73,9 @@
                                     @php($skr = $r->skrining)
                                     @php($pas = optional($skr)->pasien)
                                     @php($usr = optional($pas)->user)
-                                    @php($raw = strtolower(trim($skr->kesimpulan ?? ($skr->status_pre_eklampsia ?? ''))))
-                                    @php($isHigh = ($skr->jumlah_resiko_tinggi ?? 0) > 0 || in_array($raw, ['berisiko', 'beresiko', 'risiko tinggi', 'tinggi']))
-                                    @php($isWarn = ($skr->jumlah_resiko_sedang ?? 0) > 0 || in_array($raw, ['waspada', 'menengah', 'sedang', 'risiko sedang']))
-                                    @php($display = $isHigh ? 'Beresiko' : ($isWarn ? 'Waspada' : 'Aman'))
+                                    @php($kesimpulan = $r->kesimpulan ?? 'Tidak Berisiko')
+                                    @php($isHigh = $kesimpulan === 'Beresiko')
+                                    @php($isWarn = $kesimpulan === 'Waspada')
                                     <tr>
                                         <td class="px-3 py-3"><input type="checkbox" class="rounded"></td>
                                         <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $pas->nik ?? '-' }}</td>
@@ -88,7 +87,7 @@
                                         <td class="px-3 py-3">
                                             <span
                                                 class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $isHigh ? 'bg-[#E20D0D] text-white' : ($isWarn ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">
-                                                {{ $display }}
+                                                {{ $kesimpulan }}
                                             </span>
                                         </td>
                                         <td class="px-3 py-3">

@@ -17,20 +17,11 @@ class SkriningController extends Controller
     {
         $rsId = Auth::user()->rumahSakit->id ?? null;
 
+        // ✅ PERBAIKAN: Ambil semua rujukan yang sudah diterima
         $skrinings = RujukanRs::with(['skrining.pasien.user'])
             ->where('rs_id', $rsId)
-            ->where('done_status', true)
-            ->where(function ($q) {
-                // Hanya pakai kolom yang benar-benar ada:
-                // - catatan_rujukan
-                // - atau sudah punya riwayat di riwayat_rujukans
-                $q->whereNotNull('catatan_rujukan')
-                  ->orWhereExists(function ($sub) {
-                      $sub->select(DB::raw(1))
-                          ->from('riwayat_rujukans')
-                          ->whereColumn('riwayat_rujukans.rujukan_id', 'rujukan_rs.id');
-                  });
-            })
+            ->where('done_status', true)  // Sudah diterima
+            ->where('is_rujuk', true)     // Sudah dirujuk
             ->orderByDesc('created_at')
             ->paginate(10);
 
@@ -50,6 +41,7 @@ class SkriningController extends Controller
             $rujukan->tanggal    = optional($skr->created_at)->format('d/m/Y');
             $rujukan->alamat     = $pas->PKecamatan ?? $pas->PWilayah ?? '-';
             $rujukan->telp       = $usr->phone ?? $pas->no_telepon ?? '-';
+            // ✅ PERBAIKAN: Ganti format risiko sama seperti rujukan
             $rujukan->kesimpulan = $isHigh ? 'Beresiko' : ($isMed ? 'Waspada' : 'Tidak Berisiko');
 
             $rujukan->detail_url  = route('rs.skrining.show', $skr->id);
