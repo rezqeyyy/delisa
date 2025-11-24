@@ -99,6 +99,8 @@ class SkriningController extends Controller
         ];
         $cls = $badgeClasses[$key] ?? 'bg-[#E9E9E9] text-[#1D1D1D]';
 
+        $skrining->load(['pasien.user', 'kondisiKesehatan', 'riwayatKehamilanGpa']);
+
         $kk = optional($skrining->kondisiKesehatan);
         $gpa = optional($skrining->riwayatKehamilanGpa);
 
@@ -164,6 +166,26 @@ class SkriningController extends Controller
             ->keyBy('kuisioner_id');
         foreach ($preHighNames as $nm) { $id = optional($preKuisHigh->get($nm))->id; if ($id && (bool) optional($preJawabHigh->get($id))->jawaban) { $sebabTinggi[] = $preHighLabels[$nm] ?? $nm; } }
 
+        $riwayatPenyakitPasien = DB::table('jawaban_kuisioners as j')
+            ->join('kuisioner_pasiens as k','k.id','=','j.kuisioner_id')
+            ->where('j.skrining_id', $skrining->id)
+            ->where('k.status_soal','individu')
+            ->where('j.jawaban', true)
+            ->select('k.nama_pertanyaan','j.jawaban_lainnya')
+            ->get()
+            ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: '.$r->jawaban_lainnya) : $r->nama_pertanyaan)
+            ->values()->all();
+
+        $riwayatPenyakitKeluarga = DB::table('jawaban_kuisioners as j')
+            ->join('kuisioner_pasiens as k','k.id','=','j.kuisioner_id')
+            ->where('j.skrining_id', $skrining->id)
+            ->where('k.status_soal','keluarga')
+            ->where('j.jawaban', true)
+            ->select('k.nama_pertanyaan','j.jawaban_lainnya')
+            ->get()
+            ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: '.$r->jawaban_lainnya) : $r->nama_pertanyaan)
+            ->values()->all();
+
         $nama    = optional(optional($skrining->pasien)->user)->name ?? '-';
         $nik     = optional($skrining->pasien)->nik ?? '-';
         $tanggal = \Carbon\Carbon::parse($skrining->created_at)->format('d/m/Y');
@@ -173,7 +195,7 @@ class SkriningController extends Controller
         $hasReferral = DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists();
 
         return view('puskesmas.skrining.show', compact(
-            'skrining','nama','nik','tanggal','alamat','telp','conclusion','cls','sebabSedang','sebabTinggi','hasReferral'
+            'skrining','nama','nik','tanggal','alamat','telp','conclusion','cls','sebabSedang','sebabTinggi','hasReferral','riwayatPenyakitPasien','riwayatPenyakitKeluarga'
         ));
     }
 

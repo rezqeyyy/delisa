@@ -12,6 +12,7 @@ class DashboardController extends Controller
         // Versi SANGAT AMAN - tanpa DB::raw yang kompleks
         $pePatients = DB::table('skrinings')
             ->join('pasiens', 'skrinings.pasien_id', '=', 'pasiens.id')
+            ->join('users', 'users.id', '=', 'pasiens.user_id')
             ->select(
                 'skrinings.id',
                 'skrinings.status_pre_eklampsia',
@@ -19,9 +20,11 @@ class DashboardController extends Controller
                 'skrinings.tindak_lanjut',
                 'skrinings.created_at',
                 'pasiens.nik',
-                'pasiens.tempat_lahir',
                 'pasiens.tanggal_lahir',
-                'pasiens.PKecamatan'
+                'pasiens.PKecamatan',
+                'users.name as nama_pasien',
+                'users.address as alamat_domisili',
+                'users.phone as phone'
             )
             ->orderBy('skrinings.created_at', 'desc')
             ->get();
@@ -30,11 +33,11 @@ class DashboardController extends Controller
         $pePatients = $pePatients->map(function ($item) {
             return (object) [
                 'id' => $item->id,
-                'nama' => $item->tempat_lahir,
+                'nama' => $item->nama_pasien,
                 'nik' => $item->nik,
-                'tanggal' => $item->created_at,
-                'alamat' => $item->PKecamatan,
-                'telp' => '-',
+                'tanggal' => $item->tanggal_lahir,
+                'alamat' => $item->alamat_domisili ?? $item->PKecamatan,
+                'telp' => $item->phone ?? '-',
                 'kesimpulan' => $item->kesimpulan,
                 'hasil_akhir' => $item->kesimpulan,
                 'rekomendasi' => '-',

@@ -217,7 +217,7 @@
                             <thead class="text-[#7C7C7C]">
                                 <tr class="text-left">
                                     <th class="px-3 py-2 w-10"><input type="checkbox" class="rounded"></th>
-                                    <th class="px-3 py-2">ID Skrining</th>
+                                    <th class="px-3 py-2">No.</th>
                                     <th class="px-3 py-2">Nama Pasien</th>
                                     <th class="px-3 py-2">NIK</th>
                                     <th class="px-3 py-2">Tanggal Lahir</th>
@@ -231,8 +231,8 @@
                                 @forelse(($pePatients ?? []) as $p)
                                     <tr>
                                         <td class="px-3 py-3"><input type="checkbox" name="selected[]" value="{{ $p->id ?? '' }}" class="rounded"></td>
-                                        <td class="px-3 py-3 font-medium tabular-nums">#{{ $p->id ?? '-' }}</td>
-                                        <td class="px-3 py-3">{{ $p->nama ?? $p->tempat_lahir ?? '-' }}</td>
+                                        <td class="px-3 py-3 font-medium tabular-nums">{{ $loop->iteration }}</td>
+                                        <td class="px-3 py-3">{{ $p->nama ?? '-' }}</td>
                                         <td class="px-3 py-3 tabular-nums">{{ $p->nik ?? '-' }}</td>
                                         <td class="px-3 py-3">{{ $p->tanggal ? \Carbon\Carbon::parse($p->tanggal)->format('d/m/Y') : '-' }}</td>
                                         <td class="px-3 py-3">{{ $p->alamat ?? $p->PKecamatan ?? '-' }}</td>
