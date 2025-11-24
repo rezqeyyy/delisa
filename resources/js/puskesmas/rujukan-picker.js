@@ -18,10 +18,10 @@
         
         <!-- TAMBAHKAN TEXTAREA UNTUK CATATAN RUJUKAN -->
         <div class="mb-4">
-          <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Catatan Rujukan</label>
-          <textarea id="catatanRujukan" placeholder="Jelaskan alasan rujukan dan kondisi pasien..." 
+          <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Catatan Rujukan (opsional)</label>
+          <textarea id="catatanRujukan" placeholder="Opsional: jelaskan alasan rujukan dan kondisi pasien..." 
                     class="w-full border border-[#D9D9D9] rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#B9257F] focus:border-[#B9257F]" 
-                    rows="3" required></textarea>
+                    rows="3"></textarea>
         </div>
 
         <p class="text-sm text-[#6B7280] mb-3">Pilih Rumah Sakit tujuan rujukan:</p>
@@ -52,6 +52,7 @@
     const btnSubmit = modal.querySelector('#submitRujukanBtn');
     const rsIdInput = modal.querySelector('#rsIdInput');
     const catatanTextarea = modal.querySelector('#catatanRujukan'); // ELEMEN BARU
+    const showPopup = (opts) => (window.Swal && typeof Swal.fire === 'function') ? Swal.fire(opts) : alert(String(opts?.text || ''));
 
     function setSubmitEnabled(enabled) {
       btnSubmit.classList.remove('bg-gray-400','hover:bg-gray-500','bg-[#B9257F]','hover:bg-[#a31f70]');
@@ -66,8 +67,7 @@
 
     function validateForm() {
       const hasRsSelected = Boolean(rsIdInput.value);
-      const hasCatatan = catatanTextarea.value.trim().length >= 10; // Minimal 10 karakter
-      return hasRsSelected && hasCatatan;
+      return hasRsSelected;
     }
 
     function openModal() {
@@ -128,18 +128,27 @@
               });
               it.classList.add('bg-[#F9E5F1]','border','border-[#B9257F]/40');
               rsIdInput.value = it.getAttribute('data-id') || '';
-              setSubmitEnabled(Boolean(rsIdInput.value));
+              setSubmitEnabled(validateForm());
           });
       });
   }
 
     // FUNGSI BARU: HANDLE SUBMIT VIA AJAX
       async function handleSubmit() {
-      if (!validateForm()) return;
+      if (!validateForm()) {
+          showPopup({
+              icon: 'warning',
+              title: 'Data belum lengkap',
+              text: 'Pilih rumah sakit terlebih dahulu.',
+              confirmButtonColor: '#B9257F'
+          });
+          input.focus();
+          return;
+      }
 
       const submitData = {
           rs_id: rsIdInput.value,
-          catatan_rujukan: catatanTextarea.value.trim(),
+          catatan_rujukan: (catatanTextarea.value.trim() || null),
           _token: csrfToken
       };
 
@@ -160,7 +169,7 @@
 
           if (result.success) {
               // ✅ POPUP SUKSES - GANTI ALERT BIASA
-              Swal.fire({
+              showPopup({
                   icon: 'success',
                   title: 'Berhasil!',
                   text: 'Rujukan berhasil diajukan',
@@ -172,7 +181,7 @@
               });
           } else {
               // ✅ POPUP ERROR
-              Swal.fire({
+              showPopup({
                   icon: 'error',
                   title: 'Gagal',
                   text: result.message || 'Gagal mengajukan rujukan',
@@ -182,7 +191,7 @@
               btnSubmit.innerHTML = 'Kirim Permintaan Rujukan';
           }
       } catch (error) {
-          Swal.fire({
+          showPopup({
               icon: 'error',
               title: 'Error',
               text: 'Terjadi kesalahan: ' + error.message,

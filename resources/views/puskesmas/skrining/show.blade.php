@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bidan — Skrining</title>
+    <title>Puskesmas — Detail Skrining</title>
     
     @vite([
         'resources/css/app.css', 
         'resources/js/app.js', 
         'resources/js/pasien/imt.js', 
-        'resources/js/dropdown.js', 
-        'resources/js/pasien/sidebar-toggle.js'
+        'resources/js/puskesmas/sidebar-toggle.js',
+        'resources/js/puskesmas/rujukan-picker.js'
         ])
 
     <style>
@@ -24,7 +24,7 @@
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
         
-        <x-bidan.sidebar />
+        <x-puskesmas.sidebar />
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
              @if (session('success'))
@@ -35,12 +35,12 @@
 
             
                 <div class="mb-6 flex items-center">
-                    <a href="{{ route('bidan.skrining') }}" class="text-gray-600 hover:text-gray-900">
+                    <a href="{{ route('puskesmas.skrining') }}" class="text-gray-600 hover:text-gray-900">
                         <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                         </svg>
                     </a>
-                    <h1 class="ml-3 text-3xl font-bold text-gray-800">Data Detail Pasien</h1>
+                    <h1 class="ml-3 text-3xl font-bold text-gray-800">Detail Skrining Pasien</h1>
                 </div>
 
                 <div class="rounded-2xl bg-white p-6 shadow">
@@ -199,6 +199,14 @@
 
                     <div class="mt-6 flex items-center justify-end gap-4">
                         <a href="{{ route('puskesmas.skrining') }}" class="rounded-lg bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">Kembali</a>
+                        <button id="btnAjukanRujukan"
+                                data-submit-url="{{ route('puskesmas.skrining.rujuk', $skrining->id) }}"
+                                data-search-url="{{ route('puskesmas.rs.search') }}"
+                                data-csrf="{{ csrf_token() }}"
+                                type="button"
+                                class="rounded-lg bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a31f70] {{ $hasReferral ? 'cursor-not-allowed opacity-60' : '' }}" {{ $hasReferral ? 'disabled' : '' }}>
+                            Ajukan Rujukan
+                        </button>
                     </div>
                 </div>
                

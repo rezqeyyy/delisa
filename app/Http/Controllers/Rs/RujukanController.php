@@ -70,13 +70,9 @@ class RujukanController extends Controller
         // - tandai sudah diterima (done_status = true)
         // - reset SEMUA field lanjutan ke NULL
         $rujukan->update([
-            'is_rujuk'                 => true,
-            'done_status'              => true,
-            'pasien_datang'           => null,
-            'riwayat_tekanan_darah'   => null,
-            'hasil_protein_urin'      => null,
-            'perlu_pemeriksaan_lanjut' => null,
-            'catatan_rujukan'         => null,
+            'is_rujuk'    => true,
+            'done_status' => true,
+            'catatan_rujukan' => null,
         ]);
 
         return redirect()

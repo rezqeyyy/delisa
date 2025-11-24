@@ -9,6 +9,7 @@ use App\Models\ResepObat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class SkriningController extends Controller
 {
@@ -19,13 +20,6 @@ class SkriningController extends Controller
         $skrinings = RujukanRs::with(['skrining.pasien.user'])
             ->where('rs_id', $rsId)
             ->where('done_status', true)
-            ->where(function ($q) {
-                $q->whereNotNull('pasien_datang')
-                    ->orWhereNotNull('riwayat_tekanan_darah')
-                    ->orWhereNotNull('hasil_protein_urin')
-                    ->orWhereNotNull('perlu_pemeriksaan_lanjut')
-                    ->orWhereNotNull('catatan_rujukan');
-            })
             ->orderByDesc('created_at')
             ->paginate(10);
 
@@ -161,7 +155,16 @@ class SkriningController extends Controller
             'penggunaan.*'    => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($skrining, $rsId, $validated) {
+        $payload = [
+            'catatan_rujukan' => $validated['catatan_rujukan'] ?? null,
+            'done_status' => true,
+        ];
+        if (Schema::hasColumn('rujukan_rs','pasien_datang')) { $payload['pasien_datang'] = $validated['pasien_datang'] ?? null; }
+        if (Schema::hasColumn('rujukan_rs','riwayat_tekanan_darah')) { $payload['riwayat_tekanan_darah'] = $validated['riwayat_tekanan_darah'] ?? null; }
+        if (Schema::hasColumn('rujukan_rs','hasil_protein_urin')) { $payload['hasil_protein_urin'] = $validated['hasil_protein_urin'] ?? null; }
+        if (Schema::hasColumn('rujukan_rs','perlu_pemeriksaan_lanjut')) { $payload['perlu_pemeriksaan_lanjut'] = $validated['perlu_pemeriksaan_lanjut'] ?? null; }
+
+        DB::transaction(function () use ($skrining, $rsId, $validated, $payload) {
             // ============ RUJUKAN_RS (lanjutan pemeriksaan) ============
             $rujukan = RujukanRs::updateOrCreate(
                 [
@@ -169,14 +172,7 @@ class SkriningController extends Controller
                     'pasien_id'   => $skrining->pasien_id,
                     'rs_id'       => $rsId
                 ],
-                [
-                    'pasien_datang'            => $validated['pasien_datang'] ?? null,
-                    'riwayat_tekanan_darah'    => $validated['riwayat_tekanan_darah'] ?? null,
-                    'hasil_protein_urin'       => $validated['hasil_protein_urin'] ?? null,
-                    'perlu_pemeriksaan_lanjut' => $validated['perlu_pemeriksaan_lanjut'] ?? null,
-                    'catatan_rujukan'          => $validated['catatan_rujukan'] ?? null,
-                    'done_status'              => true,
-                ]
+                $payload
             );
 
             // ============ RIWAYAT_RUJUKANS (khusus tindakan) ============

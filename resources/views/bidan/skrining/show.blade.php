@@ -121,6 +121,32 @@
                             <div class="border-t border-gray-200 p-4 text-sm font-semibold">Jumlah Resiko Tinggi</div>
                             <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $skrining->jumlah_resiko_tinggi ?? 0 }}</div>
 
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Pemicu Risiko Sedang</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                                @if(!empty($sebabSedang))
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        @foreach($sebabSedang as $s)
+                                            <li>{{ $s }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    -
+                                @endif
+                            </div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Pemicu Risiko Tinggi</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                                @if(!empty($sebabTinggi))
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        @foreach($sebabTinggi as $s)
+                                            <li>{{ $s }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    -
+                                @endif
+                            </div>
+
                             <div class="border-t border-gray-200 p-4 text-sm font-semibold">Riwayat Penyakit Pasien</div>
                             <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
                                 @if(!empty($riwayatPenyakitPasien))

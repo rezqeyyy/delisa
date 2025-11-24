@@ -42,7 +42,7 @@ class RujukanController extends Controller
     {
         $request->validate([
             'rs_id' => 'required|exists:rumah_sakits,id',
-            'catatan_rujukan' => 'required|string|min:10'
+            'catatan_rujukan' => 'nullable|string'
         ]);
 
         // Get data skrining untuk dapatkan pasien_id
@@ -76,7 +76,7 @@ class RujukanController extends Controller
             'rs_id' => $request->rs_id, // sesuai input form
             'skrining_id' => $skriningId,
             'done_status' => false, // default false = belum selesai
-            'catatan_rujukan' => $request->catatan_rujukan,
+            'catatan_rujukan' => $request->input('catatan_rujukan') ?: null,
             'is_rujuk' => true, // true = dirujuk
             'created_at' => now(),
             'updated_at' => now()
