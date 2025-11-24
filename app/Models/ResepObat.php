@@ -13,6 +13,7 @@ class ResepObat extends Model
 
     protected $fillable = [
         'rujukan_rs_id',
+        'riwayat_rujukan_id',
         'resep_obat',
         'dosis',
         'penggunaan',

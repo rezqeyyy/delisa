@@ -153,19 +153,20 @@
                     </div>
                 </section>
 
-                {{-- Kartu: Hasil Pemeriksaan di Rumah Sakit --}}
-                <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden">
-                    <div class="px-4 sm:px-5 py-3 border-b border-[#F0F0F0] bg-[#FAFAFA]">
-                        <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D] flex items-center gap-2">
-                            <span class="w-8 h-8 rounded-full bg-[#DBEAFE] flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#2563EB]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                                    <polyline points="9,22 9,12 15,12 15,22"/>
-                                </svg>
-                            </span>
-                            <span>Hasil Pemeriksaan di Rumah Sakit</span>
-                        </h2>
-                    </div>
+            {{-- Kartu: Hasil Pemeriksaan di Rumah Sakit --}}
+            @php
+                $kk = $skrining->kondisiKesehatan;
+                $sistol = $kk->sdp ?? null;
+                $diastol = $kk->dbp ?? null;
+                $proteinUrine = $kk->pemeriksaan_protein_urine ?? null;
+            @endphp
+
+            <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden">
+                <div class="px-4 sm:px-5 py-3 border-b border-[#F0F0F0] bg-[#FAFAFA]">
+                    <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D] flex items-center gap-2">
+                        <span>Hasil Pemeriksaan di Rumah Sakit</span>
+                    </h2>
+                </div>
 
                     <div class="px-4 sm:px-5 py-4">
                         @if($rujukan)
@@ -199,25 +200,37 @@
                                     </div>
                                 </div>
 
-                                {{-- Riwayat Tekanan Darah --}}
-                                <div class="flex flex-col sm:flex-row">
-                                    <div class="sm:w-1/3 bg-[#FAFAFA] px-4 sm:px-5 py-3 text-[11px] font-semibold text-[#7C7C7C]">
-                                        Riwayat Tekanan Darah
-                                    </div>
-                                    <div class="flex-1 px-4 sm:px-5 py-3 text-[#1D1D1D]">
-                                        {{ $rujukan->riwayat_tekanan_darah ?? '-' }}
-                                    </div>
+                            {{-- Riwayat Tekanan Darah (diambil dari hasil skrining) --}}
+                            <div class="flex flex-col sm:flex-row">
+                                <div class="sm:w-1/3 bg-[#FAFAFA] px-4 sm:px-5 py-3 text-[11px] font-semibold text-[#7C7C7C]">
+                                    Riwayat Tekanan Darah
                                 </div>
+                                <div class="flex-1 px-4 sm:px-5 py-3 text-[#1D1D1D]">
+                                    @if($sistol || $diastol)
+                                        {{ ($sistol ?? '?') }}/{{ ($diastol ?? '?') }} mmHg
+                                    @else
+                                        <span class="text-[#9CA3AF] italic">
+                                            Belum ada data tekanan darah dari hasil skrining
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
 
-                                {{-- Hasil Protein Urin --}}
-                                <div class="flex flex-col sm:flex-row">
-                                    <div class="sm:w-1/3 bg-[#FAFAFA] px-4 sm:px-5 py-3 text-[11px] font-semibold text-[#7C7C7C]">
-                                        Hasil Pemeriksaan Protein Urin
-                                    </div>
-                                    <div class="flex-1 px-4 sm:px-5 py-3 text-[#1D1D1D]">
-                                        {{ $rujukan->hasil_protein_urin ?? '-' }}
-                                    </div>
+                            {{-- Hasil Protein Urin (diambil dari hasil skrining) --}}
+                            <div class="flex flex-col sm:flex-row">
+                                <div class="sm:w-1/3 bg-[#FAFAFA] px-4 sm:px-5 py-3 text-[11px] font-semibold text-[#7C7C7C]">
+                                    Hasil Pemeriksaan Protein Urin
                                 </div>
+                                <div class="flex-1 px-4 sm:px-5 py-3 text-[#1D1D1D]">
+                                    @if($proteinUrine)
+                                        {{ $proteinUrine }}
+                                    @else
+                                        <span class="text-[#9CA3AF] italic">
+                                            Belum ada data pemeriksaan protein urin dari hasil skrining
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
 
                                 {{-- Perlu Pemeriksaan Lanjutan --}}
                                 <div class="flex flex-col sm:flex-row">
