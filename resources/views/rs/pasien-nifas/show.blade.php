@@ -1,13 +1,31 @@
-@extends('layouts.rs')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Pasien Nifas - DELISA</title>
+    
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js'])
 
-@section('title', 'Detail Pasien Nifas')
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        @media print {
+            .print\\:hidden {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
 
-@section('content')
+<body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
-        {{-- Sidebar RS --}}
+        
         <x-rs.sidebar />
 
-        {{-- MAIN CONTENT --}}
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
 
             {{-- HEADER ATAS --}}
@@ -46,8 +64,7 @@
 
             {{-- ALERT SUKSES --}}
             @if (session('success'))
-                <div
-                    class="alert flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs sm:text-sm text-emerald-800">
+                <div class="alert flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs sm:text-sm text-emerald-800">
                     <span class="mt-0.5">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
                              stroke="currentColor" stroke-width="2">
@@ -81,7 +98,7 @@
             @endphp
 
             {{-- =========================
-                 1. INFORMASI PASIEN (STYLE SEPERTI GAMBAR 1)
+                 1. INFORMASI PASIEN
                ========================== --}}
             <section class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
                 <div class="flex items-center justify-between mb-4">
@@ -92,8 +109,7 @@
 
                 <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
                     {{-- Header bar --}}
-                    <div
-                        class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
+                    <div class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
                         <div class="px-4 sm:px-6 py-3 border-r border-[#F0F0F0]">
                             Informasi
                         </div>
@@ -104,7 +120,7 @@
 
                     {{-- Rows --}}
                     <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
-                        {{-- Tanggal Pemeriksaan (pakai tanggal mulai nifas) --}}
+                        {{-- Tanggal Pemeriksaan --}}
                         <div class="grid grid-cols-2">
                             <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
                                 Tanggal Pemeriksaan
@@ -138,7 +154,7 @@
                             </div>
                         </div>
 
-                        {{-- Usia Kehamilan (pakai data anak pertama bila ada) --}}
+                        {{-- Usia Kehamilan --}}
                         <div class="grid grid-cols-2">
                             <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
                                 Usia Kehamilan
@@ -174,8 +190,8 @@
                                 {{ $pasienNifas->pasien->user->phone ?? ($pasienNifas->pasien->no_telepon ?? '-') }}
                             </div>
                         </div>
-                    </div> {{-- end divide --}}
-                </div> {{-- end card --}}
+                    </div>
+                </div>
             </section>
 
             {{-- =========================
@@ -190,8 +206,7 @@
 
                 <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
                     {{-- Header bar --}}
-                    <div
-                        class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
+                    <div class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
                         <div class="px-4 sm:px-6 py-3 border-r border-[#F0F0F0]">
                             Informasi
                         </div>
@@ -254,11 +269,6 @@
                 </div>
             </section>
 
-            {{-- =========================
-                 3. DATA PER ANAK (CARD RINGKAS)
-               ========================== --}}
-            
-
             {{-- TOMBOL AKSI BAWAH --}}
             <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
                 <a href="{{ route('rs.pasien-nifas.index') }}"
@@ -289,9 +299,7 @@
             </footer>
         </main>
     </div>
-@endsection
 
-@push('scripts')
     <script>
         // Auto-hide alert sukses setelah 5 detik
         document.addEventListener('DOMContentLoaded', function () {
@@ -305,4 +313,5 @@
             });
         });
     </script>
-@endpush
+</body>
+</html>
