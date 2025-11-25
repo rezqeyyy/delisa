@@ -1,42 +1,67 @@
+/* Import font buat semua halaman */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
+body {
+    font-family: "Poppins", sans-serif;
+}
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Komponen kecil dari Figma */
 @layer components {
-  .pill {@apply px-3 py-1 rounded-full bg-sheet text-ink82 border border-stroke;}
-  .chip {@apply inline-flex items-center gap-2 px-3 py-1 rounded-full border border-stroke bg-white;}
-  .tag  {@apply px-3 py-1 text-xs rounded-full font-medium;}
-  @layer components {
-  .card {@apply bg-white rounded-xl2 shadow-card;}
-  .card-pad {@apply p-5;}           /* padding 20px seperti Figma */
-  .icon-btn {@apply h-8 w-8 grid place-content-center rounded-full border border-stroke text-grayA0;}
-}
-
+    .pill {
+        @apply px-3 py-1 rounded-full bg-sheet text-ink82 border border-stroke;
+    }
+    .chip {
+        @apply inline-flex items-center gap-2 px-3 py-1 rounded-full border border-stroke bg-white;
+    }
+    .tag {
+        @apply px-3 py-1 text-xs rounded-full font-medium;
+    }
+    @layer components {
+        .card {
+            @apply bg-white rounded-xl2 shadow-card;
+        }
+        .card-pad {
+            @apply p-5;
+        } /* padding 20px seperti Figma */
+        .icon-btn {
+            @apply h-8 w-8 grid place-content-center rounded-full border border-stroke text-grayA0;
+        }
+    }
 }
 
 /* Scrollbar manis biar rapi seperti mockup */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 999px; }
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 999px;
+}
 /* Matikan tombol clear bawaan hanya untuk search PE di dashboard */
 #peSearchInput[type="search"] {
-  -webkit-appearance: none;
-          appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 /* Chromium/WebKit: sembunyikan ikon cancel & dekorasi bawaan */
 #peSearchInput::-webkit-search-cancel-button,
 #peSearchInput::-webkit-search-decoration {
-  -webkit-appearance: none;
-          appearance: none;
-  display: none;
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
 }
 
 /* Legacy Edge/IE (aman kalau masih ada): */
 #peSearchInput::-ms-clear {
-  display: none;
-  width: 0;
-  height: 0;
+    display: none;
+    width: 0;
+    height: 0;
 }
 
 /* ===== KF chart (Kunjungan Nifas per Bulan) ===== */
@@ -45,7 +70,9 @@
 }
 
 .kf-chart-bar path {
-    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+    transition:
+        opacity 0.15s ease-out,
+        transform 0.15s ease-out;
 }
 
 .kf-chart-bar:hover path {
@@ -62,4 +89,24 @@
 /* Saat bar di-hover, tampilkan label angkanya */
 .kf-chart-bar:hover .kf-chart-bar-label {
     opacity: 1;
+}
+
+/* ============================
+   PRINT MODE UTILITIES GLOBAL
+   ============================ */
+
+@media print {
+    .print-hidden {
+        display: none !important;
+    }
+
+    /* Laravel/Tailwind escaping backslash */
+    .print\:hidden {
+        display: none !important;
+    }
+}
+
+/* Untuk Alpine x-cloak */
+[x-cloak] {
+    display: none !important;
 }

@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Riwayat Kehamilan & Persalinan — Delisa Skrining</title>
     @vite(['resources/css/app.css', 'resources/js/pasien/sidebar-toggle.js'])
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-        body { font-family: 'Poppins', sans-serif; }
-        [x-cloak] { display: none !important; }
-    </style>
     
 </head>
 
