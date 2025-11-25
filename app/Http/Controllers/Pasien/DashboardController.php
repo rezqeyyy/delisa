@@ -168,7 +168,7 @@ class DashboardController extends Controller
         }
 
         /* {{-- ==== RETURN VIEW ==== --}} */
-        return view('pasien.dashboard', [
+        return view('pasien.dashboard.dashboard', [
             'skrinings'         => $skrinings,
             'status'            => $status,
             'dateFrom'          => $dateFrom,

@@ -8,7 +8,7 @@
     @vite([
         'resources/css/app.css',
         'resources/js/app.js',
-        'resources/js/dinkes/data-master-form.js', {{-- dipakai untuk filter kecamatan → kelurahan --}}
+        'resources/js/dinkes/data-master-form.js', //{{-- dipakai untuk filter kecamatan → kelurahan --}}
     ])
 </head>
 

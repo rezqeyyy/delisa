@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use App\Models\PasienNifasBidan;
+use App\Models\Pasien;
+use App\Models\User;
 
 class PasienNifasController extends Controller
 {
@@ -74,5 +79,103 @@ class PasienNifasController extends Controller
             'sudahKFI',
             'belumKFI'
         ));
+    }
+
+    public function create()
+    {
+        return view('bidan.pasien-nifas.create');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'nama_pasien' => 'required|string|max:255',
+            'nik'         => 'required|digits:16',
+            'no_telepon'  => 'required|string|max:20',
+            'provinsi'    => 'required|string|max:100',
+            'kota'        => 'required|string|max:100',
+            'kecamatan'   => 'required|string|max:100',
+            'kelurahan'   => 'required|string|max:100',
+            'domisili'    => 'required|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $existingPasien = Pasien::with('user')->where('nik', $validated['nik'])->first();
+            if ($existingPasien) {
+                if ($existingPasien->user) {
+                    $existingPasien->user->update(['phone' => $validated['no_telepon']]);
+                } else {
+                    User::where('id', $existingPasien->user_id)->update(['phone' => $validated['no_telepon']]);
+                }
+
+                $existingPasien->update([
+                    'PProvinsi'  => $validated['provinsi'],
+                    'PKabupaten' => $validated['kota'],
+                    'PKecamatan' => $validated['kecamatan'],
+                    'PWilayah'   => $validated['kelurahan'],
+                ]);
+
+                $pasien = $existingPasien;
+            } else {
+                $role = DB::table('roles')->where('nama_role', 'pasien')->first();
+                if (!$role) {
+                    throw new \Exception('Role "pasien" tidak ditemukan');
+                }
+
+                $baseEmail = $validated['nik'] . '@pasien.delisa.id';
+                $email = User::where('email', $baseEmail)->exists()
+                    ? ($validated['nik'] . '.' . time() . '@pasien.delisa.id')
+                    : $baseEmail;
+
+                $user = User::create([
+                    'name'     => $validated['nama_pasien'],
+                    'email'    => $email,
+                    'password' => bcrypt('password'),
+                    'role_id'  => $role->id,
+                    'phone'    => $validated['no_telepon'],
+                ]);
+
+                $pasien = Pasien::create([
+                    'user_id'    => $user->id,
+                    'nik'        => $validated['nik'],
+                    'PProvinsi'  => $validated['provinsi'],
+                    'PKabupaten' => $validated['kota'],
+                    'PKecamatan' => $validated['kecamatan'],
+                    'PWilayah'   => $validated['kelurahan'],
+                ]);
+            }
+
+            $bidan = Auth::user()->bidan;
+            if (!$bidan) {
+                throw new \RuntimeException('Akses Bidan tidak valid');
+            }
+            $bidanId = $bidan->puskesmas_id;
+
+            $existingNifas = PasienNifasBidan::where('pasien_id', $pasien->id)
+                ->where('bidan_id', $bidanId)
+                ->first();
+
+            if ($existingNifas) {
+                DB::commit();
+                return redirect()->route('bidan.pasien-nifas')
+                    ->with('info', 'Pasien sudah terdaftar dalam daftar nifas.');
+            }
+
+            PasienNifasBidan::create([
+                'bidan_id'             => $bidanId,
+                'pasien_id'            => $pasien->id,
+                'tanggal_mulai_nifas'  => now(),
+            ]);
+
+            DB::commit();
+            return redirect()->route('bidan.pasien-nifas')
+                ->with('success', 'Data pasien nifas berhasil ditambahkan');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Bidan Store Pasien Nifas: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 }

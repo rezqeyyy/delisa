@@ -33,7 +33,7 @@
                             <p class="text-xs text-[#7C7C7C]">Data pasien yang sedang nifas pada puskesmas ini</p>
                         </div>
                     </div>
-                    <a href="{{ route('rs.pasien-nifas.create') }}"
+                    <a href="{{ route('bidan.pasien-nifas.create') }}"
                         class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#C2185B]">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 5v14" />

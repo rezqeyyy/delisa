@@ -37,6 +37,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnOpen)  btnOpen.addEventListener('click', openSidebar);
     if (btnClose) btnClose.addEventListener('click', closeSidebar);
 
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth >= 1024) return;
+        const isOpen = sidebar.getBoundingClientRect().left >= 0;
+        if (!isOpen) return;
+        if (!sidebar.contains(e.target) && e.target.id !== 'sidebarOpenBtn') {
+            closeSidebar();
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth >= 1024) return;
+        const isOpen = sidebar.getBoundingClientRect().left >= 0;
+        if (!isOpen) return;
+        if (!sidebar.contains(e.target) && e.target.id !== 'sidebarOpenBtn') {
+            closeSidebar();
+        }
+    });
+
     window.addEventListener('resize', () => {
         const bd = ensureBackdrop();
         if (window.innerWidth >= 1024) {

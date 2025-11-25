@@ -159,6 +159,8 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/profile/photo', [BidanProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
 
             Route::get('/pasien-nifas', [\App\Http\Controllers\Bidan\PasienNifasController::class, 'index'])->name('pasien-nifas');
+            Route::get('/pasien-nifas/create', [\App\Http\Controllers\Bidan\PasienNifasController::class, 'create'])->name('pasien-nifas.create');
+            Route::post('/pasien-nifas/store', [\App\Http\Controllers\Bidan\PasienNifasController::class, 'store'])->name('pasien-nifas.store');
         });
 
     // ================== RUMAH SAKIT ==================

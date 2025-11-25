@@ -25,7 +25,6 @@
                     {{ session('success') }}
                 </div>
             @endif
-
             
                 <div class="mb-6 flex items-center">
                     <a href="{{ route('bidan.skrining') }}" class="text-gray-600 hover:text-gray-900">

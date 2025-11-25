@@ -36,7 +36,7 @@ class SkriningController extends Controller
         $this->recalcPreEklampsia($skrining);
         $data = $this->buildSkriningShowData($skrining);
 
-        return view('pasien.skrining-show', $data);
+        return view('pasien.dashboard.skrining-show', $data);
     }
 
     /* {{-- ========== SKRINING — BUILD SHOW DATA ========== --}} */
