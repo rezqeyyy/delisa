@@ -29,9 +29,13 @@ class AnakPasien extends Model
         'tanggal_lahir' => 'date',
         'riwayat_penyakit' => 'array',
     ];
-    
-    public function pasienNifas()
+
+    /**
+     * Anak ini milik 1 pasien (ibu)
+     * nifas_id = pasien_id
+     */
+    public function pasien()
     {
-        return $this->belongsTo(PasienNifas::class, 'nifas_id');
+        return $this->belongsTo(Pasien::class, 'nifas_id');
     }
 }

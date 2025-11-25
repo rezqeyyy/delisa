@@ -75,7 +75,7 @@ class Skrining extends Model
     public function riwayatKehamilans()
     {
         // Asumsi nama modelnya adalah RiwayatKehamilan
-        return $this->hasMany(RiwayatKehamilan::class, 'skrining_id');
+        return $this->hasMany(RiwayatKehamilanGpa::class, 'skrining_id');
     }
 
     /**
