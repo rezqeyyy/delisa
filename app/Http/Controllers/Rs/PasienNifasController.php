@@ -31,7 +31,7 @@ class PasienNifasController extends Controller
             $isWarn = in_array($raw, ['menengah', 'sedang', 'waspada']);
             
             // Set label status yang konsisten
-            $pn->status_display = $isLate ? 'Telat' : ($isWarn ? 'Waspada' : 'Tepat Waktu');
+            $pn->status_display = $isLate ? 'Beresiko' : ($isWarn ? 'Waspada' : 'Tidak Berisiko');
             
             return $pn;
         });

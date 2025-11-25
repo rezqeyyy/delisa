@@ -204,8 +204,6 @@ class SkriningController extends Controller
                         ResepObat::create([
                             'rujukan_rs_id'      => $rujukan->id,   // 👈 WAJIB, supaya tidak NULL
                             // Opsional: kalau mau disimpan juga ke riwayat_rujukan_id
-                            'riwayat_rujukan_id' => $riwayatId ?? null,
-
                             'resep_obat'         => $obat,
                             'dosis'              => $validated['dosis'][$index] ?? null,
                             'penggunaan'         => $validated['penggunaan'][$index] ?? null,
