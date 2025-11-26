@@ -10,7 +10,7 @@ use App\Models\Skrining;
 use App\Models\RumahSakit;
 use App\Models\RujukanRs;
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
-
+use Maatwebsite\Excel\Facades\Excel;
 class SkriningController extends Controller
 {
     use SkriningHelpers;
@@ -261,4 +261,101 @@ class SkriningController extends Controller
         return redirect()->route('puskesmas.skrining.show', $skrining->id)
             ->with('status', 'Permintaan rujukan dikirim ke rumah sakit.');
     }
+
+    /**
+     * Export data skrining ke Excel
+     */
+    public function exportExcel()
+{
+    try {
+        $userId = optional(Auth::user())->id;
+
+        $ps = DB::table('puskesmas')
+            ->select('id','kecamatan')
+            ->where('user_id', $userId)
+            ->first();
+
+        $puskesmasId = optional($ps)->id;
+        $kecamatan   = optional($ps)->kecamatan;
+
+        // Ambil data skrining
+        $skrinings = Skrining::query()
+            ->with(['pasien.user'])
+            ->when($puskesmasId || $kecamatan, function ($q) use ($puskesmasId, $kecamatan) {
+                $q->where(function ($w) use ($puskesmasId, $kecamatan) {
+                    if ($puskesmasId) {
+                        $w->orWhere('puskesmas_id', $puskesmasId);
+                    }
+                    if ($kecamatan) {
+                        $w->orWhereHas('pasien', function ($ww) use ($kecamatan) {
+                            $ww->where('PKecamatan', $kecamatan);
+                        });
+                    }
+                });
+            })
+            ->latest()
+            ->get();
+
+        // Filter hanya skrining yang lengkap
+        $skrinings = $skrinings->filter(function ($s) {
+            return $this->isSkriningCompleteForSkrining($s);
+        })->values();
+
+        $fileName = 'data-skrining-ibu-hamil-' . date('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        $callback = function() use ($skrinings) {
+            $file = fopen('php://output', 'w');
+            
+            // Tambahkan BOM untuk UTF-8
+            fwrite($file, "\xEF\xBB\xBF");
+            
+            // Header CSV
+            fputcsv($file, ['No.', 'Nama Pasien', 'NIK', 'Tanggal Pengisian', 'Alamat', 'No Telp', 'Kesimpulan']);
+
+            // Data CSV
+            foreach ($skrinings as $index => $skrining) {
+                $nama = optional(optional($skrining->pasien)->user)->name ?? '-';
+                $nik = optional($skrining->pasien)->nik ?? '-';
+                $tanggal = $skrining->created_at ? $skrining->created_at->format('d/m/Y') : '-';
+                $alamat = optional(optional($skrining->pasien)->user)->address ?? '-';
+                $telp = optional(optional($skrining->pasien)->user)->phone ?? '-';
+                
+                $resikoSedang = (int)($skrining->jumlah_resiko_sedang ?? 0);
+                $resikoTinggi = (int)($skrining->jumlah_resiko_tinggi ?? 0);
+
+                if ($resikoTinggi >= 1 || $resikoSedang >= 2) {
+                    $kesimpulan = 'Berisiko preeklampsia';
+                } else {
+                    $kesimpulan = 'Tidak berisiko preeklampsia';
+                }
+
+                fputcsv($file, [
+                    $index + 1,
+                    $nama,
+                    $nik,
+                    $tanggal,
+                    $alamat,
+                    $telp,
+                    $kesimpulan
+                ]);
+            }
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+
+    } catch (\Exception $e) {
+        \Log::error('Export Error: ' . $e->getMessage());
+        return back()->with('error', 'Terjadi kesalahan saat mengekspor data: ' . $e->getMessage());
+    }
+}
 }
