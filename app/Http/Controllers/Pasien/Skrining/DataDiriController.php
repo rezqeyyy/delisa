@@ -2,11 +2,17 @@
 
 namespace App\Http\Controllers\Pasien\Skrining;
 
+// Mengimpor base Controller Laravel.
 use App\Http\Controllers\Controller;
+// Mengimpor Request untuk menangkap input dari HTTP.
 use Illuminate\Http\Request;
+// Mengimpor facade Auth untuk identitas pasien yang login.
 use Illuminate\Support\Facades\Auth;
+// Mengimpor facade DB untuk operasi query builder/transaksi.
 use Illuminate\Support\Facades\DB;
+// Mengimpor model Skrining (tabel skrinings).
 use App\Models\Skrining;
+// Mengimpor trait SkriningHelpers (helper validasi & rekalkulasi skrining).
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 
 class DataDiriController extends Controller
@@ -17,19 +23,27 @@ class DataDiriController extends Controller
     // - Mengarahkan ke form data diri untuk melengkapi profil dan alamat.
     public function create(Request $request)
     {
+        // Ambil parameter query string 'puskesmas_id' dan 'bidan_id' dari modal pengajuan.
         $puskesmasId = (int) $request->query('puskesmas_id');
         $bidanId = (int) $request->query('bidan_id');
+        // Jika 'puskesmas_id' kosong tetapi 'bidan_id' diisi, mapping ke puskesmas via tabel bidans.
         if (!$puskesmasId && $bidanId) {
             $puskesmasId = (int) DB::table('bidans')->where('id', $bidanId)->value('puskesmas_id');
         }
         $user        = Auth::user();
         $pasienId    = optional($user->pasien)->id;
 
-        // Validasi ringan: hanya membuat skrining jika puskesmas_id valid dan pasien terautentikasi
+        /**
+         * Validasi ringan:
+         * - pastikan puskesmas_id valid → Puskesmas::whereKey(...)->exists()
+         * - pastikan pasien terautentikasi
+         * - cegah duplikasi: hanya create jika tidak ada skrining aktif/incomplete
+         */
         if ($puskesmasId && $pasienId && \App\Models\Puskesmas::whereKey($puskesmasId)->exists()) {
-            // Cegah duplikasi: hanya buat skrining baru jika tidak ada skrining aktif/incomplete
+            // Cari skrining terakhir (latest), buat baru jika skrining terakhir sudah complete.
             $latest = Skrining::where('pasien_id', $pasienId)->latest()->first();
             if (!$latest || $this->isSkriningCompleteForSkrining($latest)) {
+                // Inisialisasi episode skrining awal (step_form=1) dan reset indikator risiko.
                 Skrining::create([
                     'pasien_id'            => $pasienId,
                     'puskesmas_id'         => $puskesmasId,
@@ -44,6 +58,7 @@ class DataDiriController extends Controller
             }
         }
 
+        // Return view form Data Diri.
         return view('pasien.skrining.data-diri');
     }
 
@@ -55,8 +70,8 @@ class DataDiriController extends Controller
     // - Redirect kembali ke form data diri dengan pesan sukses.
     public function storePengajuan(Request $request)
     {
+        // Ambil dan validasi payload pengajuan skrining (puskesmas_id harus valid).
         $payload = $request->validate([
-            // Sumber nilai: form pengajuan. Wajib ada dan harus merupakan id puskesmas yang valid.
             'puskesmas_id' => ['required', 'integer', 'exists:puskesmas,id'],
         ]);
 
@@ -64,7 +79,11 @@ class DataDiriController extends Controller
         $pasienId = optional($user->pasien)->id;
         abort_unless($pasienId, 403);
 
-        // Cegah duplikasi: jika ada skrining belum selesai, jangan buat baru
+        /**
+         * Cegah duplikasi pengajuan:
+         * - Cari skrining terakhir via latest()->first()
+         * - Jika belum selesai (step_form < 6), jangan create baru → redirect lanjutkan
+         */
         $latest = Skrining::where('pasien_id', $pasienId)->latest()->first();
         if ($latest && !$this->isSkriningCompleteForSkrining($latest)) {
             return redirect()
@@ -72,6 +91,7 @@ class DataDiriController extends Controller
                 ->with('ok', 'Ada skrining yang belum selesai. Silakan lanjutkan skrining tersebut.');
         }
 
+        // Create skrining awal (step_form=1) untuk puskesmas yang dipilih.
         Skrining::create([
             'pasien_id'            => $pasienId,
             'puskesmas_id'         => $payload['puskesmas_id'],
@@ -84,6 +104,7 @@ class DataDiriController extends Controller
             'checked_status'       => false,
         ]);
 
+        // Redirect kembali ke form Data Diri dengan pesan sukses.
         return redirect()
             ->route('pasien.data-diri', ['puskesmas_id' => $payload['puskesmas_id']])
             ->with('ok', 'Pengajuan skrining dibuat. Silakan isi Data Diri.');
@@ -110,6 +131,7 @@ class DataDiriController extends Controller
     //     Jika kosong, helper akan mengambil skrining terbaru milik pasien.
     public function store(Request $request)
     {
+        // Validasi payload Data Diri (profil & alamat) dari form.
         $data = $request->validate([
             'tempat_lahir'         => ['required', 'string', 'max:150'],
             'tanggal_lahir'        => ['required', 'date'],
@@ -133,6 +155,12 @@ class DataDiriController extends Controller
         $user   = Auth::user();
         $pasien = $user->pasien;
 
+        /**
+         * Transaksi penyimpanan Data Diri:
+         * - Update kontak & alamat pada tabel users
+         * - Update demografi pada tabel pasiens
+         * - Aturan no_jkn: hanya diisi bila pembiayaan = 'BPJS Kesehatan'
+         */
         DB::transaction(function () use ($user, $pasien, $data) {
             abort_unless($user && $pasien, 401);
 
@@ -166,16 +194,15 @@ class DataDiriController extends Controller
             ]);
         });
 
-        // 'skrining_id' diambil dari input tersembunyi pada form (opsional).
-        // Tujuan: melanjutkan skrining yang sama agar tidak membuat skrining baru.
+        // Ambil 'skrining_id' dari input tersembunyi agar tetap lanjut pada episode yang sama.
         $skriningId = (int) $request->input('skrining_id');
         $skrining = $this->requireSkriningForPasien($skriningId);
 
-        // Hitung ulang risiko setelah data diri diperbarui
+        // Rekalkulasi risiko setelah Data Diri diperbarui.
         $this->recalcPreEklampsia($skrining);
 
+        // Lanjut ke langkah GPA (step 2) dengan membawa skrining_id.
         return redirect()
-            // Kirim 'skrining_id' ke halaman GPA agar proses tetap pada skrining yang sama
             ->route('pasien.riwayat-kehamilan-gpa', ['skrining_id' => $skriningId ?: null])
             ->with('ok', 'Data diri berhasil disimpan.');
     }

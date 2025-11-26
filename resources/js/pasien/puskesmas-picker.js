@@ -15,7 +15,7 @@
                 <h3 class="text-lg font-semibold text-[#1D1D1D]">Pilih Fasilitas</h3>
                 <button type="button" id="closePuskesmasModal" class="text-[#B9257F] hover:underline">Tutup</button>
             </div>
-            <p class="text-sm text-[#6B7280]">Pilih Puskesmas atau klinik Bidan tempat Anda melakukan skrining.</p>
+            <p class="text-sm text-[#6B7280]">Pilih Puskesmas atau Klinik Bidan tempat Anda melakukan skrining.</p>
             <div class="mt-3">
                 <input id="puskesmasSearchInput" type="text" placeholder="Ketik untuk mencari puskesmas atau klinik bidan..."
                        class="w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]">

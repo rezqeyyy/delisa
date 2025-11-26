@@ -1,94 +1,175 @@
 <?php
 
+// Namespace: controller untuk fitur Pasien
 namespace App\Http\Controllers\Pasien;
 
+// Mengimpor base Controller Laravel
 use App\Http\Controllers\Controller;
+// Mengimpor Request untuk akses data dari HTTP request
 use Illuminate\Http\Request;
+// Mengimpor facade Auth untuk otentikasi pengguna
 use Illuminate\Support\Facades\Auth;
+// Mengimpor facade DB untuk operasi query builder/transaksi
 use Illuminate\Support\Facades\DB;
+// Carbon untuk manipulasi tanggal
 use Carbon\Carbon;
 
+// Mengimpor model Skrining (tabel skrinings).
 use App\Models\Skrining;
+// Mengimpor model Puskesmas (tabel puskesmas).
 use App\Models\Puskesmas;
+// Mengimpor trait SkriningHelpers (helper utilitas skrining).
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 
 
 
+/**
+ * Controller Pasien — Skrining
+ * Mengelola alur hasil skrining, edit, hapus, dan pencarian fasilitas.
+ * Rekomendasi dan status rujukan dihitung di controller.
+ */
 class SkriningController extends Controller
 {
     use SkriningHelpers;    
 
     /* {{-- ========== SKRINING — SHOW ========== --}} */
 
-    /* 
-     * Menampilkan halaman hasil skrining setelah ada kesimpulan
+    /**
+     * Menampilkan halaman hasil skrining pasien.
+     * Alur singkat:
+     * - Validasi akses milik pasien
+     * - Hitung ulang status preeklampsia bila perlu
+     * - Susun data tampilan via buildSkriningShowData()
      */
     public function show(Skrining $skrining)
     {
+        // $this adalah instance dari SkriningController. authorizeAccess() memastikan
+        // skrining yang diakses benar-benar milik pasien yang login (abort 403 jika bukan).
         $this->authorizeAccess($skrining);
 
+        // Jika belum ada kesimpulan sama sekali, arahkan pasien untuk menyelesaikan skrining dulu.
         if (is_null($skrining->kesimpulan) && is_null($skrining->status_pre_eklampsia)) {
             return redirect()
                 ->route('pasien.preeklampsia')
                 ->with('error', 'Silakan lakukan skrining preeklampsia terlebih dahulu untuk melihat hasil.');
         }
 
+        // Hitung ulang status preeklampsia berdasarkan data terbaru yang tersimpan.
         $this->recalcPreEklampsia($skrining);
+        // Susun semua variabel untuk view, termasuk rekomendasi dan status rujukan.
         $data = $this->buildSkriningShowData($skrining);
 
         return view('pasien.dashboard.skrining-show', $data);
     }
 
     /* {{-- ========== SKRINING — BUILD SHOW DATA ========== --}} */
+    /**
+     * Menyusun semua data untuk view skrining-show.
+     * Termasuk: identitas, kondisi kesehatan, GPA, ringkasan risiko & pemicu,
+     * kesimpulan, rekomendasi, serta status rujukan (badge label & class).
+     * Catatan: Logika perhitungan risiko tidak diubah.
+     */
     private function buildSkriningShowData(Skrining $skrining): array
     {
-        /* 
-         * Menyusun data tampilan hasil: identitas, kondisi, GPA,
-         * ringkasan risiko, pemicu sedang/tinggi, dan rekomendasi
-         * Kesimpulan: Berisiko jika tinggi ≥1 atau sedang ≥2; jika belum lengkap → "Skrining belum selesai"
-         */
 
+        // Relasi utama dari skrining:
+        // $pasien: model Pasien pemilik skrining (optional jika relasi belum ada)
+        // $kk    : kondisi kesehatan yang tercatat untuk skrining ini
+        // $gpa   : riwayat kehamilan (Gravida, Para, Abortus) untuk skrining ini
         $pasien = optional($skrining->pasien);
         $kk     = optional($skrining->kondisiKesehatan);
         $gpa    = optional($skrining->riwayatKehamilanGpa);
 
+        // Identitas dasar; fallback ke data user login bila data pasien belum lengkap
         $nama = $pasien->nama ?? Auth::user()->name ?? '-';
         $nik  = $pasien->nik ?? Auth::user()->nik ?? '-';
 
+        // Ringkasan kondisi saat skrining
+        // $tanggal   : tanggal skrining (fallback ke created_at skrining)
+        // $berat/$tinggi: data antropometri; $imt dihitung jika belum tersedia di DB
+        // $anjuranBb : rekomendasi kenaikan berat badan berdasarkan IMT
         $tanggal  = $kk->tanggal_skrining ?? optional($skrining)->created_at ?? null;
         $berat    = $kk->berat_badan_saat_hamil ?? null;
         $tinggi   = $kk->tinggi_badan ?? null;
         $imt      = $kk->imt ?? (($berat && $tinggi) ? round($berat / pow($tinggi/100, 2), 2) : null);
         $anjuranBb = $kk->anjuran_kenaikan_bb ?? null;
 
+        // Tekanan darah dan turunan
+        // $sistol/$diastol: Systolic/Diastolic
+        // $map            : Mean Arterial Pressure (rumus: diastol + (sistol - diastol)/3)
+        // $proteinUrine   : hasil pemeriksaan protein urin
         $sistol  = $kk->sdp ?? null;
         $diastol = $kk->dbp ?? null;
         $map     = $kk->map ?? (($sistol && $diastol) ? round(($diastol + (($sistol - $diastol) / 3)), 2) : null);
         $proteinUrine = $kk->pemeriksaan_protein_urine ?? null;
 
+        // Kehamilan berjalan
         $usiaKehamilan      = $kk->usia_kehamilan ?? '-';
         $taksiranPersalinan = $kk->tanggal_perkiraan_persalinan ?? null;
 
+        // GPA (Gravida, Para, Abortus)
         $gravida = $gpa->total_kehamilan ?? '-';
         $para    = $gpa->total_persalinan ?? '-';
         $abortus = $gpa->total_abortus ?? '-';
 
+        // Akumulasi pemicu risiko dari hasil skrining
         $resikoSedang = $skrining->jumlah_resiko_sedang ?? 0;
         $resikoTinggi = $skrining->jumlah_resiko_tinggi ?? 0;
 
-        // Gunakan kelengkapan data lintas semua halaman, bukan lagi step_form
+        // Cek kelengkapan semua data wajib skrining
         $isComplete = $this->isSkriningCompleteForSkrining($skrining);
 
+        // $kesimpulan: status akhir skrining
+        // - "Skrining belum selesai" jika data wajib belum lengkap
+        // - "Berisiko Preeklampsia" jika tinggi ≥1 atau sedang ≥2
+        // - selain itu dianggap "Tidak berisiko"
         $kesimpulan = (!$isComplete)
             ? 'Skrining belum selesai'
             : (($resikoTinggi >= 1 || $resikoSedang >= 2)
                 ? 'Berisiko Preeklampsia'
                 : 'Tidak berisiko');
 
+        // $rekomendasi: pesan tindak lanjut default sebelum mempertimbangkan status rujukan RS
         $rekomendasi  = ($resikoTinggi >= 1 || $resikoSedang >= 2)
             ? 'Beresiko preeklampsia. Silahkan untuk menghubungi petugas Puskesmas untuk mendapatkan rujukan Dokter atau Rumah Sakit untuk pengobatan lanjutan.'
             : 'Kondisi normal. Lanjutkan ANC sesuai standar dan ulang skrining di trimester berikutnya.';
+        // $catatan: catatan bebas dari petugas / sistem
         $catatan      = $skrining->catatan ?? null;
+
+        // Ambil status rujukan RS untuk skrining ini (record terbaru)
+        // done_status=false → menunggu konfirmasi RS; true → rujukan diterima RS
+        // rs_nama digunakan untuk menampilkan nama RS pada rekomendasi
+        $rujukan = DB::table('rujukan_rs as rr')
+            ->leftJoin('rumah_sakits as rs','rs.id','=','rr.rs_id')
+            ->select('rs.nama as rs_nama','rr.done_status')
+            ->where('rr.skrining_id', $skrining->id)
+            ->orderByDesc('rr.created_at')
+            ->first();
+
+        // Badge status untuk UI rekomendasi
+        $statusRujukanLabel = null;
+        $statusRujukanClass = null;
+
+        if (!$isComplete) {
+            $rekomendasi = 'Lengkapi skrining terlebih dahulu.';
+        } elseif (($resikoTinggi >= 1) || ($resikoSedang >= 2)) {
+            $referralRequested = (bool) $rujukan;
+            $referralAccepted  = (bool) optional($rujukan)->done_status;
+            $referralHospital  = optional($rujukan)->rs_nama;
+
+            $statusRujukanLabel = 'Belum diajukan';
+            $statusRujukanClass = 'bg-[#F2F2F2] text-[#7C7C7C]';
+
+            if ($referralRequested && !$referralAccepted) {
+                $rekomendasi = 'Rujukan sudah diajukan oleh puskesmas. Menunggu konfirmasi dari rumah sakit.';
+                $statusRujukanLabel = 'Menunggu RS';
+                $statusRujukanClass = 'bg-[#FEF3C7] text-[#92400E]';
+            } elseif ($referralAccepted && $referralHospital) {
+                $rekomendasi = 'Rujukan telah diterima oleh ' . $referralHospital . '. Ikuti instruksi dari rumah sakit untuk pemeriksaan lanjutan.';
+                $statusRujukanLabel = 'Diterima RS';
+                $statusRujukanClass = 'bg-[#D1FAE5] text-[#065F46]';
+            }
+        }
 
         // ===== Pemicu risiko =====
         $sebabSedang = [];
@@ -202,14 +283,16 @@ class SkriningController extends Controller
             'skrining','nama','nik','tanggal','berat','tinggi','imt','anjuranBb',
             'sistol','diastol','map','proteinUrine','usiaKehamilan','taksiranPersalinan',
             'gravida','para','abortus','resikoSedang','resikoTinggi','kesimpulan',
-            'rekomendasi','catatan','sebabSedang','sebabTinggi'
+            'rekomendasi','catatan','sebabSedang','sebabTinggi',
+            'statusRujukanLabel','statusRujukanClass'
         );
     }
 
     /* {{-- ========== SKRINING — EDIT ========== --}} */
 
-    /* 
-     * Arahkan ke langkah Data Diri dengan membawa skrining_id
+    /**
+     * Mengarahkan ke langkah Data Diri untuk mengedit skrining.
+     * Skrining yang sudah diajukan rujukan tidak bisa diedit.
      */
     public function edit(Skrining $skrining)
     {
@@ -226,8 +309,8 @@ class SkriningController extends Controller
 
     /* {{-- ========== SKRINING — UPDATE ========== --}} */
     
-    /* 
-     * Tidak digunakan untuk mengubah data langkah, hanya redirect
+    /**
+     * Endpoint update: tidak mengubah data langkah, hanya redirect balik ke halaman hasil (show).
      */
     public function update(Request $request, Skrining $skrining)
     {
@@ -240,8 +323,9 @@ class SkriningController extends Controller
 
     /* {{-- ========== SKRINING — DESTROY ========== --}} */
     
-    /* 
-     * Hapus skrining beserta relasi jawaban, riwayat, dan kondisi
+    /**
+     * Menghapus skrining beserta relasi jawaban, riwayat, dan kondisi.
+     * Skrining yang sudah diajukan rujukan tidak dapat dihapus.
      */
     public function destroy(Skrining $skrining)
     {
@@ -267,13 +351,23 @@ class SkriningController extends Controller
 
     /* {{-- ========== PUSKESMAS — SEARCH ========== --}} */
     
-    /* 
-     * Pencarian untuk modal pengajuan berdasarkan kata kunci
+    /**
+     * Pencarian fasilitas (puskesmas/bidan) untuk modal pengajuan rujukan pasien.
+     * Input: query string 'q'. Output: list JSON berisi hasil gabungan puskesmas & bidan.
      */
     public function puskesmasSearch(Request $request)
     {
+        // Ambil parameter query string 'q' untuk pencarian puskesmas/bidan.
         $q = trim($request->query('q', ''));
 
+        /**
+         * Query ke tabel puskesmas:
+         * - when($q !== '', ...) → jika q diisi, filter nama/kecamatan/lokasi
+         * - orderBy('nama_puskesmas') → urut A–Z
+         * - limit(20) → batasi 20 hasil
+         * - get([...]) → ambil kolom penting
+         * - map(...) → normalisasi bentuk response untuk UI
+         */
         $puskesmas = Puskesmas::query()
             ->when($q !== '', function ($qr) use ($q) {
                 $qr->where(function ($w) use ($q) {
@@ -294,6 +388,14 @@ class SkriningController extends Controller
                 ];
             });
 
+        /**
+         * Query ke tabel bidans:
+         * - join users (nama bidan/klinik) dan puskesmas (kecamatan)
+         * - when($q !== '', ...) → filter nama bidan / nama puskesmas / kecamatan
+         * - orderBy('u.name') → urut nama
+         * - limit(20), get([...])
+         * - map(...) → normalisasi response (type='bidan')
+         */
         $bidan = DB::table('bidans as b')
             ->join('users as u', 'u.id', '=', 'b.user_id')
             ->join('puskesmas as p', 'p.id', '=', 'b.puskesmas_id')
@@ -317,15 +419,18 @@ class SkriningController extends Controller
                 ];
             });
 
+        // Gabungkan hasil puskesmas dan bidan; ambil maksimal 20 item.
         $combined = $puskesmas->merge($bidan)->take(20)->values();
 
+        // Kembalikan JSON untuk dipakai modal pencarian fasilitas.
         return response()->json($combined);
     }
 
     /* {{-- ========== AUTH — AUTHORIZE ACCESS ========== --}} */
     
-    /* 
-     * Memastikan skrining milik pasien yang sedang login
+    /**
+     * Memastikan skrining adalah milik pasien yang sedang login.
+     * Aksi: abort 403 bila bukan pemilik.
      */
     private function authorizeAccess(Skrining $skrining): void
     {
@@ -335,8 +440,8 @@ class SkriningController extends Controller
 
     /* {{-- ========== HELPER — GET SKRINING FROM QUERY ========== --}} */
     
-    /* 
-     * Ambil skrining berdasarkan skrining_id atau latest milik pasien
+    /**
+     * Mengambil skrining berdasarkan skrining_id pada query atau skrining terbaru milik pasien.
      * Return: [Skrining|null, int $pasienId]
      */
     private function getSkriningFromQuery($skriningId): array

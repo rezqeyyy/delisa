@@ -2,12 +2,19 @@
 
 namespace App\Http\Controllers\Pasien\Skrining;
 
+// Mengimpor base Controller Laravel.
 use App\Http\Controllers\Controller;
+// Mengimpor Request untuk menangkap input dari HTTP.
 use Illuminate\Http\Request;
+// Mengimpor facade DB untuk operasi query builder/transaksi.
 use Illuminate\Support\Facades\DB;
+// Mengimpor Carbon untuk perhitungan tanggal (HPHT, TPP, usia kehamilan).
 use Carbon\Carbon;
+// Mengimpor model Skrining (tabel skrinings).
 use App\Models\Skrining;
+// Mengimpor model KondisiKesehatan (tabel kondisi_kesehatans).
 use App\Models\KondisiKesehatan;
+// Mengimpor trait SkriningHelpers (helper validasi & rekalkulasi skrining).
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 
 class KondisiKesehatanPasienController extends Controller
@@ -20,9 +27,12 @@ class KondisiKesehatanPasienController extends Controller
     // - Menarik data kondisi (jika ada) untuk prefill form.
     public function kondisiKesehatanPasien(Request $request)
     {
+        // Ambil 'skrining_id' dari query string untuk melanjutkan episode skrining yang sama.
         $skrining = $this->requireSkriningForPasien((int) $request->query('skrining_id'));
+        // Prefill: jika sudah ada data kondisi pada skrining ini, ambil baris pertama (terbaru).
         $kk = $skrining ? $skrining->kondisiKesehatan()->first() : null;
 
+        // Tampilkan form Kondisi Kesehatan dengan data prefill.
         return view('pasien.skrining.kondisi-kesehatan-pasien', compact('kk'));
     }
     
@@ -35,6 +45,7 @@ class KondisiKesehatanPasienController extends Controller
     // - Rehitung status preeklampsia dan lanjut ke riwayat penyakit pasien.
     public function store(Request $request)
     {
+        // Validasi payload Kondisi Kesehatan (antropometri, tensi, HPHT, tanggal skrining).
         $data = $request->validate([
             'tinggi_badan'               => ['required', 'integer', 'min:1'],
             'berat_badan_saat_hamil'     => ['required', 'numeric', 'min:1'],
@@ -46,8 +57,18 @@ class KondisiKesehatanPasienController extends Controller
             'usia_kehamilan_minggu'      => ['nullable', 'integer', 'min:0'],
         ]);
 
+        // Ambil skrining_id dari input untuk melanjutkan episode skrining yang sama.
         $skrining = $this->requireSkriningForPasien((int) $request->input('skrining_id'));
 
+        /**
+         * Perhitungan medis:
+         * - IMT = berat(kg) / (tinggi(m))^2 → 2 desimal
+         * - Kategori IMT → Kurus Berat/Ringan, Normal, Gemuk Ringan/Berat
+         * - Anjuran Kenaikan BB → tergantung kategori IMT
+         * - MAP = (SDP + 2*DBP) / 3 → bila SDP & DBP valid (>0)
+         * - Usia kehamilan (minggu) → dari selisih HPHT ke tanggal skrining
+         * - TPP (HPHT + 280 hari)
+         */
         // Hitung IMT
         $tinggiM = $data['tinggi_badan'] / 100;
         $imt     = round($data['berat_badan_saat_hamil'] / ($tinggiM * $tinggiM), 2);
@@ -89,6 +110,11 @@ class KondisiKesehatanPasienController extends Controller
         }
         $tpp = $hpht->copy()->addDays(280)->toDateString();
 
+        /**
+         * Transaksi penyimpanan Kondisi Kesehatan:
+         * - updateOrCreate pada tabel kondisi_kesehatans untuk skrining_id
+         * - set step_form=3 agar lanjut ke langkah berikutnya
+         */
         DB::transaction(function () use ($skrining, $data, $imt, $kategoriImt, $anjuran, $map, $usiaMinggu, $tpp) {
             KondisiKesehatan::updateOrCreate(
                 ['skrining_id' => $skrining->id],
@@ -112,9 +138,10 @@ class KondisiKesehatanPasienController extends Controller
             Skrining::query()->whereKey($skrining->id)->update(['step_form' => 3]);
         });
 
-        // Sinkronkan hasil risiko preeklamsia berdasarkan data baru
+        // Rekalkulasi risiko preeklampsia berdasarkan data baru.
         $this->recalcPreEklampsia($skrining);
 
+        // Redirect ke langkah Riwayat Penyakit Pasien (step 4) dengan skrining_id.
         return redirect()
             ->route('pasien.riwayat-penyakit-pasien', ['skrining_id' => $skrining->id])
             ->with('ok', 'Kondisi kesehatan pasien berhasil disimpan.');

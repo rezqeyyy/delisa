@@ -15,7 +15,7 @@
     class="fixed top-0 left-0 z-50 h-screen w-[260px] bg-white shadow-lg
            flex flex-col
            transform transition-transform duration-200
-           -translate-x-full lg:translate-x-0">
+           -translate-x-full">
 
     <!-- Bagian atas (logo + tombol close mobile) -->
     <div class="shrink-0">
@@ -24,11 +24,10 @@
                 <img src="{{ asset('images/logo_fulltext.png') }}" alt="DeLISA" class="w-42 h-auto object-contain">
             </a>
 
-            <!-- Tombol close: hanya tampil di mobile -->
-            <button id="sidebarCloseBtn" class="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[#E5E5E5] bg-white hover:bg-[#F8F8F8] transition" aria-label="Tutup menu">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#1D1D1D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
+            <!-- Tombol close minimal tanpa border/shadow -->
+            <button id="sidebarCloseBtn" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-transparent hover:bg-black/5 transition outline-none focus:outline-none ring-0 shadow-none border-0" aria-label="Tutup menu">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#1D1D1D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6" />
                 </svg>
             </button>
         </div>
@@ -72,7 +71,7 @@
 </aside>
 
 <button id="sidebarOpenBtn"
-    class="lg:hidden fixed z-40 left-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-20 rounded-r-xl bg-white border border-[#E5E5E5] shadow focus:outline-none focus:ring-2 focus:ring-black/10"
+    class="fixed z-40 left-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-20 rounded-r-xl bg-white border border-[#E5E5E5] shadow focus:outline-none focus:ring-2 focus:ring-black/10"
     aria-controls="sidebar" aria-label="Buka menu">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />

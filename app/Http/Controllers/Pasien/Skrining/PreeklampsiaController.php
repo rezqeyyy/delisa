@@ -2,14 +2,23 @@
 
 namespace App\Http\Controllers\Pasien\Skrining;
 
+// Mengimpor base Controller Laravel.
 use App\Http\Controllers\Controller;
+// Mengimpor Request untuk menangkap input dari HTTP.
 use Illuminate\Http\Request;
+// Mengimpor facade Auth untuk identitas pasien yang login.
 use Illuminate\Support\Facades\Auth;
+// Mengimpor facade DB untuk operasi query builder/transaksi.
 use Illuminate\Support\Facades\DB;
+// Mengimpor Carbon untuk manipulasi tanggal.
 use Carbon\Carbon;
+// Mengimpor model Skrining (tabel skrinings).
 use App\Models\Skrining;
+// Mengimpor model RiwayatKehamilanGpa (tabel riwayat_kehamilan_gpas).
 use App\Models\RiwayatKehamilanGpa;
+// Mengimpor model KondisiKesehatan (tabel kondisi_kesehatans).
 use App\Models\KondisiKesehatan;
+// Mengimpor trait SkriningHelpers (helper validasi & rekalkulasi skrining).
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 
 class PreeklampsiaController extends Controller
@@ -25,14 +34,20 @@ class PreeklampsiaController extends Controller
      */
     public function preEklampsia(Request $request)
     {
+        // Ambil parameter 'skrining_id' dari query string untuk melanjutkan episode skrining yang sama.
         $skriningId = (int) $request->query('skrining_id');
         $skrining   = $this->requireSkriningForPasien($skriningId);
 
-        // Autosave jika ada parameter jawaban (pertanyaan1..pertanyaan14)
+        // Deteksi autosave: jika ada salah satu parameter pertanyaan1..pertanyaan14 di query.
         $keys   = ['pertanyaan1','pertanyaan2','pertanyaan3','pertanyaan4','pertanyaan5','pertanyaan6','pertanyaan7','pertanyaan8','pertanyaan9','pertanyaan10','pertanyaan11','pertanyaan12','pertanyaan13','pertanyaan14'];
         $hasAny = collect($keys)->some(fn($k) => $request->filled($k));
 
         if ($hasAny) {
+            /**
+             * Autosave jawaban ke kuisioner_pasiens (status_soal='pre_eklampsia'):
+             * - $preMap mendefinisikan teks pertanyaan dan kategori risiko
+             * - updateOrInsert jawaban boolean ('ya' → true)
+             */
             $preMap = [
                 'pertanyaan1'  => ['nama' => 'Apakah kehamilan ini adalah kehamilan kedua/lebih tetapi bukan dengan suami pertama (Pernikahan kedua atau lebih)', 'resiko' => 'sedang'],
                 'pertanyaan2'  => ['nama' => 'Apakah kehamilan ini dengan Teknologi Reproduksi Berbantu (Bayi tabung, Obat induksi ovulasi)', 'resiko' => 'sedang'],
@@ -50,6 +65,9 @@ class PreeklampsiaController extends Controller
                 'pertanyaan14' => ['nama' => 'Apakah anda memiliki penyakit Anti Phospholipid Syndrome', 'resiko' => 'tinggi'],
             ];
 
+            /**
+             * Simpan jawaban dalam transaksi agar konsisten.
+             */
             DB::transaction(function () use ($skrining, $request, $preMap) {
                 foreach ($preMap as $key => $def) {
                     $row = DB::table('kuisioner_pasiens')
@@ -137,13 +155,17 @@ class PreeklampsiaController extends Controller
      */
     public function store(Request $request)
     {
+        // Ambil 'skrining_id' dari input untuk melanjutkan episode skrining yang sama.
         $skrining = $this->requireSkriningForPasien((int) $request->input('skrining_id'));
 
-        // Jawaban q1..q14 dari form
+        // Ekstrak jawaban q1..q14 dari form ('ya' → true, selain itu false).
         $q = [];
         for ($i = 1; $i <= 14; $i++) { $q[$i] = ($request->input('pertanyaan'.$i) === 'ya'); }
 
-        // Simpan jawaban ke kuisioner_pasiens (status_soal='pre_eklampsia')
+/**
+         * Simpan jawaban ke kuisioner_pasiens (status_soal='pre_eklampsia'):
+         * - $preMap mendefinisikan teks pertanyaan & kategori risiko
+         */
         $preMap = [
             'pertanyaan1'  => ['nama' => 'Apakah kehamilan ini adalah kehamilan kedua/lebih tetapi bukan dengan suami pertama (Pernikahan kedua atau lebih)', 'resiko' => 'sedang'],
             'pertanyaan2'  => ['nama' => 'Apakah kehamilan ini dengan Teknologi Reproduksi Berbantu (Bayi tabung, Obat induksi ovulasi)', 'resiko' => 'sedang'],
@@ -161,6 +183,11 @@ class PreeklampsiaController extends Controller
             'pertanyaan14' => ['nama' => 'Apakah anda memiliki penyakit Anti Phospholipid Syndrome', 'resiko' => 'tinggi'],
         ];
 
+/**
+         * Simpan dalam transaksi agar konsisten:
+         * - Cari/buat master pertanyaan → kuisioner_pasiens
+         * - updateOrInsert jawaban → jawaban_kuisioners
+         */
         DB::transaction(function () use ($skrining, $request, $preMap) {
             foreach ($preMap as $key => $def) {
                 $row = DB::table('kuisioner_pasiens')
