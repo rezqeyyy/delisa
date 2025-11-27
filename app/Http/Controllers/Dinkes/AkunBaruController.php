@@ -12,6 +12,15 @@ use App\Models\User;
 // Mengimpor model Role (tabel roles).
 use App\Models\Role;
 
+// Mengimpor model Puskesmas (tabel puskesmas).
+use App\Models\Puskesmas;
+
+// Mengimpor model RumahSakit (tabel rumah_sakits).
+use App\Models\RumahSakit;
+
+// Mengimpor model Bidan (tabel bidans).
+use App\Models\Bidan;
+
 // Mengimpor Request untuk mengambil data dari HTTP request.
 use Illuminate\Http\Request;
 
@@ -201,21 +210,19 @@ class AkunBaruController extends Controller
              */
             if ($roleName === 'puskesmas') {
                 // Cek apakah sudah ada data puskesmas dengan user_id = $user->id
-                $exists = DB::table('puskesmas')
-                    ->where('user_id', $user->id)
-                    ->exists();
+                $exists = Puskesmas::where('user_id', $user->id)->exists();
 
                 // Jika belum ada, insert data puskesmas default.
                 if (!$exists) {
-                    DB::table('puskesmas')->insert([
-                        'user_id'        => $user->id,
-                        'nama_puskesmas' => $user->name ?? 'Belum diisi',
-                        'lokasi'         => 'Belum diisi',
-                        'kecamatan'      => 'Belum diisi',
-                        'is_mandiri'     => 0,
-                        'created_at'     => now(),
-                        'updated_at'     => now(),
-                    ]);
+                    $puskesmas = new Puskesmas();
+                    $puskesmas->user_id        = $user->id;
+                    $puskesmas->nama_puskesmas = $user->name ?? 'Belum diisi';
+                    $puskesmas->lokasi         = 'Belum diisi';
+                    $puskesmas->kecamatan      = 'Belum diisi';
+                    $puskesmas->is_mandiri     = 0;
+                    $puskesmas->created_at     = now();
+                    $puskesmas->updated_at     = now();
+                    $puskesmas->save();
                 }
             }
             // Jika role-nya rs (rumah sakit).
@@ -226,20 +233,18 @@ class AkunBaruController extends Controller
                  * - Jika belum ada → buat data default.
                  * - Jika sudah ada → tidak diubah di sini.
                  */
-                $exists = DB::table('rumah_sakits')
-                    ->where('user_id', $user->id)
-                    ->exists();
+                $exists = RumahSakit::where('user_id', $user->id)->exists();
 
                 if (!$exists) {
-                    DB::table('rumah_sakits')->insert([
-                        'user_id'    => $user->id,
-                        'nama'       => $user->name ?? 'Belum diisi',
-                        'lokasi'     => 'Belum diisi',
-                        'kecamatan'  => 'Belum diisi',
-                        'kelurahan'  => 'Belum diisi',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+                    $rs = new RumahSakit();
+                    $rs->user_id    = $user->id;
+                    $rs->nama       = $user->name ?? 'Belum diisi';
+                    $rs->lokasi     = 'Belum diisi';
+                    $rs->kecamatan  = 'Belum diisi';
+                    $rs->kelurahan  = 'Belum diisi';
+                    $rs->created_at = now();
+                    $rs->updated_at = now();
+                    $rs->save();
                 }
             }
             // Jika role-nya bidan.
@@ -302,21 +307,15 @@ class AkunBaruController extends Controller
              */
             switch ($roleName) {
                 case 'bidan':
-                    DB::table('bidans')
-                        ->where('user_id', $user->id)
-                        ->delete();
+                    Bidan::where('user_id', $user->id)->delete();
                     break;
 
                 case 'rs':
-                    DB::table('rumah_sakits')
-                        ->where('user_id', $user->id)
-                        ->delete();
+                    RumahSakit::where('user_id', $user->id)->delete();
                     break;
 
                 case 'puskesmas':
-                    DB::table('puskesmas')
-                        ->where('user_id', $user->id)
-                        ->delete();
+                    Puskesmas::where('user_id', $user->id)->delete();
                     break;
             }
 

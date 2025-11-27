@@ -9,6 +9,17 @@ use App\Http\Controllers\Controller;
 // Import DB facade untuk query langsung ke database (query builder / raw).
 use Illuminate\Support\Facades\DB;
 
+// Import model-model Eloquent yang terkait pasien & nifas.
+use App\Models\Pasien;
+use App\Models\Skrining;
+use App\Models\KondisiKesehatan;
+use App\Models\RiwayatKehamilanGpa;
+use App\Models\RiwayatKehamilan;
+use App\Models\PasienNifasBidan;
+use App\Models\PasienNifasRs;
+use App\Models\Kf;
+use App\Models\RujukanRs;
+
 class PasienController extends Controller
 {
     /**
@@ -25,7 +36,8 @@ class PasienController extends Controller
          * - Left join roles (r) untuk mengambil nama_role user (jika ada).
          * - Mengambil semua kolom dari pasiens (p.*) + sebagian kolom user + nama_role dari roles.
          */
-        $pasien = DB::table('pasiens as p')
+        $pasien = Pasien::query()
+            ->from('pasiens as p')
             // Join ke tabel users untuk ambil name, email, phone, dll.
             ->join('users as u', 'u.id', '=', 'p.user_id')
             // Left join roles untuk mengambil nama role (misalnya 'pasien').
@@ -54,7 +66,8 @@ class PasienController extends Controller
          * - Gunakan COALESCE(created_at, updated_at) untuk formatting tanggal,
          *   lalu di-format via to_char menjadi string tanggal dan tanggal+jam.
          */
-        $skrining = DB::table('skrinings as s')
+        $skrining = Skrining::query()
+            ->from('skrinings as s')
             // Left join ke puskesmas karena skrining bisa berasal dari puskesmas tertentu.
             ->leftJoin('puskesmas as pk', 'pk.id', '=', 's.puskesmas_id')
             // Filter semua skrining yang dimiliki pasien ini.
@@ -79,7 +92,7 @@ class PasienController extends Controller
          * - Jika belum pernah diisi, $kondisi akan bernilai null.
          */
         $kondisi = $skrining
-            ? DB::table('kondisi_kesehatans')
+            ? KondisiKesehatan::query()
                 ->where('skrining_id', $skrining->id)
                 ->orderByDesc('created_at')
                 ->first()
@@ -90,7 +103,7 @@ class PasienController extends Controller
          * Ambil data riwayat GPA (Gravida-Para-Abortus) terakhir:
          * - Satu baris terakhir dari tabel riwayat_kehamilan_gpas untuk pasien ini.
          */
-        $gpa = DB::table('riwayat_kehamilan_gpas')
+        $gpa = RiwayatKehamilanGpa::query()
             ->where('pasien_id', $pasienId)
             ->orderByDesc('created_at')
             ->first();
@@ -101,7 +114,7 @@ class PasienController extends Controller
          * - Diurutkan desc berdasarkan created_at.
          * - Dibatasi 10 entri terakhir agar tidak terlalu panjang di UI.
          */
-        $riwayatKehamilan = DB::table('riwayat_kehamilans')
+        $riwayatKehamilan = RiwayatKehamilan::query()
             ->where('pasien_id', $pasienId)
             ->orderByDesc('created_at')
             ->limit(10)
@@ -117,13 +130,13 @@ class PasienController extends Controller
          * Keduanya di-union sehingga menjadi satu set ID episode (id dari masing-masing tabel).
          * Query ini nanti dipakai di whereIn pada tabel kf.
          */
-        $episodeIdsQuery = DB::table('pasien_nifas_bidan')
+        $episodeIdsQuery = PasienNifasBidan::query()
             // Ambil kolom id episode nifas dari bidan
             ->where('pasien_id', $pasienId)
             ->select('id')
             // Union dengan id episode dari RS
             ->union(
-                DB::table('pasien_nifas_rs')
+                PasienNifasRs::query()
                     ->where('pasien_id', $pasienId)
                     ->select('id')
             );
@@ -136,7 +149,8 @@ class PasienController extends Controller
          * - selectRaw: ambil kunjungan_nifas_ke sebagai integer (ke), dan COUNT(*) sebagai total.
          * - groupBy ke → hasil: per KF-1, KF-2, KF-3, KF-4 berapa total kunjungannya.
          */
-        $kfSummary = DB::table('kf as k')
+        $kfSummary = Kf::query()
+            ->from('kf as k')
             // Filter episode yang id_nifas-nya termasuk dalam episode pasien ini
             ->whereIn('k.id_nifas', $episodeIdsQuery)
             // Ambil nomor kunjungan dan jumlahnya
@@ -160,7 +174,8 @@ class PasienController extends Controller
          *       'Meninggal'=> 1,
          *   ]
          */
-        $kfPantauan = DB::table('kf as k')
+        $kfPantauan = Kf::query()
+            ->from('kf as k')
             ->whereIn('k.id_nifas', $episodeIdsQuery)
             ->selectRaw("k.kesimpulan_pantauan, COUNT(*)::int as total")
             ->groupBy('k.kesimpulan_pantauan')
@@ -173,7 +188,8 @@ class PasienController extends Controller
          * - Filter berdasarkan pasien_id.
          * - Urutkan terbaru, batasi 5 record terakhir.
          */
-        $rujukan = DB::table('rujukan_rs as rr')
+        $rujukan = RujukanRs::query()
+            ->from('rujukan_rs as rr')
             // join detail RS (nama rumah sakit)
             ->leftJoin('rumah_sakits as rs', 'rs.id', '=', 'rr.rs_id')
             // Pilih semua kolom rujukan + nama RS sebagai rs_nama

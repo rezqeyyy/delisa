@@ -12,6 +12,14 @@ namespace App\Http\Controllers\Dinkes;
 // Mengimpor base controller Laravel.
 use App\Http\Controllers\Controller;
 
+// Mengimpor model yang diperlukan.
+use App\Models\User;
+use App\Models\Role;
+use App\Models\Puskesmas;
+use App\Models\RumahSakit;
+use App\Models\Bidan;
+
+
 // Request untuk mengambil data dari HTTP (query string, form, dsb.).
 use Illuminate\Http\Request;
 
@@ -55,7 +63,7 @@ class DataMasterController extends Controller
         $candidates = $aliases[$key] ?? [$key]; // kalau tidak ada di alias, pakai nama sendiri
 
         // Query ke tabel roles untuk mencari id berdasarkan nama_role (LOWER(nama_role) = ?)
-        return (int) DB::table('roles')
+        return (int) Role::query()
             ->where(function ($q) use ($candidates) {
                 // Loop semua kandidat nama role (alias)
                 foreach ($candidates as $i => $n) {
@@ -240,7 +248,7 @@ class DataMasterController extends Controller
         $all = $this->depokKecamatanOptions();
 
         // Ambil nama_puskesmas yang sudah dipakai di tabel puskesmas
-        $taken = DB::table('puskesmas')
+        $taken = Puskesmas::query()
             ->pluck('nama_puskesmas')
             ->all();
 
@@ -268,7 +276,7 @@ class DataMasterController extends Controller
         $all = $this->depokKecamatanOptions();
 
         // Ambil daftar nama_puskesmas yang sudah ada
-        $taken = DB::table('puskesmas')
+        $taken = Puskesmas::query()
             ->pluck('nama_puskesmas')
             ->all();
 
@@ -316,7 +324,7 @@ class DataMasterController extends Controller
         $roleId = $this->roleId($roleMap[$tab] ?? 'bidan');
 
         // Base query: semua user aktif dengan role_id tersebut
-        $base = DB::table('users')
+        $base = User::query()
             ->where('users.status', true)
             ->where('users.role_id', $roleId);
 
@@ -340,7 +348,7 @@ class DataMasterController extends Controller
                 // Paginate 5 per halaman, dengan query string dipertahankan
                 ->paginate(5)->withQueryString();
 
-        // Jika tab = 'puskesmas'
+            // Jika tab = 'puskesmas'
         } elseif ($tab === 'puskesmas') {
             $accounts = $base
                 // Join ke tabel puskesmas berdasarkan user_id
@@ -358,7 +366,7 @@ class DataMasterController extends Controller
                 ->orderBy('users.created_at', 'desc')
                 ->paginate(5)->withQueryString();
 
-        // Selain itu, dianggap tab = 'bidan'
+            // Selain itu, dianggap tab = 'bidan'
         } else { // bidan
             $accounts = $base
                 // Join ke tabel bidans berdasarkan user_id
@@ -380,7 +388,7 @@ class DataMasterController extends Controller
         }
 
         // Daftar semua puskesmas yang ada, dipakai misalnya untuk dropdown filter di view.
-        $puskesmasList = DB::table('puskesmas')
+        $puskesmasList = Puskesmas::query()
             ->select('id', 'nama_puskesmas')
             ->orderBy('nama_puskesmas')
             ->get();
@@ -422,29 +430,25 @@ class DataMasterController extends Controller
 
         // Transaksi: insert ke tabel users dan rumah_sakits harus berjalan bersama
         DB::transaction(function () use ($payload) {
-            // Insert ke tabel users dan dapatkan id user baru
-            $userId = DB::table('users')->insertGetId([
-                'name'       => $payload['pic_name'],
-                'email'      => $payload['email'],
-                'password'   => Hash::make($payload['password']), // password di-hash
-                'phone'      => $payload['phone'] ?? null,
-                'address'    => $payload['lokasi'] ?? null,
-                'status'     => 1, // aktif
-                'role_id'    => $this->roleId('rs'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // Buat user RS
+            $user = new User();
+            $user->name     = $payload['pic_name'];
+            $user->email    = $payload['email'];
+            $user->password = Hash::make($payload['password']);
+            $user->phone    = $payload['phone'] ?? null;
+            $user->address  = $payload['lokasi'] ?? null;
+            $user->status   = 1;
+            $user->role_id  = $this->roleId('rs');
+            $user->save();
 
-            // Insert detail RS ke tabel rumah_sakits, dengan relasi ke user_id
-            DB::table('rumah_sakits')->insert([
-                'user_id'    => $userId,
-                'nama'       => $payload['nama'],
-                'lokasi'     => $payload['lokasi'] ?? '',
-                'kecamatan'  => $payload['kecamatan'],
-                'kelurahan'  => $payload['kelurahan'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // Buat record rumah sakit
+            $rs = new RumahSakit();
+            $rs->user_id   = $user->id;
+            $rs->nama      = $payload['nama'];
+            $rs->lokasi    = $payload['lokasi'] ?? '';
+            $rs->kecamatan = $payload['kecamatan'];
+            $rs->kelurahan = $payload['kelurahan'];
+            $rs->save();
         });
 
         // Redirect balik dengan pesan sukses
@@ -480,31 +484,25 @@ class DataMasterController extends Controller
 
         // Transaksi agar insert users + puskesmas berjalan atomik
         DB::transaction(function () use ($payload) {
+            $user = new User();
+            $user->name     = $payload['pic_name'];
+            $user->email    = $payload['email'];
+            $user->password = Hash::make($payload['password']);
+            $user->phone    = $payload['phone'] ?? null;
+            $user->address  = $payload['lokasi'] ?? null;
+            $user->status   = 1;
+            $user->role_id  = $this->roleId('puskesmas');
+            $user->save();
 
-            // Insert user baru untuk Puskesmas
-            $userId = DB::table('users')->insertGetId([
-                'name'       => $payload['pic_name'],
-                'email'      => $payload['email'],
-                'password'   => Hash::make($payload['password']),
-                'phone'      => $payload['phone'] ?? null,
-                'address'    => $payload['lokasi'] ?? null,
-                'status'     => 1,
-                'role_id'    => $this->roleId('puskesmas'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            // Insert data Puskesmas yang terkait dengan user_id
-            DB::table('puskesmas')->insert([
-                'user_id'        => $userId,
-                'nama_puskesmas' => $payload['nama'],       // nama puskesmas = nama kecamatan
-                'lokasi'         => $payload['lokasi'] ?? '',
-                'kecamatan'      => $payload['nama'],       // kecamatan sama dengan nama
-                'is_mandiri'     => 0,
-                'created_at'     => now(),
-                'updated_at'     => now(),
-            ]);
+            $pusk = new Puskesmas();
+            $pusk->user_id        = $user->id;
+            $pusk->nama_puskesmas = $payload['nama'];
+            $pusk->lokasi         = $payload['lokasi'] ?? '';
+            $pusk->kecamatan      = $payload['nama'];
+            $pusk->is_mandiri     = 0;
+            $pusk->save();
         });
+
 
         // Redirect balik dengan pesan sukses
         return back()->with('ok', 'Data Puskesmas berhasil ditambahkan.');
@@ -528,28 +526,23 @@ class DataMasterController extends Controller
 
         // Transaksi untuk insert user + bidans
         DB::transaction(function () use ($payload) {
-            // Insert user untuk bidan
-            $userId = DB::table('users')->insertGetId([
-                'name'       => $payload['name'],
-                'email'      => $payload['email'],
-                'password'   => Hash::make($payload['password']),
-                'phone'      => $payload['phone'] ?? null,
-                'address'    => $payload['address'] ?? null,
-                'status'     => 1,
-                'role_id'    => $this->roleId('bidan'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $user = new User();
+            $user->name     = $payload['name'];
+            $user->email    = $payload['email'];
+            $user->password = Hash::make($payload['password']);
+            $user->phone    = $payload['phone'] ?? null;
+            $user->address  = $payload['address'] ?? null;
+            $user->status   = 1;
+            $user->role_id  = $this->roleId('bidan');
+            $user->save();
 
-            // Insert detail bidan ke tabel bidans
-            DB::table('bidans')->insert([
-                'user_id'            => $userId,
-                'nomor_izin_praktek' => $payload['nomor_izin_praktek'],
-                'puskesmas_id'       => $payload['puskesmas_id'],
-                'created_at'         => now(),
-                'updated_at'         => now(),
-            ]);
+            $bidan = new Bidan();
+            $bidan->user_id            = $user->id;
+            $bidan->nomor_izin_praktek = $payload['nomor_izin_praktek'];
+            $bidan->puskesmas_id       = $payload['puskesmas_id'];
+            $bidan->save();
         });
+
 
         // Redirect balik dengan pesan sukses
         return back()->with('ok', 'Akun Bidan berhasil ditambahkan.');
@@ -573,7 +566,7 @@ class DataMasterController extends Controller
         $new = '12345678';
 
         // Update kolom password user dengan hash dari nilai default
-        DB::table('users')->where('id', $user)->update([
+        User::where('id', $user)->update([
             'password'   => Hash::make($new),
             'updated_at' => now(),
         ]);
@@ -604,7 +597,7 @@ class DataMasterController extends Controller
         $tab = $request->query('tab', 'bidan');
 
         // Ambil daftar puskesmas aktif (users.status = true), join ke users
-        $puskesmasList = DB::table('puskesmas')
+        $puskesmasList = Puskesmas::query()
             ->join('users', 'users.id', '=', 'puskesmas.user_id')
             ->where('users.status', true)
             ->orderBy('puskesmas.nama_puskesmas')
@@ -645,7 +638,7 @@ class DataMasterController extends Controller
 
         // Jika tab = 'rs', join users + rumah_sakits
         if ($tab === 'rs') {
-            $data = DB::table('users')
+            $data = User::query()
                 ->join('rumah_sakits', 'rumah_sakits.user_id', '=', 'users.id')
                 ->where('users.id', $user)
                 ->select(
@@ -657,9 +650,9 @@ class DataMasterController extends Controller
                 )
                 ->first();
 
-        // Jika tab = 'puskesmas', join users + puskesmas
+            // Jika tab = 'puskesmas', join users + puskesmas
         } elseif ($tab === 'puskesmas') {
-            $data = DB::table('users')
+            $data = User::query()
                 ->join('puskesmas', 'puskesmas.user_id', '=', 'users.id')
                 ->where('users.id', $user)
                 ->select(
@@ -670,9 +663,9 @@ class DataMasterController extends Controller
                 )
                 ->first();
 
-        // Selain itu, dianggap tab = 'bidan'
+            // Selain itu, dianggap tab = 'bidan'
         } else {
-            $data = DB::table('users')
+            $data = User::query()
                 ->join('bidans', 'bidans.user_id', '=', 'users.id')
                 ->join('puskesmas', 'puskesmas.id', '=', 'bidans.puskesmas_id')
                 ->where('users.id', $user)
@@ -704,7 +697,7 @@ class DataMasterController extends Controller
         $tab = $request->query('tab', 'bidan');
 
         // Ambil list Puskesmas untuk dropdown (misal di form Bidan)
-        $puskesmasList = DB::table('puskesmas')
+        $puskesmasList = Puskesmas::query()
             ->select('id', 'nama_puskesmas')
             ->orderBy('nama_puskesmas')
             ->get();
@@ -718,7 +711,7 @@ class DataMasterController extends Controller
         // Jika tab = 'rs'
         if ($tab === 'rs') {
             // Join users + rumah_sakits untuk data RS
-            $data = DB::table('users')
+            $data = User::query()
                 ->join('rumah_sakits', 'rumah_sakits.user_id', '=', 'users.id')
                 ->where('users.id', $user)
                 ->select(
@@ -734,10 +727,10 @@ class DataMasterController extends Controller
             $kecamatanOptions = $this->depokKecamatanOptions();
             $kelurahanOptions = $this->depokKelurahanOptions();
 
-        // Jika tab = 'puskesmas'
+            // Jika tab = 'puskesmas'
         } elseif ($tab === 'puskesmas') {
             // Join users + puskesmas
-            $data = DB::table('users')
+            $data = User::query()
                 ->join('puskesmas', 'puskesmas.user_id', '=', 'users.id')
                 ->where('users.id', $user)
                 ->select(
@@ -753,10 +746,10 @@ class DataMasterController extends Controller
                 ? $this->availableKecamatanForEdit($data->kecamatan)
                 : $this->depokKecamatanOptions();
 
-        // Selain itu, tab = 'bidan'
+            // Selain itu, tab = 'bidan'
         } else {
             // Join users + bidans
-            $data = DB::table('users')
+            $data = User::query()
                 ->join('bidans', 'bidans.user_id', '=', 'users.id')
                 ->where('users.id', $user)
                 ->select(
@@ -781,7 +774,7 @@ class DataMasterController extends Controller
             'puskesmasList'         => $puskesmasList,
             'kecamatanOptions'      => $kecamatanOptions,
             'kelurahanOptions'      => $kelurahanOptions,
-            'rsKelurahanByKecamatan'=> $rsKelurahanByKecamatan,
+            'rsKelurahanByKecamatan' => $rsKelurahanByKecamatan,
         ]);
     }
 
@@ -818,7 +811,7 @@ class DataMasterController extends Controller
             // Transaksi untuk update users + rumah_sakits
             DB::transaction(function () use ($user, $payload) {
                 // Update tabel users
-                DB::table('users')->where('id', $user)->update([
+                User::where('id', $user)->update([
                     'name'       => $payload['name'],
                     'email'      => $payload['email'],
                     'phone'      => $payload['phone'] ?? null,
@@ -827,16 +820,16 @@ class DataMasterController extends Controller
                 ]);
 
                 // Update tabel rumah_sakits
-                DB::table('rumah_sakits')->where('user_id', $user)->update([
+                RumahSakit::where('user_id', $user)->update([
                     'nama'       => $payload['nama'],
                     'lokasi'     => $payload['lokasi'] ?? '',
                     'kecamatan'  => $payload['kecamatan'],
                     'kelurahan'  => $payload['kelurahan'],
                     'updated_at' => now(),
                 ]);
-        });
+            });
 
-        // Jika tab = 'puskesmas'
+            // Jika tab = 'puskesmas'
         } elseif ($tab === 'puskesmas') {
             // Ambil key kecamatan Depok
             $kecamatanKeys = array_keys($this->depokKecamatanOptions());
@@ -854,7 +847,7 @@ class DataMasterController extends Controller
             DB::transaction(function () use ($user, $payload) {
 
                 // Update user PIC
-                DB::table('users')->where('id', $user)->update([
+                User::where('id', $user)->update([
                     'name'       => $payload['name'],
                     'email'      => $payload['email'],
                     'phone'      => $payload['phone'] ?? null,
@@ -863,16 +856,16 @@ class DataMasterController extends Controller
                 ]);
 
                 // Update data puskesmas
-                DB::table('puskesmas')->where('user_id', $user)->update([
+                Puskesmas::where('user_id', $user)->update([
                     'nama_puskesmas' => $payload['nama'],
                     'lokasi'         => $payload['lokasi'] ?? '',
                     'kecamatan'      => $payload['nama'],
                     'is_mandiri'     => 0,
                     'updated_at'     => now(),
                 ]);
-        });
+            });
 
-        // Selain itu, berarti tab = 'bidan'
+            // Selain itu, berarti tab = 'bidan'
         } else { // bidan
             // Validasi input bidan
             $payload = $request->validate([
@@ -887,7 +880,7 @@ class DataMasterController extends Controller
             // Transaksi update users + bidans
             DB::transaction(function () use ($user, $payload) {
                 // Update user
-                DB::table('users')->where('id', $user)->update([
+                User::where('id', $user)->update([
                     'name'       => $payload['name'],
                     'email'      => $payload['email'],
                     'phone'      => $payload['phone'] ?? null,
@@ -896,7 +889,7 @@ class DataMasterController extends Controller
                 ]);
 
                 // Update detail bidan
-                DB::table('bidans')->where('user_id', $user)->update([
+                Bidan::where('user_id', $user)->update([
                     'nomor_izin_praktek' => $payload['nomor_izin_praktek'],
                     'puskesmas_id'       => $payload['puskesmas_id'],
                     'updated_at'         => now(),
@@ -929,32 +922,29 @@ class DataMasterController extends Controller
             DB::transaction(function () use ($tab, $user) {
                 if ($tab === 'rs') {
                     // Hapus detail RS
-                    DB::table('rumah_sakits')->where('user_id', $user)->delete();
-
+                    RumahSakit::where('user_id', $user)->delete();
                 } elseif ($tab === 'puskesmas') {
                     // Cari id puskesmas berdasarkan user_id
-                    $puskesmasId = DB::table('puskesmas')->where('user_id', $user)->value('id');
+                    $puskesmasId = Puskesmas::where('user_id', $user)->value('id');
 
                     if ($puskesmasId) {
                         // Putus relasi bidan dengan puskesmas yang akan dihapus
-                        DB::table('bidans')
-                            ->where('puskesmas_id', $puskesmasId)
+                        Bidan::where('puskesmas_id', $puskesmasId)
                             ->update([
                                 'puskesmas_id' => null,
                                 'updated_at'   => now(),
                             ]);
 
                         // Hapus data puskesmas
-                        DB::table('puskesmas')->where('id', $puskesmasId)->delete();
+                        Puskesmas::where('id', $puskesmasId)->delete();
                     }
-
                 } else {
                     // Tab = bidan: hapus detail bidan
-                    DB::table('bidans')->where('user_id', $user)->delete();
+                    Bidan::where('user_id', $user)->delete();
                 }
 
                 // Terakhir, hapus user-nya
-                DB::table('users')->where('id', $user)->delete();
+                User::where('id', $user)->delete();
             });
 
             // Jika transaksi sukses, redirect dengan pesan OK

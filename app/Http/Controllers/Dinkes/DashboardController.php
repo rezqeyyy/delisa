@@ -12,6 +12,15 @@ namespace App\Http\Controllers\Dinkes;
 // Mengimpor base Controller Laravel
 use App\Http\Controllers\Controller;
 
+// Mengimpor model yang dibutuhkan
+use App\Models\Pasien;
+use App\Models\Skrining;
+use App\Models\Kf;
+use App\Models\PasienNifasBidan;
+use App\Models\PasienNifasRs;
+use App\Models\Puskesmas;
+
+
 // Mengimpor Request untuk menangani input HTTP (query string, form, dsb.)
 use Illuminate\Http\Request;
 
@@ -50,7 +59,7 @@ class DashboardController extends Controller
         $selectedYear = (int) ($request->query('year') ?? now()->year);
 
         // Query ke tabel kf untuk mengambil daftar tahun yang tersedia pada kolom tanggal_kunjungan
-        $availableYears = DB::table('kf')
+        $availableYears = Kf::query()
             // EXTRACT(YEAR ...) mengambil tahun dari tanggal_kunjungan
             // DISTINCT agar tidak duplikat, ::int untuk cast ke integer
             ->selectRaw('DISTINCT EXTRACT(YEAR FROM tanggal_kunjungan)::int AS year')
@@ -87,7 +96,8 @@ class DashboardController extends Controller
         // ===================== 1. ASAL PASIEN (DEPOK vs NON) =====================
 
         // Hitung jumlah pasien yang berasal dari Depok dan pernah melakukan skrining
-        $asalDepok = DB::table('pasiens as p')
+        $asalDepok = Pasien::query()
+            ->from('pasiens as p')
             // COALESCE(PKabupaten, '') ILIKE '%Depok%' -> kabupaten mengandung 'Depok' (case-insensitive)
             ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'")
             // whereExists: hanya hitung pasien yang punya data skrining
@@ -101,7 +111,8 @@ class DashboardController extends Controller
             ->count();
 
         // Hitung jumlah pasien NON-Depok yang pernah melakukan skrining
-        $asalNonDepok = DB::table('pasiens as p')
+        $asalNonDepok = Pasien::query()
+            ->from('pasiens as p')
             // Jika PKabupaten null atau tidak mengandung 'Depok'
             ->whereRaw("(p.\"PKabupaten\" IS NULL OR p.\"PKabupaten\" NOT ILIKE '%Depok%')")
             // Hanya pasien yang pernah melakukan skrining
@@ -119,7 +130,7 @@ class DashboardController extends Controller
         // ===================== 2. KF PER BULAN (12 SLOT) =====================
 
         // Ambil jumlah kunjungan nifas (KF) per bulan pada tahun yang dipilih
-        $kfPerBulan = DB::table('kf')
+        $kfPerBulan = Kf::query()
             // EXTRACT(MONTH ...) -> ambil bulan dari tanggal_kunjungan, cast ke int
             // COUNT(*)::int -> jumlah kunjungan per bulan, cast ke int
             ->selectRaw('EXTRACT(MONTH FROM tanggal_kunjungan)::int as bulan, COUNT(*)::int as total')
@@ -168,8 +179,11 @@ class DashboardController extends Controller
         // ===================== 4. DATA NIFAS (TOTAL & SUDAH KFI) =====================
 
         // Membuat union dua sumber pasien nifas: dari bidan dan dari RS
-        $unionNifas = DB::table('pasien_nifas_bidan')->select('pasien_id')
-            ->union(DB::table('pasien_nifas_rs')->select('pasien_id'));
+        $unionNifas = PasienNifasBidan::select('pasien_id')
+            ->union(
+                PasienNifasRs::select('pasien_id')
+            );
+
 
         // Total pasien nifas = jumlah distinct pasien_id dari union tersebut
         $totalNifas = DB::query()
@@ -195,10 +209,10 @@ class DashboardController extends Controller
         // ===================== 5. HADIR / MANGKIR (LATEST SKRINING) =====================
 
         // 1) Hitung seluruh pasien yang terdaftar di tabel pasiens
-        $totalPasienTerdaftar = DB::table('pasiens')->count();
+        $totalPasienTerdaftar = Pasien::count();
 
         // 2) Hitung pasien yang "hadir" = sudah memiliki skrining (tanpa lihat checked_status)
-        $pasienHadir = DB::table('skrinings')
+        $pasienHadir = Skrining::query()
             // distinct pasien_id agar satu pasien hanya dihitung sekali
             ->distinct('pasien_id')
             ->count('pasien_id');
@@ -234,17 +248,17 @@ class DashboardController extends Controller
         // ===================== 6. PEMANTAUAN KF =====================
 
         // Hitung jumlah kunjungan dengan kesimpulan pantauan "Sehat"
-        $pemantauanSehat = DB::table('kf')
+        $pemantauanSehat = Kf::query()
             ->where('kesimpulan_pantauan', 'Sehat')
             ->count();
 
         // Hitung jumlah dengan kesimpulan pantauan "Dirujuk"
-        $pemantauanDirujuk = DB::table('kf')
+        $pemantauanDirujuk = Kf::query()
             ->where('kesimpulan_pantauan', 'Dirujuk')
             ->count();
 
         // Hitung jumlah dengan kesimpulan pantauan "Meninggal"
-        $pemantauanMeninggal = DB::table('kf')
+        $pemantauanMeninggal = Kf::query()
             ->where('kesimpulan_pantauan', 'Meninggal')
             ->count();
 
@@ -269,7 +283,7 @@ class DashboardController extends Controller
         // ===================== 8. DAFTAR PUSKESMAS (UNTUK DROPDOWN) =====================
 
         // Ambil daftar puskesmas untuk dropdown filter
-        $puskesmasList = DB::table('puskesmas')
+        $puskesmasList = Puskesmas::query()
             ->select('id', 'nama_puskesmas')
             ->orderBy('nama_puskesmas')
             ->get();
@@ -280,7 +294,7 @@ class DashboardController extends Controller
         return view('dinkes.dasbor.dashboard', [
             // Asal pasien (versi baru + pendek)
             'asalDepok'   => $asalDepok,
-            'asalNonDepok'=> $asalNonDepok,
+            'asalNonDepok' => $asalNonDepok,
             'depok'       => $depok,
             'non'         => $non,
 

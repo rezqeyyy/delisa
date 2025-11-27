@@ -17,6 +17,9 @@ use Illuminate\Support\Facades\Hash;
 // Storage → untuk upload & delete file foto profil
 use Illuminate\Support\Facades\Storage;
 
+// Eloquent Model User
+use App\Models\User;
+
 class ProfileController extends Controller
 {
     /**
@@ -43,7 +46,7 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         // Ambil record User dari database berdasarkan ID user yang login
-        $user = \App\Models\User::find(Auth::id());
+        $user = User::find(Auth::id());
 
         /**
          * Validasi input form:
@@ -161,7 +164,7 @@ class ProfileController extends Controller
     public function destroyPhoto(Request $request)
     {
         // Ambil data user yang login
-        $user = \App\Models\User::find(Auth::id());
+        $user = User::find(Auth::id());
 
         // Jika user punya foto & file ada di storage → hapus
         if ($user->photo && Storage::disk('public')->exists($user->photo)) {

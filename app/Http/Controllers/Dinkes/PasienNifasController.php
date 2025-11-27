@@ -37,6 +37,16 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 // Alignment: pengaturan alignment text (horizontal & vertical)
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
+// ==========================
+//  Eloquent Models
+// ==========================
+
+use App\Models\Pasien;
+use App\Models\PasienNifasBidan;
+use App\Models\PasienNifasRs;
+use App\Models\AnakPasien;
+use App\Models\Kf;
+
 class PasienNifasController extends Controller
 {
     /**
@@ -80,7 +90,8 @@ class PasienNifasController extends Controller
         $q = trim($q ?? '');
 
         // Mulai query dari tabel pasiens sebagai alias p
-        $query = DB::table('pasiens as p')
+        $query = Pasien::query()
+            ->from('pasiens as p')
             // Join ke tabel users (u) via p.user_id = u.id
             ->join('users as u', 'u.id', '=', 'p.user_id')
             // Left join ke pasien_nifas_bidan (pnb) via pasien_id
@@ -141,7 +152,8 @@ class PasienNifasController extends Controller
     public function show($nifasId)
     {
         // 1) Data utama pasien + penanggung nifas (berdasarkan ID nifas)
-        $pasien = DB::table('pasiens as p')
+        $pasien = Pasien::query()
+            ->from('pasiens as p')
             // Join ke users untuk ambil name/email/phone/address
             ->join('users as u', 'u.id', '=', 'p.user_id')
             // Left join pasien_nifas_bidan & pasien_nifas_rs untuk cek sumber nifas
@@ -202,14 +214,14 @@ class PasienNifasController extends Controller
 
         // 2) Data anak nifas: nifas_id = ID nifas (bukan ID pasien)
         // Ambil daftar anak yang terkait dengan episode nifas ini dari tabel anak_pasien.
-        $anakList = DB::table('anak_pasien')
+        $anakList = AnakPasien::query()
             ->where('nifas_id', $nifasId)
             ->orderBy('anak_ke')    // urut berdasarkan anak ke-1, ke-2, dst.
             ->get();
 
         // 3) Riwayat penyakit nifas (diambil dari tabel anak_pasien)
         // Ambil kolom riwayat_penyakit (kemungkinan JSON) dan keterangan_masalah_lain untuk semua anak di episode ini.
-        $riwayatPenyakitRaw = DB::table('anak_pasien')
+        $riwayatPenyakitRaw = AnakPasien::query()
             ->where('nifas_id', $nifasId)
             ->get(['riwayat_penyakit', 'keterangan_masalah_lain']);
 
@@ -253,7 +265,8 @@ class PasienNifasController extends Controller
 
         // 4) Kunjungan nifas (KF)
         // Ambil semua catatan kunjungan nifas dari tabel kf untuk nifas_id ini.
-        $kunjunganNifas = DB::table('kf')
+        $kunjunganNifas = Kf::query()
+            ->from('kf')
             // Left join ke anak_pasien agar tahu nama anak & anak ke berapa.
             ->leftJoin('anak_pasien as a', 'a.id', '=', 'kf.id_anak')
             // Filter berdasarkan id_nifas
@@ -439,9 +452,9 @@ class PasienNifasController extends Controller
         // Bungkus operasi dalam transaksi untuk menjaga konsistensi data.
         DB::transaction(function () use ($pasienId) {
             // Hapus relasi nifas di sumber bidan jika ada.
-            DB::table('pasien_nifas_bidan')->where('pasien_id', $pasienId)->delete();
+            PasienNifasBidan::where('pasien_id', $pasienId)->delete();
             // Hapus relasi nifas di sumber RS jika ada.
-            DB::table('pasien_nifas_rs')->where('pasien_id', $pasienId)->delete();
+            PasienNifasRs::where('pasien_id', $pasienId)->delete();
 
             // Catatan:
             // Jika ingin, di sini bisa dilanjutkan untuk menghapus/menyesuaikan
