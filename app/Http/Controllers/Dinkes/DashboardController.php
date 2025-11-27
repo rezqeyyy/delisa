@@ -397,8 +397,13 @@ class DashboardController extends Controller
                     ELSE p.nik
                 END AS nik_masked,
 
-                -- umur pasien (tahun) dari tanggal lahir
-                EXTRACT(YEAR FROM age(current_date, p.tanggal_lahir))::int AS umur,
+                -- umur pasien (tahun) dari tanggal lahir (0 / negatif dianggap tidak valid)
+                CASE
+                    WHEN p.tanggal_lahir IS NULL THEN NULL
+                    WHEN EXTRACT(YEAR FROM age(current_date, p.tanggal_lahir))::int <= 0 THEN NULL
+                    ELSE EXTRACT(YEAR FROM age(current_date, p.tanggal_lahir))::int
+                END AS umur,
+
 
                 -- usia kehamilan dari tabel kondisi_kesehatans (jika ada)
                 kk.usia_kehamilan,
