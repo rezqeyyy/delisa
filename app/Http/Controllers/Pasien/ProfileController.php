@@ -48,6 +48,7 @@ class ProfileController extends Controller
         // Validasi input form
         $request->validate([
             'name'         => ['required', 'string', 'max:255'],
+            'email'        => ['nullable', 'email', 'unique:users,email,' . $user->id],
             'nik'          => ['nullable', 'string', 'max:32'],
             'address'      => ['nullable', 'string', 'max:255'],
             'phone'        => ['nullable', 'string', 'max:32'],
@@ -81,6 +82,7 @@ class ProfileController extends Controller
 
         // Simpan field pada tabel users
         $user->name    = $request->name;
+        $user->email   = $request->email;
         $user->address = $request->address;
         $user->phone   = $request->phone;
 

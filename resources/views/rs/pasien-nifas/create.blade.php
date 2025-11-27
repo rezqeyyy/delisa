@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Tambah Pasien Nifas - DELISA</title>
     
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js', 'resources/js/rs/wilayah.js'])
 
 </head>
 
@@ -19,22 +19,17 @@
 
             {{-- Header --}}
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('rs.pasien-nifas.index') }}"
-                       class="inline-flex items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-3 py-1.5 text-xs sm:text-sm text-[#4B4B4B] hover:bg-[#F8F8F8]">
-                        <span class="inline-flex w-5 h-5 items-center justify-center rounded-full bg-[#F5F5F5]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" stroke-width="2">
-                                <path d="M15 18l-6-6 6-6" />
-                            </svg>
-                        </span>
-                        <span>Kembali</span>
+                <div class="mb-6 flex items-center gap-3">
+                    <a href="{{ route('rs.pasien-nifas.index') }}" class="text-gray-600 hover:text-gray-900">
+                        <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
                     </a>
                     <div>
                         <h1 class="text-lg sm:text-xl font-semibold text-[#1D1D1D]">
                             Tambah Data Pasien Nifas
                         </h1>
-                        <p class="text-xs text-[#7C7C7C]">
+                        <p class="text-xs text-[#7C7C7C] mt-1">
                             Lengkapi data identitas dan alamat pasien nifas di rumah sakit ini
                         </p>
                     </div>
@@ -180,84 +175,91 @@
                         @enderror
                     </div>
 
-                    {{-- Baris 3: Provinsi & Kota/Kabupaten --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">
-                                Provinsi <span class="text-pink-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="provinsi"
-                                id="provinsi"
-                                class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
-                                placeholder="Contoh: Jawa Barat"
-                                value="{{ old('provinsi') }}"
-                                required>
-                            @error('provinsi')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
+                    {{-- Baris 3 & 4: Wilayah (Provinsi → Kota/Kabupaten → Kecamatan → Kelurahan) --}}
+                    <div id="wilayah-wrapper"
+                         data-url-provinces="{{ route('wilayah.provinces') }}"
+                         data-url-regencies="{{ url('/wilayah/regencies') }}"
+                         data-url-districts="{{ url('/wilayah/districts') }}"
+                         data-url-villages="{{ url('/wilayah/villages') }}"
+                         data-prov="{{ old('provinsi') }}"
+                         data-kab="{{ old('kota') }}"
+                         data-kec="{{ old('kecamatan') }}"
+                         data-kel="{{ old('kelurahan') }}"
+                         class="space-y-4">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                                    Provinsi <span class="text-pink-600">*</span>
+                                </label>
+                                <select
+                                    name="provinsi"
+                                    id="provinsi"
+                                    class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                                    required>
+                                    <option value="">{{ old('provinsi') ? 'Memuat…' : 'Pilih Provinsi' }}</option>
+                                </select>
+                                @error('provinsi')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                                    Kota/Kabupaten <span class="text-pink-600">*</span>
+                                </label>
+                                <select
+                                    name="kota"
+                                    id="kabupaten"
+                                    class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                                    required>
+                                    <option value="">{{ old('kota') ? 'Memuat…' : 'Pilih Kota/Kabupaten' }}</option>
+                                </select>
+                                @error('kota')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
 
-                        <div>
-                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">
-                                Kota/Kabupaten <span class="text-pink-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="kota"
-                                id="kota"
-                                class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
-                                placeholder="Contoh: Kota Depok"
-                                value="{{ old('kota') }}"
-                                required>
-                            @error('kota')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                                    Kecamatan <span class="text-pink-600">*</span>
+                                </label>
+                                <select
+                                    name="kecamatan"
+                                    id="kecamatan"
+                                    class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                                    required>
+                                    <option value="">{{ old('kecamatan') ? 'Memuat…' : 'Pilih Kecamatan' }}</option>
+                                </select>
+                                @error('kecamatan')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                                    Kelurahan <span class="text-pink-600">*</span>
+                                </label>
+                                <select
+                                    name="kelurahan"
+                                    id="kelurahan"
+                                    class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                                    required>
+                                    <option value="">{{ old('kelurahan') ? 'Memuat…' : 'Pilih Kelurahan' }}</option>
+                                </select>
+                                @error('kelurahan')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
                     </div>
 
-                    {{-- Baris 4: Kecamatan & Kelurahan --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">
-                                Kecamatan <span class="text-pink-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="kecamatan"
-                                id="kecamatan"
-                                class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
-                                placeholder="Contoh: Beji"
-                                value="{{ old('kecamatan') }}"
-                                required>
-                            @error('kecamatan')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">
-                                Kelurahan <span class="text-pink-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="kelurahan"
-                                id="kelurahan"
-                                class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
-                                placeholder="Contoh: Pondok Cina"
-                                value="{{ old('kelurahan') }}"
-                                required>
-                            @error('kelurahan')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-
-                    {{-- Baris 5: Domisili --}}
+                    {{-- Baris 5: Alamat --}}
                     <div>
                         <label class="block text-[11px] font-semibold text-[#666666] mb-1">
-                            Domisili <span class="text-pink-600">*</span>
+                            Alamat <span class="text-pink-600">*</span>
                         </label>
                         <textarea
                             name="domisili"

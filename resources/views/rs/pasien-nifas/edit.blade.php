@@ -18,27 +18,22 @@
 
             {{-- Header --}}
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('rs.pasien-nifas.index') }}"
-                       class="inline-flex items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-3 py-1.5 text-xs sm:text-sm text-[#4B4B4B] hover:bg-[#F8F8F8]">
-                        <span class="inline-flex w-5 h-5 items-center justify-center rounded-full bg-[#F5F5F5]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" stroke-width="2">
-                                <path d="M15 18l-6-6 6-6" />
-                            </svg>
-                        </span>
-                        <span>Kembali</span>
+                <div class="mb-6 flex items-center gap-3">
+                    <a href="{{ route('rs.pasien-nifas.index') }}" class="text-gray-600 hover:text-gray-900">
+                        <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
                     </a>
                     <div>
                         <h1 class="text-lg sm:text-xl font-semibold text-[#1D1D1D]">
                             Data Nifas Pasien
                         </h1>
-                        <p class="text-xs text-[#7C7C7C]">
+                        <p class="text-xs text-[#7C7C7C] mt-1">
                             Tambahkan data anak untuk pasien nifas ini
                         </p>
                     </div>
                 </div>
-
+                
                 {{-- Badge Status Risiko --}}
                 @php
                     $statusType = $pasienNifas->status_type ?? 'normal';

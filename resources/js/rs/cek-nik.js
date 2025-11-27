@@ -119,6 +119,16 @@ function fillForm(pasien) {
             }
         }
     });
+
+    // Isi dropdown wilayah secara berantai berdasarkan nama jika modul tersedia
+    if (window.WilayahCascade && typeof window.WilayahCascade.setByNames === 'function') {
+        window.WilayahCascade.setByNames({
+            prov: pasien.provinsi || '',
+            kab: pasien.kota || '',
+            kec: pasien.kecamatan || '',
+            kel: pasien.kelurahan || ''
+        });
+    }
 }
 
 function clearFormExceptNik() {

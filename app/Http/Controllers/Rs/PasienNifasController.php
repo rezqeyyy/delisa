@@ -13,6 +13,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class PasienNifasController extends Controller
 {
@@ -137,7 +138,7 @@ class PasienNifasController extends Controller
                         'kota'          => $pasien->PKabupaten ?? '',
                         'kecamatan'     => $pasien->PKecamatan ?? '',
                         'kelurahan'     => $pasien->PWilayah ?? '',
-                        'domisili'      => $this->buildDomisili($pasien),
+                        'domisili'      => ($pasien->address ?? $this->buildDomisili($pasien)),
                         'status_risiko' => $statusRisiko['label'],
                         'status_type'   => $statusRisiko['type'],
                         'has_skrining'  => $pasien->skrinings->count() > 0,
@@ -216,13 +217,21 @@ class PasienNifasController extends Controller
                     ]);
                 }
 
-                // Update data wilayah pasien
-                $existingPasien->update([
+                // Update data wilayah pasien + alamat
+                $updateData = [
                     'PProvinsi'  => $validated['provinsi'],
                     'PKabupaten' => $validated['kota'],
                     'PKecamatan' => $validated['kecamatan'],
                     'PWilayah'   => $validated['kelurahan'],
-                ]);
+                ];
+
+                if (Schema::hasColumn('pasiens', 'address')) {
+                    $updateData['address'] = $validated['domisili'];
+                } else if ($existingPasien->user) {
+                    $existingPasien->user->update(['address' => $validated['domisili']]);
+                }
+
+                $existingPasien->update($updateData);
             } else {
                 // Buat user + pasien baru
                 $roleId = DB::table('roles')
@@ -247,14 +256,22 @@ class PasienNifasController extends Controller
                     'phone'    => $validated['no_telepon'],
                 ]);
 
-                $pasien = Pasien::create([
+                $pasienData = [
                     'user_id'    => $user->id,
                     'nik'        => $validated['nik'],
                     'PProvinsi'  => $validated['provinsi'],
                     'PKabupaten' => $validated['kota'],
                     'PKecamatan' => $validated['kecamatan'],
                     'PWilayah'   => $validated['kelurahan'],
-                ]);
+                ];
+
+                if (Schema::hasColumn('pasiens', 'address')) {
+                    $pasienData['address'] = $validated['domisili'];
+                } else {
+                    $user->update(['address' => $validated['domisili']]);
+                }
+
+                $pasien = Pasien::create($pasienData);
             }
 
             // Ambil rs_id dari user RS yang sedang login
