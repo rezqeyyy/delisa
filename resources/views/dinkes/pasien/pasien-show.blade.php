@@ -107,7 +107,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-5">
                             {{-- Fasilitas Skrining --}}
                             <div>
-                                <div class="text-sm text-[#7C7C7C] mb-1">Fasilitas Skrining</div>
+                                <div class="text-sm text-[#7C7C7C] mb-1">Tempat Skrining</div>
                                 <div class="font-semibold break-words">
                                     {{ $skrining->puskesmas_nama ?? '—' }}
                                 </div>
