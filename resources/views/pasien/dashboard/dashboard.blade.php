@@ -11,7 +11,8 @@
         'resources/js/dropdown.js', 
         'resources/js/pasien/puskesmas-picker.js', 
         'resources/js/pasien/sidebar-toggle.js', 
-        'resources/js/pasien/list-filter.js'])
+        'resources/js/pasien/list-filter.js',
+        'resources/js/pasien/delete-confirm.js'])
 
 </head>
 
@@ -20,15 +21,11 @@
         
         <x-pasien.sidebar />
             
-        <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
+        <main class="flex-1 w-full lg:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
             <div class="flex items-center gap-3 flex-nowrap">
                 <div class="flex items-center gap-2 flex-1 min-w-0">
-                    <div class="relative w-full">
-                        <span class="absolute inset-y-0 left-3 flex items-center">
-                            <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60" alt="Search">
-                        </span>
-                        <input type="text" placeholder="Search..."
-                            class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+                    <div class="flex items-center">
+                        <h1 class="text-3xl font-bold text-[#1D1D1D]">Dashboard</h1>
                     </div>
                 </div>
 
@@ -183,10 +180,10 @@
                                             <a href="{{ $viewUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">View</a>
 
                                             @if(empty($skrining->has_referral))
-                                            <form method="POST" action="{{ route('pasien.skrining.destroy', $skrining->id) }}" onsubmit="return confirm('Yakin hapus data skrining?')">
+                                            <form method="POST" action="{{ route('pasien.skrining.destroy', $skrining->id) }}" class="js-delete-skrining-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="rounded-full border px-4 py-2 text-red-600 hover:bg-red-50">Hapus</button>
+                                                <button type="button" class="js-delete-skrining-btn rounded-full border px-4 py-2 text-red-600 hover:bg-red-50">Hapus</button>
                                             </form>
                                             @else
                                                 <span class="px-4 py-1.5 rounded-full bg-[#F2F2F2] border border-[#E5E5E5] text-[#7C7C7C]">Hapus</span>

@@ -43,10 +43,7 @@
                     <span>Rujukan</span>
                 </a>
 
-                <a href="{{ route('puskesmas.laporan') }}" class="{{ $is('puskesmas.laporan*') ? $active : $idle }}">
-                    <img src="{{ asset('icons/Iconly/Regular/Light/Message.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Laporan">
-                    <span>Laporan</span>
-                </a>
+                <!-- MENU LAPORAN DIHAPUS DARI SINI -->
 
                 <a href="{{ route('puskesmas.pasien-nifas') }}" class="{{ $is('puskesmas.pasien-nifas*') ? $active : $idle }}">
                     <img src="{{ asset('icons/Iconly/Regular/Light/2 User.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Pasien Nifas">

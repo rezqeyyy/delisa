@@ -2,11 +2,17 @@
 
 namespace App\Http\Controllers\Pasien\skrining\Concerns;
 
+// Mengimpor facade Auth untuk identitas pasien yang login.
 use Illuminate\Support\Facades\Auth;
+// Mengimpor facade DB untuk operasi query builder/transaksi.
 use Illuminate\Support\Facades\DB;
+// Mengimpor Carbon untuk kalkulasi umur dan tanggal.
 use Carbon\Carbon;
+// Mengimpor model Skrining (tabel skrinings).
 use App\Models\Skrining;
+// Mengimpor model KondisiKesehatan (tabel kondisi_kesehatans).
 use App\Models\KondisiKesehatan;
+// Mengimpor model RiwayatKehamilanGpa (tabel riwayat_kehamilan_gpas).
 use App\Models\RiwayatKehamilanGpa;
 
 trait SkriningHelpers
@@ -20,10 +26,12 @@ trait SkriningHelpers
      */
     private function requireSkriningForPasien(int $skriningId): Skrining
     {
+        // Ambil user login dan id pasien terkait; 401 jika tidak terautentikasi sebagai pasien.
         $user     = Auth::user();
         $pasienId = optional($user->pasien)->id;
         abort_unless($pasienId, 401);
 
+        // Jika skriningId dikirim → pastikan milik pasien; jika tidak, ambil skrining terbaru milik pasien.
         return $skriningId
             ? Skrining::where('pasien_id', $pasienId)->whereKey($skriningId)->firstOrFail()
             : Skrining::where('pasien_id', $pasienId)->latest()->firstOrFail();
@@ -84,23 +92,27 @@ trait SkriningHelpers
      */
     private function hasAllJawaban(Skrining $skrining, array $names, string $statusSoal): bool
     {
+        // Ambil master pertanyaan untuk kategori tertentu (status_soal).
         $kuis = DB::table('kuisioner_pasiens')
             ->where('status_soal', $statusSoal)
             ->whereIn('nama_pertanyaan', $names)
             ->get(['id', 'nama_pertanyaan'])
             ->keyBy('nama_pertanyaan');
 
+        // Jika jumlah master pertanyaan kurang dari daftar yang diminta → belum lengkap.
         if ($kuis->count() < count($names)) {
             return false;
         }
 
         $ids = $kuis->pluck('id')->all();
 
+        // Hitung jumlah jawaban yang tersedia untuk skrining dan daftar kuisioner tersebut.
         $answeredCount = DB::table('jawaban_kuisioners')
             ->where('skrining_id', $skrining->id)
             ->whereIn('kuisioner_id', $ids)
             ->count();
 
+        // Lengkap bila semua pertanyaan memiliki jawaban.
         return $answeredCount === count($names);
     }
 
@@ -112,6 +124,7 @@ trait SkriningHelpers
      */
     private function isSkriningCompleteForSkrining(Skrining $skrining): bool
     {
+        // Validasi kelengkapan 6 langkah skrining (Data Diri → GPA → Kondisi → Penyakit Pasien → Keluarga → Preeklampsia).
         // 1) Data Diri
         if (!$this->isDataDiriCompleteForSkrining($skrining)) {
             return false;
@@ -190,6 +203,7 @@ trait SkriningHelpers
      */
     private function recalcPreEklampsia(Skrining $skrining): void
     {
+        // Hitung ulang jumlah faktor sedang/tinggi untuk menetapkan status_pre_eklampsia, kesimpulan, dan tindak_lanjut.
         $pasien = optional($skrining->pasien);
         $kk  = KondisiKesehatan::where('skrining_id', $skrining->id)->first();
         $gpa = RiwayatKehamilanGpa::where('skrining_id', $skrining->id)->first();
@@ -208,6 +222,7 @@ trait SkriningHelpers
         $sistol  = $kk ? (int) $kk->sdp : null;
         $diastol = $kk ? (int) $kk->dbp : null;
 
+        // Flag moderat/tinggi berdasarkan data medis & kuisioner.
         $isAgeModerate          = ($umur !== null && $umur >= 35);
         $isPrimigravidaModerate = ($gpa && intval($gpa->total_kehamilan) === 1);
         $isImtModerate          = ($kk && floatval($kk->imt) > 30);
@@ -297,6 +312,7 @@ trait SkriningHelpers
         $moderateCount = count(array_unique($moderateFlags));
         $highCount     = count(array_unique($highFlags));
 
+        // Aturan kesimpulan: ≥1 tinggi atau ≥2 sedang → Berisiko; selain itu → Normal.
         if ($highCount >= 1 || $moderateCount >= 2) {
             $status       = 'Risiko Tinggi';
             $kesimpulan   = 'Berisiko';
@@ -307,6 +323,7 @@ trait SkriningHelpers
             $tindakLanjut = false;
         }
        
+        // Sinkronkan hasil ke tabel skrinings agar dashboard & hasil konsisten.
         Skrining::query()->whereKey($skrining->id)->update([
             'status_pre_eklampsia' => $status,
             'jumlah_resiko_sedang' => $moderateCount,

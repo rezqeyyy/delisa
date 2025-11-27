@@ -2,11 +2,17 @@
 
 namespace App\Http\Controllers\Pasien;
 
+// Mengimpor base Controller Laravel.
 use App\Http\Controllers\Controller;
+// Mengimpor Request untuk menangkap input dari HTTP.
 use Illuminate\Http\Request;
+// Mengimpor facade Auth untuk identitas pasien yang login.
 use Illuminate\Support\Facades\Auth;
+// Mengimpor facade DB untuk operasi query builder/transaksi.
 use Illuminate\Support\Facades\DB;
+// Mengimpor model Skrining (tabel skrinings).
 use App\Models\Skrining;
+// Mengimpor trait SkriningHelpers (helper validasi & rekalkulasi skrining).
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 
 class DashboardController extends Controller
@@ -20,8 +26,9 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
-        // Ambil nilai filter status dari query string, kosong jika tidak ada
-        // Nilai yang dikirim dari dropdown: "Normal", "Waspada", "Berisiko"
+        // Ambil parameter query string untuk filter:
+        // - 'status' → alias kesimpulan/risk (Normal | Waspada | Berisiko | Skrining belum selesai)
+        // - 'date_from' & 'date_to' → rentang tanggal created_at
         $status   = trim($request->get('status', ''));
         $dateFrom = trim($request->get('date_from', ''));
         $dateTo   = trim($request->get('date_to', ''));
@@ -43,6 +50,16 @@ class DashboardController extends Controller
         ];
 
         /* {{-- ==== QUERY DAFTAR SKRINING ==== --}} */
+        /**
+         * Query daftar skrining milik pasien:
+         * - where('pasien_id', ...) → hanya milik pasien yang login
+         * - when($status !== '', ...) → filter alias kesimpulan/status preeklampsia
+         * - when(date range, ...) → filter berdasarkan created_at (antara from..to)
+         * - with(['pasien.user']) → eager load relasi untuk tampilan
+         * - latest() → urutkan paling baru di atas
+         * - paginate(10) → batasi 10 per halaman
+         * - withQueryString() → parameter filter tetap ada saat paging
+         */
         $skrinings = Skrining::where('pasien_id', $pasienId)
             ->when($status !== '', function ($q) use ($status, $kesimpulanAliases, $preeklampsiaAliases) {
                 if ($status === 'Skrining belum selesai') {
@@ -77,6 +94,10 @@ class DashboardController extends Controller
          * Menyusun data tampilan ringkasan: kesimpulan, badge status,
          * ringkasan risiko, pemicu sedang/tinggi, dan rekomendasi
          * Kesimpulan: belum selesai | berisiko (tinggi ≥1 atau sedang ≥2) | tidak berisiko
+         * Transform hasil paginate untuk tampilan UI:
+         * - Tentukan 'conclusion_display' dari kelengkapan & jumlah risiko
+         * - Tetapkan 'badge_class' sesuai kesimpulan
+         * - Set 'has_referral' bila skrining memiliki rujukan RS
          */
         $skrinings->getCollection()->transform(function ($s) {
             $resikoSedang = (int)($s->jumlah_resiko_sedang ?? 0);

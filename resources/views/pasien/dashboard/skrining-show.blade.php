@@ -14,6 +14,11 @@
     <div class="lg:ml-[260px] mx-auto max-w-8xl px-3 sm:px-6 lg:px-8 py-6 lg:py-8">
         <!-- Header -->
         <div class="mb-6 flex items-center">            
+            <a href="{{ route('pasien.dashboard') }}" class="text-[#1D1D1D] hover:text-[#000]">
+                <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </a>
             <h1 class="ml-3 text-3xl font-bold text-[#1D1D1D]">Riwayat Pasien</h1>
         </div>
 
@@ -139,11 +144,12 @@
 
                     <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Rekomendasi</div>  
                     <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">
-                        @if (trim($kesimpulan) === 'Skrining belum selesai')
-                            Lengkapi Skrining terlebih dahulu.
-                        @else
-                            {{ $rekomendasi }}
+                        @if ($statusRujukanLabel)
+                            <div class="mb-2">
+                                <span class="inline-flex items-center rounded-full px-3 h-8 text-xs font-semibold {{ $statusRujukanClass }}">{{ $statusRujukanLabel }}</span>
+                            </div>
                         @endif
+                        <p>{{ $rekomendasi }}</p>
                     </div>
 
                     <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Catatan</div>
