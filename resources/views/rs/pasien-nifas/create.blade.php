@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Tambah Pasien Nifas - DELISA</title>
-
+    
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js'])
 
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
-
+        
         <x-rs.sidebar />
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
@@ -21,10 +21,10 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div class="flex items-center gap-3">
                     <a href="{{ route('rs.pasien-nifas.index') }}"
-                        class="inline-flex items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-3 py-1.5 text-xs sm:text-sm text-[#4B4B4B] hover:bg-[#F8F8F8]">
+                       class="inline-flex items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-3 py-1.5 text-xs sm:text-sm text-[#4B4B4B] hover:bg-[#F8F8F8]">
                         <span class="inline-flex w-5 h-5 items-center justify-center rounded-full bg-[#F5F5F5]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                                 stroke="currentColor" stroke-width="2">
                                 <path d="M15 18l-6-6 6-6" />
                             </svg>
                         </span>
@@ -41,13 +41,25 @@
                 </div>
             </div>
 
-            {{-- Alert error global --}}
-            @if (session('error'))
-                <div
-                    class="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs sm:text-sm text-red-800">
+            {{-- Alert --}}
+            @if(session('success'))
+                <div class="flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs sm:text-sm text-emerald-800">
                     <span class="mt-0.5">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
+                             stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+                            <path d="M9 12l2 2 4-4" />
+                        </svg>
+                    </span>
+                    <span>{{ session('success') }}</span>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs sm:text-sm text-red-800">
+                    <span class="mt-0.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10" />
                             <path d="M12 8v5" />
                             <path d="M12 16h.01" />
@@ -57,23 +69,29 @@
                 </div>
             @endif
 
-            @if (session('success'))
-                <div
-                    class="flex items-start gap-2 rounded-xl border border-green-100 bg-green-50 px-3 py-2 text-xs sm:text-sm text-green-800">
+            @if(session('info'))
+                <div class="flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs sm:text-sm text-blue-800">
                     <span class="mt-0.5">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
+                             stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10" />
-                            <path d="M9 12l2 2 4-4" />
+                            <path d="M12 16v-4" />
+                            <path d="M12 8h.01" />
                         </svg>
                     </span>
-                    <span>{{ session('success') }}</span>
+                    <span>{{ session('info') }}</span>
                 </div>
             @endif
 
-            {{-- Kartu Form Tambah Pasien Nifas --}}
-            <section class="bg-white rounded-2xl border border-[#E9E9E9] p-3 sm:p-5 space-y-4">
-                <div class="border-b border-[#F0F0F0] pb-3 mb-2">
+            {{-- NIK Check Result Alert --}}
+            <div id="nikAlert" class="hidden"></div>
+
+            {{-- Status Risiko Card (muncul setelah cek NIK) --}}
+            <div id="statusRisikoCard" class="hidden"></div>
+
+            {{-- Form Tambah Pasien Nifas --}}
+            <section class="bg-white rounded-2xl border border-[#E9E9E9] p-3 sm:p-4 space-y-4">
+                <div class="border-b border-[#F0F0F0] pb-3">
                     <h2 class="text-base sm:text-lg font-semibold text-[#1D1D1D]">
                         Form Tambah Pasien Nifas
                     </h2>
@@ -82,168 +100,200 @@
                     </p>
                 </div>
 
-                <form id="formTambahPasien" method="POST" action="{{ route('rs.pasien-nifas.store') }}"
-                    class="space-y-5">
+                <form action="{{ route('rs.pasien-nifas.store') }}"
+                      method="POST" id="formPasienNifas" class="space-y-4">
                     @csrf
 
-                    {{-- Nama & NIK --}}
+                    {{-- Baris 1: Nama Pasien & NIK --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-1.5">
-                            <label for="nama_pasien" class="block text-[11px] font-semibold text-[#666666]">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">
                                 Nama Pasien <span class="text-pink-600">*</span>
                             </label>
-                            <input type="text" id="nama_pasien" name="nama_pasien"
-                                class="block w-full rounded-lg border border-[#E5E5E5]
-       bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm
-       focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30
-       @error('nama_pasien') ring-1 ring-red-400 @enderror"
-                                placeholder="Nama lengkap pasien" value="{{ old('nama_pasien') }}" required>
+                            <input
+                                type="text"
+                                name="nama_pasien"
+                                id="nama_pasien"
+                                class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                                placeholder="Nama lengkap pasien"
+                                value="{{ old('nama_pasien') }}"
+                                required>
                             @error('nama_pasien')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div class="space-y-1.5">
-                            <label for="nik" class="block text-[11px] font-semibold text-[#666666]">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">
                                 NIK <span class="text-pink-600">*</span>
                             </label>
-                            <input type="text" id="nik" name="nik" maxlength="16"
-                                class="block w-full rounded-lg border border-[#E5E5E5]
-       bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm
-       focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30
-       @error('nik') ring-1 ring-red-400 @enderror"
-                                placeholder="Masukkan NIK 16 digit" value="{{ old('nik') }}" required>
+                            <div class="flex gap-2">
+                                <input
+                                    type="text"
+                                    name="nik"
+                                    id="nik"
+                                    maxlength="16"
+                                    class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                                    placeholder="Masukkan NIK 16 digit"
+                                    value="{{ old('nik') }}"
+                                    required>
+                                <button
+                                    type="button"
+                                    id="btnCekNik"
+                                    data-url="{{ route('rs.pasien-nifas.cek-nik') }}"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-[#E91E8C] bg-[#E91E8C]/10 px-4 py-2 text-xs sm:text-sm font-semibold text-[#E91E8C] hover:bg-[#E91E8C] hover:text-white transition-colors whitespace-nowrap">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2">
+                                        <circle cx="11" cy="11" r="8" />
+                                        <path d="m21 21-4.35-4.35" />
+                                    </svg>
+                                    <span>Cek</span>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-[#7C7C7C] mt-1">
+                                Klik "Cek" untuk mengisi data otomatis jika pasien sudah terdaftar
+                            </p>
                             @error('nik')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
 
-                    {{-- No Telepon --}}
-                    <div class="space-y-1.5">
-                        <label for="no_telepon" class="block text-[11px] font-semibold text-[#666666]">
+                    {{-- Baris 2: Nomor Telepon --}}
+                    <div>
+                        <label class="block text-[11px] font-semibold text-[#666666] mb-1">
                             Nomor Telepon <span class="text-pink-600">*</span>
                         </label>
-                        <input type="text" id="no_telepon" name="no_telepon"
-                            class="block w-full rounded-lg border border-[#E5E5E5]
-       bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm
-       focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30
-       @error('no_telepon') ring-1 ring-red-400 @enderror"
-                            placeholder="08xxxxxxxxxx" value="{{ old('no_telepon') }}" required>
-                        @error('no_telepon')
-                            <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                        @enderror
-                        <p class="text-[11px] text-[#9B9B9B]">
+                        <input
+                            type="text"
+                            name="no_telepon"
+                            id="no_telepon"
+                            class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                            placeholder="08xxxxxxxxxx"
+                            value="{{ old('no_telepon') }}"
+                            required>
+                        <p class="text-[10px] text-[#7C7C7C] mt-1">
                             Nomor ini akan disimpan pada akun user pasien (users.phone)
                         </p>
-                    </div>
-
-                    {{-- Provinsi & Kota --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-1.5">
-                            <label for="provinsi" class="block text-[11px] font-semibold text-[#666666]">
-                                Provinsi <span class="text-pink-600">*</span>
-                            </label>
-                            <input type="text" id="provinsi" name="provinsi"
-                                class="block w-full rounded-lg border border-[#E5E5E5]
-       bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm
-       focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30
-       @error('provinsi') ring-1 ring-red-400 @enderror"
-                                placeholder="Contoh: Jawa Barat" value="{{ old('provinsi') }}" required>
-                            @error('provinsi')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div class="space-y-1.5">
-                            <label for="kota" class="block text-[11px] font-semibold text-[#666666]">
-                                Kota/Kabupaten <span class="text-pink-600">*</span>
-                            </label>
-                            <input type="text" id="kota" name="kota"
-                                class="block w-full rounded-lg border border-[#E5E5E5]
-       bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm
-       focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30
-       @error('kota') ring-1 ring-red-400 @enderror"
-                                placeholder="Contoh: Kota Depok" value="{{ old('kota') }}" required>
-                            @error('kota')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-
-                    {{-- Kecamatan & Kelurahan --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-1.5">
-                            <label for="kecamatan" class="block text-[11px] font-semibold text-[#666666]">
-                                Kecamatan <span class="text-pink-600">*</span>
-                            </label>
-                            <input type="text" id="kecamatan" name="kecamatan"
-                                class="block w-full rounded-lg border border-[#E5E5E5]
-       bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm
-       focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30
-       @error('kecamatan') ring-1 ring-red-400 @enderror"
-                                placeholder="Contoh: Beji" value="{{ old('kecamatan') }}" required>
-                            @error('kecamatan')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div class="space-y-1.5">
-                            <label for="kelurahan" class="block text-[11px] font-semibold text-[#666666]">
-                                Kelurahan <span class="text-pink-600">*</span>
-                            </label>
-                            <input type="text" id="kelurahan" name="kelurahan"
-                                class="block w-full rounded-lg border border-[#E5E5E5]
-       bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm
-       focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30
-       @error('kelurahan') ring-1 ring-red-400 @enderror"
-                                placeholder="Contoh: Pondok Cina" value="{{ old('kelurahan') }}" required>
-                            @error('kelurahan')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-
-                    {{-- Domisili --}}
-                    <div class="space-y-1.5">
-                        <label for="domisili" class="block text-[11px] font-semibold text-[#666666]">
-                            Domisili <span class="text-pink-600">*</span>
-                        </label>
-                        <textarea id="domisili" name="domisili" rows="4"
-                            class="block w-full rounded-lg border border-[#E5E5E5]
-       bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm
-       focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30
-       @error('domisili') ring-1 ring-red-400 @enderror"
-                            placeholder="Contoh: Jl. Margonda Raya No. xx, RT xx / RW xx" required>{{ old('domisili') }}</textarea>
-                        @error('domisili')
-                            <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
+                        @error('no_telepon')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    {{-- Actions --}}
-                    <div
-                        class="flex flex-col sm:flex-row sm:justify-between gap-3 pt-3 border-t border-[#F0F0F0] mt-2">
-                        <a href="{{ route('rs.pasien-nifas.index') }}"
-                            class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M15 18l-6-6 6-6" />
-                            </svg>
-                            <span>Kembali</span>
-                        </a>
+                    {{-- Baris 3: Provinsi & Kota/Kabupaten --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                                Provinsi <span class="text-pink-600">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="provinsi"
+                                id="provinsi"
+                                class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                                placeholder="Contoh: Jawa Barat"
+                                value="{{ old('provinsi') }}"
+                                required>
+                            @error('provinsi')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                        <button type="submit"
-                            class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-[#C2185B]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 5v14" />
-                                <path d="M5 12h14" />
-                            </svg>
-                            <span>Tambah Data Pasien</span>
-                        </button>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                                Kota/Kabupaten <span class="text-pink-600">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="kota"
+                                id="kota"
+                                class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                                placeholder="Contoh: Kota Depok"
+                                value="{{ old('kota') }}"
+                                required>
+                            @error('kota')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    {{-- Baris 4: Kecamatan & Kelurahan --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                                Kecamatan <span class="text-pink-600">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="kecamatan"
+                                id="kecamatan"
+                                class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                                placeholder="Contoh: Beji"
+                                value="{{ old('kecamatan') }}"
+                                required>
+                            @error('kecamatan')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                                Kelurahan <span class="text-pink-600">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="kelurahan"
+                                id="kelurahan"
+                                class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                                placeholder="Contoh: Pondok Cina"
+                                value="{{ old('kelurahan') }}"
+                                required>
+                            @error('kelurahan')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    {{-- Baris 5: Domisili --}}
+                    <div>
+                        <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                            Domisili <span class="text-pink-600">*</span>
+                        </label>
+                        <textarea
+                            name="domisili"
+                            id="domisili"
+                            rows="3"
+                            class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                            placeholder="Contoh: Jl. Margonda Raya No. xx, RT xx / RW xx"
+                            required>{{ old('domisili') }}</textarea>
+                        @error('domisili')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                 </form>
             </section>
+
+            {{-- Button Actions --}}
+            <div class="flex flex-col sm:flex-row sm:justify-between gap-3">
+                <a href="{{ route('rs.pasien-nifas.index') }}"
+                   class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                    <span>Kembali</span>
+                </a>
+
+                <button type="submit" form="formPasienNifas"
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-[#C2185B]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14" />
+                        <path d="M5 12h14" />
+                    </svg>
+                    <span>Simpan & Lanjutkan</span>
+                </button>
+            </div>
 
             <footer class="text-center text-[11px] text-[#7C7C7C] py-4">
                 © 2025 Dinas Kesehatan Kota Depok — DeLISA
@@ -251,23 +301,6 @@
         </main>
     </div>
 
-    <script>
-        // Validasi NIK hanya angka
-        const nikInput = document.getElementById('nik');
-        if (nikInput) {
-            nikInput.addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9]/g, '');
-            });
-        }
-
-        // Validasi No Telepon hanya angka
-        const telpInput = document.getElementById('no_telepon');
-        if (telpInput) {
-            telpInput.addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9]/g, '');
-            });
-        }
-    </script>
+    @vite(['resources/js/rs/cek-nik.js'])
 </body>
-
 </html>

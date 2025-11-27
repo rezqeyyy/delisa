@@ -23,6 +23,8 @@ class AnakPasien extends Model
         'imd',
         'riwayat_penyakit',
         'keterangan_masalah_lain',
+        'kondisi_ibu',
+        'catatan_kondisi_ibu',
     ];
     
     protected $casts = [

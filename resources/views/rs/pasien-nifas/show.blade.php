@@ -16,6 +16,36 @@
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
 
+            @php
+                $statusType = $pasienNifas->status_type ?? 'normal';
+                $statusDisplay = $pasienNifas->status_display ?? 'Tidak Berisiko';
+                $isBeresiko = $statusType === 'beresiko' || $statusType === 'waspada';
+                
+                $badgeClass = match($statusType) {
+                    'beresiko' => 'bg-red-100 text-red-700 border-red-200',
+                    'waspada' => 'bg-amber-100 text-amber-700 border-amber-200',
+                    default => 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                };
+
+                $anakPertama = $pasienNifas->anakPasien->first();
+
+                $totalAnak = $pasienNifas->anakPasien->count();
+                $anakBBLR = $pasienNifas->anakPasien->filter(fn($a) => $a->berat_lahir_anak < 2.5)->count();
+                $anakPreterm = $pasienNifas->anakPasien
+                    ->filter(function ($a) {
+                        $usia = (int) filter_var($a->usia_kehamilan_saat_lahir, FILTER_SANITIZE_NUMBER_INT);
+                        return $usia < 37;
+                    })
+                    ->count();
+                $anakRiwayat = $pasienNifas->anakPasien
+                    ->filter(fn($a) => $a->riwayat_penyakit && count($a->riwayat_penyakit) > 0)
+                    ->count();
+
+                // Hitung kondisi ibu
+                $kondisiAman = $pasienNifas->anakPasien->where('kondisi_ibu', 'aman')->count();
+                $kondisiPerluTindakLanjut = $pasienNifas->anakPasien->where('kondisi_ibu', 'perlu_tindak_lanjut')->count();
+            @endphp
+
             {{-- HEADER ATAS --}}
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div class="flex items-center gap-3">
@@ -39,15 +69,40 @@
                     </div>
                 </div>
 
-                <a href="{{ route('rs.pasien-nifas.show', $pasienNifas->id) }}"
-                   class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#C2185B]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2">
-                        <path d="M12 5v14" />
-                        <path d="M5 12h14" />
-                    </svg>
-                    <span>Tambah Data Anak</span>
-                </a>
+                <div class="flex items-center gap-2">
+                    {{-- Badge Status Risiko --}}
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border {{ $badgeClass }}">
+                        @if($statusType === 'beresiko')
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                <line x1="12" y1="9" x2="12" y2="13" />
+                                <line x1="12" y1="17" x2="12.01" y2="17" />
+                            </svg>
+                        @elseif($statusType === 'waspada')
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M12 8v4" />
+                                <path d="M12 16h.01" />
+                            </svg>
+                        @else
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 12l2 2 4-4" />
+                                <circle cx="12" cy="12" r="10" />
+                            </svg>
+                        @endif
+                        <span class="text-xs font-semibold">{{ $statusDisplay }}</span>
+                    </div>
+
+                    <a href="{{ route('rs.pasien-nifas.show', $pasienNifas->id) }}"
+                       class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#C2185B]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14" />
+                            <path d="M5 12h14" />
+                        </svg>
+                        <span>Tambah Data Anak</span>
+                    </a>
+                </div>
             </div>
 
             {{-- ALERT SUKSES --}}
@@ -63,27 +118,6 @@
                     <span>{{ session('success') }}</span>
                 </div>
             @endif
-
-            @php
-                $anakPertama = $pasienNifas->anakPasien->first();
-
-                $totalAnak = $pasienNifas->anakPasien->count();
-                $anakBBLR = $pasienNifas->anakPasien->filter(fn($a) => $a->berat_lahir_anak < 2.5)->count();
-                $anakPreterm = $pasienNifas->anakPasien
-                    ->filter(function ($a) {
-                        $usia = (int) filter_var($a->usia_kehamilan_saat_lahir, FILTER_SANITIZE_NUMBER_INT);
-                        return $usia < 37;
-                    })
-                    ->count();
-                $anakRiwayat = $pasienNifas->anakPasien
-                    ->filter(fn($a) => $a->riwayat_penyakit && count($a->riwayat_penyakit) > 0)
-                    ->count();
-
-                $adaResiko = $anakBBLR > 0 || $anakPreterm > 0 || $anakRiwayat > 0;
-                $statusResikoText = $adaResiko
-                    ? 'Terdapat faktor risiko pada sebagian anak, perlu pemantauan ketat dan kunjungan rutin.'
-                    : 'Tidak ada faktor risiko berat yang terdeteksi. Kondisi anak-anak dalam batas normal.';
-            @endphp
 
             {{-- =========================
                  1. INFORMASI PASIEN
@@ -142,6 +176,18 @@
                             </div>
                         </div>
 
+                        {{-- Status Risiko Pre-Eklampsia --}}
+                        <div class="grid grid-cols-2">
+                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                Status Risiko Pre-Eklampsia
+                            </div>
+                            <div class="px-4 sm:px-6 py-3">
+                                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold {{ $badgeClass }}">
+                                    {{ $statusDisplay }}
+                                </span>
+                            </div>
+                        </div>
+
                         {{-- Usia Kehamilan --}}
                         <div class="grid grid-cols-2">
                             <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
@@ -188,7 +234,7 @@
             <section class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
                 <div class="mb-4">
                     <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">
-                        Data Anak
+                        Ringkasan Data Anak
                     </h2>
                 </div>
 
@@ -244,18 +290,220 @@
                             </div>
                         </div>
 
-                        {{-- Status Risiko Anak --}}
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                Status Risiko Anak
+                        {{-- Kondisi Ibu (Hanya untuk Beresiko) --}}
+                        @if($isBeresiko)
+                            <div class="grid grid-cols-2 bg-red-50/50">
+                                <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                    Kondisi Ibu - Aman
+                                </div>
+                                <div class="px-4 sm:px-6 py-3 text-emerald-700 font-semibold">
+                                    {{ $kondisiAman }} anak
+                                </div>
                             </div>
-                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
-                                <p>{{ $statusResikoText }}</p>
+                            <div class="grid grid-cols-2 bg-red-50/50">
+                                <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
+                                    Kondisi Ibu - Perlu Tindak Lanjut
+                                </div>
+                                <div class="px-4 sm:px-6 py-3 text-red-700 font-semibold">
+                                    {{ $kondisiPerluTindakLanjut }} anak
+                                </div>
                             </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
             </section>
+
+            {{-- =========================
+                 3. DETAIL SETIAP ANAK
+               ========================== --}}
+            @if($pasienNifas->anakPasien->count() > 0)
+                <section class="space-y-4">
+                    <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">
+                        Detail Data Anak
+                    </h2>
+
+                    @foreach($pasienNifas->anakPasien as $index => $anak)
+                        @php
+                            $kondisiIbuClass = match($anak->kondisi_ibu) {
+                                'aman' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                                'perlu_tindak_lanjut' => 'bg-red-100 text-red-700 border-red-200',
+                                default => 'bg-gray-100 text-gray-500 border-gray-200'
+                            };
+                            $kondisiIbuLabel = match($anak->kondisi_ibu) {
+                                'aman' => 'Aman',
+                                'perlu_tindak_lanjut' => 'Perlu Tindak Lanjut',
+                                default => 'Belum Diisi'
+                            };
+                        @endphp
+
+                        <div class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-[#E91E8C]/10 flex items-center justify-center">
+                                        <span class="text-sm font-bold text-[#E91E8C]">{{ $anak->anak_ke }}</span>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-semibold text-[#1D1D1D]">
+                                            {{ $anak->nama_anak ?? 'Anak ke-' . $anak->anak_ke }}
+                                        </h3>
+                                        <p class="text-xs text-[#7C7C7C]">
+                                            {{ $anak->jenis_kelamin }} • Lahir {{ \Carbon\Carbon::parse($anak->tanggal_lahir)->translatedFormat('d F Y') }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {{-- Badge Kondisi Ibu (Hanya untuk Beresiko) --}}
+                                @if($isBeresiko && $anak->kondisi_ibu)
+                                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border {{ $kondisiIbuClass }}">
+                                        @if($anak->kondisi_ibu === 'aman')
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M9 12l2 2 4-4" />
+                                                <circle cx="12" cy="12" r="10" />
+                                            </svg>
+                                        @else
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                                <line x1="12" y1="9" x2="12" y2="13" />
+                                                <line x1="12" y1="17" x2="12.01" y2="17" />
+                                            </svg>
+                                        @endif
+                                        <span class="text-xs font-semibold">{{ $kondisiIbuLabel }}</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="bg-white rounded-2xl shadow-sm border border-[#ECECEC] overflow-hidden">
+                                <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
+                                    {{-- Data Anak --}}
+                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4">
+                                        <div>
+                                            <p class="text-[10px] text-[#7C7C7C] mb-1">Berat Lahir</p>
+                                            <p class="font-semibold text-[#1D1D1D]">{{ $anak->berat_lahir_anak }} kg</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] text-[#7C7C7C] mb-1">Panjang Lahir</p>
+                                            <p class="font-semibold text-[#1D1D1D]">{{ $anak->panjang_lahir_anak }} cm</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] text-[#7C7C7C] mb-1">Lingkar Kepala</p>
+                                            <p class="font-semibold text-[#1D1D1D]">{{ $anak->lingkar_kepala_anak }} cm</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] text-[#7C7C7C] mb-1">Usia Kehamilan</p>
+                                            <p class="font-semibold text-[#1D1D1D]">{{ $anak->usia_kehamilan_saat_lahir }} minggu</p>
+                                        </div>
+                                    </div>
+
+                                    {{-- Info Tambahan --}}
+                                    <div class="grid grid-cols-3 gap-4 p-4 bg-[#FAFAFA]">
+                                        <div class="flex items-center gap-2">
+                                            @if($anak->memiliki_buku_kia)
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M9 12l2 2 4-4" />
+                                                    <circle cx="12" cy="12" r="10" />
+                                                </svg>
+                                            @else
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <path d="M15 9l-6 6" />
+                                                    <path d="M9 9l6 6" />
+                                                </svg>
+                                            @endif
+                                            <span class="text-xs">Buku KIA</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            @if($anak->buku_kia_bayi_kecil)
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M9 12l2 2 4-4" />
+                                                    <circle cx="12" cy="12" r="10" />
+                                                </svg>
+                                            @else
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <path d="M15 9l-6 6" />
+                                                    <path d="M9 9l6 6" />
+                                                </svg>
+                                            @endif
+                                            <span class="text-xs">Buku KIA Bayi Kecil</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            @if($anak->imd)
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M9 12l2 2 4-4" />
+                                                    <circle cx="12" cy="12" r="10" />
+                                                </svg>
+                                            @else
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <path d="M15 9l-6 6" />
+                                                    <path d="M9 9l6 6" />
+                                                </svg>
+                                            @endif
+                                            <span class="text-xs">IMD</span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Riwayat Penyakit --}}
+                                    @if($anak->riwayat_penyakit && count($anak->riwayat_penyakit) > 0)
+                                        <div class="p-4">
+                                            <p class="text-[10px] text-[#7C7C7C] mb-2">Riwayat Penyakit/Komplikasi Ibu</p>
+                                            <div class="flex flex-wrap gap-2">
+                                                @foreach($anak->riwayat_penyakit as $penyakit)
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium">
+                                                        {{ $penyakit }}
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- Keterangan Masalah Lain --}}
+                                    @if($anak->keterangan_masalah_lain)
+                                        <div class="p-4 bg-gray-50">
+                                            <p class="text-[10px] text-[#7C7C7C] mb-1">Keterangan Masalah Lain</p>
+                                            <p class="text-xs text-[#1D1D1D]">{{ $anak->keterangan_masalah_lain }}</p>
+                                        </div>
+                                    @endif
+
+                                    {{-- ===================== KONDISI IBU (HANYA UNTUK BERESIKO) ===================== --}}
+                                    @if($isBeresiko && $anak->kondisi_ibu)
+                                        <div class="p-4 {{ $anak->kondisi_ibu === 'perlu_tindak_lanjut' ? 'bg-red-50' : 'bg-emerald-50' }}">
+                                            <div class="flex items-start gap-3">
+                                                @if($anak->kondisi_ibu === 'aman')
+                                                    <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+                                                            <path d="M9 12l2 2 4-4" />
+                                                        </svg>
+                                                    </div>
+                                                @else
+                                                    <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                                            <line x1="12" y1="9" x2="12" y2="13" />
+                                                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                                                        </svg>
+                                                    </div>
+                                                @endif
+                                                <div class="flex-1">
+                                                    <h4 class="text-xs font-semibold {{ $anak->kondisi_ibu === 'perlu_tindak_lanjut' ? 'text-red-800' : 'text-emerald-800' }} mb-1">
+                                                        Kondisi Ibu Saat Melahirkan: {{ $kondisiIbuLabel }}
+                                                    </h4>
+                                                    @if($anak->catatan_kondisi_ibu)
+                                                        <p class="text-xs {{ $anak->kondisi_ibu === 'perlu_tindak_lanjut' ? 'text-red-700' : 'text-emerald-700' }} leading-relaxed">
+                                                            {{ $anak->catatan_kondisi_ibu }}
+                                                        </p>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </section>
+            @endif
 
             {{-- TOMBOL AKSI BAWAH --}}
             <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">

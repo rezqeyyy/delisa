@@ -7,6 +7,7 @@ use App\Models\PasienNifasRs;
 use App\Models\AnakPasien;
 use App\Models\Pasien;
 use App\Models\User;
+use App\Models\Skrining;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
@@ -20,23 +21,69 @@ class PasienNifasController extends Controller
      */
     public function index()
     {
-        $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs'])
+        $pasienNifas = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        // ✅ Transform data untuk menambahkan status_display
+        // Transform data untuk menambahkan status_display berdasarkan skrining
         $pasienNifas->getCollection()->transform(function ($pn) {
-            $raw = strtolower(trim($pn->status_kunjungan ?? ''));
-            $isLate = in_array($raw, ['telat', 'late', 'terlambat']);
-            $isWarn = in_array($raw, ['menengah', 'sedang', 'waspada']);
-            
-            // Set label status yang konsisten
-            $pn->status_display = $isLate ? 'Beresiko' : ($isWarn ? 'Waspada' : 'Tidak Berisiko');
+            // Ambil status risiko dari skrining pasien
+            $statusRisiko = $this->getStatusRisikoFromSkrining($pn->pasien);
+            $pn->status_display = $statusRisiko['label'];
+            $pn->status_type = $statusRisiko['type']; // 'beresiko', 'waspada', 'normal'
             
             return $pn;
         });
 
         return view('rs.pasien-nifas.index', compact('pasienNifas'));
+    }
+
+    /**
+     * Ambil status risiko dari data skrining pasien
+     * 
+     * @param Pasien|null $pasien
+     * @return array
+     */
+    private function getStatusRisikoFromSkrining($pasien)
+    {
+        if (!$pasien) {
+            return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
+        }
+
+        // Ambil skrining terbaru dari pasien
+        $skrining = Skrining::where('pasien_id', $pasien->id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$skrining) {
+            return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
+        }
+
+        // Cek berdasarkan jumlah_resiko_tinggi dan jumlah_resiko_sedang
+        $resikoTinggi = $skrining->jumlah_resiko_tinggi ?? 0;
+        $resikoSedang = $skrining->jumlah_resiko_sedang ?? 0;
+
+        // Cek juga dari kolom kesimpulan atau status_pre_eklampsia
+        $kesimpulan = strtolower(trim($skrining->kesimpulan ?? ''));
+        $statusPE = strtolower(trim($skrining->status_pre_eklampsia ?? ''));
+
+        // Kondisi BERESIKO (Risiko Tinggi)
+        $isHighRisk = $resikoTinggi > 0
+            || in_array($kesimpulan, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi'])
+            || in_array($statusPE, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']);
+
+        // Kondisi WASPADA (Risiko Sedang)
+        $isMediumRisk = $resikoSedang > 0
+            || in_array($kesimpulan, ['waspada', 'menengah', 'sedang', 'risiko sedang'])
+            || in_array($statusPE, ['waspada', 'menengah', 'sedang', 'risiko sedang']);
+
+        if ($isHighRisk) {
+            return ['label' => 'Beresiko', 'type' => 'beresiko'];
+        } elseif ($isMediumRisk) {
+            return ['label' => 'Waspada', 'type' => 'waspada'];
+        } else {
+            return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
+        }
     }
 
     /**
@@ -48,8 +95,97 @@ class PasienNifasController extends Controller
     }
 
     /**
+     * Cek NIK - API endpoint untuk mencari pasien berdasarkan NIK
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function cekNik(Request $request)
+    {
+        $nik = $request->input('nik');
+
+        // Validasi NIK
+        if (!$nik || strlen($nik) !== 16) {
+            return response()->json([
+                'found' => false,
+                'message' => 'NIK tidak valid. Harus 16 digit.'
+            ]);
+        }
+
+        try {
+            // Cari pasien berdasarkan NIK dengan relasi user dan skrining
+            $pasien = Pasien::where('nik', $nik)
+                ->with(['user', 'skrinings' => function($q) {
+                    $q->orderBy('created_at', 'desc')->limit(1);
+                }])
+                ->first();
+
+            if ($pasien) {
+                // Ambil status risiko dari skrining
+                $statusRisiko = $this->getStatusRisikoFromSkrining($pasien);
+
+                // Pasien ditemukan - return data untuk auto-fill
+                return response()->json([
+                    'found' => true,
+                    'message' => 'Pasien ditemukan',
+                    'pasien' => [
+                        'id'            => $pasien->id,
+                        'nik'           => $pasien->nik,
+                        'nama'          => $pasien->user->name ?? '',
+                        'no_telepon'    => $pasien->user->phone ?? '',
+                        'provinsi'      => $pasien->PProvinsi ?? '',
+                        'kota'          => $pasien->PKabupaten ?? '',
+                        'kecamatan'     => $pasien->PKecamatan ?? '',
+                        'kelurahan'     => $pasien->PWilayah ?? '',
+                        'domisili'      => $this->buildDomisili($pasien),
+                        'status_risiko' => $statusRisiko['label'],
+                        'status_type'   => $statusRisiko['type'],
+                        'has_skrining'  => $pasien->skrinings->count() > 0,
+                    ]
+                ]);
+            }
+
+            // Pasien tidak ditemukan
+            return response()->json([
+                'found' => false,
+                'message' => 'Pasien dengan NIK tersebut tidak ditemukan. Silakan isi data baru.'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error Cek NIK: ' . $e->getMessage());
+
+            return response()->json([
+                'found' => false,
+                'message' => 'Terjadi kesalahan saat mencari data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Build domisili string dari data pasien
+     */
+    private function buildDomisili($pasien)
+    {
+        $parts = [];
+
+        if (!empty($pasien->rt)) {
+            $parts[] = 'RT ' . $pasien->rt;
+        }
+        if (!empty($pasien->rw)) {
+            $parts[] = 'RW ' . $pasien->rw;
+        }
+        if (!empty($pasien->PWilayah)) {
+            $parts[] = 'Kel. ' . $pasien->PWilayah;
+        }
+        if (!empty($pasien->PKecamatan)) {
+            $parts[] = 'Kec. ' . $pasien->PKecamatan;
+        }
+
+        return implode(', ', $parts);
+    }
+
+    /**
      * Simpan data pasien nifas baru
-     * (Opsi B: no_telepon disimpan di users.phone, bukan di tabel pasiens)
      */
     public function store(Request $request)
     {
@@ -73,49 +209,36 @@ class PasienNifasController extends Controller
             if ($existingPasien) {
                 $pasien = $existingPasien;
 
-                // === Opsi B ===
-                // Update phone di tabel users (bukan di pasiens)
+                // Update phone di tabel users
                 if ($existingPasien->user) {
                     $existingPasien->user->update([
                         'phone' => $validated['no_telepon'],
                     ]);
-                } else {
-                    // fallback kalau relasi belum diset
-                    User::where('id', $existingPasien->user_id)->update([
-                        'phone' => $validated['no_telepon'],
-                    ]);
                 }
 
-                // Update data wilayah pasien (tanpa no_telepon)
+                // Update data wilayah pasien
                 $existingPasien->update([
                     'PProvinsi'  => $validated['provinsi'],
                     'PKabupaten' => $validated['kota'],
                     'PKecamatan' => $validated['kecamatan'],
                     'PWilayah'   => $validated['kelurahan'],
-                    // domisili belum disimpan karena belum ada kolomnya
                 ]);
             } else {
-                // Kalau pasien belum ada, buat user + pasien baru
-
+                // Buat user + pasien baru
                 $roleId = DB::table('roles')
                     ->where('nama_role', 'pasien')
                     ->first();
 
-                if (! $roleId) {
+                if (!$roleId) {
                     throw new \Exception('Role "pasien" tidak ditemukan di database');
                 }
 
-                // Email auto-generate dari NIK
-                $baseEmail   = $validated['nik'] . '@pasien.delisa.id';
+                $baseEmail = $validated['nik'] . '@pasien.delisa.id';
                 $emailExists = User::where('email', $baseEmail)->exists();
+                $email = $emailExists 
+                    ? $validated['nik'] . '.' . time() . '@pasien.delisa.id' 
+                    : $baseEmail;
 
-                if ($emailExists) {
-                    $email = $validated['nik'] . '.' . time() . '@pasien.delisa.id';
-                } else {
-                    $email = $baseEmail;
-                }
-
-                // === Opsi B: simpan no_telepon di users.phone ===
                 $user = User::create([
                     'name'     => $validated['nama_pasien'],
                     'email'    => $email,
@@ -124,17 +247,14 @@ class PasienNifasController extends Controller
                     'phone'    => $validated['no_telepon'],
                 ]);
 
-                // Data pasien hanya menyimpan identitas & wilayah
-                $pasienData = [
+                $pasien = Pasien::create([
                     'user_id'    => $user->id,
                     'nik'        => $validated['nik'],
                     'PProvinsi'  => $validated['provinsi'],
                     'PKabupaten' => $validated['kota'],
                     'PKecamatan' => $validated['kecamatan'],
                     'PWilayah'   => $validated['kelurahan'],
-                ];
-
-                $pasien = Pasien::create($pasienData);
+                ]);
             }
 
             // Ambil rs_id dari user RS yang sedang login
@@ -154,13 +274,11 @@ class PasienNifasController extends Controller
             }
 
             // Buat entri pasien nifas baru
-            $pasienNifasData = [
+            $pasienNifas = PasienNifasRs::create([
                 'rs_id'               => $rs_id,
                 'pasien_id'           => $pasien->id,
                 'tanggal_mulai_nifas' => now(),
-            ];
-
-            $pasienNifas = PasienNifasRs::create($pasienNifasData);
+            ]);
 
             DB::commit();
 
@@ -183,21 +301,38 @@ class PasienNifasController extends Controller
      */
     private function getRsId()
     {
-        $userId = Auth::id();
+        $user = Auth::user();
 
-        if (! $userId) {
+        if (!$user) {
             throw new \RuntimeException('User belum login.');
         }
 
-        $rsId = DB::table('rumah_sakits')
-            ->where('user_id', $userId)
-            ->value('id');
-
-        if (! $rsId) {
-            throw new \RuntimeException('Data Rumah Sakit untuk user ini belum ditemukan di tabel rumah_sakits.');
+        // Cek berbagai kemungkinan relasi RS
+        if (!empty($user->rumah_sakit_id)) {
+            return $user->rumah_sakit_id;
         }
 
-        return $rsId;
+        if (!empty($user->rs_id)) {
+            return $user->rs_id;
+        }
+
+        if (method_exists($user, 'rumahSakit')) {
+            $rs = $user->rumahSakit()->first();
+            if ($rs) {
+                return $rs->id;
+            }
+        }
+
+        // Fallback: cari dari tabel rumah_sakits
+        $rsId = DB::table('rumah_sakits')
+            ->where('user_id', $user->id)
+            ->value('id');
+
+        if ($rsId) {
+            return $rsId;
+        }
+
+        throw new \RuntimeException('Data Rumah Sakit untuk user ini tidak ditemukan.');
     }
 
     /**
@@ -205,8 +340,13 @@ class PasienNifasController extends Controller
      */
     public function show($id)
     {
-        $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs', 'anakPasien'])
+        $pasienNifas = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs', 'anakPasien'])
             ->findOrFail($id);
+
+        // Ambil status risiko
+        $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
+        $pasienNifas->status_display = $statusRisiko['label'];
+        $pasienNifas->status_type = $statusRisiko['type'];
 
         return view('rs.pasien-nifas.edit', compact('pasienNifas'));
     }
@@ -216,7 +356,14 @@ class PasienNifasController extends Controller
      */
     public function storeAnakPasien(Request $request, $id)
     {
-        $validated = $request->validate([
+        $pasienNifas = PasienNifasRs::with('pasien')->findOrFail($id);
+        
+        // Cek apakah pasien beresiko
+        $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
+        $isBeresiko = in_array($statusRisiko['type'], ['beresiko', 'waspada']);
+
+        // Validasi dasar
+        $rules = [
             'anak_ke'                    => 'required|integer|min:1',
             'tanggal_lahir'              => 'required|date',
             'jenis_kelamin'              => 'required|in:Laki-laki,Perempuan',
@@ -230,11 +377,20 @@ class PasienNifasController extends Controller
             'imd'                        => 'required|boolean',
             'riwayat_penyakit'           => 'nullable|array',
             'keterangan_masalah_lain'    => 'nullable|string',
-        ]);
+        ];
+
+        // Tambahkan validasi kondisi ibu jika pasien beresiko
+        if ($isBeresiko) {
+            $rules['kondisi_ibu'] = 'required|in:aman,perlu_tindak_lanjut';
+            $rules['catatan_kondisi_ibu'] = 'required|string';
+        } else {
+            $rules['kondisi_ibu'] = 'nullable|in:aman,perlu_tindak_lanjut';
+            $rules['catatan_kondisi_ibu'] = 'nullable|string';
+        }
+
+        $validated = $request->validate($rules);
 
         try {
-            $pasienNifas = PasienNifasRs::findOrFail($id);
-
             AnakPasien::create([
                 'nifas_id'                  => $pasienNifas->id,
                 'anak_ke'                   => $validated['anak_ke'],
@@ -250,6 +406,9 @@ class PasienNifasController extends Controller
                 'imd'                       => $validated['imd'],
                 'riwayat_penyakit'          => $validated['riwayat_penyakit'] ?? [],
                 'keterangan_masalah_lain'   => $validated['keterangan_masalah_lain'],
+                // Kolom baru untuk kondisi ibu
+                'kondisi_ibu'               => $validated['kondisi_ibu'] ?? null,
+                'catatan_kondisi_ibu'       => $validated['catatan_kondisi_ibu'] ?? null,
             ]);
 
             return redirect()
@@ -271,9 +430,15 @@ class PasienNifasController extends Controller
     {
         $pasienNifas = PasienNifasRs::with([
             'pasien.user',
+            'pasien.skrinings',
             'rs',
             'anakPasien'
         ])->findOrFail($id);
+
+        // Ambil status risiko
+        $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
+        $pasienNifas->status_display = $statusRisiko['label'];
+        $pasienNifas->status_type = $statusRisiko['type'];
 
         $anakPasien = $pasienNifas->anakPasien->first();
 
@@ -286,9 +451,17 @@ class PasienNifasController extends Controller
     public function downloadPDF()
     {
         try {
-            $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs'])
+            $pasienNifas = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs'])
                 ->orderBy('created_at', 'desc')
                 ->get();
+
+            // Transform untuk menambahkan status
+            $pasienNifas->transform(function ($pn) {
+                $statusRisiko = $this->getStatusRisikoFromSkrining($pn->pasien);
+                $pn->status_display = $statusRisiko['label'];
+                $pn->status_type = $statusRisiko['type'];
+                return $pn;
+            });
 
             $pdf = Pdf::loadView('rs.pasien-nifas.pdf', compact('pasienNifas'));
 

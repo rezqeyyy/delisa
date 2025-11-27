@@ -41,4 +41,22 @@ class Pasien extends Model
     {
         return $this->belongsTo(User::class);
     }
+    
+     // Relasi ke Skrining
+    public function skrinings()
+    {
+        return $this->hasMany(Skrining::class, 'pasien_id');
+    }
+
+    // Skrining terbaru
+    public function latestSkrining()
+    {
+        return $this->hasOne(Skrining::class, 'pasien_id')->latestOfMany();
+    }
+
+    // Relasi ke Pasien Nifas RS
+    public function pasienNifasRs()
+    {
+        return $this->hasMany(PasienNifasRs::class, 'pasien_id');
+    }
 }

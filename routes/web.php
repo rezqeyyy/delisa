@@ -182,15 +182,18 @@ Route::middleware(['auth'])->group(function () {
 
             // Penerimaan Rujukan
             Route::get('/penerimaan-rujukan', [RsRujukanController::class, 'index'])->name('penerimaan-rujukan.index');
+            Route::post('/cek-nik', [PasienNifasController::class, 'cekNik'])->name('cek-nik');
             Route::post('/penerimaan-rujukan/{id}/accept', [RsRujukanController::class, 'accept'])->name('penerimaan-rujukan.accept');
             Route::post('/penerimaan-rujukan/{id}/reject', [RsRujukanController::class, 'reject'])->name('penerimaan-rujukan.reject');
 
             // Pasien Nifas
+            Route::post('/cek-nik', [PasienNifasController::class, 'cekNik'])->name('cek-nik');
             Route::post('/pasien-nifas/{id}/anak', [RsPasienNifasController::class, 'storeAnakPasien'])->name('pasien-nifas.store-anak');
             Route::get('/pasien-nifas', [RsPasienNifasController::class, 'index'])->name('pasien-nifas.index');
             Route::get('/pasien-nifas/create', [RsPasienNifasController::class, 'create'])->name('pasien-nifas.create');
             Route::get('/pasien-nifas/download/pdf', [RsPasienNifasController::class, 'downloadPDF'])->name('pasien-nifas.download-pdf');
             Route::get('/pasien-nifas/{id}', [RsPasienNifasController::class, 'show'])->name('pasien-nifas.show');
+            
 
 
             Route::post('/pasien-nifas/cek-nik', [RsPasienNifasController::class, 'cekNik'])->name('pasien-nifas.cek-nik');
