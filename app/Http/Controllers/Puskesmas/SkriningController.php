@@ -11,6 +11,8 @@ use App\Models\RumahSakit;
 use App\Models\RujukanRs;
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
+
 class SkriningController extends Controller
 {
     use SkriningHelpers;
@@ -354,7 +356,7 @@ class SkriningController extends Controller
         return response()->stream($callback, 200, $headers);
 
     } catch (\Exception $e) {
-        \Log::error('Export Error: ' . $e->getMessage());
+        Log::error('Export Error: ' . $e->getMessage());
         return back()->with('error', 'Terjadi kesalahan saat mengekspor data: ' . $e->getMessage());
     }
 }
