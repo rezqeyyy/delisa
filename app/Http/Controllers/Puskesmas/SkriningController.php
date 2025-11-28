@@ -10,27 +10,43 @@ use App\Models\Skrining;
 use App\Models\RumahSakit;
 use App\Models\RujukanRs;
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
-use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Facades\Excel; // Catatan: Alias ini tidak digunakan dalam fungsi exportExcel, jadi bisa dihapus jika tidak digunakan di tempat lain.
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Controller untuk menangani proses skrining pasien.
+ * Meliputi daftar skrining, detail skrining, pencarian rumah sakit, pengajuan rujukan, dan ekspor data.
+ */
 class SkriningController extends Controller
 {
+    // Catatan: Menggunakan trait SkriningHelpers untuk fungsi-fungsi bantu.
     use SkriningHelpers;
 
+    /**
+     * Menampilkan daftar skrining yang telah lengkap beserta informasi pasien.
+     *
+     * @param Request $request Request HTTP yang masuk.
+     * @return \Illuminate\Contracts\View\View
+     */
     public function index(Request $request)
     {
+        // Catatan: Mendapatkan ID pengguna yang sedang login.
         $userId = optional(Auth::user())->id;
 
+        // Catatan: Mengambil data puskesmas milik pengguna.
         $ps = DB::table('puskesmas')
             ->select('id','kecamatan')
             ->where('user_id', $userId)
             ->first();
 
+        // Catatan: Mengambil ID dan kecamatan puskesmas.
         $puskesmasId = optional($ps)->id;
         $kecamatan   = optional($ps)->kecamatan;
 
+        // Catatan: Mengambil data skrining beserta relasi pasien dan user.
         $skrinings = Skrining::query()
             ->with(['pasien.user'])
+            // Catatan: Menyaring skrining berdasarkan ID puskesmas atau kecamatan pasien.
             ->when($puskesmasId || $kecamatan, function ($q) use ($puskesmasId, $kecamatan) {
                 $q->where(function ($w) use ($puskesmasId, $kecamatan) {
                     if ($puskesmasId) {
@@ -43,19 +59,22 @@ class SkriningController extends Controller
                     }
                 });
             })
-            ->latest()
+            ->latest() // Urutkan dari yang terbaru
             ->get();
 
+        // Catatan: Filter hanya skrining yang sudah lengkap.
         $skrinings = $skrinings->filter(function ($s) {
             return $this->isSkriningCompleteForSkrining($s);
         })->values();
 
+        // Catatan: Transformasi data untuk menambahkan informasi kesimpulan dan kelas badge.
         $skrinings->transform(function ($s) {
             $resikoSedang = (int)($s->jumlah_resiko_sedang ?? 0);
             $resikoTinggi = (int)($s->jumlah_resiko_tinggi ?? 0);
 
             $isComplete = $this->isSkriningCompleteForSkrining($s);
 
+            // Catatan: Menentukan kesimpulan berdasarkan jumlah risiko.
             if (!$isComplete) {
                 $conclusion = 'Skrining belum selesai';
             } elseif ($resikoTinggi >= 1 || $resikoSedang >= 2) {
@@ -64,6 +83,7 @@ class SkriningController extends Controller
                 $conclusion = 'Tidak berisiko preeklampsia';
             }
 
+            // Catatan: Menentukan kelas CSS berdasarkan kesimpulan.
             $key = strtolower(trim($conclusion));
             $badgeClasses = [
                 'berisiko preeklampsia' => 'bg-red-600 text-white',
@@ -76,20 +96,35 @@ class SkriningController extends Controller
             return $s;
         });
 
+        // Catatan: Mengirim data skrining ke view.
         return view('puskesmas.skrining.index', compact('skrinings'));
     }
 
+    /**
+     * Menampilkan detail skrining berdasarkan ID beserta informasi pasien, faktor risiko, dan status rujukan.
+     *
+     * @param Skrining $skrining Model skrining yang diambil berdasarkan ID.
+     * @return \Illuminate\Contracts\View\View
+     */
     public function show(Skrining $skrining)
     {
+        // Catatan: Mendapatkan ID pengguna yang sedang login.
         $userId = optional(Auth::user())->id;
+        // Catatan: Mengambil data puskesmas milik pengguna.
         $ps = DB::table('puskesmas')->select('id','kecamatan')->where('user_id', $userId)->first();
+        // Catatan: Jika data puskesmas tidak ditemukan, kembalikan error 404.
         abort_unless($ps, 404);
 
+        // Catatan: Ambil kecamatan pasien untuk validasi akses.
         $kecPasien = optional($skrining->pasien)->PKecamatan;
+        // Catatan: Cek apakah skrining milik puskesmas ini atau pasien dari kecamatan yang sama.
         $allowed = (($skrining->puskesmas_id === $ps->id) || ($kecPasien === $ps->kecamatan));
+        // Catatan: Jika tidak diizinkan, kembalikan error 403 (Forbidden).
         abort_unless($allowed, 403);
+        // Catatan: Jika skrining belum lengkap, kembalikan error 404.
         abort_unless($this->isSkriningCompleteForSkrining($skrining), 404);
 
+        // Catatan: Hitung jumlah risiko untuk menentukan kesimpulan.
         $resikoSedang = (int)($skrining->jumlah_resiko_sedang ?? 0);
         $resikoTinggi = (int)($skrining->jumlah_resiko_tinggi ?? 0);
         $conclusion = ($resikoTinggi >= 1 || $resikoSedang >= 2) ? 'Berisiko preeklampsia' : 'Tidak berisiko preeklampsia';
@@ -101,21 +136,49 @@ class SkriningController extends Controller
         ];
         $cls = $badgeClasses[$key] ?? 'bg-[#E9E9E9] text-[#1D1D1D]';
 
+        // Catatan: Load relasi-relasi yang dibutuhkan untuk tampilan detail.
         $skrining->load(['pasien.user', 'kondisiKesehatan', 'riwayatKehamilanGpa']);
 
+        // Catatan: Ambil data kondisi kesehatan dan G-P-A (Gravida-Para-Abortus).
         $kk = optional($skrining->kondisiKesehatan);
         $gpa = optional($skrining->riwayatKehamilanGpa);
 
+        // Catatan: Inisialisasi array untuk faktor risiko sedang dan tinggi.
         $sebabSedang = [];
         $sebabTinggi = [];
 
+        // Catatan: Ambil dan hitung usia ibu.
         $umur = null;
-        try { $tgl = optional($skrining->pasien)->tanggal_lahir; if ($tgl) { $umur = \Carbon\Carbon::parse($tgl)->age; } } catch (\Throwable $e) { $umur = null; }
-        if ($umur !== null && $umur >= 35) { $sebabSedang[] = "Usia ibu {$umur} tahun (≥35)"; }
-        if ($gpa && intval($gpa->total_kehamilan) === 1) { $sebabSedang[] = 'Primigravida (G=1)'; }
-        if ($kk && $kk->imt !== null && floatval($kk->imt) > 30) { $sebabSedang[] = 'IMT ' . number_format(floatval($kk->imt), 2) . ' kg/m² (>30)'; }
-        $sistol = $kk->sdp ?? null; $diastol = $kk->dbp ?? null; if (($sistol !== null && $sistol >= 130) || ($diastol !== null && $diastol >= 90)) { $sebabTinggi[] = 'Tekanan darah di atas 130/90 mHg'; }
+        try {
+            $tgl = optional($skrining->pasien)->tanggal_lahir;
+            if ($tgl) {
+                $umur = \Carbon\Carbon::parse($tgl)->age;
+            }
+        } catch (\Throwable $e) {
+            $umur = null;
+        }
+        if ($umur !== null && $umur >= 35) {
+            $sebabSedang[] = "Usia ibu {$umur} tahun (≥35)";
+        }
 
+        // Catatan: Cek apakah primigravida (kehamilan pertama).
+        if ($gpa && intval($gpa->total_kehamilan) === 1) {
+            $sebabSedang[] = 'Primigravida (G=1)';
+        }
+
+        // Catatan: Cek apakah IMT tinggi.
+        if ($kk && $kk->imt !== null && floatval($kk->imt) > 30) {
+            $sebabSedang[] = 'IMT ' . number_format(floatval($kk->imt), 2) . ' kg/m² (>30)';
+        }
+
+        // Catatan: Cek apakah tekanan darah tinggi.
+        $sistol = $kk->sdp ?? null;
+        $diastol = $kk->dbp ?? null;
+        if (($sistol !== null && $sistol >= 130) || ($diastol !== null && $diastol >= 90)) {
+            $sebabTinggi[] = 'Tekanan darah di atas 130/90 mHg';
+        }
+
+        // Catatan: Daftar pertanyaan kuisioner risiko sedang.
         $preModerateNames = [
             'Apakah kehamilan ini adalah kehamilan kedua/lebih tetapi bukan dengan suami pertama (Pernikahan kedua atau lebih)',
             'Apakah kehamilan ini dengan Teknologi Reproduksi Berbantu (Bayi tabung, Obat induksi ovulasi)',
@@ -128,18 +191,30 @@ class SkriningController extends Controller
             $preModerateNames[2] => 'Jarak 10 tahun dari kehamilan sebelumnya',
             $preModerateNames[3] => 'Riwayat keluarga preeklampsia',
         ];
+
+        // Catatan: Ambil ID kuisioner risiko sedang dari database.
         $preKuisModerate = DB::table('kuisioner_pasiens')
             ->where('status_soal','pre_eklampsia')
             ->whereIn('nama_pertanyaan',$preModerateNames)
             ->get(['id','nama_pertanyaan'])
             ->keyBy('nama_pertanyaan');
+
+        // Catatan: Ambil jawaban kuisioner risiko sedang dari database.
         $preJawabModerate = DB::table('jawaban_kuisioners')
             ->where('skrining_id',$skrining->id)
             ->whereIn('kuisioner_id',$preKuisModerate->pluck('id')->all())
             ->get(['kuisioner_id','jawaban'])
             ->keyBy('kuisioner_id');
-        foreach ($preModerateNames as $nm) { $id = optional($preKuisModerate->get($nm))->id; if ($id && (bool) optional($preJawabModerate->get($id))->jawaban) { $sebabSedang[] = $preModerateLabels[$nm] ?? $nm; } }
 
+        // Catatan: Tambahkan faktor risiko sedang berdasarkan jawaban.
+        foreach ($preModerateNames as $nm) {
+            $id = optional($preKuisModerate->get($nm))->id;
+            if ($id && (bool) optional($preJawabModerate->get($id))->jawaban) {
+                $sebabSedang[] = $preModerateLabels[$nm] ?? $nm;
+            }
+        }
+
+        // Catatan: Daftar pertanyaan kuisioner risiko tinggi.
         $preHighNames = [
             'Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya',
             'Apakah kehamilan anda saat ini adalah kehamilan kembar',
@@ -156,18 +231,30 @@ class SkriningController extends Controller
             $preHighNames[4] => 'Penyakit autoimun (SLE)',
             $preHighNames[5] => 'Anti Phospholipid Syndrome',
         ];
+
+        // Catatan: Ambil ID kuisioner risiko tinggi dari database.
         $preKuisHigh = DB::table('kuisioner_pasiens')
             ->where('status_soal','pre_eklampsia')
             ->whereIn('nama_pertanyaan',$preHighNames)
             ->get(['id','nama_pertanyaan'])
             ->keyBy('nama_pertanyaan');
+
+        // Catatan: Ambil jawaban kuisioner risiko tinggi dari database.
         $preJawabHigh = DB::table('jawaban_kuisioners')
             ->where('skrining_id',$skrining->id)
             ->whereIn('kuisioner_id',$preKuisHigh->pluck('id')->all())
             ->get(['kuisioner_id','jawaban'])
             ->keyBy('kuisioner_id');
-        foreach ($preHighNames as $nm) { $id = optional($preKuisHigh->get($nm))->id; if ($id && (bool) optional($preJawabHigh->get($id))->jawaban) { $sebabTinggi[] = $preHighLabels[$nm] ?? $nm; } }
 
+        // Catatan: Tambahkan faktor risiko tinggi berdasarkan jawaban.
+        foreach ($preHighNames as $nm) {
+            $id = optional($preKuisHigh->get($nm))->id;
+            if ($id && (bool) optional($preJawabHigh->get($id))->jawaban) {
+                $sebabTinggi[] = $preHighLabels[$nm] ?? $nm;
+            }
+        }
+
+        // Catatan: Ambil riwayat penyakit pribadi dari jawaban kuisioner individu.
         $riwayatPenyakitPasien = DB::table('jawaban_kuisioners as j')
             ->join('kuisioner_pasiens as k','k.id','=','j.kuisioner_id')
             ->where('j.skrining_id', $skrining->id)
@@ -178,6 +265,7 @@ class SkriningController extends Controller
             ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: '.$r->jawaban_lainnya) : $r->nama_pertanyaan)
             ->values()->all();
 
+        // Catatan: Ambil riwayat penyakit keluarga dari jawaban kuisioner keluarga.
         $riwayatPenyakitKeluarga = DB::table('jawaban_kuisioners as j')
             ->join('kuisioner_pasiens as k','k.id','=','j.kuisioner_id')
             ->where('j.skrining_id', $skrining->id)
@@ -188,22 +276,33 @@ class SkriningController extends Controller
             ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: '.$r->jawaban_lainnya) : $r->nama_pertanyaan)
             ->values()->all();
 
+        // Catatan: Ambil data pasien untuk ditampilkan.
         $nama    = optional(optional($skrining->pasien)->user)->name ?? '-';
         $nik     = optional($skrining->pasien)->nik ?? '-';
         $tanggal = \Carbon\Carbon::parse($skrining->created_at)->format('d/m/Y');
         $alamat  = optional(optional($skrining->pasien)->user)->address ?? '-';
         $telp    = optional(optional($skrining->pasien)->user)->phone ?? '-';
 
+        // Catatan: Cek apakah sudah ada rujukan untuk skrining ini.
         $hasReferral = DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists();
 
+        // Catatan: Kirim data ke view untuk ditampilkan.
         return view('puskesmas.skrining.show', compact(
             'skrining','nama','nik','tanggal','alamat','telp','conclusion','cls','sebabSedang','sebabTinggi','hasReferral','riwayatPenyakitPasien','riwayatPenyakitKeluarga'
         ));
     }
 
+    /**
+     * Endpoint AJAX untuk mencari rumah sakit berdasarkan input pencarian.
+     *
+     * @param Request $request Request yang berisi parameter pencarian 'q'.
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function rsSearch(Request $request)
     {
+        // Catatan: Ambil input pencarian dan bersihkan spasi.
         $q = trim($request->get('q',''));
+        // Catatan: Query untuk mencari rumah sakit.
         $rs = RumahSakit::query()
             ->when($q !== '', function ($qr) use ($q) {
                 $qr->where(function ($w) use ($q) {
@@ -212,10 +311,11 @@ class SkriningController extends Controller
                       ->orWhere('kelurahan', 'like', "%{$q}%");
                 });
             })
-            ->orderBy('nama')
-            ->limit(30)
+            ->orderBy('nama') // Urutkan berdasarkan nama rumah sakit.
+            ->limit(30) // Batasi hasil maksimal 30.
             ->get(['id','nama','kecamatan','kelurahan']);
 
+        // Catatan: Format hasil pencarian untuk ditampilkan di dropdown.
         $list = $rs->map(function ($row) {
             return [
                 'id'        => $row->id,
@@ -225,139 +325,170 @@ class SkriningController extends Controller
             ];
         })->values();
 
+        // Catatan: Kembalikan hasil dalam bentuk JSON.
         return response()->json($list);
     }
 
+    /**
+     * Mengajukan rujukan skrining ke rumah sakit tertentu.
+     *
+     * @param Request $request Request yang berisi ID rumah sakit.
+     * @param Skrining $skrining Model skrining yang akan dirujuk.
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function rujuk(Request $request, Skrining $skrining)
     {
+        // Catatan: Mendapatkan ID pengguna yang sedang login.
         $userId = optional(Auth::user())->id;
+        // Catatan: Mengambil data puskesmas milik pengguna.
         $ps = DB::table('puskesmas')->select('id','kecamatan')->where('user_id', $userId)->first();
+        // Catatan: Jika data puskesmas tidak ditemukan, kembalikan error 404.
         abort_unless($ps, 404);
 
+        // Catatan: Ambil kecamatan pasien untuk validasi akses.
         $kecPasien = optional($skrining->pasien)->PKecamatan;
+        // Catatan: Cek apakah skrining milik puskesmas ini atau pasien dari kecamatan yang sama.
         $allowed = (($skrining->puskesmas_id === $ps->id) || ($kecPasien === $ps->kecamatan));
+        // Catatan: Jika tidak diizinkan, kembalikan error 403 (Forbidden).
         abort_unless($allowed, 403);
 
-        // Pastikan skrining lengkap
+        // Catatan: Pastikan skrining sudah lengkap sebelum dirujuk.
         abort_unless($this->isSkriningCompleteForSkrining($skrining), 404);
 
+        // Catatan: Validasi input ID rumah sakit.
         $validated = $request->validate([
             'rs_id' => 'required|exists:rumah_sakits,id',
         ]);
 
-        // Cegah duplikasi rujukan untuk skrining yang sama
+        // Catatan: Cegah duplikasi rujukan untuk skrining yang sama.
         $already = RujukanRs::where('skrining_id', $skrining->id)->exists();
         if ($already) {
             return redirect()->route('puskesmas.skrining.show', $skrining->id)
                 ->with('status', 'Rujukan sudah diajukan untuk skrining ini.');
         }
 
+        // Catatan: Buat rujukan baru di database.
         RujukanRs::create([
             'pasien_id'   => $skrining->pasien_id,
             'rs_id'       => $validated['rs_id'],
             'skrining_id' => $skrining->id,
-            'is_rujuk'    => true,
-            'done_status' => false,
+            'is_rujuk'    => true, // Menandakan bahwa ini adalah rujukan aktif.
+            'done_status' => false, // Belum selesai.
         ]);
 
+        // Catatan: Redirect kembali ke halaman detail skrining dengan pesan sukses.
         return redirect()->route('puskesmas.skrining.show', $skrining->id)
             ->with('status', 'Permintaan rujukan dikirim ke rumah sakit.');
     }
 
     /**
-     * Export data skrining ke Excel
+     * Export data skrining ke format CSV.
+     *
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
     public function exportExcel()
-{
-    try {
-        $userId = optional(Auth::user())->id;
+    {
+        try {
+            // Catatan: Mendapatkan ID pengguna yang sedang login.
+            $userId = optional(Auth::user())->id;
 
-        $ps = DB::table('puskesmas')
-            ->select('id','kecamatan')
-            ->where('user_id', $userId)
-            ->first();
+            // Catatan: Mengambil data puskesmas milik pengguna.
+            $ps = DB::table('puskesmas')
+                ->select('id','kecamatan')
+                ->where('user_id', $userId)
+                ->first();
 
-        $puskesmasId = optional($ps)->id;
-        $kecamatan   = optional($ps)->kecamatan;
+            // Catatan: Mengambil ID dan kecamatan puskesmas.
+            $puskesmasId = optional($ps)->id;
+            $kecamatan   = optional($ps)->kecamatan;
 
-        // Ambil data skrining
-        $skrinings = Skrining::query()
-            ->with(['pasien.user'])
-            ->when($puskesmasId || $kecamatan, function ($q) use ($puskesmasId, $kecamatan) {
-                $q->where(function ($w) use ($puskesmasId, $kecamatan) {
-                    if ($puskesmasId) {
-                        $w->orWhere('puskesmas_id', $puskesmasId);
-                    }
-                    if ($kecamatan) {
-                        $w->orWhereHas('pasien', function ($ww) use ($kecamatan) {
-                            $ww->where('PKecamatan', $kecamatan);
-                        });
-                    }
-                });
-            })
-            ->latest()
-            ->get();
+            // Catatan: Ambil data skrining beserta relasi pasien dan user.
+            $skrinings = Skrining::query()
+                ->with(['pasien.user'])
+                // Catatan: Menyaring skrining berdasarkan ID puskesmas atau kecamatan pasien.
+                ->when($puskesmasId || $kecamatan, function ($q) use ($puskesmasId, $kecamatan) {
+                    $q->where(function ($w) use ($puskesmasId, $kecamatan) {
+                        if ($puskesmasId) {
+                            $w->orWhere('puskesmas_id', $puskesmasId);
+                        }
+                        if ($kecamatan) {
+                            $w->orWhereHas('pasien', function ($ww) use ($kecamatan) {
+                                $ww->where('PKecamatan', $kecamatan);
+                            });
+                        }
+                    });
+                })
+                ->latest() // Urutkan dari yang terbaru
+                ->get();
 
-        // Filter hanya skrining yang lengkap
-        $skrinings = $skrinings->filter(function ($s) {
-            return $this->isSkriningCompleteForSkrining($s);
-        })->values();
+            // Catatan: Filter hanya skrining yang sudah lengkap.
+            $skrinings = $skrinings->filter(function ($s) {
+                return $this->isSkriningCompleteForSkrining($s);
+            })->values();
 
-        $fileName = 'data-skrining-ibu-hamil-' . date('Y-m-d') . '.csv';
+            // Catatan: Nama file CSV yang akan diunduh.
+            $fileName = 'data-skrining-ibu-hamil-' . date('Y-m-d') . '.csv';
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=utf-8',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0'
-        ];
+            // Catatan: Header HTTP untuk memicu download file.
+            $headers = [
+                'Content-Type' => 'text/csv; charset=utf-8',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+                'Pragma' => 'no-cache',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires' => '0'
+            ];
 
-        $callback = function() use ($skrinings) {
-            $file = fopen('php://output', 'w');
-            
-            // Tambahkan BOM untuk UTF-8
-            fwrite($file, "\xEF\xBB\xBF");
-            
-            // Header CSV
-            fputcsv($file, ['No.', 'Nama Pasien', 'NIK', 'Tanggal Pengisian', 'Alamat', 'No Telp', 'Kesimpulan']);
-
-            // Data CSV
-            foreach ($skrinings as $index => $skrining) {
-                $nama = optional(optional($skrining->pasien)->user)->name ?? '-';
-                $nik = optional($skrining->pasien)->nik ?? '-';
-                $tanggal = $skrining->created_at ? $skrining->created_at->format('d/m/Y') : '-';
-                $alamat = optional(optional($skrining->pasien)->user)->address ?? '-';
-                $telp = optional(optional($skrining->pasien)->user)->phone ?? '-';
+            // Catatan: Callback untuk menulis data ke output stream.
+            $callback = function() use ($skrinings) {
+                $file = fopen('php://output', 'w');
                 
-                $resikoSedang = (int)($skrining->jumlah_resiko_sedang ?? 0);
-                $resikoTinggi = (int)($skrining->jumlah_resiko_tinggi ?? 0);
+                // Catatan: Tambahkan BOM (Byte Order Mark) untuk UTF-8 agar tampilan di Excel benar.
+                fwrite($file, "\xEF\xBB\xBF");
+                
+                // Catatan: Header CSV.
+                fputcsv($file, ['No.', 'Nama Pasien', 'NIK', 'Tanggal Pengisian', 'Alamat', 'No Telp', 'Kesimpulan']);
 
-                if ($resikoTinggi >= 1 || $resikoSedang >= 2) {
-                    $kesimpulan = 'Berisiko preeklampsia';
-                } else {
-                    $kesimpulan = 'Tidak berisiko preeklampsia';
+                // Catatan: Data CSV.
+                foreach ($skrinings as $index => $skrining) {
+                    $nama = optional(optional($skrining->pasien)->user)->name ?? '-';
+                    $nik = optional($skrining->pasien)->nik ?? '-';
+                    $tanggal = $skrining->created_at ? $skrining->created_at->format('d/m/Y') : '-';
+                    $alamat = optional(optional($skrining->pasien)->user)->address ?? '-';
+                    $telp = optional(optional($skrining->pasien)->user)->phone ?? '-';
+                    
+                    $resikoSedang = (int)($skrining->jumlah_resiko_sedang ?? 0);
+                    $resikoTinggi = (int)($skrining->jumlah_resiko_tinggi ?? 0);
+
+                    // Catatan: Menentukan kesimpulan berdasarkan jumlah risiko.
+                    if ($resikoTinggi >= 1 || $resikoSedang >= 2) {
+                        $kesimpulan = 'Berisiko preeklampsia';
+                    } else {
+                        $kesimpulan = 'Tidak berisiko preeklampsia';
+                    }
+
+                    // Catatan: Tulis baris data ke file CSV.
+                    fputcsv($file, [
+                        $index + 1,
+                        $nama,
+                        $nik,
+                        $tanggal,
+                        $alamat,
+                        $telp,
+                        $kesimpulan
+                    ]);
                 }
+                
+                fclose($file);
+            };
 
-                fputcsv($file, [
-                    $index + 1,
-                    $nama,
-                    $nik,
-                    $tanggal,
-                    $alamat,
-                    $telp,
-                    $kesimpulan
-                ]);
-            }
-            
-            fclose($file);
-        };
+            // Catatan: Kembalikan response stream untuk download file.
+            return response()->stream($callback, 200, $headers);
 
-        return response()->stream($callback, 200, $headers);
-
-    } catch (\Exception $e) {
-        Log::error('Export Error: ' . $e->getMessage());
-        return back()->with('error', 'Terjadi kesalahan saat mengekspor data: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            // Catatan: Log error jika terjadi exception.
+            Log::error('Export Error: ' . $e->getMessage());
+            // Catatan: Kembali ke halaman sebelumnya dengan pesan error.
+            return back()->with('error', 'Terjadi kesalahan saat mengekspor data: ' . $e->getMessage());
+        }
     }
-}
 }
