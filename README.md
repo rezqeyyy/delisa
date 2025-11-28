@@ -12,6 +12,7 @@
 ### 🎨 Frontend
 ![Vite](https://img.shields.io/badge/Vite-Bundler-646CFF?style=flat-square&logo=vite&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)
+![Alpine.js](https://img.shields.io/badge/Alpine.js-3.x-77C1D2?style=flat-square&logo=alpinelinux&logoColor=white)
 
 
 ### 🛠 Backend
