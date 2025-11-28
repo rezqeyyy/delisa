@@ -10,8 +10,9 @@ use App\Models\Skrining;
 use App\Models\RumahSakit;
 use App\Models\RujukanRs;
 use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
-use Maatwebsite\Excel\Facades\Excel; // Catatan: Alias ini tidak digunakan dalam fungsi exportExcel, jadi bisa dihapus jika tidak digunakan di tempat lain.
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * Controller untuk menangani proses skrining pasien.
@@ -489,6 +490,99 @@ class SkriningController extends Controller
             Log::error('Export Error: ' . $e->getMessage());
             // Catatan: Kembali ke halaman sebelumnya dengan pesan error.
             return back()->with('error', 'Terjadi kesalahan saat mengekspor data: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export data skrining ke format PDF.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function exportPDF()
+    {
+        try {
+            // Catatan: Mendapatkan ID pengguna yang sedang login.
+            $userId = optional(Auth::user())->id;
+
+            // Catatan: Mengambil data puskesmas milik pengguna.
+            $ps = DB::table('puskesmas')
+                ->select('id','kecamatan')
+                ->where('user_id', $userId)
+                ->first();
+
+            // Catatan: Mengambil ID dan kecamatan puskesmas.
+            $puskesmasId = optional($ps)->id;
+            $kecamatan   = optional($ps)->kecamatan;
+
+            // Catatan: Ambil data skrining beserta relasi pasien dan user.
+            $skrinings = Skrining::query()
+                ->with(['pasien.user'])
+                // Catatan: Menyaring skrining berdasarkan ID puskesmas atau kecamatan pasien.
+                ->when($puskesmasId || $kecamatan, function ($q) use ($puskesmasId, $kecamatan) {
+                    $q->where(function ($w) use ($puskesmasId, $kecamatan) {
+                        if ($puskesmasId) {
+                            $w->orWhere('puskesmas_id', $puskesmasId);
+                        }
+                        if ($kecamatan) {
+                            $w->orWhereHas('pasien', function ($ww) use ($kecamatan) {
+                                $ww->where('PKecamatan', $kecamatan);
+                            });
+                        }
+                    });
+                })
+                ->latest()
+                ->get();
+
+            // Catatan: Filter hanya skrining yang sudah lengkap.
+            $skrinings = $skrinings->filter(function ($s) {
+                return $this->isSkriningCompleteForSkrining($s);
+            })->values();
+
+            // Catatan: Transformasi data untuk menambahkan informasi kesimpulan.
+            $skrinings->transform(function ($s) {
+                $resikoSedang = (int)($s->jumlah_resiko_sedang ?? 0);
+                $resikoTinggi = (int)($s->jumlah_resiko_tinggi ?? 0);
+
+                $isComplete = $this->isSkriningCompleteForSkrining($s);
+
+                // Catatan: Menentukan kesimpulan berdasarkan jumlah risiko.
+                if (!$isComplete) {
+                    $s->kesimpulan = 'Skrining belum selesai';
+                    $s->badge_class = 'skrining-belum-selesai';
+                } elseif ($resikoTinggi >= 1 || $resikoSedang >= 2) {
+                    $s->kesimpulan = 'Berisiko preeklampsia';
+                    $s->badge_class = 'berisiko';
+                } else {
+                    $s->kesimpulan = 'Tidak berisiko preeklampsia';
+                    $s->badge_class = 'tidak-berisiko';
+                }
+
+                return $s;
+            });
+
+            // Debug: Cek apakah ada data
+            if ($skrinings->isEmpty()) {
+                return back()->with('error', 'Tidak ada data skrining yang dapat diekspor.');
+            }
+
+            // Catatan: Generate PDF
+            $pdf = Pdf::loadView('puskesmas.skrining.export-pdf', compact('skrinings'))
+                     ->setPaper('a4', 'landscape')
+                     ->setOption('defaultFont', 'Arial')
+                     ->setOption('isRemoteEnabled', true);
+
+            $fileName = 'data-skrining-ibu-hamil-' . date('Y-m-d') . '.pdf';
+
+            // Catatan: Download PDF
+            return $pdf->download($fileName);
+
+        } catch (\Exception $e) {
+            // Catatan: Log error jika terjadi exception.
+            Log::error('PDF Export Error: ' . $e->getMessage());
+            Log::error('PDF Export Trace: ' . $e->getTraceAsString());
+            
+            // Catatan: Kembali ke halaman sebelumnya dengan pesan error.
+            return back()->with('error', 'Terjadi kesalahan saat mengekspor PDF: ' . $e->getMessage());
         }
     }
 }

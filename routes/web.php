@@ -128,6 +128,8 @@ Route::middleware('role:puskesmas')
         // Tambahkan setelah route skrining
     Route::get('/skrining/export/excel', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'exportExcel'])->name('export.excel');
     Route::get('/skrining/export/pdf', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'exportPdf'])->name('export.pdf');
+    Route::get('/puskesmas/skrining/export-pdf', [SkriningController::class, 'exportPDF'])
+    ->name('puskesmas.export.pdf');
 });
 
     // ================== BIDAN ==================
