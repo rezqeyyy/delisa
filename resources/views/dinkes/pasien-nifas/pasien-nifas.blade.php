@@ -10,11 +10,33 @@
 </head>
 
 <body class="bg-[#F5F5F5] font-[Poppins] text-[#000000CC]">
+    @php
+        // Label dinamis untuk opsi sort "Prioritas" (saat halaman pertama kali dimuat)
+        $prioritySortLabel = 'Prioritas (Hitam → Hijau)';
+
+        switch ($priority ?? '') {
+            case 'hitam':
+                $prioritySortLabel = 'Prioritas Hitam — Terlambat';
+                break;
+            case 'merah':
+                $prioritySortLabel = 'Prioritas Merah — Sisa 1–3 hari';
+                break;
+            case 'kuning':
+                $prioritySortLabel = 'Prioritas Kuning — Sisa 4–6 hari';
+                break;
+            case 'hijau':
+                $prioritySortLabel = 'Prioritas Hijau — Sisa ≥ 7 hari';
+                break;
+            // kalau kosong / tidak dikenal → pakai default
+        }
+    @endphp
+
     <div class="flex flex-col min-h-screen">
         <x-dinkes.sidebar />
 
+        {{-- max-w-6xl dihapus supaya konten (tabel) bisa lebar penuh --}}
         <main class="ml-0 md:ml-[260px] flex-1 min-h-screen flex flex-col p-4 sm:p-6 lg:p-8 space-y-6">
-            <div class="flex-1">
+            <div class="flex-1 w-full">
                 {{-- HEADER --}}
                 <header class="w-full space-y-3 sm:space-y-4">
                     <div>
@@ -26,32 +48,35 @@
                         </p>
                     </div>
 
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
 
                         {{-- FORM SEARCH (kiri) --}}
-                        <form action="{{ route('dinkes.pasien-nifas') }}" method="GET" class="w-full md:w-auto">
-                            <div class="relative w-full lg:w-[320px]">
+                        <form action="{{ route('dinkes.pasien-nifas') }}" method="GET"
+                            class="w-full md:w-auto md:max-w-xs">
+                            <div class="relative w-full">
                                 <input type="text" name="q" value="{{ $q ?? '' }}"
                                     placeholder="Cari nama atau NIK..."
                                     class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm
-                           focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+                                       focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40 bg-white">
                                 <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}"
                                     class="absolute left-3 top-2.5 w-4 h-4 opacity-60" alt="search">
                             </div>
                         </form>
 
-                        {{-- FILTER + UNDUH DATA (pojok kanan atas) --}}
-                        <div class="flex items-center justify-end gap-2 md:w-auto" x-data="{ openFilter: false }">
+                        {{-- FILTER + UNDUH DATA (kanan) --}}
+                        <div class="flex flex-wrap items-center justify-end gap-2 md:gap-3 w-full md:w-auto"
+                            x-data="{ openFilter: false }">
 
-                            {{-- FORM FILTER (hanya untuk puskesmas + sort) --}}
-                            <form action="{{ route('dinkes.pasien-nifas') }}" method="GET" class="relative">
+                            {{-- FORM FILTER --}}
+                            <form action="{{ route('dinkes.pasien-nifas') }}" method="GET"
+                                class="relative w-full sm:w-auto">
                                 {{-- Pertahankan q saat apply filter --}}
                                 <input type="hidden" name="q" value="{{ $q ?? '' }}">
 
                                 {{-- Tombol FILTER --}}
                                 <button type="button" @click="openFilter = !openFilter"
-                                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#B61E7B]
-                               px-4 py-2 text-sm font-semibold text-white hover:bg-[#B9257F] transition">
+                                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B61E7B]
+                                        px-4 py-2 text-sm font-semibold text-white hover:bg-[#B9257F] transition">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4"
                                         fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M3 6h18M6 12h12M10 18h4" />
@@ -60,9 +85,9 @@
                                 </button>
 
                                 {{-- Dropdown Filter --}}
-                                <div x-show="openFilter" x-transition @click.outside="openFilter = false"
-                                    class="origin-top-right absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-2xl
-                            shadow-lg border border-[#E5E5E5] z-20">
+                                <div x-show="openFilter" x-transition @click.outside="openFilter = false" x-cloak
+                                    class="origin-top-right absolute right-0 mt-2 w-full sm:w-80 bg-white rounded-2xl
+                                     shadow-lg border border-[#E5E5E5] z-20">
                                     <div class="p-4 space-y-3">
 
                                         {{-- Filter Puskesmas --}}
@@ -70,8 +95,8 @@
                                             <p class="text-xs font-semibold text-[#6B7280]">Filter Puskesmas</p>
                                             <select name="puskesmas_id"
                                                 class="w-full px-3 py-2 rounded-xl border border-[#D9D9D9]
-                                           text-xs sm:text-sm focus:outline-none focus:ring-1
-                                           focus:ring-[#B9257F]/40 bg-white">
+                                                    text-xs sm:text-sm focus:outline-none focus:ring-1
+                                                    focus:ring-[#B9257F]/40 bg-white">
                                                 <option value="">Semua Puskesmas</option>
                                                 @foreach ($puskesmasList as $pk)
                                                     <option value="{{ $pk->id }}" @selected((string) ($selectedPuskesmasId ?? '') === (string) $pk->id)>
@@ -84,12 +109,13 @@
                                         {{-- Filter Sort --}}
                                         <div class="space-y-1">
                                             <p class="text-xs font-semibold text-[#6B7280]">Urutkan</p>
-                                            <select name="sort"
+                                            <select name="sort" id="sort-select"
                                                 class="w-full px-3 py-2 rounded-xl border border-[#D9D9D9]
-                                           text-xs sm:text-sm focus:outline-none focus:ring-1
-                                           focus:ring-[#B9257F]/40 bg-white">
-                                                <option value="prioritas" @selected(($sort ?? 'prioritas') === 'prioritas')>
-                                                    Prioritas (Hitam → Hijau)
+                                                    text-xs sm:text-sm focus:outline-none focus:ring-1
+                                                    focus:ring-[#B9257F]/40 bg-white">
+                                                <option id="sort-priority-option" value="prioritas"
+                                                    @selected(($sort ?? 'prioritas') === 'prioritas')>
+                                                    {{ $prioritySortLabel }}
                                                 </option>
                                                 <option value="nama_asc" @selected(($sort ?? '') === 'nama_asc')>
                                                     Nama A → Z
@@ -106,17 +132,43 @@
                                             </select>
                                         </div>
 
+                                        {{-- Filter Prioritas (warna badge) --}}
+                                        <div class="space-y-1">
+                                            <p class="text-xs font-semibold text-[#6B7280]">Warna Prioritas Tertentu</p>
+                                            <select name="priority" id="priority-filter"
+                                                class="w-full px-3 py-2 rounded-xl border border-[#D9D9D9]
+                                                    text-xs sm:text-sm focus:outline-none focus:ring-1
+                                                    focus:ring-[#B9257F]/40 bg-white">
+                                                <option value="" @selected(empty($priority))>
+                                                    Semua Warna Prioritas
+                                                </option>
+                                                <option value="hitam" @selected(($priority ?? '') === 'hitam')>
+                                                    Hitam — Terlambat
+                                                </option>
+                                                <option value="merah" @selected(($priority ?? '') === 'merah')>
+                                                    Merah — Sisa 1–3 hari
+                                                </option>
+                                                <option value="kuning" @selected(($priority ?? '') === 'kuning')>
+                                                    Kuning — Sisa 4–6 hari
+                                                </option>
+                                                <option value="hijau" @selected(($priority ?? '') === 'hijau')>
+                                                    Hijau — Sisa ≥ 7 hari
+                                                </option>
+                                            </select>
+                                        </div>
+
                                         {{-- Tombol reset & submit --}}
-                                        <div class="flex items-center justify-between gap-2 pt-2">
+                                        <div
+                                            class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2">
                                             {{-- Reset filter, tapi q tetap dipertahankan --}}
                                             <a href="{{ route('dinkes.pasien-nifas', ['q' => $q ?: null]) }}"
-                                                class="px-3 py-2 rounded-full border border-[#D1D5DB]
-                                      text-xs sm:text-sm text-[#4B5563] hover:bg-[#F3F4F6] transition">
+                                                class="w-full sm:w-auto px-3 py-2 rounded-full border border-[#D1D5DB]
+                                               text-xs sm:text-sm text-[#4B5563] hover:bg-[#F3F4F6] transition text-center">
                                                 Reset
                                             </a>
                                             <button type="submit"
-                                                class="px-4 py-2 rounded-full bg-[#B9257F] text-white
-                                           text-xs sm:text-sm font-semibold hover:bg-[#a31f70] transition">
+                                                class="w-full sm:w-auto px-4 py-2 rounded-full bg-[#B9257F] text-white
+                                                    text-xs sm:text-sm font-semibold hover:bg-[#a31f70] transition">
                                                 Terapkan
                                             </button>
                                         </div>
@@ -124,15 +176,15 @@
                                 </div>
                             </form>
 
-                            {{-- TOMBOL EXPORT — MENEMPEL DI KANAN FILTER --}}
+                            {{-- TOMBOL EXPORT --}}
                             <a href="{{ route('dinkes.pasien-nifas.export', [
                                 'q' => $q ?? null,
                                 'puskesmas_id' => $selectedPuskesmasId ?? null,
                                 'sort' => $sort ?? null,
+                                'priority' => $priority ?? null,
                             ]) }}"
-                                class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#B61E7B]
-                      px-4 py-2 text-sm font-semibold text-white hover:bg-[#B9257F] transition
-                      ">
+                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B61E7B]
+                               px-4 py-2 text-sm font-semibold text-white hover:bg-[#B9257F] transition">
                                 <img src="{{ asset('icons/Iconly/Regular/Outline/Paper Download.svg') }}"
                                     class="w-5 h-5" alt="Download">
                                 <span>Unduh Data</span>
@@ -141,10 +193,8 @@
                     </div>
                 </header>
 
-
-
                 {{-- LIST MODE KARTU (MOBILE) --}}
-                <section class="md:hidden mt-2 space-y-3">
+                <section class="md:hidden mt-3 space-y-3">
                     @forelse ($rows as $idx => $row)
                         <article class="rounded-2xl bg-white shadow p-4">
                             <div class="flex items-start justify-between gap-3">
@@ -206,9 +256,9 @@
                 </section>
 
                 {{-- TABEL (DESKTOP / TABLET) --}}
-                <section class="hidden md:block mt-2 rounded-2xl overflow-hidden border border-[#EDEDED] bg-white">
+                <section class="hidden md:block mt-3 rounded-2xl overflow-hidden border border-[#EDEDED] bg-white">
                     <div class="overflow-x-auto">
-                        <table class="min-w-[900px] w-full text-sm text-left border-collapse">
+                        <table class="w-full text-sm text-left border-collapse">
                             <thead class="bg-[#F5F5F5] text-[#7C7C7C] border-b border-[#D9D9D9]">
                                 <tr>
                                     <th class="pl-6 pr-4 py-3 font-semibold">No</th>
@@ -231,8 +281,7 @@
 
                                         {{-- Nama (link ke detail) --}}
                                         <td class="px-4 py-3">
-                                            <a href="{{ route('dinkes.pasien-nifas.show', $row->nifas_id) }}"
-                                                class="font-medium text-[#000000] hover:underline">
+                                            <a href="{{ route('dinkes.pasien-nifas.show', $row->nifas_id) }}">
                                                 {{ $row->name }}
                                             </a>
                                         </td>

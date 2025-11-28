@@ -41,6 +41,8 @@ class PasienNifasController extends Controller
         $q           = trim($request->get('q', ''));
         $puskesmasId = $request->get('puskesmas_id');
         $sort        = $request->get('sort', 'prioritas');
+        $priority    = $request->get('priority'); // 'hitam','merah','kuning','hijau','tanpa_jadwal' atau null
+
 
         // Query dasar: pasien nifas + pasien + user + puskesmas (dari skrining terbaru)
         $baseQuery = $this->buildPasienNifasQuery(
@@ -93,6 +95,8 @@ class PasienNifasController extends Controller
                 $row->priority_level   = 5;                    // prioritas paling rendah
                 return $row;
             }
+
+            
 
             $maxKe = optional($kfDone->get($row->nifas_id))->max_ke ?? 0;
             $nextKe = min(4, $maxKe + 1); // Maksimal KF4
@@ -174,6 +178,25 @@ class PasienNifasController extends Controller
 
             return $row;
         });
+
+         // Filter berdasarkan warna prioritas (opsional)
+        if (!empty($priority)) {
+            $priorityMap = [
+                'hitam'       => 1, // terlambat
+                'merah'       => 2, // sisa 1–3 hari
+                'kuning'      => 3, // sisa 4–6 hari (sesuai configmu)
+                'hijau'       => 4, // sisa ≥ 7 hari
+                'tanpa_jadwal'=> 5, // jadwal KF belum tersedia / tidak ada KF
+            ];
+
+            if (isset($priorityMap[$priority])) {
+                $targetLevel = $priorityMap[$priority];
+
+                $allRows = $allRows->filter(function ($row) use ($targetLevel) {
+                    return ($row->priority_level ?? null) === $targetLevel;
+                });
+            }
+        }
 
         // Sorting sesuai pilihan
         switch ($sort) {
@@ -325,6 +348,8 @@ class PasienNifasController extends Controller
         $q           = trim($request->get('q', ''));
         $puskesmasId = $request->get('puskesmas_id');
         $sort        = $request->get('sort', 'prioritas');
+        $priority    = $request->get('priority');
+
 
         // 1) Ambil data dasar pasien nifas (sama seperti index)
         $baseQuery = $this->buildPasienNifasQuery(
@@ -424,6 +449,25 @@ class PasienNifasController extends Controller
 
             return $row;
         });
+
+        // Filter berdasarkan warna prioritas (opsional)
+        if (!empty($priority)) {
+            $priorityMap = [
+                'hitam'       => 1,
+                'merah'       => 2,
+                'kuning'      => 3,
+                'hijau'       => 4,
+                'tanpa_jadwal'=> 5,
+            ];
+
+            if (isset($priorityMap[$priority])) {
+                $targetLevel = $priorityMap[$priority];
+
+                $rows = $rows->filter(function ($row) use ($targetLevel) {
+                    return ($row->priority_level ?? null) === $targetLevel;
+                });
+            }
+        }
 
         // 3) Sorting sama seperti index()
         switch ($sort) {
