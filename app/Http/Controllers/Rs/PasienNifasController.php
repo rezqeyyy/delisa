@@ -20,23 +20,23 @@ class PasienNifasController extends Controller
     /**
      * Display list of pasien nifas
      */
-    public function index()
+    public function index() // Menampilkan daftar pasien nifas dengan pagination, termasuk status risiko dari skrining
     {
-        $pasienNifas = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $pasienNifas = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs']) // Eager load relasi pasien, user, skrining, dan RS
+            ->orderBy('created_at', 'desc') // Urutkan berdasarkan terbaru
+            ->paginate(10); // Batasi 10 data per halaman
 
         // Transform data untuk menambahkan status_display berdasarkan skrining
         $pasienNifas->getCollection()->transform(function ($pn) {
             // Ambil status risiko dari skrining pasien
-            $statusRisiko = $this->getStatusRisikoFromSkrining($pn->pasien);
-            $pn->status_display = $statusRisiko['label'];
+            $statusRisiko = $this->getStatusRisikoFromSkrining($pn->pasien); // Hitung status risiko
+            $pn->status_display = $statusRisiko['label']; // Label: Beresiko/Waspada/Tidak Berisiko
             $pn->status_type = $statusRisiko['type']; // 'beresiko', 'waspada', 'normal'
             
             return $pn;
         });
 
-        return view('rs.pasien-nifas.index', compact('pasienNifas'));
+        return view('rs.pasien-nifas.index', compact('pasienNifas')); // Kembalikan view dengan data
     }
 
     /**
@@ -90,9 +90,9 @@ class PasienNifasController extends Controller
     /**
      * Show form create pasien nifas
      */
-    public function create()
+    public function create() // Menampilkan form untuk mendaftarkan pasien nifas baru
     {
-        return view('rs.pasien-nifas.create');
+        return view('rs.pasien-nifas.create'); // Kembalikan view form create
     }
 
     /**
@@ -101,12 +101,12 @@ class PasienNifasController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function cekNik(Request $request)
+    public function cekNik(Request $request) // Endpoint AJAX untuk cek NIK dan auto-fill data pasien jika ditemukan
     {
-        $nik = $request->input('nik');
+        $nik = $request->input('nik'); // Ambil NIK dari request
 
         // Validasi NIK
-        if (!$nik || strlen($nik) !== 16) {
+        if (!$nik || strlen($nik) !== 16) { // NIK harus 16 digit
             return response()->json([
                 'found' => false,
                 'message' => 'NIK tidak valid. Harus 16 digit.'
@@ -117,11 +117,11 @@ class PasienNifasController extends Controller
             // Cari pasien berdasarkan NIK dengan relasi user dan skrining
             $pasien = Pasien::where('nik', $nik)
                 ->with(['user', 'skrinings' => function($q) {
-                    $q->orderBy('created_at', 'desc')->limit(1);
+                    $q->orderBy('created_at', 'desc')->limit(1); // Ambil skrining terbaru saja
                 }])
                 ->first();
 
-            if ($pasien) {
+            if ($pasien) { // Jika pasien ditemukan
                 // Ambil status risiko dari skrining
                 $statusRisiko = $this->getStatusRisikoFromSkrining($pasien);
 
@@ -129,7 +129,7 @@ class PasienNifasController extends Controller
                 return response()->json([
                     'found' => true,
                     'message' => 'Pasien ditemukan',
-                    'pasien' => [
+                    'pasien' => [ // Data untuk mengisi form secara otomatis
                         'id'            => $pasien->id,
                         'nik'           => $pasien->nik,
                         'nama'          => $pasien->user->name ?? '',
@@ -153,7 +153,7 @@ class PasienNifasController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error Cek NIK: ' . $e->getMessage());
+            Log::error('Error Cek NIK: ' . $e->getMessage()); // Log error untuk debugging
 
             return response()->json([
                 'found' => false,
@@ -188,9 +188,9 @@ class PasienNifasController extends Controller
     /**
      * Simpan data pasien nifas baru
      */
-    public function store(Request $request)
+    public function store(Request $request) // Menyimpan data pasien nifas baru (buat user+pasien baru atau update existing)
     {
-        $validated = $request->validate([
+        $validated = $request->validate([ // Validasi input form
             'nama_pasien' => 'required|string|max:255',
             'nik'         => 'required|digits:16',
             'no_telepon'  => 'required|string|max:20',
@@ -202,12 +202,12 @@ class PasienNifasController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
+            DB::beginTransaction(); // Mulai transaction untuk konsistensi data
 
             // Cek apakah pasien dengan NIK ini sudah ada
             $existingPasien = Pasien::where('nik', $validated['nik'])->first();
 
-            if ($existingPasien) {
+            if ($existingPasien) { // Jika pasien sudah ada, update datanya
                 $pasien = $existingPasien;
 
                 // Update phone di tabel users
@@ -225,38 +225,38 @@ class PasienNifasController extends Controller
                     'PWilayah'   => $validated['kelurahan'],
                 ];
 
-                if (Schema::hasColumn('pasiens', 'address')) {
+                if (Schema::hasColumn('pasiens', 'address')) { // Cek apakah kolom address ada
                     $updateData['address'] = $validated['domisili'];
-                } else if ($existingPasien->user) {
+                } else if ($existingPasien->user) { // Jika tidak, simpan di tabel users
                     $existingPasien->user->update(['address' => $validated['domisili']]);
                 }
 
                 $existingPasien->update($updateData);
-            } else {
+            } else { // Jika pasien belum ada, buat baru
                 // Buat user + pasien baru
                 $roleId = DB::table('roles')
                     ->where('nama_role', 'pasien')
                     ->first();
 
-                if (!$roleId) {
+                if (!$roleId) { // Pastikan role pasien ada
                     throw new \Exception('Role "pasien" tidak ditemukan di database');
                 }
 
-                $baseEmail = $validated['nik'] . '@pasien.delisa.id';
+                $baseEmail = $validated['nik'] . '@pasien.delisa.id'; // Generate email otomatis dari NIK
                 $emailExists = User::where('email', $baseEmail)->exists();
                 $email = $emailExists 
-                    ? $validated['nik'] . '.' . time() . '@pasien.delisa.id' 
+                    ? $validated['nik'] . '.' . time() . '@pasien.delisa.id' // Tambah timestamp jika email sudah ada
                     : $baseEmail;
 
-                $user = User::create([
+                $user = User::create([ // Buat user baru
                     'name'     => $validated['nama_pasien'],
                     'email'    => $email,
-                    'password' => bcrypt('password'),
+                    'password' => bcrypt('password'), // Password default
                     'role_id'  => $roleId->id,
                     'phone'    => $validated['no_telepon'],
                 ]);
 
-                $pasienData = [
+                $pasienData = [ // Data untuk tabel pasiens
                     'user_id'    => $user->id,
                     'nik'        => $validated['nik'],
                     'PProvinsi'  => $validated['provinsi'],
@@ -271,7 +271,7 @@ class PasienNifasController extends Controller
                     $user->update(['address' => $validated['domisili']]);
                 }
 
-                $pasien = Pasien::create($pasienData);
+                $pasien = Pasien::create($pasienData); // Buat record pasien baru
             }
 
             // Ambil rs_id dari user RS yang sedang login
@@ -282,7 +282,7 @@ class PasienNifasController extends Controller
                 ->where('rs_id', $rs_id)
                 ->first();
 
-            if ($existingNifas) {
+            if ($existingNifas) { // Jika sudah terdaftar, redirect ke halaman show
                 DB::commit();
 
                 return redirect()
@@ -294,16 +294,16 @@ class PasienNifasController extends Controller
             $pasienNifas = PasienNifasRs::create([
                 'rs_id'               => $rs_id,
                 'pasien_id'           => $pasien->id,
-                'tanggal_mulai_nifas' => now(),
+                'tanggal_mulai_nifas' => now(), // Set tanggal mulai nifas = sekarang
             ]);
 
-            DB::commit();
+            DB::commit(); // Commit transaction jika semua berhasil
 
             return redirect()
                 ->route('rs.pasien-nifas.show', $pasienNifas->id)
                 ->with('success', 'Data pasien nifas berhasil ditambahkan! Silakan tambah data anak.');
         } catch (\Exception $e) {
-            DB::rollBack();
+            DB::rollBack(); // Rollback jika ada error
 
             Log::error('Error Create Pasien Nifas: ' . $e->getMessage());
 
@@ -355,52 +355,52 @@ class PasienNifasController extends Controller
     /**
      * Display form tambah data anak
      */
-    public function show($id)
+    public function show($id) // Menampilkan detail pasien nifas dan form untuk menambah data anak
     {
-        $pasienNifas = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs', 'anakPasien'])
-            ->findOrFail($id);
+        $pasienNifas = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs', 'anakPasien']) // Load semua relasi
+            ->findOrFail($id); // Throw 404 jika tidak ditemukan
 
         // Ambil status risiko
         $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
-        $pasienNifas->status_display = $statusRisiko['label'];
-        $pasienNifas->status_type = $statusRisiko['type'];
+        $pasienNifas->status_display = $statusRisiko['label']; // Tambahkan label status
+        $pasienNifas->status_type = $statusRisiko['type']; // Tambahkan type status
 
-        return view('rs.pasien-nifas.edit', compact('pasienNifas'));
+        return view('rs.pasien-nifas.edit', compact('pasienNifas')); // View untuk edit/tambah anak
     }
 
     /**
      * Store data anak pasien
      */
-    public function storeAnakPasien(Request $request, $id)
+    public function storeAnakPasien(Request $request, $id) // Menyimpan data anak dari pasien nifas
     {
-        $pasienNifas = PasienNifasRs::with('pasien')->findOrFail($id);
+        $pasienNifas = PasienNifasRs::with('pasien')->findOrFail($id); // Ambil data pasien nifas
         
         // Cek apakah pasien beresiko
         $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
-        $isBeresiko = in_array($statusRisiko['type'], ['beresiko', 'waspada']);
+        $isBeresiko = in_array($statusRisiko['type'], ['beresiko', 'waspada']); // True jika beresiko atau waspada
 
         // Validasi dasar
         $rules = [
-            'anak_ke'                    => 'required|integer|min:1',
+            'anak_ke'                    => 'required|integer|min:1', // Urutan anak
             'tanggal_lahir'              => 'required|date',
             'jenis_kelamin'              => 'required|in:Laki-laki,Perempuan',
             'nama_anak'                  => 'nullable|string|max:255',
-            'usia_kehamilan_saat_lahir'  => 'required|string',
-            'berat_lahir_anak'           => 'required|numeric|min:0',
-            'panjang_lahir_anak'         => 'required|numeric|min:0',
-            'lingkar_kepala_anak'        => 'required|numeric|min:0',
+            'usia_kehamilan_saat_lahir'  => 'required|string', // Usia kehamilan dalam minggu
+            'berat_lahir_anak'           => 'required|numeric|min:0', // Dalam gram
+            'panjang_lahir_anak'         => 'required|numeric|min:0', // Dalam cm
+            'lingkar_kepala_anak'        => 'required|numeric|min:0', // Dalam cm
             'memiliki_buku_kia'          => 'required|boolean',
             'buku_kia_bayi_kecil'        => 'required|boolean',
-            'imd'                        => 'required|boolean',
+            'imd'                        => 'required|boolean', // Inisiasi Menyusu Dini
             'riwayat_penyakit'           => 'nullable|array',
             'keterangan_masalah_lain'    => 'nullable|string',
         ];
 
         // Tambahkan validasi kondisi ibu jika pasien beresiko
-        if ($isBeresiko) {
+        if ($isBeresiko) { // Wajib isi kondisi ibu jika pasien beresiko
             $rules['kondisi_ibu'] = 'required|in:aman,perlu_tindak_lanjut';
             $rules['catatan_kondisi_ibu'] = 'required|string';
-        } else {
+        } else { // Opsional jika pasien tidak beresiko
             $rules['kondisi_ibu'] = 'nullable|in:aman,perlu_tindak_lanjut';
             $rules['catatan_kondisi_ibu'] = 'nullable|string';
         }
@@ -408,12 +408,12 @@ class PasienNifasController extends Controller
         $validated = $request->validate($rules);
 
         try {
-            AnakPasien::create([
-                'nifas_id'                  => $pasienNifas->id,
+            AnakPasien::create([ // Simpan data anak ke database
+                'nifas_id'                  => $pasienNifas->id, // Foreign key ke pasien_nifas
                 'anak_ke'                   => $validated['anak_ke'],
                 'tanggal_lahir'             => $validated['tanggal_lahir'],
                 'jenis_kelamin'             => $validated['jenis_kelamin'],
-                'nama_anak'                 => $validated['nama_anak'] ?? 'Anak ke-' . $validated['anak_ke'],
+                'nama_anak'                 => $validated['nama_anak'] ?? 'Anak ke-' . $validated['anak_ke'], // Default nama jika kosong
                 'usia_kehamilan_saat_lahir' => $validated['usia_kehamilan_saat_lahir'],
                 'berat_lahir_anak'          => $validated['berat_lahir_anak'],
                 'panjang_lahir_anak'        => $validated['panjang_lahir_anak'],
@@ -421,7 +421,7 @@ class PasienNifasController extends Controller
                 'memiliki_buku_kia'         => $validated['memiliki_buku_kia'],
                 'buku_kia_bayi_kecil'       => $validated['buku_kia_bayi_kecil'],
                 'imd'                       => $validated['imd'],
-                'riwayat_penyakit'          => $validated['riwayat_penyakit'] ?? [],
+                'riwayat_penyakit'          => $validated['riwayat_penyakit'] ?? [], // Default array kosong
                 'keterangan_masalah_lain'   => $validated['keterangan_masalah_lain'],
                 // Kolom baru untuk kondisi ibu
                 'kondisi_ibu'               => $validated['kondisi_ibu'] ?? null,
@@ -429,7 +429,7 @@ class PasienNifasController extends Controller
             ]);
 
             return redirect()
-                ->route('rs.pasien-nifas.detail', $id)
+                ->route('rs.pasien-nifas.detail', $id) // Redirect ke halaman detail
                 ->with('success', 'Data anak berhasil ditambahkan!');
         } catch (\Exception $e) {
             Log::error('Error Store Anak Pasien: ' . $e->getMessage());
@@ -443,9 +443,9 @@ class PasienNifasController extends Controller
     /**
      * Display detail readonly pasien nifas dan data anak
      */
-    public function detail($id)
+    public function detail($id) // Menampilkan detail lengkap pasien nifas dan anak (read-only)
     {
-        $pasienNifas = PasienNifasRs::with([
+        $pasienNifas = PasienNifasRs::with([ // Load semua relasi yang dibutuhkan
             'pasien.user',
             'pasien.skrinings',
             'rs',
@@ -457,32 +457,32 @@ class PasienNifasController extends Controller
         $pasienNifas->status_display = $statusRisiko['label'];
         $pasienNifas->status_type = $statusRisiko['type'];
 
-        $anakPasien = $pasienNifas->anakPasien->first();
+        $anakPasien = $pasienNifas->anakPasien->first(); // Ambil data anak pertama (jika ada)
 
-        return view('rs.pasien-nifas.show', compact('pasienNifas', 'anakPasien'));
+        return view('rs.pasien-nifas.show', compact('pasienNifas', 'anakPasien')); // View detail read-only
     }
 
     /**
      * Download PDF data pasien nifas
      */
-    public function downloadPDF()
+    public function downloadPDF() // Generate dan download PDF daftar semua pasien nifas
     {
         try {
-            $pasienNifas = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs'])
+            $pasienNifas = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs']) // Ambil semua data
                 ->orderBy('created_at', 'desc')
                 ->get();
 
             // Transform untuk menambahkan status
-            $pasienNifas->transform(function ($pn) {
+            $pasienNifas->transform(function ($pn) { // Tambahkan status risiko ke setiap record
                 $statusRisiko = $this->getStatusRisikoFromSkrining($pn->pasien);
                 $pn->status_display = $statusRisiko['label'];
                 $pn->status_type = $statusRisiko['type'];
                 return $pn;
             });
 
-            $pdf = Pdf::loadView('rs.pasien-nifas.pdf', compact('pasienNifas'));
+            $pdf = Pdf::loadView('rs.pasien-nifas.pdf', compact('pasienNifas')); // Generate PDF dari view
 
-            return $pdf->download('data-pasien-nifas-' . date('Y-m-d') . '.pdf');
+            return $pdf->download('data-pasien-nifas-' . date('Y-m-d') . '.pdf'); // Download dengan nama file + tanggal
         } catch (\Exception $e) {
             return back()
                 ->with('error', 'Gagal mengunduh PDF: ' . $e->getMessage());

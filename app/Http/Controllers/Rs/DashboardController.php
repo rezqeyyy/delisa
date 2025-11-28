@@ -273,7 +273,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * ✨ FITUR BARU: Proses pasien ke data nifas
+     *  Proses pasien ke data nifas
      */
     public function prosesPasienNifas(Request $request, $id)
     {
