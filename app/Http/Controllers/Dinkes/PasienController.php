@@ -98,7 +98,7 @@ class PasienController extends Controller
                 ->first()
             : null;
 
-        // ===================== GPA & riwayat kehamilan =====================
+        // ===================== GPA =====================
         /**
          * Ambil data riwayat GPA (Gravida-Para-Abortus) terakhir:
          * - Satu baris terakhir dari tabel riwayat_kehamilan_gpas untuk pasien ini.
@@ -108,18 +108,7 @@ class PasienController extends Controller
             ->orderByDesc('created_at')
             ->first();
 
-        /**
-         * Ambil riwayat kehamilan (bisa lebih dari satu):
-         * - Tabel riwayat_kehamilans menyimpan episode kehamilan sebelumnya.
-         * - Diurutkan desc berdasarkan created_at.
-         * - Dibatasi 10 entri terakhir agar tidak terlalu panjang di UI.
-         */
-        $riwayatKehamilan = RiwayatKehamilan::query()
-            ->where('pasien_id', $pasienId)
-            ->orderByDesc('created_at')
-            ->limit(10)
-            ->get();
-
+            
         // ===================== Episode Nifas milik pasien =====================
         /**
          * Mendefinisikan query subselect untuk mengambil semua ID episode nifas
@@ -306,7 +295,6 @@ class PasienController extends Controller
             'skrining'          => $skrining,      // punya ->tanggal & ->tanggal_waktu
             'kondisi'           => $kondisi,
             'gpa'               => $gpa,
-            'riwayatKehamilan'  => $riwayatKehamilan,
             'kfSummary'         => $kfSummary,
             'kfPantauan'        => $kfPantauan,
             'rujukan'           => $rujukan,
