@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 // Mengimpor facade DB untuk operasi query builder/transaksi.
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 // Mengimpor model Skrining (tabel skrinings).
 use App\Models\Skrining;
 // Mengimpor trait SkriningHelpers (helper validasi & rekalkulasi skrining).
@@ -135,7 +136,7 @@ class DataDiriController extends Controller
         $data = $request->validate([
             'tempat_lahir'         => ['required', 'string', 'max:150'],
             'tanggal_lahir'        => ['required', 'date'],
-            'phone'                => ['required', 'string', 'max:30'],
+            'phone'                => ['required', 'string', 'max:15', Rule::unique('users', 'phone')->ignore(Auth::id())],
             'address'              => ['required', 'string', 'max:255'],
             'status_perkawinan'    => ['required', 'in:0,1'],
             'PKecamatan'           => ['required', 'string', 'max:150'],

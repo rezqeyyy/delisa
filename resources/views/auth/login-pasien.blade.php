@@ -83,8 +83,16 @@
                          action route('pasien.login.store') → AuthController
                          =================================================== -->
                     <form action="{{ route('pasien.login.store') }}"
-                          method="POST"
-                          class="mt-8 space-y-5">
+                            method="POST"
+                            class="mt-8 space-y-5">
+
+                        @if ($errors->any())
+                            <div class="mt-4 p-4 rounded-md bg-red-50 border border-red-200 text-red-700">
+                                @foreach ($errors->all() as $error)
+                                    <p class="text-sm">{{ $error }}</p>
+                                @endforeach
+                            </div>
+                        @endif
 
                         @csrf  <!-- Token keamanan POST -->
 
@@ -98,10 +106,11 @@
                             </label>
 
                             <input
-                                type="text"
+                                type="tel"
                                 name="nik"
                                 id="nik"
                                 maxlength="16"
+                                inputmode="numeric" pattern="[0-9]*"
                                 placeholder="0000000000000000"
                                 required
                                 class="mt-1 block w-full px-4 py-3 border border-gray-300

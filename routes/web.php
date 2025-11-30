@@ -19,7 +19,7 @@ use App\Http\Controllers\Dinkes\PasienNifasController;
 use App\Http\Controllers\Dinkes\ProfileController as DinkesProfileController;
 use App\Http\Controllers\Dinkes\PasienController;
 
-use App\Http\Controllers\Bidan\ProfileController as BidanProfileController; // <-- TAMBAHAN
+use App\Http\Controllers\Bidan\ProfileController as BidanProfileController; 
 use App\Http\Controllers\Rs\ProfileController as RsProfileController;
 
 

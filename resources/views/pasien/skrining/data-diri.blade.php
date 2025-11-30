@@ -98,7 +98,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
-                        <input name="phone" type="text"
+                        <input name="phone" type="tel" required inputmode="numeric" pattern="[0-9]*"
                             class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
                             value="{{ old('phone', Auth::user()->phone) }}"
                             placeholder="08xxxxxxxxxx">

@@ -62,7 +62,8 @@
                         </label>
                         <input
                             name="phone"
-                            type="text"
+                            type="tel"
+                            inputmode="numeric" pattern="[0-9]*"
                             value="{{ old('phone') }}"
                             placeholder="Masukan Nomor Telp"
                             class="mt-1 w-full px-4 py-3 rounded-full border border-[#D91A8B] focus:outline-none"

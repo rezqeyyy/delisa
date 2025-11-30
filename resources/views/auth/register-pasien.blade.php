@@ -27,10 +27,19 @@
 
                         <form action="{{ route('pasien.register.store') }}" method="POST" class="mt-8 space-y-5">
                             @csrf
+
+                            @if ($errors->any())
+                                <div class="mt-4 p-4 rounded-md bg-red-50 border border-red-200 text-red-700">
+                                    @foreach ($errors->all() as $error)
+                                        <p class="text-sm">{{ $error }}</p>
+                                    @endforeach
+                                </div>
+                            @endif
+                            
                             <div>
                                 <label for="nik" class="block text-sm font-medium text-gray-700">Nomor Induk
                                     Kependudukan (NIK)</label>
-                                <input type="text" name="nik" id="nik" maxlength="16"
+                                <input type="tel" name="nik" id="nik" maxlength="16" inputmode="numeric" pattern="[0-9]*"
                                     placeholder="16 digit NIK" required
                                     class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#D91A8B] focus:border-[#D91A8B]">
                             </div>
@@ -39,6 +48,12 @@
                                     Lengkap</label>
                                 <input type="text" name="nama_lengkap" id="nama_lengkap"
                                     placeholder="Nama sesuai KTP" required
+                                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#D91A8B] focus:border-[#D91A8B]">
+                            </div>
+                            <div>
+                                <label for="phone" class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
+                                <input type="tel" name="phone" id="phone" inputmode="numeric" pattern="[0-9]*"
+                                    placeholder="08xxxxxxxxxx" required
                                     class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#D91A8B] focus:border-[#D91A8B]">
                             </div>
 
