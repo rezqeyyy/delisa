@@ -1,131 +1,327 @@
 <?php
 
-/**
- * Controller Dinkes untuk:
- * - Menampilkan daftar pasien nifas (index).
- * - Menampilkan detail satu pasien nifas (show).
- * - Mengekspor laporan pasien nifas ke file .xlsx (export).
- * - Menghapus status nifas pasien dari daftar nifas (destroy).
- */
-
 namespace App\Http\Controllers\Dinkes;
 
-// Base controller Laravel
 use App\Http\Controllers\Controller;
-
-// Request untuk akses query string & input form
 use Illuminate\Http\Request;
-
-// DB facade untuk query builder & transaksi database
 use Illuminate\Support\Facades\DB;
-
-// Carbon untuk manipulasi tanggal (format, parsing, dll)
 use Carbon\Carbon;
 
-// ==========================
-//  Library untuk Excel .xlsx
-// ==========================
-
-// Spreadsheet: representasi workbook Excel di memory
+// Excel .xlsx
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-// Writer Xlsx: untuk menyimpan Spreadsheet ke format .xlsx
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-// Fill: pengaturan warna/fill background sel
 use PhpOffice\PhpSpreadsheet\Style\Fill;
-// Border: pengaturan border tabel
 use PhpOffice\PhpSpreadsheet\Style\Border;
-// Alignment: pengaturan alignment text (horizontal & vertical)
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
-// ==========================
-//  Eloquent Models
-// ==========================
+use Illuminate\Pagination\LengthAwarePaginator;
 
+// Eloquent Models
 use App\Models\Pasien;
 use App\Models\PasienNifasBidan;
 use App\Models\PasienNifasRs;
 use App\Models\AnakPasien;
 use App\Models\Kf;
+use App\Models\Puskesmas;
 
 class PasienNifasController extends Controller
 {
     /**
-     * Halaman index: daftar pasien nifas untuk Dinkes.
-     *
-     * - Mendukung pencarian nama/NIK via query string 'q'.
-     * - Menggunakan query builder yang sama dengan export (buildPasienNifasQuery).
+     * Halaman index pemantauan pasien nifas Dinkes.
+     * - Pencarian nama/NIK (q)
+     * - Filter puskesmas (puskesmas_id)
+     * - Sort:
+     *      prioritas (hitam→merah→kuning→hijau) [default]
+     *      nama_asc / nama_desc
+     *      kf_terbaru / kf_terlama
+     * - Hitung progres KF & sisa waktu (jika data KF sudah ada).
      */
     public function index(Request $request)
     {
-        // Ambil parameter 'q' dari query string, default string kosong, lalu trim spasi.
-        $q = trim($request->get('q', ''));
+        $q           = trim($request->get('q', ''));
+        $puskesmasId = $request->get('puskesmas_id');
+        $sort        = $request->get('sort', 'prioritas');
+        $priority    = $request->get('priority'); // 'hitam','merah','kuning','hijau','tanpa_jadwal' atau null
 
-        // Bangun query dasar pasien nifas (join pasiens, users, pasien_nifas_bidan, pasien_nifas_rs)
-        // lalu paginate 10 baris per halaman dan pertahankan query string (withQueryString).
-        $rows = $this->buildPasienNifasQuery($q)
-            ->paginate(10)
-            ->withQueryString();
 
-        // Render view daftar pasien nifas di Dinkes, kirim rows & nilai q untuk form pencarian.
+        // Query dasar: pasien nifas + pasien + user + puskesmas (dari skrining terbaru)
+        $baseQuery = $this->buildPasienNifasQuery(
+            $q,
+            $puskesmasId ? (int) $puskesmasId : null
+        );
+
+        // Ambil semua episode nifas (diproses di Collection lalu dipaginate manual)
+        $allRows = $baseQuery->get();
+
+        // Kumpulkan id_nifas untuk cek progres KF
+        $nifasIds = $allRows->pluck('nifas_id')->filter()->values()->all();
+
+        $kfDone = collect();
+        if (!empty($nifasIds)) {
+            $kfDone = Kf::query()
+                ->selectRaw('id_nifas, MAX(kunjungan_nifas_ke)::int as max_ke')
+                ->whereIn('id_nifas', $nifasIds)
+                ->groupBy('id_nifas')
+                ->get()
+                ->keyBy('id_nifas');
+        }
+
+        // Konfigurasi jadwal KF (hari setelah tanggal_mulai_nifas)
+        $dueDays = [
+            1 => 3,
+            2 => 7,
+            3 => 14,
+            4 => 42,
+        ];
+
+        $today  = Carbon::today();
+        $namaKf = [
+            1 => 'satu',
+            2 => 'dua',
+            3 => 'tiga',
+            4 => 'empat',
+        ];
+
+        // Hitung jadwal KF dan sisa waktu
+        $allRows = $allRows->map(function ($row) use ($kfDone, $dueDays, $today, $namaKf) {
+            // Jika BELUM ada data KF sama sekali untuk nifas ini
+            if (!$kfDone->has($row->nifas_id)) {
+                $row->next_kf_ke      = null;
+                $row->jadwal_kf_date  = null;
+                $row->hari_sisa       = null;
+                $row->jadwal_kf_text  = '';                    // jadwal KF dikosongkan
+                $row->sisa_waktu_label = '—';                  // badge netral
+                $row->badge_class      = 'bg-[#E5E7EB] text-[#374151]';
+                $row->priority_level   = 5;                    // prioritas paling rendah
+                return $row;
+            }
+
+            
+
+            $maxKe = optional($kfDone->get($row->nifas_id))->max_ke ?? 0;
+            $nextKe = min(4, $maxKe + 1); // Maksimal KF4
+            $row->next_kf_ke = $nextKe;
+
+            $tanggalMulai = $row->tanggal_mulai_nifas
+                ? Carbon::parse($row->tanggal_mulai_nifas)
+                : null;
+
+            $jadwalDate = null;
+            $hariSisa   = null;
+
+            if ($tanggalMulai) {
+                $due        = $dueDays[$nextKe] ?? 42;
+                $jadwalDate = $tanggalMulai->copy()->addDays($due);
+                // >0: masih X hari lagi, 0: hari ini, <0: sudah lewat X hari
+                $hariSisa   = $today->diffInDays($jadwalDate, false);
+            }
+
+            $row->jadwal_kf_date = $jadwalDate;
+            $row->hari_sisa      = $hariSisa;
+
+            // Teks keterangan jadwal KF
+            if ($jadwalDate) {
+                $kfLabel = $namaKf[$nextKe] ?? (string) $nextKe;
+
+                if ($hariSisa !== null && $hariSisa > 0) {
+                    $row->jadwal_kf_text = sprintf(
+                        'KF %s akan dilakukan tanggal %s',
+                        $kfLabel,
+                        $jadwalDate->translatedFormat('d F Y')
+                    );
+                } elseif ($hariSisa !== null && $hariSisa <= 0) {
+                    $telat = abs($hariSisa);
+                    $row->jadwal_kf_text = sprintf(
+                        'KF %s sudah terlewat %d hari',
+                        $kfLabel,
+                        $telat
+                    );
+                } else {
+                    $row->jadwal_kf_text = sprintf(
+                        'KF %s (jadwal tidak diketahui)',
+                        $kfLabel
+                    );
+                }
+            } else {
+                $row->jadwal_kf_text = 'Jadwal KF belum tersedia';
+            }
+
+            // Badge sisa waktu + prioritas
+            if ($hariSisa === null) {
+                $row->sisa_waktu_label = '—';
+                $row->badge_class      = 'bg-[#E5E7EB] text-[#374151]';
+                $row->priority_level   = 5;
+            } else {
+                if ($hariSisa >= 7) {
+                    // Hijau
+                    $row->sisa_waktu_label = "Sisa {$hariSisa} hari";
+                    $row->badge_class      = 'bg-[#2EDB58] text-white';
+                    $row->priority_level   = 4;
+                } elseif ($hariSisa >= 4) {
+                    // Kuning
+                    $row->sisa_waktu_label = "Sisa {$hariSisa} hari";
+                    $row->badge_class      = 'bg-[#FFC400] text-[#1D1D1D]';
+                    $row->priority_level   = 3;
+                } elseif ($hariSisa >= 1) {
+                    // Merah
+                    $row->sisa_waktu_label = "Sisa {$hariSisa} hari";
+                    $row->badge_class      = 'bg-[#FF3B30] text-white';
+                    $row->priority_level   = 2;
+                } else {
+                    // Hitam (telat)
+                    $telat = abs($hariSisa);
+                    $row->sisa_waktu_label = "Terlambat {$telat} hari";
+                    $row->badge_class      = 'bg-[#000000] text-white';
+                    $row->priority_level   = 1;
+                }
+            }
+
+            return $row;
+        });
+
+         // Filter berdasarkan warna prioritas (opsional)
+        if (!empty($priority)) {
+            $priorityMap = [
+                'hitam'       => 1, // terlambat
+                'merah'       => 2, // sisa 1–3 hari
+                'kuning'      => 3, // sisa 4–6 hari (sesuai configmu)
+                'hijau'       => 4, // sisa ≥ 7 hari
+                'tanpa_jadwal'=> 5, // jadwal KF belum tersedia / tidak ada KF
+            ];
+
+            if (isset($priorityMap[$priority])) {
+                $targetLevel = $priorityMap[$priority];
+
+                $allRows = $allRows->filter(function ($row) use ($targetLevel) {
+                    return ($row->priority_level ?? null) === $targetLevel;
+                });
+            }
+        }
+
+        // Sorting sesuai pilihan
+        switch ($sort) {
+            case 'nama_asc':
+                $allRows = $allRows->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE);
+                break;
+            case 'nama_desc':
+                $allRows = $allRows->sortByDesc('name', SORT_NATURAL | SORT_FLAG_CASE);
+                break;
+            case 'kf_terbaru':
+                $allRows = $allRows->sortByDesc(function ($row) {
+                    return $row->jadwal_kf_date ?: Carbon::create(1900, 1, 1);
+                });
+                break;
+            case 'kf_terlama':
+                $allRows = $allRows->sortBy(function ($row) {
+                    return $row->jadwal_kf_date ?: Carbon::create(2100, 1, 1);
+                });
+                break;
+            default:
+                // Default: prioritas warna + yang paling mepet di dalam tiap level
+                $allRows = $allRows
+                    ->sortBy(function ($row) {
+                        return $row->hari_sisa ?? 9999;
+                    })
+                    ->sortBy('priority_level');
+                break;
+        }
+
+        $allRows = $allRows->values();
+
+        // Paginate manual
+        $perPage = 10;
+        $page    = LengthAwarePaginator::resolveCurrentPage();
+        $total   = $allRows->count();
+
+        $currentItems = $allRows->forPage($page, $perPage)->values();
+
+        $rows = new LengthAwarePaginator(
+            $currentItems,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path'  => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
+
+        // Daftar puskesmas (hanya induk, is_mandiri = 0) untuk filter
+        $puskesmasList = Puskesmas::query()
+            ->where('is_mandiri', 0)
+            ->orderBy('nama_puskesmas')
+            ->get();
+
         return view('dinkes.pasien-nifas.pasien-nifas', [
-            'rows' => $rows,
-            'q'    => $q,
+            'rows'                => $rows,
+            'q'                   => $q,
+            'puskesmasList'       => $puskesmasList,
+            'selectedPuskesmasId' => $puskesmasId,
+            'sort'                => $sort,
         ]);
     }
 
     /**
-     * Query dasar untuk pasien nifas (dipakai di index & export).
-     *
-     * - Menggabungkan data pasien (pasiens), user (users), dan status nifas
-     *   (pasien_nifas_bidan, pasien_nifas_rs).
-     * - Menghasilkan kolom:
-     *   - pasien_id, name, nik, tempat_lahir, tanggal_lahir
-     *   - role_penanggung (Bidan / Rumah Sakit / Puskesmas)
-     *   - nifas_id (ID episode nifas, dari pnb.id / pnr.id)
-     *   - sumber_nifas ('bidan' / 'rs' / null)
+     * Query dasar pasien nifas:
+     * - pasien + users
+     * - episode nifas bidan / RS
+     * - puskesmas dari skrining terbaru pasien
      */
-    private function buildPasienNifasQuery(?string $q = '')
+    private function buildPasienNifasQuery(?string $q = '', ?int $puskesmasId = null)
     {
-        // Normalisasi parameter q: jika null → string kosong, lalu di-trim.
         $q = trim($q ?? '');
 
-        // Mulai query dari tabel pasiens sebagai alias p
+        // Subquery skrining terbaru per pasien (gunakan delisa.sql → PostgreSQL)
+        $latestSkriningSql = <<<SQL
+            (
+                SELECT DISTINCT ON (pasien_id)
+                       id,
+                       pasien_id,
+                       puskesmas_id,
+                       created_at
+                FROM skrinings
+                ORDER BY pasien_id, created_at DESC
+            ) AS ls
+        SQL;
+
         $query = Pasien::query()
             ->from('pasiens as p')
-            // Join ke tabel users (u) via p.user_id = u.id
             ->join('users as u', 'u.id', '=', 'p.user_id')
-            // Left join ke pasien_nifas_bidan (pnb) via pasien_id
             ->leftJoin('pasien_nifas_bidan as pnb', 'pnb.pasien_id', '=', 'p.id')
-            // Left join ke pasien_nifas_rs (pnr) via pasien_id
             ->leftJoin('pasien_nifas_rs as pnr', 'pnr.pasien_id', '=', 'p.id')
-            // selectRaw untuk membentuk kolom alias seperti pasien_id, role_penanggung, dll
+            // skrining terbaru
+            ->leftJoin(DB::raw($latestSkriningSql), 'ls.pasien_id', '=', 'p.id')
+            // puskesmas asal skrining
+            ->leftJoin('puskesmas as pk', 'pk.id', '=', 'ls.puskesmas_id')
             ->selectRaw(<<<'SQL'
-            p.id as pasien_id,
-            u.name,
-            p.nik,
-            p.tempat_lahir,
-            p.tanggal_lahir,
-            CASE 
-                WHEN pnb.id IS NOT NULL THEN 'Bidan'
-                WHEN pnr.id IS NOT NULL THEN 'Rumah Sakit'
-                ELSE 'Puskesmas'
-            END as role_penanggung,
-            COALESCE(pnb.id, pnr.id) as nifas_id,
-            CASE
-                WHEN pnb.id IS NOT NULL THEN 'bidan'
-                WHEN pnr.id IS NOT NULL THEN 'rs'
-                ELSE NULL
-            END as sumber_nifas
-        SQL);
+                p.id as pasien_id,
+                u.name,
+                p.nik,
+                p.tempat_lahir,
+                p.tanggal_lahir,
+                CASE 
+                    WHEN pnb.id IS NOT NULL THEN 'Bidan'
+                    WHEN pnr.id IS NOT NULL THEN 'Rumah Sakit'
+                    ELSE 'Puskesmas'
+                END as role_penanggung,
+                COALESCE(pnb.id, pnr.id) as nifas_id,
+                CASE
+                    WHEN pnb.id IS NOT NULL THEN 'bidan'
+                    WHEN pnr.id IS NOT NULL THEN 'rs'
+                    ELSE NULL
+                END as sumber_nifas,
+                COALESCE(pnb.tanggal_mulai_nifas, pnr.tanggal_mulai_nifas) as tanggal_mulai_nifas,
+                pk.id as puskesmas_id,
+                pk.nama_puskesmas as puskesmas_nama
+            SQL);
 
-        // Filter: hanya pasien yang benar-benar punya episode nifas
-        // yaitu jika pnb.id atau pnr.id tidak null.
+        // Hanya pasien yang punya episode nifas
         $query->where(function ($w) {
             $w->whereNotNull('pnb.id')
                 ->orWhereNotNull('pnr.id');
         });
 
-        // Jika q tidak kosong, tambah kondisi pencarian berdasarkan nama atau NIK.
+        // Pencarian nama / NIK
         if ($q !== '') {
             $query->where(function ($w) use ($q) {
                 $w->where('u.name', 'ILIKE', "%{$q}%")
@@ -133,235 +329,217 @@ class PasienNifasController extends Controller
             });
         }
 
-        // Urutkan hasil berdasarkan nama user naik (A-Z).
+        // Filter berdasarkan puskesmas skrining
+        if (!is_null($puskesmasId)) {
+            $query->where('pk.id', $puskesmasId);
+        }
+
+        // Order dasar
         return $query->orderBy('u.name');
     }
 
-    /**
-     * Tampilkan detail satu pasien nifas untuk Dinkes.
-     *
-     * Parameter:
-     * - $nifasId = ID episode nifas (bukan ID pasien).
-     *
-     * Langkah:
-     * 1) Ambil data pasien & penanggung nifas berdasarkan $nifasId.
-     * 2) Ambil data anak-anak pada episode nifas ini.
-     * 3) Ambil riwayat penyakit nifas dari tabel anak_pasien (format JSON).
-     * 4) Ambil kunjungan nifas (KF) terkait nifas_id ini.
-     */
-    public function show($nifasId)
-    {
-        // 1) Data utama pasien + penanggung nifas (berdasarkan ID nifas)
-        $pasien = Pasien::query()
-            ->from('pasiens as p')
-            // Join ke users untuk ambil name/email/phone/address
-            ->join('users as u', 'u.id', '=', 'p.user_id')
-            // Left join pasien_nifas_bidan & pasien_nifas_rs untuk cek sumber nifas
-            ->leftJoin('pasien_nifas_bidan as pnb', 'pnb.pasien_id', '=', 'p.id')
-            ->leftJoin('pasien_nifas_rs as pnr', 'pnr.pasien_id', '=', 'p.id')
-            // Left join bidan (b) & puskesmas (pk) untuk detail penanggung bidan
-            ->leftJoin('bidans as b', 'b.id', '=', 'pnb.bidan_id')
-            ->leftJoin('puskesmas as pk', 'pk.id', '=', 'b.puskesmas_id')
-            // Left join rumah_sakits (rs) untuk detail penanggung RS
-            ->leftJoin('rumah_sakits as rs', 'rs.id', '=', 'pnr.rs_id')
-            // selectRaw untuk ambil kombinasi kolom dari beberapa tabel, plus case role_penanggung
-            ->selectRaw("
-            p.id,
-            u.name,
-            u.email,
-            u.phone,
-            u.address,
-            p.nik,
-            p.tempat_lahir,
-            p.tanggal_lahir,
-            p.\"PKecamatan\" as \"PKecamatan\",
-            p.\"PKabupaten\" as \"PKabupaten\",
-            p.\"PProvinsi\" as \"PProvinsi\",
-            CASE 
-                WHEN pnb.id IS NOT NULL THEN 'Bidan'
-                WHEN pnr.id IS NOT NULL THEN 'Rumah Sakit'
-                ELSE 'Puskesmas'
-            END as role_penanggung,
-            pnb.tanggal_mulai_nifas as tanggal_mulai_nifas_bidan,
-            pnr.tanggal_mulai_nifas as tanggal_mulai_nifas_rs,
-            pk.nama_puskesmas,
-            rs.nama as nama_rs
-        ")
-            // Filter: episode nifas bisa berada di pasien_nifas_bidan atau pasien_nifas_rs
-            ->where(function ($q) use ($nifasId) {
-                $q->where('pnb.id', $nifasId)
-                    ->orWhere('pnr.id', $nifasId);
-            })
-            // Ambil satu baris (atau null).
-            ->first();
-
-        // Jika episode nifas tidak ditemukan → 404 Not Found.
-        abort_unless($pasien, 404);
-
-        // Normalisasi tanggal lahir & mulai nifas untuk tampilan (format tanggal lokal)
-        // Jika tanggal_lahir ada, format ke 'd F Y' (contoh: 05 Januari 2025) dengan translatedFormat.
-        $pasien->tanggal_lahir_formatted = $pasien->tanggal_lahir
-            ? Carbon::parse($pasien->tanggal_lahir)->translatedFormat('d F Y')
-            : null;
-
-        // Ambil tanggal mulai nifas dari bidan atau RS (mana yang tidak null).
-        $tanggalMulaiNifas = $pasien->tanggal_mulai_nifas_bidan ?? $pasien->tanggal_mulai_nifas_rs;
-
-        // Format tanggal mulai nifas jika ada.
-        $pasien->tanggal_mulai_nifas_formatted = $tanggalMulaiNifas
-            ? Carbon::parse($tanggalMulaiNifas)->translatedFormat('d F Y')
-            : null;
-
-        // 2) Data anak nifas: nifas_id = ID nifas (bukan ID pasien)
-        // Ambil daftar anak yang terkait dengan episode nifas ini dari tabel anak_pasien.
-        $anakList = AnakPasien::query()
-            ->where('nifas_id', $nifasId)
-            ->orderBy('anak_ke')    // urut berdasarkan anak ke-1, ke-2, dst.
-            ->get();
-
-        // 3) Riwayat penyakit nifas (diambil dari tabel anak_pasien)
-        // Ambil kolom riwayat_penyakit (kemungkinan JSON) dan keterangan_masalah_lain untuk semua anak di episode ini.
-        $riwayatPenyakitRaw = AnakPasien::query()
-            ->where('nifas_id', $nifasId)
-            ->get(['riwayat_penyakit', 'keterangan_masalah_lain']);
-
-        /**
-         * Olah riwayat penyakit:
-         * - riwayat_penyakit di DB bisa berupa JSON (string) berisi array penyakit.
-         * - Untuk setiap anak, decode JSON → array list penyakit.
-         * - Setiap item menjadi object { nama_penyakit, keterangan_penyakit_lain }.
-         * - Di-collect menjadi collection riwayatPenyakit yang unik per nama_penyakit.
-         */
-        $riwayatPenyakit = collect($riwayatPenyakitRaw)
-            ->flatMap(function ($row) {
-                // Ambil isi riwayat_penyakit untuk baris ini.
-                $list = $row->riwayat_penyakit;
-
-                // Jika bertipe string, asumsikan JSON dan coba decode.
-                if (is_string($list)) {
-                    $decoded = json_decode($list, true);
-                    // Jika decode sukses (tidak error), gunakan hasil decode. Kalau gagal, pakai array kosong.
-                    $list = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
-                }
-
-                // Jika bukan array, berarti datanya tidak valid → kembalikan array kosong.
-                if (!is_array($list)) {
-                    return [];
-                }
-
-                // Setiap item di array list dianggap nama penyakit.
-                // Map ke object standar yang juga membawa keterangan_masalah_lain.
-                return collect($list)->map(function ($nama) use ($row) {
-                    return (object) [
-                        'nama_penyakit'            => $nama,
-                        'keterangan_penyakit_lain' => $row->keterangan_masalah_lain,
-                    ];
-                });
-            })
-            // Hilangkan duplikat berdasarkan nama_penyakit
-            ->unique('nama_penyakit')
-            // Reset index agar berurutan dari 0,1,2,...
-            ->values();
-
-        // 4) Kunjungan nifas (KF)
-        // Ambil semua catatan kunjungan nifas dari tabel kf untuk nifas_id ini.
-        $kunjunganNifas = Kf::query()
-            ->from('kf')
-            // Left join ke anak_pasien agar tahu nama anak & anak ke berapa.
-            ->leftJoin('anak_pasien as a', 'a.id', '=', 'kf.id_anak')
-            // Filter berdasarkan id_nifas
-            ->where('kf.id_nifas', $nifasId)
-            // Urutkan per tanggal kunjungan (kronologis)
-            ->orderBy('kf.tanggal_kunjungan')
-            // Pilih semua kolom kf ditambah nama_anak & anak_ke
-            ->selectRaw('
-            kf.*,
-            a.nama_anak,
-            a.anak_ke
-        ')
-            // Ambil collection
-            ->get();
-
-        // Kirim semua data ke view detail pasien nifas Dinkes.
-        return view('dinkes.pasien-nifas.show', [
-            'pasien'          => $pasien,
-            'anakList'        => $anakList,
-            'riwayatPenyakit' => $riwayatPenyakit,
-            'kunjunganNifas'  => $kunjunganNifas,
-        ]);
-    }
 
     /**
-     * EXPORT:
-     * Unduh semua data pasien Nifas (sesuai filter pencarian 'q')
-     * dalam bentuk file Excel .xlsx, dengan styling mirip export pasien PE.
+     * Export Excel (menghormati filter q + puskesmas_id + sort)
+     * TANPA mengubah styling tabel Excel.
      */
     public function export(Request $request)
     {
-        // Ambil parameter 'q' dari query string untuk pencarian (nama/NIK).
-        $q = trim($request->get('q', ''));
+        $q           = trim($request->get('q', ''));
+        $puskesmasId = $request->get('puskesmas_id');
+        $sort        = $request->get('sort', 'prioritas');
+        $priority    = $request->get('priority');
 
-        // Bangun query dasar pasien nifas dengan filter q, lalu ambil semua baris (get).
-        $rows = $this->buildPasienNifasQuery($q)->get();
 
-        // Buat objek Spreadsheet baru.
+        // 1) Ambil data dasar pasien nifas (sama seperti index)
+        $baseQuery = $this->buildPasienNifasQuery(
+            $q,
+            $puskesmasId ? (int) $puskesmasId : null
+        );
+
+        $rows = $baseQuery->get();
+
+        // 2) Hitung progres KF + priority level, supaya urutan export
+        //    mengikuti sort yang sama dengan halaman index.
+        $nifasIds = $rows->pluck('nifas_id')->filter()->values()->all();
+
+        $kfDone = collect();
+        if (!empty($nifasIds)) {
+            $kfDone = Kf::query()
+                ->selectRaw('id_nifas, MAX(kunjungan_nifas_ke)::int as max_ke')
+                ->whereIn('id_nifas', $nifasIds)
+                ->groupBy('id_nifas')
+                ->get()
+                ->keyBy('id_nifas');
+        }
+
+        $dueDays = [
+            1 => 3,
+            2 => 7,
+            3 => 14,
+            4 => 42,
+        ];
+
+        $today  = Carbon::today();
+        $namaKf = [
+            1 => 'satu',
+            2 => 'dua',
+            3 => 'tiga',
+            4 => 'empat',
+        ];
+
+        $rows = $rows->map(function ($row) use ($kfDone, $dueDays, $today, $namaKf) {
+            // sama persis logika di index()
+
+            if (!$kfDone->has($row->nifas_id)) {
+                $row->next_kf_ke       = null;
+                $row->jadwal_kf_date   = null;
+                $row->hari_sisa        = null;
+                $row->jadwal_kf_text   = '';
+                $row->sisa_waktu_label = '—';
+                $row->badge_class      = 'bg-[#E5E7EB] text-[#374151]';
+                $row->priority_level   = 5;
+                return $row;
+            }
+
+            $maxKe  = optional($kfDone->get($row->nifas_id))->max_ke ?? 0;
+            $nextKe = min(4, $maxKe + 1);
+            $row->next_kf_ke = $nextKe;
+
+            $tanggalMulai = $row->tanggal_mulai_nifas
+                ? Carbon::parse($row->tanggal_mulai_nifas)
+                : null;
+
+            $jadwalDate = null;
+            $hariSisa   = null;
+
+            if ($tanggalMulai) {
+                $due        = $dueDays[$nextKe] ?? 42;
+                $jadwalDate = $tanggalMulai->copy()->addDays($due);
+                $hariSisa   = $today->diffInDays($jadwalDate, false);
+            }
+
+            $row->jadwal_kf_date = $jadwalDate;
+            $row->hari_sisa      = $hariSisa;
+
+            if ($hariSisa === null) {
+                $row->sisa_waktu_label = '—';
+                $row->badge_class      = 'bg-[#E5E7EB] text-[#374151]';
+                $row->priority_level   = 5;
+            } else {
+                if ($hariSisa >= 7) {
+                    $row->sisa_waktu_label = "Sisa {$hariSisa} hari";
+                    $row->badge_class      = 'bg-[#2EDB58] text-white';
+                    $row->priority_level   = 4;
+                } elseif ($hariSisa >= 4) {
+                    $row->sisa_waktu_label = "Sisa {$hariSisa} hari";
+                    $row->badge_class      = 'bg-[#FFC400] text-[#1D1D1D]';
+                    $row->priority_level   = 3;
+                } elseif ($hariSisa >= 1) {
+                    $row->sisa_waktu_label = "Sisa {$hariSisa} hari";
+                    $row->badge_class      = 'bg-[#FF3B30] text-white';
+                    $row->priority_level   = 2;
+                } else {
+                    $telat                 = abs($hariSisa);
+                    $row->sisa_waktu_label = "Terlambat {$telat} hari";
+                    $row->badge_class      = 'bg-[#000000] text-white';
+                    $row->priority_level   = 1;
+                }
+            }
+
+            return $row;
+        });
+
+        // Filter berdasarkan warna prioritas (opsional)
+        if (!empty($priority)) {
+            $priorityMap = [
+                'hitam'       => 1,
+                'merah'       => 2,
+                'kuning'      => 3,
+                'hijau'       => 4,
+                'tanpa_jadwal'=> 5,
+            ];
+
+            if (isset($priorityMap[$priority])) {
+                $targetLevel = $priorityMap[$priority];
+
+                $rows = $rows->filter(function ($row) use ($targetLevel) {
+                    return ($row->priority_level ?? null) === $targetLevel;
+                });
+            }
+        }
+
+        // 3) Sorting sama seperti index()
+        switch ($sort) {
+            case 'nama_asc':
+                $rows = $rows->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE);
+                break;
+            case 'nama_desc':
+                $rows = $rows->sortByDesc('name', SORT_NATURAL | SORT_FLAG_CASE);
+                break;
+            case 'kf_terbaru':
+                $rows = $rows->sortByDesc(function ($row) {
+                    return $row->jadwal_kf_date ?: Carbon::create(1900, 1, 1);
+                });
+                break;
+            case 'kf_terlama':
+                $rows = $rows->sortBy(function ($row) {
+                    return $row->jadwal_kf_date ?: Carbon::create(2100, 1, 1);
+                });
+                break;
+            default:
+                $rows = $rows
+                    ->sortBy(function ($row) {
+                        return $row->hari_sisa ?? 9999;
+                    })
+                    ->sortBy('priority_level');
+                break;
+        }
+
+        $rows = $rows->values();
+
+        // 4) === MULAI BAGIAN STYLING EXCEL (TIDAK DIUBAH) ===
         $spreadsheet = new Spreadsheet();
-        // Ambil sheet aktif (default Sheet1).
-        $sheet = $spreadsheet->getActiveSheet();
+        $sheet       = $spreadsheet->getActiveSheet();
 
-        // ========== 1. Judul ==========
-        // Gabung sel A1 sampai F1 untuk judul besar.
+        // Judul
         $sheet->mergeCells('A1:F1');
-        // Set teks judul laporan.
         $sheet->setCellValue('A1', 'Laporan Data Pasien Nifas');
-        // Set font judul: bold + ukuran 14.
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-        // Atur alignment judul ke tengah (horizontal & vertikal).
         $sheet->getStyle('A1')->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_CENTER)
             ->setVertical(Alignment::VERTICAL_CENTER);
-        // Tinggi baris 1 sedikit lebih besar untuk judul.
         $sheet->getRowDimension(1)->setRowHeight(22);
-
-        // Baris 2 dikosongkan (spasi di antara judul dan header tabel).
         $sheet->getRowDimension(2)->setRowHeight(5);
 
-        // ========== 2. Header ==========
-        // Baris header tabel (row ke-3).
+        // Header (kolom disesuaikan dengan tabel pemantauan)
         $headerRow = 3;
-
-        // Definisi kolom header: key = kolom Excel, value = teks header.
-        $headers = [
-            'A' => 'ID Pasien',
+        $headers   = [
+            'A' => 'No',
             'B' => 'Nama Lengkap',
             'C' => 'NIK',
-            'D' => 'Role Penanggung',
-            'E' => 'Tempat Lahir',
-            'F' => 'Tanggal Lahir',
+            'D' => 'Puskesmas',
+            'E' => 'Jadwal KF',
+            'F' => 'Sisa Waktu',
         ];
 
-        // Isi header di baris ke-3 (A3..F3).
+
         foreach ($headers as $col => $text) {
             $sheet->setCellValue($col . $headerRow, $text);
         }
 
-        // Range header (A3:F3).
         $headerRange = 'A' . $headerRow . ':F' . $headerRow;
 
-        // Style header: bold + warna font putih.
         $sheet->getStyle($headerRange)->getFont()
             ->setBold(true)
             ->getColor()->setARGB('FFFFFFFF');
 
-        // Fill header dengan warna solid (biru tua 4F81BD).
         $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FF4F81BD');
 
-        // Align teks header di tengah secara horizontal.
         $sheet->getStyle($headerRange)->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        // Set lebar kolom agar isi tabel rapi dan terbaca.
         $sheet->getColumnDimension('A')->setWidth(12);
         $sheet->getColumnDimension('B')->setWidth(25);
         $sheet->getColumnDimension('C')->setWidth(20);
@@ -369,100 +547,79 @@ class PasienNifasController extends Controller
         $sheet->getColumnDimension('E')->setWidth(18);
         $sheet->getColumnDimension('F')->setWidth(15);
 
-        // Format kolom C (NIK) sebagai text (supaya leading zero tidak hilang).
         $sheet->getStyle('C')->getNumberFormat()->setFormatCode('@');
 
-        // ========== 3. Data ==========
-        // Mulai baris data setelah header (row 4).
+        // Data
         $rowIndex = $headerRow + 1;
+        $no       = 1;
 
-        // Loop setiap baris hasil query dan masukkan ke dalam sheet.
         foreach ($rows as $row) {
-            // Format tanggal lahir ke 'd-m-Y' jika tidak null.
-            $tglLahir = $row->tanggal_lahir
-                ? Carbon::parse($row->tanggal_lahir)->format('d-m-Y')
-                : '';
+            // Kolom A: No urut (seperti di tabel)
+            $sheet->setCellValue('A' . $rowIndex, $no);
 
-            // Isi sel per kolom.
-            $sheet->setCellValue('A' . $rowIndex, $row->pasien_id);
+            // Kolom B: Nama
             $sheet->setCellValue('B' . $rowIndex, $row->name);
-            // NIK sebagai text explicit agar tidak dikonversi ke angka.
+
+            // Kolom C: NIK (tetap pakai explicit string supaya tidak dipotong)
             $sheet->setCellValueExplicit(
                 'C' . $rowIndex,
                 $row->nik,
                 \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
             );
-            $sheet->setCellValue('D' . $rowIndex, $row->role_penanggung);
-            $sheet->setCellValue('E' . $rowIndex, $row->tempat_lahir);
-            $sheet->setCellValue('F' . $rowIndex, $tglLahir);
 
-            // Naikkan index baris untuk data berikutnya.
+            // Kolom D: Puskesmas
+            $sheet->setCellValue('D' . $rowIndex, $row->puskesmas_nama ?? '-');
+
+            // Kolom E: Jadwal KF (teks lengkap seperti di tabel)
+            // contoh: "KF satu sudah terlewat 2 hari" atau kosong jika belum ada KF
+            $sheet->setCellValue('E' . $rowIndex, $row->jadwal_kf_text ?? '');
+
+            // Kolom F: Sisa Waktu (label badge, misal: "—", "Sisa 3 hari", "Terlambat 1 hari")
+            $sheet->setCellValue('F' . $rowIndex, $row->sisa_waktu_label ?? '');
+
             $rowIndex++;
+            $no++;
         }
 
-        // Hitung baris terakhir yang berisi data (rowIndex telah melampaui).
-        $lastDataRow = $rowIndex - 1;
 
-        // Jika ternyata tidak ada data (lastDataRow < headerRow),
-        // set lastDataRow minimal sama dengan headerRow.
+        $lastDataRow = $rowIndex - 1;
         if ($lastDataRow < $headerRow) {
             $lastDataRow = $headerRow;
         }
 
-        // Range seluruh tabel (header + data), untuk diberi border.
         $tableRange = 'A' . $headerRow . ':F' . $lastDataRow;
 
-        // Beri border tipis di seluruh sel pada range tabel.
         $sheet->getStyle($tableRange)->getBorders()->getAllBorders()
             ->setBorderStyle(Border::BORDER_THIN);
 
-        // Atur tinggi baris untuk semua baris dari header sampai baris terakhir.
         for ($r = $headerRow; $r <= $lastDataRow; $r++) {
             $sheet->getRowDimension($r)->setRowHeight(18);
         }
 
-        // Freeze header: kunci baris di atas supaya header tetap terlihat saat scroll.
         $sheet->freezePane('A' . ($headerRow + 1));
 
-        // Nama file export, pakai pola: data-pasien-nifas-YYYY-mm-dd.xlsx
         $fileName = 'data-pasien-nifas-' . now()->format('Y-m-d') . '.xlsx';
 
-        // Buat writer Xlsx dari Spreadsheet.
         $writer = new Xlsx($spreadsheet);
 
-        // Response streamDownload agar file langsung diunduh di browser.
         return response()->streamDownload(function () use ($writer) {
-            // Simpan isi spreadsheet ke output stream (php://output).
             $writer->save('php://output');
         }, $fileName, [
-            // Content-Type standar untuk file Excel modern (.xlsx).
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
 
+
     /**
-     * Hapus status nifas pasien dari daftar nifas.
-     *
-     * - Menghapus entri pasien dari tabel pasien_nifas_bidan & pasien_nifas_rs
-     *   berdasarkan pasien_id.
-     * - Tidak menghapus data pasien secara keseluruhan, hanya melepas status nifasnya.
+     * Lepas status nifas pasien (bidan & RS) tanpa menghapus data pasien.
      */
     public function destroy($pasienId)
     {
-        // Bungkus operasi dalam transaksi untuk menjaga konsistensi data.
         DB::transaction(function () use ($pasienId) {
-            // Hapus relasi nifas di sumber bidan jika ada.
             PasienNifasBidan::where('pasien_id', $pasienId)->delete();
-            // Hapus relasi nifas di sumber RS jika ada.
             PasienNifasRs::where('pasien_id', $pasienId)->delete();
-
-            // Catatan:
-            // Jika ingin, di sini bisa dilanjutkan untuk menghapus/menyesuaikan
-            // data turunan lain yang terkait nifas (misalnya kf, anak_pasien, dsb),
-            // sesuai kebutuhan desain data. Untuk sekarang, cukup melepas dari daftar nifas.
         });
 
-        // Redirect balik dengan flash message sukses.
         return back()->with('success', 'Pasien dihapus dari daftar nifas.');
     }
 }

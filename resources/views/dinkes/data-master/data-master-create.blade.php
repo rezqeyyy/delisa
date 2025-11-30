@@ -467,7 +467,7 @@
 
                         {{-- Dropdown: Nama Puskesmas / Kecamatan. --}}
                         <div>
-                            <label>Nama Puskesmas / Kecamatan</label>
+                            <label>Kecamatan Puskesmas</label>
                             {{-- 
                                 select name="nama" → di controller akan divalidasi harus salah satu kecamatan Depok.
                                 - value diisi dengan key dari $kecamatanOptions.

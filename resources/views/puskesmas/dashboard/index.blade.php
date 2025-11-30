@@ -31,7 +31,7 @@
                 </div>
 
                 <div class="flex items-center gap-3 flex-none justify-end">
-                    <a href="{{ route('puskesmas.dashboard') }}" class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
+                    <a href="{{ route('puskesmas.profile.edit') }}" class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90" alt="Setting">
                     </a>
 
@@ -209,7 +209,6 @@
                         <table class="w-full text-sm">
                             <thead class="text-[#7C7C7C]">
                                 <tr class="text-left">
-                                    <th class="px-3 py-2 w-10"><input type="checkbox" class="rounded"></th>
                                     <th class="px-3 py-2">No.</th>
                                     <th class="px-3 py-2">Nama Pasien</th>
                                     <th class="px-3 py-2">NIK</th>
@@ -223,7 +222,6 @@
                             <tbody class="divide-y divide-[#E9E9E9]">
                                 @forelse(($pePatients ?? []) as $p)
                                     <tr>
-                                        <td class="px-3 py-3"><input type="checkbox" name="selected[]" value="{{ $p->id ?? '' }}" class="rounded"></td>
                                         <td class="px-3 py-3 font-medium tabular-nums">{{ $loop->iteration }}</td>
                                         <td class="px-3 py-3">{{ $p->nama ?? '-' }}</td>
                                         <td class="px-3 py-3 tabular-nums">{{ $p->nik ?? '-' }}</td>
