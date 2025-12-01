@@ -179,12 +179,15 @@ Route::middleware('role:puskesmas')
             Route::get('/skrining/{id}/edit', [RsSkriningController::class, 'edit'])->name('skrining.edit');
             Route::get('/skrining/{id}', [RsSkriningController::class, 'show'])->name('skrining.show');
             Route::put('/skrining/{id}', [RsSkriningController::class, 'update'])->name('skrining.update');
+            Route::get('/skrining/{id}/export-pdf', [RsSkriningController::class, 'exportPdf'])->name('skrining.exportPdf');
+
 
             // Penerimaan Rujukan
             Route::get('/penerimaan-rujukan', [RsRujukanController::class, 'index'])->name('penerimaan-rujukan.index');
             Route::post('/cek-nik', [PasienNifasController::class, 'cekNik'])->name('cek-nik');
             Route::post('/penerimaan-rujukan/{id}/accept', [RsRujukanController::class, 'accept'])->name('penerimaan-rujukan.accept');
             Route::post('/penerimaan-rujukan/{id}/reject', [RsRujukanController::class, 'reject'])->name('penerimaan-rujukan.reject');
+
 
             // Pasien Nifas
             Route::post('/cek-nik', [PasienNifasController::class, 'cekNik'])->name('cek-nik');
@@ -193,6 +196,7 @@ Route::middleware('role:puskesmas')
             Route::get('/pasien-nifas/create', [RsPasienNifasController::class, 'create'])->name('pasien-nifas.create');
             Route::get('/pasien-nifas/download/pdf', [RsPasienNifasController::class, 'downloadPDF'])->name('pasien-nifas.download-pdf');
             Route::get('/pasien-nifas/{id}', [RsPasienNifasController::class, 'show'])->name('pasien-nifas.show');
+            Route::get('/pasien-nifas/{id}/download-pdf', [RsPasienNifasController::class, 'downloadSinglePDF'])->name('pasien-nifas.download-single-pdf');
             
 
 

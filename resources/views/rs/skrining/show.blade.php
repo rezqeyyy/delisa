@@ -7,14 +7,32 @@
     
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js'])
 
+    {{-- Print styles --}}
+    <style>
+        @media print {
+            .print-hidden {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            main {
+                margin-left: 0 !important;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
         
-        <x-rs.sidebar />
+        <div class="print-hidden">
+            <x-rs.sidebar />
+        </div>
 
-        <main class="flex-1 w-full xl:ml-[260px] bg-[#FAFAFA] max-w-none min-w-0 overflow-y-auto">
+        <main class="flex-1 w-full xl:ml-[260px] bg-[#FAFAFA] max-w-none min-w-0 overflow-y-auto print:ml-0">
             <div class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-6">
 
                 {{-- Header --}}
@@ -41,9 +59,18 @@
                     </div>
                 </div>
 
+                {{-- Print Header (only visible when printing) --}}
+                <div class="hidden print:block mb-6">
+                    <div class="text-center border-b-2 border-[#E91E8C] pb-4 mb-4">
+                        <h1 class="text-xl font-bold text-[#1D1D1D]">HASIL PEMERIKSAAN PASIEN</h1>
+                        <p class="text-sm text-[#7C7C7C]">Sistem DeLISA - Dinas Kesehatan Kota Depok</p>
+                        <p class="text-xs text-[#9CA3AF] mt-1">Dicetak pada: {{ now()->format('d F Y, H:i') }} WIB</p>
+                    </div>
+                </div>
+
                 {{-- Alert sukses --}}
                 @if(session('success'))
-                    <div class="flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs sm:text-sm text-emerald-800">
+                    <div class="flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs sm:text-sm text-emerald-800 print-hidden">
                         <span class="mt-0.5">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
                                  stroke="currentColor" stroke-width="2">
@@ -56,10 +83,10 @@
                 @endif
 
                 {{-- Kartu: Informasi Pasien --}}
-                <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden">
+                <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden print:shadow-none print:border-gray-300">
                     <div class="px-4 sm:px-5 py-3 border-b border-[#F0F0F0] bg-[#FAFAFA]">
                         <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D] flex items-center gap-2">
-                            <span class="w-8 h-8 rounded-full bg-[#FCE7F3] flex items-center justify-center">
+                            <span class="w-8 h-8 rounded-full bg-[#FCE7F3] flex items-center justify-center print:hidden">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#E91E8C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                                     <circle cx="12" cy="7" r="4"/>
@@ -146,7 +173,7 @@
                 $proteinUrine = $kk->pemeriksaan_protein_urine ?? null;
             @endphp
 
-            <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden">
+            <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden print:shadow-none print:border-gray-300">
                 <div class="px-4 sm:px-5 py-3 border-b border-[#F0F0F0] bg-[#FAFAFA]">
                     <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D] flex items-center gap-2">
                         <span>Hasil Pemeriksaan di Rumah Sakit</span>
@@ -164,7 +191,7 @@
                                     <div class="flex-1 px-4 sm:px-5 py-3">
                                         @if($rujukan->pasien_datang == 1)
                                             <span class="inline-flex items-center gap-1.5 rounded-full bg-[#D1FAE5] text-[#059669] px-3 py-1 text-[11px] font-semibold">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 print:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <circle cx="12" cy="12" r="10"/>
                                                     <path d="m9 12 2 2 4-4"/>
                                                 </svg>
@@ -172,7 +199,7 @@
                                             </span>
                                         @elseif($rujukan->pasien_datang == 0)
                                             <span class="inline-flex items-center gap-1.5 rounded-full bg-[#FEE2E2] text-[#DC2626] px-3 py-1 text-[11px] font-semibold">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 print:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <circle cx="12" cy="12" r="10"/>
                                                     <path d="m15 9-6 6"/>
                                                     <path d="m9 9 6 6"/>
@@ -225,7 +252,7 @@
                                     <div class="flex-1 px-4 sm:px-5 py-3">
                                         @if($rujukan->perlu_pemeriksaan_lanjut == 1)
                                             <span class="inline-flex items-center gap-1.5 rounded-full bg-[#FEF3C7] text-[#D97706] px-3 py-1 text-[11px] font-semibold">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 print:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                                                     <line x1="12" y1="9" x2="12" y2="13"/>
                                                     <line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -234,7 +261,7 @@
                                             </span>
                                         @elseif($rujukan->perlu_pemeriksaan_lanjut == 0)
                                             <span class="inline-flex items-center gap-1.5 rounded-full bg-[#D1FAE5] text-[#059669] px-3 py-1 text-[11px] font-semibold">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 print:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <polyline points="20,6 9,17 4,12"/>
                                                 </svg>
                                                 <span>Tidak</span>
@@ -245,7 +272,33 @@
                                     </div>
                                 </div>
 
-                                {{-- Catatan Tambahan --}}
+                                {{-- Tindakan --}}
+                                @if($riwayatRujukan && $riwayatRujukan->tindakan)
+                                    <div class="flex flex-col sm:flex-row">
+                                        <div class="sm:w-1/3 bg-[#FAFAFA] px-4 sm:px-5 py-3 text-[11px] font-semibold text-[#7C7C7C]">
+                                            Tindakan
+                                        </div>
+                                        <div class="flex-1 px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">
+                                            {{ $riwayatRujukan->tindakan }}
+                                        </div>
+                                    </div>
+                                @endif
+
+                                {{-- Catatan Riwayat Rujukan --}}
+                                @if($riwayatRujukan && $riwayatRujukan->catatan)
+                                    <div class="flex flex-col sm:flex-row">
+                                        <div class="sm:w-1/3 bg-[#FAFAFA] px-4 sm:px-5 py-3 text-[11px] font-semibold text-[#7C7C7C]">
+                                            Catatan Riwayat Rujukan
+                                        </div>
+                                        <div class="flex-1 px-4 sm:px-5 py-3">
+                                            <div class="rounded-xl border border-[#E5E5E5] bg-[#F9FAFB] px-3 py-2 text-[11px] sm:text-xs text-[#4B4B4B] leading-relaxed">
+                                                {{ $riwayatRujukan->catatan }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                {{-- Catatan Rujukan (jika ada) --}}
                                 @if($rujukan->catatan_rujukan)
                                     <div class="flex flex-col sm:flex-row">
                                         <div class="sm:w-1/3 bg-[#FAFAFA] px-4 sm:px-5 py-3 text-[11px] font-semibold text-[#7C7C7C]">
@@ -260,7 +313,7 @@
                                 @endif
                             </div>
                         @else
-                            <div class="text-center py-8 space-y-3">
+                            <div class="text-center py-8 space-y-3 print-hidden">
                                 <div class="mx-auto w-12 h-12 rounded-full bg-[#F5F5F5] flex items-center justify-center text-[#BDBDBD]">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M9 11l3 3L22 4"/>
@@ -284,16 +337,19 @@
                                     </a>
                                 </div>
                             </div>
+                            <div class="hidden print:block text-center py-4 text-[#9CA3AF] italic">
+                                Belum ada data pemeriksaan dari rumah sakit
+                            </div>
                         @endif
                     </div>
                 </section>
 
                 {{-- Kartu: Resep Obat --}}
                 @if($rujukan && $resepObats->count() > 0)
-                    <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden">
+                    <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden print:shadow-none print:border-gray-300">
                         <div class="px-4 sm:px-5 py-3 border-b border-[#F0F0F0] bg-[#FAFAFA]">
                             <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D] flex items-center gap-2">
-                                <span class="w-8 h-8 rounded-full bg-[#ECFEFF] flex items-center justify-center">
+                                <span class="w-8 h-8 rounded-full bg-[#ECFEFF] flex items-center justify-center print:hidden">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#0E7490]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M10.5 20.5L5.5 15.5L15.5 5.5L20.5 10.5L10.5 20.5Z"/>
                                         <path d="M8.5 12.5L12.5 8.5"/>
@@ -348,10 +404,10 @@
                 @endif
 
                 {{-- Kartu: Kesimpulan Skrining Awal --}}
-                <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden">
+                <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden print:shadow-none print:border-gray-300">
                     <div class="px-4 sm:px-5 py-3 border-b border-[#F0F0F0] bg-[#FAFAFA]">
                         <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D] flex items-center gap-2">
-                            <span class="w-8 h-8 rounded-full bg-[#FEF3C7] flex items-center justify-center">
+                            <span class="w-8 h-8 rounded-full bg-[#FEF3C7] flex items-center justify-center print:hidden">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#D97706]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                                     <polyline points="14,2 14,8 20,8"/>
@@ -433,6 +489,21 @@
                     </div>
                 </section>
 
+                {{-- Print Footer --}}
+                <div class="hidden print:block mt-8 pt-4 border-t border-gray-300">
+                    <div class="flex justify-between items-end">
+                        <div class="text-xs text-[#7C7C7C]">
+                            <p>Dokumen ini dicetak dari sistem DeLISA</p>
+                            <p>© 2025 Dinas Kesehatan Kota Depok</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-[#7C7C7C] mb-16">Depok, {{ now()->format('d F Y') }}</p>
+                            <p class="text-xs font-semibold text-[#1D1D1D]">Petugas RS</p>
+                            <p class="text-xs text-[#7C7C7C]">(_______________________)</p>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Aksi bawah --}}
                 <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2 print-hidden">
                     <a href="{{ route('rs.skrining.index') }}"
@@ -445,17 +516,20 @@
                     </a>
 
                     <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        <button type="button" onclick="window.print()"
-                                class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] w-full sm:w-auto">
+                        {{-- Tombol Cetak PDF --}}
+                        <a href="{{ route('rs.skrining.exportPdf', $skrining->id) }}"
+                           class="inline-flex items-center justify-center gap-2 rounded-full border border-[#DC2626] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#DC2626] hover:bg-[#FEE2E2] w-full sm:w-auto">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
                                  stroke="currentColor" stroke-width="2">
-                                <path d="M6 9V2h12v7" />
-                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                                <path d="M6 14h12v8H6z" />
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14,2 14,8 20,8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10,9 9,9 8,9"/>
                             </svg>
-                            <span>Cetak</span>
-                        </button>
-
+                            <span>Unduh PDF</span>
+                        </a>
+                       
                         <a href="{{ route('rs.skrining.edit', $skrining->id) }}"
                            class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#C2185B] w-full sm:w-auto">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"

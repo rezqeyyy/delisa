@@ -266,9 +266,161 @@
                             id="domisili"
                             rows="3"
                             class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
-                            placeholder="Contoh: Jl. Margonda Raya No. xx, RT xx / RW xx"
+                            placeholder="Contoh: Jl. Margonda Raya"
                             required>{{ old('domisili') }}</textarea>
                         @error('domisili')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- === TAMBAHAN FIELD SESUAI TABEL PASIENS === --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Tempat Lahir -->
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                                Tempat Lahir
+                            </label>
+                            <input type="text"
+                                   name="tempat_lahir"
+                                   id="tempat_lahir"
+                                   class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm shadow-sm focus:border-[#E91E8C]/30"
+                                   placeholder="Contoh: Depok"
+                                   value="{{ old('tempat_lahir') }}">
+                            @error('tempat_lahir')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Tanggal Lahir -->
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                                Tanggal Lahir
+                            </label>
+                            <input type="date"
+                                   name="tanggal_lahir"
+                                   id="tanggal_lahir"
+                                   class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm shadow-sm focus:border-[#E91E8C]/30"
+                                   value="{{ old('tanggal_lahir') }}">
+                            @error('tanggal_lahir')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    {{-- Status Perkawinan --}}
+                    <div>
+                        <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                            Status Perkawinan
+                        </label>
+                        <select name="status_perkawinan" id="status_perkawinan"
+                                class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm shadow-sm focus:border-[#E91E8C]/30">
+                            <option value="">Pilih Status</option>
+                            <option value="Belum Kawin" {{ old('status_perkawinan') == 'Belum Kawin' ? 'selected' : '' }}>Belum Kawin</option>
+                            <option value="Kawin" {{ old('status_perkawinan') == 'Kawin' ? 'selected' : '' }}>Kawin</option>
+                            <option value="Cerai Hidup" {{ old('status_perkawinan') == 'Cerai Hidup' ? 'selected' : '' }}>Cerai Hidup</option>
+                            <option value="Cerai Mati" {{ old('status_perkawinan') == 'Cerai Mati' ? 'selected' : '' }}>Cerai Mati</option>
+                        </select>
+                        @error('status_perkawinan')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- RT / RW / Kode Pos --}}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">RT</label>
+                            <input type="text" name="rt" id="rt"
+                                   class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm"
+                                   value="{{ old('rt') }}" placeholder="Contoh: 03">
+                            @error('rt')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">RW</label>
+                            <input type="text" name="rw" id="rw"
+                                   class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm"
+                                   value="{{ old('rw') }}" placeholder="Contoh: 02">
+                            @error('rw')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">Kode Pos</label>
+                            <input type="text" name="kode_pos" id="kode_pos"
+                                   class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm"
+                                   value="{{ old('kode_pos') }}" placeholder="Contoh: 16455">
+                            @error('kode_pos')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    {{-- Pekerjaan & Pendidikan --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">Pekerjaan</label>
+                            <input type="text" name="pekerjaan" id="pekerjaan"
+                                   class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm"
+                                   value="{{ old('pekerjaan') }}" placeholder="Contoh: Ibu Rumah Tangga">
+                            @error('pekerjaan')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">Pendidikan</label>
+                            <input type="text" name="pendidikan" id="pendidikan"
+                                   class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm"
+                                   value="{{ old('pendidikan') }}" placeholder="Contoh: S1">
+                            @error('pendidikan')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    {{-- Pembiayaan Kesehatan & Golongan Darah --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">Pembiayaan Kesehatan</label>
+                            <select name="pembiayaan_kesehatan" id="pembiayaan_kesehatan"
+                                    class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm">
+                                <option value="">Pilih Pembiayaan</option>
+                                <option value="UMUM" {{ old('pembiayaan_kesehatan') == 'UMUM' ? 'selected' : '' }}>UMUM</option>
+                                <option value="BPJS" {{ old('pembiayaan_kesehatan') == 'BPJS' ? 'selected' : '' }}>BPJS</option>
+                                <option value="INTERNASIONAL" {{ old('pembiayaan_kesehatan') == 'INTERNASIONAL' ? 'selected' : '' }}>INTERNASIONAL</option>
+                                <option value="LAINNYA" {{ old('pembiayaan_kesehatan') == 'LAINNYA' ? 'selected' : '' }}>LAINNYA</option>
+                            </select>
+                            @error('pembiayaan_kesehatan')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-semibold text-[#666666] mb-1">Golongan Darah</label>
+                            <select name="golongan_darah" id="golongan_darah"
+                                    class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm">
+                                <option value="">Pilih Golongan Darah</option>
+                                <option value="A" {{ old('golongan_darah') == 'A' ? 'selected' : '' }}>A</option>
+                                <option value="B" {{ old('golongan_darah') == 'B' ? 'selected' : '' }}>B</option>
+                                <option value="AB" {{ old('golongan_darah') == 'AB' ? 'selected' : '' }}>AB</option>
+                                <option value="O" {{ old('golongan_darah') == 'O' ? 'selected' : '' }}>O</option>
+                            </select>
+                            @error('golongan_darah')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    {{-- No JKN --}}
+                    <div>
+                        <label class="block text-[11px] font-semibold text-[#666666] mb-1">No JKN</label>
+                        <input type="text" name="no_jkn" id="no_jkn"
+                               class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm"
+                               value="{{ old('no_jkn') }}" placeholder="Contoh: 1234567890123456">
+                        @error('no_jkn')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
                     </div>
@@ -304,5 +456,12 @@
     </div>
 
     @vite(['resources/js/rs/cek-nik.js'])
+    {{-- gunakan wilayah.js yg sudah ada untuk meng-handle kedua wrapper:
+        - wilayah-wrapper (domisili)
+        - wilayah-pelayanan-wrapper (pelayanan)
+        wilayah.js kemungkinan perlu sedikit modifikasi agar dapat initialize dua wrapper berbeda
+        Jika wilayah.js saat ini hanya mencari elemen berdasarkan id provinsi/kabupaten/kecamatan/kelurahan,
+        maka gunakan id baru (pprovinsi, pkabupaten, pkecamatan, pwilayah) dan pastikan script juga meng-handle keduanya.
+    --}}
 </body>
 </html>
