@@ -590,18 +590,18 @@
                                 aria-label="Bersihkan pencarian">×</button>
                         </form>
 
+                        {{-- Tombol membuka modal filter data PE --}}
+                        <button id="btnPeFilter" type="button"
+                            class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm">
+                            Filter
+                        </button>
+
                         {{-- Tombol Unduh Data (menggunakan filter query yang sama) --}}
                         {{-- TOMBOL UNDUH (PAKAI FILTER YANG SAMA) --}}
                         <a href="{{ route('dinkes.dashboard.pe-export', request()->query()) }}"
                             class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm whitespace-nowrap">
                             Unduh Data
                         </a>
-
-                        {{-- Tombol membuka modal filter data PE --}}
-                        <button id="btnPeFilter" type="button"
-                            class="border border-[#CAC7C7] rounded-full px-4 py-1 text-sm">
-                            Filter
-                        </button>
                     </div>
 
                 </div>

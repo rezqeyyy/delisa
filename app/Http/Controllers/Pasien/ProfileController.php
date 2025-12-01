@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use App\Models\Pasien;
 
 /**
@@ -51,7 +52,7 @@ class ProfileController extends Controller
             'email'        => ['nullable', 'email', 'unique:users,email,' . $user->id],
             'nik'          => ['nullable', 'string', 'max:32'],
             'address'      => ['nullable', 'string', 'max:255'],
-            'phone'        => ['nullable', 'string', 'max:32'],
+            'phone'        => ['required', 'string', 'max:32', Rule::unique('users', 'phone')->ignore($user->id)],
             'photo'        => [
                 'nullable',
                 'file',

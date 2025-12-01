@@ -124,10 +124,11 @@
                             </label>
                             <div class="flex gap-2">
                                 <input
-                                    type="text"
+                                    type="tel"
                                     name="nik"
                                     id="nik"
                                     maxlength="16"
+                                    inputmode="numeric" pattern="[0-9]*"
                                     class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
                                     placeholder="Masukkan NIK 16 digit"
                                     value="{{ old('nik') }}"

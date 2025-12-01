@@ -251,6 +251,7 @@ class RoleRegistrationController extends Controller
         $data = $r->validate([
             'nik'          => 'required|string|size:16|unique:pasiens,nik',
             'nama_lengkap' => 'required|string|min:3',
+            'phone'        => 'required|string|max:30|unique:users,phone',
         ]);
 
         $roleId = $this->roleId('pasien');
@@ -267,6 +268,7 @@ class RoleRegistrationController extends Controller
                 'name'       => $data['nama_lengkap'],
                 'email'      => null,
                 'password'   => null,
+                'phone'      => $data['phone'],
                 'role_id'    => $roleId,
                 'status'     => 1,
                 'created_at' => now(),

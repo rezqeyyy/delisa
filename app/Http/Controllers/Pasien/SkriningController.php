@@ -337,6 +337,7 @@ class SkriningController extends Controller
                 ->with('error', 'Skrining sudah diajukan rujukan dan tidak dapat dihapus.');
         }
 
+        //DB::transaction -> operasi database yang saling berkaitan dan harus dijalankan secara aman serta konsisten.
         DB::transaction(function () use ($skrining) {
             DB::table('jawaban_kuisioners')->where('skrining_id', $skrining->id)->delete();
             DB::table('riwayat_kehamilans')->where('skrining_id', $skrining->id)->delete();

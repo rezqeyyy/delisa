@@ -87,6 +87,14 @@
                 @csrf
                 @method('PUT')
 
+                @if ($errors->any())
+                    <div class="mt-4 p-4 rounded-md bg-red-50 border border-red-200 text-red-700">
+                        @foreach ($errors->all() as $error)
+                            <p class="text-sm">{{ $error }}</p>
+                        @endforeach
+                    </div>
+                @endif
+
                 <div class="w-full max-w-xl md:max-w-5xl mx-auto">
                     <label class="block text-sm font-medium mb-2">Nama</label>
                     <input type="text" name="name" value="{{ old('name', $user->name) }}"
@@ -95,7 +103,7 @@
 
                 <div class="w-full max-w-xl md:max-w-5xl mx-auto">
                     <label class="block text-sm font-medium mb-2">NIK</label>
-                    <input type="text" name="nik" value="{{ old('nik', $pasien->nik ?? '') }}"
+                    <input type="tel" name="nik" value="{{ old('nik', $pasien->nik ?? '') }}" maxlength="16" inputmode="numeric" pattern="[0-9]*"
                         class="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-pink-200 focus:outline-none">
                 </div>
 
@@ -113,7 +121,7 @@
 
                 <div class="w-full max-w-xl md:max-w-5xl mx-auto">
                     <label class="block text-sm font-medium mb-2">Nomor Telepon</label>
-                    <input type="text" name="phone" value="{{ old('phone', $user->phone) }}"
+                    <input type="tel" name="phone" value="{{ old('phone', $user->phone) }}" required inputmode="numeric" pattern="[0-9]*"
                         class="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-pink-200 focus:outline-none">
                 </div>
 

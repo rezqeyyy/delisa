@@ -228,7 +228,7 @@
                             - jika tidak → bg putih + border abu + hover abu muda.
                         --}}
                         class="dm-tab px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium {{ $tab === 'bidan' ? 'bg-[#B9257F] text-white' : 'bg-white border border-[#D9D9D9] text-[#4B4B4B] hover:bg-[#F5F5F5]' }}">
-                        Bidan PKM
+                        Bidan Mandiri
                     </a>
 
                     {{-- Tab: Rumah Sakit --}}

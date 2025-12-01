@@ -37,7 +37,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nomor Telepon PIC</label>
-                        <input name="phone" type="text" value="{{ old('phone') }}"
+                        <input name="phone" type="tel" inputmode="numeric" pattern="[0-9]*" value="{{ old('phone') }}"
                             placeholder="Masukan Nomor Telp"
                             class="mt-1 w-full px-4 py-3 rounded-full border @error('phone') @else border-[#D91A8B] @enderror focus:outline-none">
                     </div>
