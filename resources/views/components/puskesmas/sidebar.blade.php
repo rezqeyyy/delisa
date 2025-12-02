@@ -42,10 +42,10 @@
                     <img src="{{ asset('icons/Iconly/Regular/Light/Document.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Rujukan">
                     <span>Rujukan</span>
                 </a>
-
                 <!-- MENU LAPORAN DIHAPUS DARI SINI -->
 
-                <a href="{{ route('puskesmas.pasien-nifas') }}" class="{{ $is('puskesmas.pasien-nifas*') ? $active : $idle }}">
+                <!-- ✅ PERBAIKAN: TAG <a> YANG BENAR -->
+                <a href="{{ route('puskesmas.pasien-nifas.index') }}" class="{{ $is('puskesmas.pasien-nifas*') ? $active : $idle }}">
                     <img src="{{ asset('icons/Iconly/Regular/Light/2 User.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Pasien Nifas">
                     <span>Pasien Nifas</span>
                 </a>

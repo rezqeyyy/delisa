@@ -1,223 +1,240 @@
 <?php
-// app/Http/Controllers/Puskesmas/RujukanController.php
-
 namespace App\Http\Controllers\Puskesmas;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
-/**
- * Controller untuk menangani proses rujukan pasien dari Puskesmas ke Rumah Sakit.
- * Meliputi pencarian rumah sakit, pengajuan rujukan, daftar rujukan, detail rujukan, dan pengecekan rujukan aktif.
- */
 class RujukanController extends Controller
 {
     /**
-     * Endpoint AJAX untuk mencari rumah sakit berdasarkan input pencarian.
-     * Digunakan untuk mengisi dropdown rumah sakit secara dinamis.
-     *
-     * @param Request $request Request yang berisi parameter pencarian 'q'.
-     * @return \Illuminate\Http\JsonResponse
+     * Cari rumah sakit
      */
     public function searchRS(Request $request)
     {
         try {
-            // Catatan: Mengambil parameter pencarian 'q' dari request.
             $search = $request->get('q', '');
-            
             $query = DB::table('rumah_sakits');
             
-            // Catatan: Jika ada input pencarian, tambahkan kondisi pencarian berdasarkan nama, kecamatan, atau kelurahan.
             if (!empty($search)) {
-                $query->where(function($q) use ($search) {
-                    $q->where('nama', 'like', "%{$search}%")
-                      ->orWhere('kecamatan', 'like', "%{$search}%")
-                      ->orWhere('kelurahan', 'like', "%{$search}%");
-                });
+                $query->where('nama', 'like', "%{$search}%");
             }
             
-            // Catatan: SESUAIKAN DENGAN STRUKTUR TABEL YANG ADA
-            // Ambil kolom yang diperlukan untuk ditampilkan di dropdown.
-            $rumahSakits = $query->select('id', 'nama', 'lokasi as alamat', 'kecamatan', 'kelurahan')->get();
-            
-            // Catatan: Kembalikan hasil dalam bentuk JSON.
-            return response()->json($rumahSakits);
-            
+            return response()->json($query->select('id', 'nama')->get());
         } catch (\Exception $e) {
-            // Catatan: Log error jika terjadi exception.
-            Log::error('RS Search Error: ' . $e->getMessage());
-            // Catatan: Kembalikan array kosong dengan status 500 (Internal Server Error).
             return response()->json([], 500);
         }
     }
 
     /**
-     * Mengajukan rujukan baru dari detail skrining ke rumah sakit tertentu.
-     *
-     * @param Request $request Request yang berisi data rujukan (rs_id, catatan_rujukan).
-     * @param int $skriningId ID dari skrining yang akan dirujuk.
-     * @return \Illuminate\Http\JsonResponse
+     * Ajukan rujukan
      */
     public function ajukanRujukan(Request $request, $skriningId)
     {
-        // Catatan: Validasi input dari form rujukan.
-        $request->validate([
-            'rs_id' => 'required|exists:rumah_sakits,id', // Harus ada dan sesuai dengan ID di tabel rumah_sakits.
-            'catatan_rujukan' => 'nullable|string' // Opsional, harus berupa string.
-        ]);
+        try {
+            $request->validate([
+                'rs_id' => 'required|exists:rumah_sakits,id',
+                'catatan_rujukan' => 'nullable|string'
+            ]);
 
-        // Catatan: Ambil data skrining untuk mendapatkan pasien_id.
-        $skrining = DB::table('skrinings')
-            ->where('id', $skriningId)
-            ->first();
+            $skrining = DB::table('skrinings')->where('id', $skriningId)->first();
+            
+            if (!$skrining) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data skrining tidak ditemukan'
+                ], 404);
+            }
 
-        // Catatan: Periksa apakah skrining ditemukan.
-        if (!$skrining) {
+            // Cek rujukan aktif
+            $existing = DB::table('rujukan_rs')
+                ->where('skrining_id', $skriningId)
+                ->where('done_status', 0)
+                ->exists();
+                
+            if ($existing) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pasien sudah memiliki rujukan aktif'
+                ], 400);
+            }
+
+            // Insert rujukan baru
+            $rujukanId = DB::table('rujukan_rs')->insertGetId([
+                'pasien_id' => $skrining->pasien_id,
+                'rs_id' => $request->rs_id,
+                'skrining_id' => $skriningId,
+                'done_status' => 0,
+                'catatan_rujukan' => $request->catatan_rujukan,
+                'is_rujuk' => 1,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rujukan berhasil diajukan',
+                'rujukan_id' => $rujukanId,
+                'redirect_url' => route('puskesmas.rujukan.index')
+            ]);
+            
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Data skrining tidak ditemukan'
-            ], 404);
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Catatan: Cek apakah sudah ada rujukan aktif untuk skrining ini.
-        $existingRujukan = DB::table('rujukan_rs')
-            ->where('skrining_id', $skriningId)
-            ->where('done_status', false) // Belum selesai
-            ->first();
-
-        // Catatan: Jika sudah ada rujukan aktif, kembalikan error.
-        if ($existingRujukan) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pasien ini sudah memiliki rujukan aktif'
-            ], 400);
-        }
-
-        // Catatan: Buat rujukan baru - SESUAI STRUCTURE EXISTING.
-        $rujukanId = DB::table('rujukan_rs')->insertGetId([
-            'pasien_id' => $skrining->pasien_id, // dari data skrining
-            'rs_id' => $request->rs_id, // sesuai input form
-            'skrining_id' => $skriningId,
-            'done_status' => false, // default false = belum selesai
-            'catatan_rujukan' => $request->input('catatan_rujukan') ?: null,
-            'is_rujuk' => true, // true = dirujuk
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
-
-        // Catatan: TODO: Trigger notifikasi ke RS
-        // $this->sendNotificationToRS($rujukanId);
-
-        // Catatan: Kembalikan respons sukses.
-        return response()->json([
-            'success' => true,
-            'message' => 'Rujukan berhasil diajukan',
-            'rujukan_id' => $rujukanId
-        ]);
     }
 
     /**
-     * Menampilkan daftar semua rujukan yang diajukan oleh Puskesmas.
-     *
-     * @return \Illuminate\Contracts\View\View
+     * Tampilkan daftar rujukan - VERSI SIMPLE
      */
     public function index()
     {
         try {
-            // Catatan: Ambil daftar rujukan beserta informasi pasien, user, skrining, dan rumah sakit.
+            // AMBIL DATA DENGAN CARA SEDERHANA
             $rujukans = DB::table('rujukan_rs')
-                ->join('skrinings', 'rujukan_rs.skrining_id', '=', 'skrinings.id')
-                ->join('pasiens', 'rujukan_rs.pasien_id', '=', 'pasiens.id')
-                ->join('users', 'pasiens.user_id', '=', 'users.id')
-                ->join('rumah_sakits', 'rujukan_rs.rs_id', '=', 'rumah_sakits.id')
-                ->where('rujukan_rs.is_rujuk', true) // Hanya rujukan yang benar-benar diajukan
-                ->select(
-                    'rujukan_rs.*',
-                    'users.name as nama_pasien', // ✅ dari users.name
-                    'pasiens.nik',
-                    'rumah_sakits.nama as nama_rs',
-                    'skrinings.kesimpulan',
-                    'skrinings.created_at as tanggal_skrining'
-                )
-                ->orderBy('rujukan_rs.created_at', 'desc') // Urutkan dari yang terbaru
+                ->where('is_rujuk', 1)
+                ->orderBy('created_at', 'desc')
                 ->get();
+            
+            // JIKA ADA DATA, AMBIL INFORMASI TAMBAHAN
+            if ($rujukans->isNotEmpty()) {
+                foreach ($rujukans as $rujukan) {
+                    // Ambil nama pasien
+                    $pasien = DB::table('pasiens')
+                        ->join('users', 'pasiens.user_id', '=', 'users.id')
+                        ->where('pasiens.id', $rujukan->pasien_id)
+                        ->select('users.name as nama_pasien', 'pasiens.nik')
+                        ->first();
+                    
+                    $rujukan->nama_pasien = $pasien->nama_pasien ?? 'Tidak diketahui';
+                    $rujukan->nik = $pasien->nik ?? '-';
+                    
+                    // Ambil nama rumah sakit
+                    $rs = DB::table('rumah_sakits')
+                        ->where('id', $rujukan->rs_id)
+                        ->select('nama as nama_rs')
+                        ->first();
+                    
+                    $rujukan->nama_rs = $rs->nama_rs ?? 'Tidak diketahui';
+                }
+            }
 
-            // Catatan: Kirim data rujukan ke view untuk ditampilkan.
             return view('puskesmas.rujukan.index', compact('rujukans'));
             
         } catch (\Exception $e) {
-            // Catatan: Log error jika terjadi exception.
-            Log::error('Rujukan Index Error: ' . $e->getMessage());
-            // Catatan: Kembali ke halaman sebelumnya dengan pesan error.
             return back()->with('error', 'Gagal memuat data rujukan');
         }
     }
 
     /**
-     * Menampilkan detail dari satu rujukan berdasarkan ID.
-     *
-     * @param int $id ID dari rujukan.
-     * @return \Illuminate\Contracts\View\View
+     * Tampilkan detail rujukan - VERSI SIMPLE & PASTI BEKERJA
      */
     public function show($id)
     {
         try {
-            // Catatan: Ambil detail rujukan beserta informasi lengkap pasien, user, skrining, dan rumah sakit.
+            // 1. AMBIL DATA DASAR RUJUKAN
             $rujukan = DB::table('rujukan_rs')
-                ->join('skrinings', 'rujukan_rs.skrining_id', '=', 'skrinings.id')
-                ->join('pasiens', 'rujukan_rs.pasien_id', '=', 'pasiens.id')
-                ->join('users', 'pasiens.user_id', '=', 'users.id')
-                ->join('rumah_sakits', 'rujukan_rs.rs_id', '=', 'rumah_sakits.id')
-                ->where('rujukan_rs.id', $id)
-                ->select(
-                    'rujukan_rs.*',
-                    'users.name as nama_pasien',        // ✅ dari users.name
-                    'pasiens.nik',
-                    'pasiens.tanggal_lahir',
-                    'users.address as alamat',          // ✅ dari users.address
-                    'users.phone as no_telepon',        // ✅ dari users.phone
-                    'rumah_sakits.nama as nama_rs',
-                    'rumah_sakits.lokasi as alamat_rs', // ✅ dari rumah_sakits.lokasi
-                    'rumah_sakits.telepon as telepon_rs',
-                    'skrinings.kesimpulan',
-                    'skrinings.hasil_akhir'
-                )
+                ->where('id', $id)
                 ->first();
-
-            // Catatan: Jika rujukan tidak ditemukan, tampilkan error 404.
+            
             if (!$rujukan) {
-                abort(404, 'Data rujukan tidak ditemukan');
+                return response()->view('errors.404', [], 404);
             }
-
-            // Catatan: Kirim detail rujukan ke view untuk ditampilkan.
+            
+            // 2. AMBIL DATA PASIEN
+            $pasien = DB::table('pasiens')
+                ->join('users', 'pasiens.user_id', '=', 'users.id')
+                ->where('pasiens.id', $rujukan->pasien_id)
+                ->select('users.name as nama_pasien', 'pasiens.nik', 'pasiens.tanggal_lahir', 'users.address as alamat', 'users.phone as no_telepon')
+                ->first();
+            
+            if ($pasien) {
+                $rujukan->nama_pasien = $pasien->nama_pasien;
+                $rujukan->nik = $pasien->nik;
+                $rujukan->tanggal_lahir = $pasien->tanggal_lahir;
+                $rujukan->alamat = $pasien->alamat;
+                $rujukan->no_telepon = $pasien->no_telepon;
+            }
+            
+            // 3. AMBIL DATA RUMAH SAKIT
+            $rumahSakit = DB::table('rumah_sakits')
+                ->where('id', $rujukan->rs_id)
+                ->select('nama as nama_rs', 'lokasi as alamat_rs', 'telepon as telepon_rs')
+                ->first();
+            
+            if ($rumahSakit) {
+                $rujukan->nama_rs = $rumahSakit->nama_rs;
+                $rujukan->alamat_rs = $rumahSakit->alamat_rs;
+                $rujukan->telepon_rs = $rumahSakit->telepon_rs;
+            }
+            
+            // 4. AMBIL DATA SKRINING
+            $skrining = DB::table('skrinings')
+                ->where('id', $rujukan->skrining_id)
+                ->select('kesimpulan', 'hasil_akhir')
+                ->first();
+            
+            if ($skrining) {
+                $rujukan->kesimpulan = $skrining->kesimpulan;
+                $rujukan->hasil_akhir = $skrining->hasil_akhir;
+            }
+            
             return view('puskesmas.rujukan.show', compact('rujukan'));
             
         } catch (\Exception $e) {
-            // Catatan: Log error jika terjadi exception.
-            Log::error('Rujukan Show Error: ' . $e->getMessage());
-            // Catatan: Tampilkan error 500.
-            abort(500, 'Gagal memuat detail rujukan');
+            return response()->view('errors.500', ['message' => $e->getMessage()], 500);
         }
     }
 
     /**
-     * Memeriksa apakah skrining tertentu sudah memiliki rujukan aktif.
-     * Digunakan untuk mencegah pengajuan rujukan ganda.
-     *
-     * @param int $skriningId ID dari skrining.
-     * @return bool
+     * Update status rujukan
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'done_status' => 'required|boolean'
+            ]);
+            
+            $updated = DB::table('rujukan_rs')
+                ->where('id', $id)
+                ->update([
+                    'done_status' => $request->done_status ? 1 : 0,
+                    'updated_at' => now()
+                ]);
+            
+            if (!$updated) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data tidak ditemukan'
+                ], 404);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Status berhasil diperbarui',
+                'status_text' => $request->done_status ? 'Selesai' : 'Menunggu Konfirmasi RS'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan'
+            ], 500);
+        }
+    }
+
+    /**
+     * Cek rujukan aktif
      */
     public function checkExistingRujukan($skriningId)
     {
-        // Catatan: Cek apakah ada rujukan untuk skrining ini yang statusnya aktif (belum selesai dan benar-benar dirujuk).
-        $hasReferral = DB::table('rujukan_rs')
+        return DB::table('rujukan_rs')
             ->where('skrining_id', $skriningId)
-            ->where('done_status', false) // Belum selesai
-            ->where('is_rujuk', true) // Benar-benar dirujuk
+            ->where('done_status', 0)
+            ->where('is_rujuk', 1)
             ->exists();
-
-        return $hasReferral;
     }
 }

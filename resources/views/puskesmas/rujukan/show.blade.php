@@ -3,118 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puskesmas — Detail Rujukan</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+    <title>Detail Rujukan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#FFF7FC] min-h-screen">
-    <div class="flex min-h-screen">
-        <x-puskesmas.sidebar />
-        
-        <main class="flex-1 w-full xl:ml-[260px] p-6">
-            <!-- Header dengan tombol kembali -->
-            <div class="mb-6 flex items-center justify-between">
+<body class="bg-gray-50">
+    <div class="container mx-auto p-4">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h1 class="text-2xl font-bold mb-4">Detail Rujukan</h1>
+            
+            @if(isset($rujukan) && $rujukan)
+            <div class="space-y-4">
+                <!-- Informasi Dasar -->
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-800">Detail Rujukan</h1>
-                    <p class="text-gray-600">Informasi lengkap rujukan pasien</p>
-                </div>
-                <a href="{{ route('puskesmas.rujukan.index') }}" 
-                   class="px-4 py-2 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-sm hover:bg-gray-50">
-                    ← Kembali ke List
-                </a>
-            </div>
-
-            @if($rujukan)
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Informasi Pasien -->
-                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
-                    <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Informasi Pasien</h2>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-[#7C7C7C]">Nama Pasien</span>
-                            <span class="font-medium text-[#1D1D1D]">{{ $rujukan->nama_pasien }}</span>
+                    <h2 class="text-lg font-semibold mb-2">Informasi Rujukan</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p><span class="font-medium">ID:</span> {{ $rujukan->id }}</p>
+                            <p><span class="font-medium">Status:</span> 
+                                <span class="px-2 py-1 rounded {{ $rujukan->done_status ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
+                                    {{ $rujukan->done_status ? 'Selesai' : 'Menunggu' }}
+                                </span>
+                            </p>
+                            <p><span class="font-medium">Tanggal:</span> {{ $rujukan->created_at }}</p>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-[#7C7C7C]">NIK</span>
-                            <span class="font-medium text-[#1D1D1D]">{{ $rujukan->nik }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-[#7C7C7C]">Tanggal Lahir</span>
-                            <span class="font-medium text-[#1D1D1D]">{{ $rujukan->tanggal_lahir ? \Carbon\Carbon::parse($rujukan->tanggal_lahir)->format('d/m/Y') : '-' }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-[#7C7C7C]">Alamat</span>
-                            <span class="font-medium text-[#1D1D1D] text-right">{{ $rujukan->alamat ?? '-' }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-[#7C7C7C]">No Telepon</span>
-                            <span class="font-medium text-[#1D1D1D]">{{ $rujukan->no_telepon ?? '-' }}</span>
+                        <div>
+                            <p><span class="font-medium">Pasien ID:</span> {{ $rujukan->pasien_id }}</p>
+                            <p><span class="font-medium">RS ID:</span> {{ $rujukan->rs_id }}</p>
+                            <p><span class="font-medium">Skrining ID:</span> {{ $rujukan->skrining_id }}</p>
                         </div>
                     </div>
                 </div>
-
-                <!-- Informasi Rujukan -->
-                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
-                    <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Informasi Rujukan</h2>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-[#7C7C7C]">Rumah Sakit Tujuan</span>
-                            <span class="font-medium text-[#1D1D1D]">{{ $rujukan->nama_rs }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-[#7C7C7C]">Alamat RS</span>
-                            <span class="font-medium text-[#1D1D1D] text-right">{{ $rujukan->alamat_rs ?? '-' }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-[#7C7C7C]">Telepon RS</span>
-                            <span class="font-medium text-[#1D1D1D]">{{ $rujukan->telepon_rs ?? '-' }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-[#7C7C7C]">Tanggal Rujukan</span>
-                            <span class="font-medium text-[#1D1D1D]">{{ \Carbon\Carbon::parse($rujukan->created_at)->format('d/m/Y H:i') }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-[#7C7C7C]">Status</span>
-                            @php
-                                $statusClass = $rujukan->done_status ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-                                $statusText = $rujukan->done_status ? 'Selesai' : 'Menunggu Konfirmasi RS';
-                            @endphp
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $statusClass }}">
-                                {{ $statusText }}
-                            </span>
-                        </div>
+                
+                <!-- Data Pasien -->
+                @if(isset($rujukan->nama_pasien))
+                <div>
+                    <h2 class="text-lg font-semibold mb-2">Data Pasien</h2>
+                    <p><span class="font-medium">Nama:</span> {{ $rujukan->nama_pasien }}</p>
+                    <p><span class="font-medium">NIK:</span> {{ $rujukan->nik ?? '-' }}</p>
+                    <p><span class="font-medium">Alamat:</span> {{ $rujukan->alamat ?? '-' }}</p>
+                    <p><span class="font-medium">Telepon:</span> {{ $rujukan->no_telepon ?? '-' }}</p>
+                </div>
+                @endif
+                
+                <!-- Data Rumah Sakit -->
+                @if(isset($rujukan->nama_rs))
+                <div>
+                    <h2 class="text-lg font-semibold mb-2">Rumah Sakit Tujuan</h2>
+                    <p><span class="font-medium">Nama:</span> {{ $rujukan->nama_rs }}</p>
+                    <p><span class="font-medium">Alamat:</span> {{ $rujukan->alamat_rs ?? '-' }}</p>
+                    <p><span class="font-medium">Telepon:</span> {{ $rujukan->telepon_rs ?? '-' }}</p>
+                </div>
+                @endif
+                
+                <!-- Catatan -->
+                <div>
+                    <h2 class="text-lg font-semibold mb-2">Catatan</h2>
+                    <div class="bg-gray-100 p-3 rounded">
+                        {{ $rujukan->catatan_rujukan ?? 'Tidak ada catatan' }}
                     </div>
                 </div>
-
-                <!-- Catatan Rujukan -->
-                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6 lg:col-span-2">
-                    <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Catatan Rujukan</h2>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <p class="text-[#1D1D1D]">{{ $rujukan->catatan_rujukan ?? 'Tidak ada catatan' }}</p>
-                    </div>
-                </div>
-
-                <!-- Data Skrining -->
-                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6 lg:col-span-2">
-                    <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Data Skrining Awal</h2>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-[#7C7C7C]">Kesimpulan Skrining</span>
-                            <span class="font-medium text-[#1D1D1D]">{{ $rujukan->kesimpulan ?? '-' }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-[#7C7C7C]">Hasil Detail</span>
-                            <span class="font-medium text-[#1D1D1D] text-right">{{ $rujukan->hasil_akhir ?? '-' }}</span>
-                        </div>
-                    </div>
+                
+                <!-- Tombol -->
+                <div class="pt-4 flex space-x-3">
+                    <a href="{{ route('puskesmas.rujukan.index') }}" 
+                       class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        ← Kembali
+                    </a>
+                    
+                    @if(!$rujukan->done_status)
+                    <button onclick="tandaiSelesai()"
+                            class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                        ✅ Tandai Selesai
+                    </button>
+                    @endif
                 </div>
             </div>
             @else
-            <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6 text-center">
-                <p class="text-gray-500">Data rujukan tidak ditemukan</p>
+            <div class="text-red-600">
+                <p>Data rujukan tidak ditemukan</p>
             </div>
             @endif
-        </main>
+        </div>
     </div>
+
+    @if(isset($rujukan) && !$rujukan->done_status)
+    <script>
+    function tandaiSelesai() {
+        if(confirm('Tandai rujukan ini sebagai selesai?')) {
+            fetch('/puskesmas/rujukan/{{ $rujukan->id }}/update-status', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ done_status: true })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    alert(data.message);
+                    location.reload();
+                }
+            });
+        }
+    }
+    </script>
+    @endif
 </body>
 </html>

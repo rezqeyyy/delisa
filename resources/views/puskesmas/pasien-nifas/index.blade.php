@@ -86,76 +86,151 @@
                         </div>
                     </div>
 
-                    <!-- Table dengan 7 Kolom -->
+                    <!-- Table -->
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="text-[#7C7C7C] bg-[#FAFAFA]">
                                 <tr class="text-left">
-                                    <th class="px-4 py-3 font-semibold">ID PASIEN</th>
+                                    <th class="px-4 py-3 font-semibold">NO</th>
                                     <th class="px-4 py-3 font-semibold">NAMA PASIEN</th>
-                                    <th class="px-4 py-3 font-semibold">TANGGAL</th>
+                                    <th class="px-4 py-3 font-semibold">TANGGAL MULAI NIFAS</th>
                                     <th class="px-4 py-3 font-semibold">ALAMAT</th>
-                                    <th class="px-4 py-3 font-semibold">NO. TELP</th>
-                                    <th class="px-4 py-3 font-semibold">PENGINGAT</th>
+                                    <th class="px-4 py-3 font-semibold">RUMAH SAKIT</th>
+                                    <th class="px-4 py-3 font-semibold">STATUS KF</th>
                                     <th class="px-4 py-3 font-semibold">ACTION</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#E9E9E9]">
-                                @forelse($pasienNifas as $pasien)
+                                @forelse($pasienNifas as $item)
                                 <tr class="hover:bg-[#FAFAFA]">
-    <!-- ID PASIEN -->
-    <td class="px-4 py-3 font-medium text-[#1D1D1D]">
-        #{{ $pasien->pasien_id ?? 'N/A' }}
-    </td>
-    
-    <!-- NAMA PASIEN - Gunakan NIK karena tidak ada kolom nama -->
-    <td class="px-4 py-3 font-medium text-[#1D1D1D]">
-        {{ $pasien->nik ?? 'N/A' }}
-    </td>
-    
-    <!-- TANGGAL MULAI NIFAS -->
-    <td class="px-4 py-3 text-[#7C7C7C]">
-        @if(isset($pasien->tanggal))
-            {{ \Carbon\Carbon::parse($pasien->tanggal)->format('d/m/Y') }}
-        @else
-            N/A
-        @endif
-    </td>
-    
-    <!-- ALAMAT -->
-    <td class="px-4 py-3 text-[#7C7C7C] max-w-xs truncate">
-        {{ $pasien->alamat ?? $pasien->PKabupaten ?? 'N/A' }}
-    </td>
-    
-    <!-- NO. TELP - Tidak ada data, jadi kosong -->
-    <td class="px-4 py-3 text-[#7C7C7C]">
-        -
-    </td>
-    
-    <!-- PENGINGAT -->
-    <td class="px-4 py-3">
-        <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-[#FFC400] text-[#1D1D1D]">
-            Belum KFI
-        </span>
-    </td>
-    
-    <!-- ACTION -->
-    <td class="px-4 py-3">
-        <div class="flex items-center gap-2">
-            <button class="p-1.5 rounded-lg border border-[#D9D9D9] hover:bg-[#F5F5F5] transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#7C7C7C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-            </button>
-            <button class="p-1.5 rounded-lg border border-[#D9D9D9] hover:bg-[#F5F5F5] transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#7C7C7C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-            </button>
-        </div>
-    </td>
-</tr>
+                                    <!-- NO -->
+                                    <td class="px-4 py-3 text-[#7C7C7C]">
+                                        {{ $loop->iteration + (($pasienNifas->currentPage() - 1) * $pasienNifas->perPage()) }}
+                                    </td>
+                                    
+                                    <!-- NAMA PASIEN -->
+                                    <td class="px-4 py-3 font-medium text-[#1D1D1D]">
+                                        {{ $item->pasien->user->name ?? 'N/A' }}
+                                    </td>
+                                    
+                                    <!-- TANGGAL MULAI NIFAS -->
+                                    <td class="px-4 py-3 text-[#7C7C7C]">
+                                        @if($item->tanggal_mulai_nifas)
+                                            {{ \Carbon\Carbon::parse($item->tanggal_mulai_nifas)->format('d/m/Y') }}
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
+                                    
+                                    <!-- ALAMAT -->
+                                    <td class="px-4 py-3 text-[#7C7C7C] max-w-xs truncate">
+                                        {{ $item->pasien->PKecamatan ?? $item->pasien->PKabupaten ?? 'N/A' }}
+                                    </td>
+                                    
+                                    <!-- RUMAH SAKIT -->
+                                    <td class="px-4 py-3 text-[#7C7C7C]">
+                                        {{ $item->rs->nama ?? 'N/A' }}
+                                    </td>
+                                    
+                                    <!-- STATUS KF -->
+                                    <td class="px-4 py-3">
+                                        @php
+                                            $kf1Status = $item->getKfStatus(1);
+                                            $kf2Status = $item->getKfStatus(2);
+                                            $kf3Status = $item->getKfStatus(3);
+                                            
+                                            // Tentukan badge warna berdasarkan status terburuk
+                                            if($kf1Status == 'terlambat' || $kf2Status == 'terlambat' || $kf3Status == 'terlambat') {
+                                                $badgeColor = 'bg-red-100 text-red-800';
+                                                $badgeText = 'Ada KF Terlambat';
+                                            } elseif($kf1Status == 'dalam_periode' || $kf2Status == 'dalam_periode' || $kf3Status == 'dalam_periode') {
+                                                $badgeColor = 'bg-amber-100 text-amber-800';
+                                                $badgeText = 'Perlu KF';
+                                            } elseif($kf1Status == 'selesai' && $kf2Status == 'selesai' && $kf3Status == 'selesai') {
+                                                $badgeColor = 'bg-green-100 text-green-800';
+                                                $badgeText = 'Semua KF Selesai';
+                                            } else {
+                                                $badgeColor = 'bg-gray-100 text-gray-800';
+                                                $badgeText = 'Menunggu';
+                                            }
+                                        @endphp
+                                        <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $badgeColor }}">
+                                            {{ $badgeText }}
+                                        </span>
+                                    </td>
+                                    
+                                    <!-- ACTION -->
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <!-- Tombol Detail -->
+                                            <a href="{{ route('puskesmas.pasien-nifas.show', $item->id) }}" 
+                                               class="p-1.5 rounded-lg border border-[#D9D9D9] hover:bg-[#F5F5F5] transition-colors"
+                                               title="Detail Pasien">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#7C7C7C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                            </a>
+                                            
+                                            <!-- Tombol KF1 -->
+                                            @if($item->canDoKf(1) && !$item->isKfSelesai(1))
+                                                <a href="{{ route('puskesmas.pasien-nifas.form-kf', ['id' => $item->id, 'jenisKf' => 1]) }}" 
+                                                   class="p-1.5 rounded-lg border {{ $item->getKfStatus(1) == 'terlambat' ? 'border-red-300 bg-red-50 hover:bg-red-100' : 'border-amber-300 bg-amber-50 hover:bg-amber-100' }} transition-colors"
+                                                   title="Catat KF1 - {{ $item->getKfStatus(1) == 'terlambat' ? 'TERLAMBAT' : 'Dalam Periode' }}">
+                                                    <span class="text-xs font-bold {{ $item->getKfStatus(1) == 'terlambat' ? 'text-red-600' : 'text-amber-600' }}">
+                                                        KF1
+                                                    </span>
+                                                </a>
+                                            @elseif($item->isKfSelesai(1))
+                                                <span class="p-1.5 rounded-lg border border-green-300 bg-green-50 cursor-default" title="KF1 Sudah Selesai">
+                                                    <span class="text-xs font-bold text-green-600">✓</span>
+                                                </span>
+                                            @else
+                                                <span class="p-1.5 rounded-lg border border-gray-300 bg-gray-50 cursor-not-allowed" title="KF1 Belum Tersedia">
+                                                    <span class="text-xs font-bold text-gray-400">KF1</span>
+                                                </span>
+                                            @endif
+                                            
+                                            <!-- Tombol KF2 -->
+                                            @if($item->canDoKf(2) && !$item->isKfSelesai(2))
+                                                <a href="{{ route('puskesmas.pasien-nifas.form-kf', ['id' => $item->id, 'jenisKf' => 2]) }}" 
+                                                   class="p-1.5 rounded-lg border {{ $item->getKfStatus(2) == 'terlambat' ? 'border-red-300 bg-red-50 hover:bg-red-100' : 'border-amber-300 bg-amber-50 hover:bg-amber-100' }} transition-colors"
+                                                   title="Catat KF2 - {{ $item->getKfStatus(2) == 'terlambat' ? 'TERLAMBAT' : 'Dalam Periode' }}">
+                                                    <span class="text-xs font-bold {{ $item->getKfStatus(2) == 'terlambat' ? 'text-red-600' : 'text-amber-600' }}">
+                                                        KF2
+                                                    </span>
+                                                </a>
+                                            @elseif($item->isKfSelesai(2))
+                                                <span class="p-1.5 rounded-lg border border-green-300 bg-green-50 cursor-default" title="KF2 Sudah Selesai">
+                                                    <span class="text-xs font-bold text-green-600">✓</span>
+                                                </span>
+                                            @else
+                                                <span class="p-1.5 rounded-lg border border-gray-300 bg-gray-50 cursor-not-allowed" title="KF2 Belum Tersedia">
+                                                    <span class="text-xs font-bold text-gray-400">KF2</span>
+                                                </span>
+                                            @endif
+                                            
+                                            <!-- Tombol KF3 -->
+                                            @if($item->canDoKf(3) && !$item->isKfSelesai(3))
+                                                <a href="{{ route('puskesmas.pasien-nifas.form-kf', ['id' => $item->id, 'jenisKf' => 3]) }}" 
+                                                   class="p-1.5 rounded-lg border {{ $item->getKfStatus(3) == 'terlambat' ? 'border-red-300 bg-red-50 hover:bg-red-100' : 'border-amber-300 bg-amber-50 hover:bg-amber-100' }} transition-colors"
+                                                   title="Catat KF3 - {{ $item->getKfStatus(3) == 'terlambat' ? 'TERLAMBAT' : 'Dalam Periode' }}">
+                                                    <span class="text-xs font-bold {{ $item->getKfStatus(3) == 'terlambat' ? 'text-red-600' : 'text-amber-600' }}">
+                                                        KF3
+                                                    </span>
+                                                </a>
+                                            @elseif($item->isKfSelesai(3))
+                                                <span class="p-1.5 rounded-lg border border-green-300 bg-green-50 cursor-default" title="KF3 Sudah Selesai">
+                                                    <span class="text-xs font-bold text-green-600">✓</span>
+                                                </span>
+                                            @else
+                                                <span class="p-1.5 rounded-lg border border-gray-300 bg-gray-50 cursor-not-allowed" title="KF3 Belum Tersedia">
+                                                    <span class="text-xs font-bold text-gray-400">KF3</span>
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
                                 @empty
                                 <tr>
                                     <td colspan="7" class="px-4 py-6 text-center text-[#7C7C7C]">

@@ -4,48 +4,38 @@ namespace App\Http\Controllers\Puskesmas;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
-/**
- * Controller untuk menangani halaman dashboard Puskesmas.
- * Menyediakan data statistik dan daftar pasien untuk ditampilkan di halaman utama.
- */
 class DashboardController extends Controller
 {
     /**
-     * Menampilkan halaman dashboard utama beserta data statistik dan pasien.
-     *
-     * @return \Illuminate\Contracts\View\View
+     * Menampilkan halaman dashboard utama.
      */
     public function index()
     {
-        // ========== DEBUG SEDERHANA ==========
-        // Catatan: Mengambil semua data pasien hanya untuk menghitung asal Depok/non-Depok.
-        // Jika tabel 'pasiens' besar, ini bisa menjadi tidak efisien. Pertimbangkan query agregat di DB.
-        $allPasien = DB::table('pasiens')->select('PKabupaten')->get();
+        // ========== HITUNG PASIEN DEPOK/NON DEPOK ==========
+        $totalPasien = DB::table('pasiens')->count();
         
-        $depokCount = 0;
-        $nonDepokCount = 0;
+        // Untuk PostgreSQL, gunakan nama kolom yang tepat
+        // Jika PKabupaten tidak ada, coba cek nama kolom sebenarnya
+        $depokCount = DB::table('pasiens')
+            ->where(function($query) {
+                $query->whereRaw('LOWER("PKabupaten") LIKE ?', ['%depok%'])
+                      ->orWhere('PKabupaten', 'ilike', '%depok%');
+            })
+            ->count();
         
-        foreach ($allPasien as $pasien) {
-            if ($this->isDepok($pasien->PKabupaten)) {
-                $depokCount++;
-            } else {
-                $nonDepokCount++;
-            }
-        }
-
-        // ========== PAKSA HASIL UNTUK TEST ==========
-        // Catatan: Bagian ini digunakan untuk keperluan testing. Harus dihapus atau dinonaktifkan setelah testing.
-        // Comment line berikut setelah test
-        $depokCount = 4;  // PAKSA 4
-        $nonDepokCount = 0; // PAKSA 0
+        $nonDepokCount = $totalPasien - $depokCount;
         
-        echo "DEBUG: Depok = {$depokCount}, Non Depok = {$nonDepokCount}";
-        // Hapus line di atas setelah test
-
-        // ========== KODE LAINNYA TETAP SAMA ==========
-        // Catatan: Mengambil data skrining beserta informasi pasien dan user.
-        // Digunakan untuk menampilkan daftar pasien dengan status pre-eklampsia.
+        // Log untuk debugging
+        Log::info("Dashboard Debug: Total Pasien = {$totalPasien}, Depok = {$depokCount}, Non Depok = {$nonDepokCount}");
+        
+        // ========== DEBUG: CEK KOLOM YANG ADA ==========
+        // Uncomment baris ini untuk melihat kolom yang ada di tabel pasiens
+        // $columns = DB::getSchemaBuilder()->getColumnListing('pasiens');
+        // dd($columns); // Akan menampilkan semua kolom di tabel pasiens
+        
+        // ========== DATA PASIEN PRE-EKLAMPSIA ==========
         $pePatients = DB::table('skrinings')
             ->join('pasiens', 'skrinings.pasien_id', '=', 'pasiens.id')
             ->join('users', 'users.id', '=', 'pasiens.user_id')
@@ -65,8 +55,6 @@ class DashboardController extends Controller
             ->orderBy('skrinings.created_at', 'desc')
             ->get();
 
-        // Catatan: Menyusun ulang struktur data pasien untuk tampilan.
-        // Menggabungkan alamat domisili dan kecamatan jika alamat kosong.
         $pePatients = $pePatients->map(function ($item) {
             return (object) [
                 'id' => $item->id,
@@ -83,45 +71,37 @@ class DashboardController extends Controller
             ];
         });
 
-        // Catatan: Menghitung total pasien nifas dari dua sumber: bidan dan rumah sakit.
+        // ========== DATA PASIEN NIFAS ==========
         $totalNifasBidan = DB::table('pasien_nifas_bidan')->count();
         $totalNifasRS = DB::table('pasien_nifas_rs')->count();
         $totalNifas = $totalNifasBidan + $totalNifasRS;
-        $sudahKFI = 0; // Catatan: Nilai ini sepertinya statis, mungkin akan diimplementasikan nanti.
+        $sudahKFI = 0;
+
+        // ========== STATISTIK LAINNYA ==========
+        $resikoNormal = DB::table('skrinings')->where('status_pre_eklampsia', 'Normal')->count();
+        $resikoPreeklampsia = DB::table('skrinings')->where('status_pre_eklampsia', '!=', 'Normal')->count();
 
         $data = [
             'asalDepok' => $depokCount,
             'asalNonDepok' => $nonDepokCount,
-            'resikoNormal' => DB::table('skrinings')->where('status_pre_eklampsia', 'Normal')->count(),
-            'resikoPreeklampsia' => DB::table('skrinings')->where('status_pre_eklampsia', '!=', 'Normal')->count(), // Catatan: Menghitung semua status selain 'Normal'.
-            'pasienTidakHadir' => 0, // Catatan: Nilai statis, mungkin akan diimplementasikan nanti.
+            'resikoNormal' => $resikoNormal,
+            'resikoPreeklampsia' => $resikoPreeklampsia,
+            'pasienHadir' => 0,
+            'pasienTidakHadir' => 0,
             'totalNifas' => $totalNifas,
             'sudahKFI' => $sudahKFI,
-            'pemantauanSehat' => DB::table('skrinings')->where('kesimpulan', 'like', '%aman%')->orWhere('kesimpulan', 'like', '%tidak%')->count(), // Catatan: Mencari kesimpulan yang mengandung kata 'aman' atau 'tidak'.
-            'pemantauanDirujuk' => DB::table('skrinings')->where('tindak_lanjut', true)->count(), // Catatan: Asumsi tindak_lanjut adalah boolean.
-            'pemantauanMeninggal' => 0, // Catatan: Nilai statis, mungkin akan diimplementasikan nanti.
+            'pemantauanSehat' => DB::table('skrinings')
+                ->where(function($query) {
+                    $query->where('kesimpulan', 'like', '%aman%')
+                          ->orWhere('kesimpulan', 'like', '%tidak%')
+                          ->orWhere('kesimpulan', 'like', '%normal%');
+                })
+                ->count(),
+            'pemantauanDirujuk' => DB::table('skrinings')->where('tindak_lanjut', true)->count(),
+            'pemantauanMeninggal' => 0,
             'pePatients' => $pePatients
         ];
 
         return view('puskesmas.dashboard.index', $data);
-    }
-
-    /**
-     * Memeriksa apakah nama kabupaten berasal dari Depok.
-     * Digunakan untuk menghitung jumlah pasien dari Depok.
-     *
-     * @param string|null $kabupaten Nama kabupaten dari data pasien.
-     * @return bool True jika nama kabupaten mengandung kata 'depok', false jika tidak.
-     */
-    private function isDepok($kabupaten)
-    {
-        // Catatan: Memeriksa apakah input kosong.
-        if (empty($kabupaten) || trim($kabupaten) === '') {
-            return false;
-        }
-        
-        // Catatan: Mengubah menjadi huruf kecil untuk pencocokan yang tidak sensitif terhadap huruf besar/kecil.
-        $kabupaten = strtolower(trim($kabupaten));
-        return $kabupaten === 'depok' || str_contains($kabupaten, 'depok');
     }
 }

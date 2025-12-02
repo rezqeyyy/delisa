@@ -106,31 +106,53 @@ Route::middleware(['auth'])->group(function () {
         });
 
     // ================== PUSKESMAS ==================
-    Route::middleware('role:puskesmas')
-        ->prefix('puskesmas')->as('puskesmas.')
-        ->group(function () {
-            Route::get('/dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
-            Route::get('/skrining', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'index'])->name('skrining');
-            Route::get('/skrining/{skrining}', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'show'])->name('skrining.show');
+Route::middleware('role:puskesmas')
+    ->prefix('puskesmas')->as('puskesmas.')
+    ->group(function () {
+        Route::get('/dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/skrining', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'index'])->name('skrining');
+        Route::get('/skrining/{skrining}', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'show'])->name('skrining.show');
 
-            // ✅ RUTE RUJUKAN - DIPINDAH KE RUJUKAN CONTROLLER
-            Route::get('/rs/search', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'searchRS'])->name('rs.search');
-            Route::post('/skrining/{skrining}/rujuk', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'ajukanRujukan'])->name('skrining.rujuk');
+        // ✅ RUTE RUJUKAN - DIPINDAH KE RUJUKAN CONTROLLER
+        Route::get('/rs/search', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'searchRS'])->name('rs.search');
+        Route::post('/skrining/{skrining}/rujuk', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'ajukanRujukan'])->name('skrining.rujuk');
 
-            // ✅ RUTE MANAGEMENT RUJUKAN
-            Route::get('/rujukan', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'index'])->name('rujukan.index');
-            Route::get('/rujukan/{id}', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'show'])->name('rujukan.show');
-            Route::get('/pasien-nifas', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'index'])->name('pasien-nifas');
-            Route::get('/profile/edit', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'edit'])->name('profile.edit');
-            Route::put('/profile/update', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'update'])->name('profile.update');
-            Route::delete('/profile/photo', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'destroyPhoto'])
-                ->name('profile.photo.destroy');
-            // Tambahkan setelah route skrining
-            Route::get('/skrining/export/excel', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'exportExcel'])->name('export.excel');
-            Route::get('/skrining/export/pdf', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'exportPdf'])->name('export.pdf');
-            Route::get('/puskesmas/skrining/export-pdf', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'exportPDF'])
-                ->name('puskesmas.export.pdf');
+        // ✅ RUTE MANAGEMENT RUJUKAN
+        Route::get('/rujukan', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'index'])->name('rujukan.index');
+        Route::get('/rujukan/{id}', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'show'])->name('rujukan.show');
+        Route::get('/profile/edit', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile/update', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile/photo', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'destroyPhoto'])
+            ->name('profile.photo.destroy');
+        // ✅ TAMBAHKAN ROUTE INI UNTUK UPDATE STATUS
+        Route::put('/rujukan/{id}/update-status', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'updateStatus'])
+            ->name('rujukan.update-status');
+            
+        //✅ RUTE MANAGEMENT Pasien-Nifas dengan KF
+        Route::prefix('pasien-nifas')->name('pasien-nifas.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'index'])->name('index');
+            Route::get('/{id}', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'show'])->name('show');
+            Route::get('/{id}/kf/{jenisKf}', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'formCatatKf'])->name('form-kf');
+            
+            // ✅ PERBAIKAN: Routes untuk download PDF KF - HAPUS DOUBLE PREFIX
+            Route::get('/{id}/kf/{jenisKf}/pdf', 
+                [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'downloadKfPdf']
+            )->name('kf.pdf');  // Nama: puskesmas.pasien-nifas.kf.pdf
+
+            Route::get('/{id}/all-kf/pdf', 
+                [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'downloadAllKfPdf']
+            )->name('all-kf.pdf');  // Nama: puskesmas.pasien-nifas.all-kf.pdf
+                            
+            // ✅ PERBAIKAN: Tambahkan {jenisKf} dan ganti ke PUT
+            Route::put('/{id}/kf/{jenisKf}', [\App\Http\Controllers\Puskesmas\PasienNifasController::class, 'catatKf'])->name('catat-kf');
         });
+        
+        // Tambahkan setelah route skrining
+        Route::get('/skrining/export/excel', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'exportExcel'])->name('export.excel');
+        Route::get('/skrining/export/pdf', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'exportPdf'])->name('export.pdf');
+        Route::get('/puskesmas/skrining/export-pdf', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'exportPDF'])
+            ->name('puskesmas.export.pdf');
+    });
 
     // ================== BIDAN ==================
     Route::middleware('role:bidan')
