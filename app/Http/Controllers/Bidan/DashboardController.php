@@ -11,6 +11,7 @@ use App\Models\Skrining;
 use App\Models\Kf;
 use App\Models\Bidan;
 use App\Models\PasienNifasBidan;
+use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +24,7 @@ use App\Models\PasienNifasBidan;
 
 class DashboardController extends Controller
 {
+    use SkriningHelpers;
     /*
     |--------------------------------------------------------------------------
     | METHOD: index()
@@ -40,30 +42,31 @@ class DashboardController extends Controller
         }
         $puskesmasId = $bidan->puskesmas_id; // ID puskesmas bidan untuk filter data
 
-        // 2. Query Dasar Skrining & Pasien
-        $skriningsQuery = Skrining::where('puskesmas_id', $puskesmasId); // Filter skrining per puskesmas
-        $pasienIds = (clone $skriningsQuery)->pluck('pasien_id'); // Ambil semua ID pasien
-        $pasienQuery = Pasien::whereIn('id', $pasienIds); // Query pasien berdasarkan ID
+        // 2. Ambil semua skrining milik puskesmas dan filter yang lengkap
+        $skrinings = Skrining::where('puskesmas_id', $puskesmasId)
+            ->with(['pasien.user', 'riwayatKehamilanGpa', 'kondisiKesehatan'])
+            ->latest()
+            ->get()
+            ->filter(fn($s) => $this->isSkriningCompleteForSkrining($s))
+            ->values();
 
-        // 3. Card: Daerah Asal Pasien (Depok vs Non-Depok)
-        // Hitung jumlah pasien berdasarkan kolom PKabupaten
-        $daerahAsal = (clone $pasienQuery)->selectRaw(
-            'SUM(CASE WHEN "PKabupaten" = \'Depok\' THEN 1 ELSE 0 END) as depok,
-             SUM(CASE WHEN "PKabupaten" != \'Depok\' OR "PKabupaten" IS NULL THEN 1 ELSE 0 END) as non_depok'
-        )->first(); // Return: object dengan property depok & non_depok
+        // 3. Card: Daerah Asal Pasien (Depok vs Non-Depok) dari skrining lengkap
+        $pasienIds = $skrinings->pluck('pasien_id')->unique();
+        $pasienList = Pasien::whereIn('id', $pasienIds)->get(['PKabupaten']);
+        $depok = $pasienList->filter(fn($p) => $p->PKabupaten === 'Depok')->count();
+        $nonDepok = $pasienList->count() - $depok;
+        $daerahAsal = (object) ['depok' => $depok, 'non_depok' => $nonDepok];
 
-        // 4. Card: Risiko Eklampsia (Normal vs Beresiko)
-        // Hitung jumlah skrining berdasarkan kesimpulan
-        $resiko = (clone $skriningsQuery)->selectRaw(
-            'SUM(CASE WHEN kesimpulan = \'Normal\' THEN 1 ELSE 0 END) as normal,
-             SUM(CASE WHEN kesimpulan = \'Beresiko\' THEN 1 ELSE 0 END) as beresiko'
-        )->first(); // Return: object dengan property normal & beresiko
+        // 4. Card: Risiko Preeklampsia (Normal vs Berisiko) dari skrining lengkap
+        $resikoBeresiko = $skrinings->filter(function ($s) {
+            $label = strtolower(trim($s->kesimpulan ?? ''));
+            return in_array($label, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']);
+        })->count();
+        $resikoNormal = $skrinings->count() - $resikoBeresiko;
 
-        // 5. Card: Pasien Hadir (Hadir Hari Ini vs Tidak Hadir)
-        // Asumsi: Hadir = skrining di-update hari ini
-        $totalSkrining = (clone $skriningsQuery)->count(); // Total semua skrining
-        $pasienHadir = (clone $skriningsQuery)->whereDate('updated_at', today())->count(); // Update hari ini
-        $pasienTidakHadir = $totalSkrining - $pasienHadir; // Selisih = tidak hadir
+        // 5. Card: Pasien Hadir (Hadir Hari Ini vs Tidak Hadir) dari skrining lengkap
+        $pasienHadir = $skrinings->filter(fn($s) => optional($s->updated_at)->isToday())->count();
+        $pasienTidakHadir = $skrinings->count() - $pasienHadir;
 
         // 6. Data Nifas - Ambil ID Bidan di Puskesmas yang Sama
         $bidanIdsPuskesmas = Bidan::where('puskesmas_id', $puskesmasId)->pluck('id'); // Semua bidan di puskesmas ini
@@ -95,26 +98,23 @@ class DashboardController extends Controller
                                  ->distinct('id_nifas') // Hitung unik per pasien
                                  ->count(); // Total meninggal
 
-        // 10. Tabel: 5 Data Skrining Terbaru
-        $pasienTerbaru = (clone $skriningsQuery) // Clone query skrining
-                            ->with(['pasien.user']) // Eager load relasi pasien & user (hindari N+1 query)
-                            ->latest() // Urutkan berdasarkan created_at terbaru
-                            ->take(5) // Ambil 5 data teratas
-                            ->get(); // Eksekusi query, return Collection
+        // 10. Tabel: 5 Data Skrining Terbaru dari skrining lengkap
+        $pasienTerbaru = $skrinings->sortByDesc('created_at')->take(5)->values();
         
         // 11. Kirim Data ke View
         // compact(): ubah variable jadi array ['daerahAsal' => $daerahAsal, ...]
         return view('bidan.dashboard', compact(
-            'daerahAsal',           // Data card daerah asal
-            'resiko',               // Data card risiko
-            'pasienHadir',          // Jumlah hadir
-            'pasienTidakHadir',     // Jumlah tidak hadir
-            'totalNifas',           // Total pasien nifas
-            'sudahKf1',             // Sudah KF1
-            'pemantauanSehat',      // Status sehat
-            'pemantauanDirujuk',    // Status dirujuk
-            'pemantauanMeninggal',  // Status meninggal
-            'pasienTerbaru'         // 5 data terbaru untuk tabel
+            'daerahAsal',
+            'resikoNormal',
+            'resikoBeresiko',
+            'pasienHadir',
+            'pasienTidakHadir',
+            'totalNifas',
+            'sudahKf1',
+            'pemantauanSehat',
+            'pemantauanDirujuk',
+            'pemantauanMeninggal',
+            'pasienTerbaru'
         ));
     }
 }

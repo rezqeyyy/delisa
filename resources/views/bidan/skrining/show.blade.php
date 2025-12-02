@@ -72,6 +72,17 @@
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Tanggal Pemeriksaan</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->created_at)->format('d F Y') }}</div>
 
+                        <div class="p-4 text-sm font-semibold">Tempat Pemeriksaan</div>
+                        <div class="sm:col-span-2 p-4 text-sm">
+                            @php($pkm = optional($skrining->puskesmas))
+                            @if($pkm && (bool) $pkm->is_mandiri)
+                                <div class="font-medium">{{ $pkm->nama_puskesmas ?? '-' }}</div>
+                                <div class="text-xs text-[#6B7280]">Bidan Mandiri — Kec. {{ $pkm->kecamatan ?? '-' }}</div>
+                            @else
+                                {{ $pkm->nama_puskesmas ?? '-' }}
+                            @endif
+                        </div>
+
                         {{-- Nama Pasien dari relasi user --}}
                         <div class="p-4 text-sm font-semibold">Nama</div>
                         <div class="sm:col-span-2 p-4 text-sm">{{ optional(optional($skrining->pasien)->user)->name ?? '-' }}</div>
@@ -230,16 +241,23 @@
                         --}}
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Rekomendasi</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
-                            @php($k = trim($skrining->kesimpulan ?? ''))
-                            @php($rek = 'Belum ada rekomendasi.')
-                            @if($k === 'Beresiko')
-                                @php($rek = 'Waspada Pre Eklampsia. Disarankan untuk segera dirujuk ke Rumah Sakit atau Dokter. Kenali tanda-tanda bahaya dalam kehamilan seperti sakit kepala hebat, pandangan kabur, dan nyeri ulu hati. Jika mengalami tanda bahaya, segera ke fasilitas kesehatan.')
-                            @elseif($k === 'Normal' || $k === 'Aman')
-                                @php($rek = 'Kondisi normal, tetap jaga kesehatan dan pola makan. Lakukan pemeriksaan rutin.')
-                            @elseif($k === 'Waspada')
-                                @php($rek = 'Pantau kondisi secara berkala. Kenali tanda-tanda bahaya dan segera hubungi fasilitas kesehatan jika muncul.')
+                            @if(!empty($rujukanAccepted) && $rujukanAccepted)
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">Diterima RS</span>
+                                </div>
+                                <p>Rujukan telah diterima oleh {{ $rujukanRsName ?? 'Rumah Sakit' }}. Ikuti instruksi dari rumah sakit untuk pemeriksaan lanjutan.</p>
+                            @else
+                                @php($k = trim($skrining->kesimpulan ?? ''))
+                                @php($rek = 'Belum ada rekomendasi.')
+                                @if($k === 'Beresiko')
+                                    @php($rek = 'Waspada Pre Eklampsia. Disarankan untuk segera dirujuk ke Rumah Sakit atau Dokter. Kenali tanda-tanda bahaya dalam kehamilan seperti sakit kepala hebat, pandangan kabur, dan nyeri ulu hati. Jika mengalami tanda bahaya, segera ke fasilitas kesehatan.')
+                                @elseif($k === 'Normal' || $k === 'Aman')
+                                    @php($rek = 'Kondisi normal, tetap jaga kesehatan dan pola makan. Lakukan pemeriksaan rutin.')
+                                @elseif($k === 'Waspada')
+                                    @php($rek = 'Pantau kondisi secara berkala. Kenali tanda-tanda bahaya dan segera hubungi fasilitas kesehatan jika muncul.')
+                                @endif
+                                {{ $rek }}
                             @endif
-                            {{ $rek }}
                         </div>
 
                         {{-- Catatan (placeholder) --}}

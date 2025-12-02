@@ -89,8 +89,9 @@
             const isBidan = item.type === 'bidan';
             const title = isBidan ? (item.klinik_nama || '-') : (item.nama_puskesmas || '-');
             const subtitle = isBidan ? `Bidan Mandiri — Kec. ${item.kecamatan ?? '-'}` : `Puskesmas — Kec. ${item.kecamatan ?? '-'}`;
+            const extraAttr = isBidan ? ` data-puskesmas-id="${item.puskesmas_id ?? ''}"` : '';
             return `
-            <button type="button" data-id="${item.id}" data-type="${item.type}"
+            <button type="button" data-id="${item.id}" data-type="${item.type}"${extraAttr}
                     class="w-full text-left px-4 py-2 hover:bg-[#F9E5F1] border-b last:border-b-0">
                 <div class="font-medium text-[#1D1D1D]">${title}</div>
                 <div class="text-xs text-[#6B7280]">${subtitle}</div>
@@ -108,7 +109,8 @@
                 // Simpan pilihan & aktifkan tombol mulai
                 const selId = it.getAttribute('data-id') || null;
                 const selType = it.getAttribute('data-type') || 'puskesmas';
-                selected = selId ? { id: selId, type: selType } : null;
+                const selPkmId = it.getAttribute('data-puskesmas-id') || null;
+                selected = selId ? { id: selId, type: selType, puskesmas_id: selPkmId } : null;
                 setBtnStyle(Boolean(selected));
             });
         });
@@ -133,11 +135,8 @@
     btnStart.addEventListener('click', () => {
         if (!selected) return;
         const target = new URL(startUrl, window.location.origin);
-        if (selected.type === 'bidan') {
-            target.searchParams.set('bidan_id', selected.id);
-        } else {
-            target.searchParams.set('puskesmas_id', selected.id);
-        }
+        const pkmId = (selected.type === 'bidan') ? (selected.puskesmas_id || selected.id) : selected.id;
+        target.searchParams.set('puskesmas_id', pkmId);
         window.location.href = target.toString();
     });
 })();

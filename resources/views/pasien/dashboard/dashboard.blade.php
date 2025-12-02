@@ -30,17 +30,21 @@
                 </div>
 
                 <div class="flex items-center gap-3 flex-none justify-end">
+                    {{-- Tombol shortcut (ikon pengaturan) → menuju Edit Profil Pasien (route 'pasien.profile.edit') --}}
                     <a href="{{ route('pasien.profile.edit') }}" class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90" alt="Setting">
                     </a>
 
+                    {{-- Tombol Profil + Dropdown --}}
                     <div id="profileWrapper" class="relative">
                         <button id="profileBtn" class="flex items-center gap-3 pl-2 pr-3 py-1.5 bg-white border border-[#E5E5E5] rounded-full hover:bg-[#F8F8F8]">
                             
+                            {{-- Foto profil user jika ada (disimpan di storage) --}}
                             @if (Auth::user()?->photo)
                                 <img src="{{ Storage::url(Auth::user()->photo) . '?t=' . optional(Auth::user()->updated_at)->timestamp }}"
                                     class="w-8 h-8 rounded-full object-cover" alt="{{ Auth::user()->name }}">
                             @else
+                                {{-- Avatar default jika user belum upload foto --}}
                                 <span
                                     class="w-8 h-8 rounded-full bg-pink-50 ring-2 ring-pink-100 flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
@@ -60,7 +64,7 @@
                                 class="w-4 h-4 opacity-70" alt="More" />
                         </button>
 
-                        <div id="profileMenu" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
                             <div class="px-4 py-3 border-b border-[#F0F0F0]">
                                 <p class="text-sm font-medium text-[#1D1D1D]">
                                     {{ auth()->user()->name ?? 'Nama Pasien' }}

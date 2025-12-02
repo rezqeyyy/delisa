@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Skrining;
+use App\Models\RujukanRs;
 use App\Models\Bidan;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 
 class SkriningController extends Controller
 {
+    use SkriningHelpers;
     /*
     |--------------------------------------------------------------------------
     | METHOD: index()
@@ -40,41 +44,27 @@ class SkriningController extends Controller
         $puskesmasId = $bidan->puskesmas_id; // ID puskesmas untuk filter
         
         // 2. Ambil Data Skrining dengan Relasi
-        $skrinings = Skrining::where('puskesmas_id', $puskesmasId) // Filter per puskesmas
-                            ->with(['pasien.user']) // Eager load: pasien->user (nama, telp)
-                            ->latest() // Urutkan terbaru dulu
-                            ->paginate(10); // 10 data per halaman
+        $skrinings = Skrining::where('puskesmas_id', $puskesmasId)
+                            ->with(['pasien.user', 'kondisiKesehatan', 'riwayatKehamilanGpa'])
+                            ->latest()
+                            ->get();
 
-        // 3. Transform Data untuk Badge Kesimpulan
-        // Loop setiap skrining untuk set badge color & label
-        $skrinings->getCollection()->transform(function ($s) {
-            $label = strtolower(trim($s->kesimpulan ?? '')); // Lowercase & trim kesimpulan
-            
-            // Cek apakah termasuk risiko tinggi
+        // 3. Filter hanya skrining yang sudah lengkap
+        $skrinings = $skrinings->filter(fn($s) => $this->isSkriningCompleteForSkrining($s))->values();
+
+        // 4. Transform Data untuk Badge Kesimpulan
+        $skrinings->transform(function ($s) {
+            $label = strtolower(trim($s->kesimpulan ?? ''));
             $isRisk = in_array($label, ['beresiko','berisiko','risiko tinggi','tinggi']);
-            
-            // Cek apakah termasuk risiko sedang
             $isWarn = in_array($label, ['waspada','menengah','sedang','risiko sedang']);
-            
-            // Tentukan label yang ditampilkan
-            $display = $isRisk ? 'Beresiko' : // Jika risk -> Beresiko
-                      ($isWarn ? 'Waspada' :  // Jika warn -> Waspada
-                      ($label === 'aman' ? 'Aman' : // Jika aman -> Aman
-                      ($s->kesimpulan ?? 'Normal'))); // Sisanya -> Normal
-            
-            // Tentukan variant badge (untuk warna)
-            $variant = $isRisk ? 'risk' :  // risk = merah
-                      ($isWarn ? 'warn' :  // warn = kuning
-                      'safe');              // safe = hijau
-            
-            // Set attribute baru ke object skrining
-            $s->setAttribute('conclusion_display', $display); // Label yang ditampilkan
-            $s->setAttribute('badge_variant', $variant); // Variant warna badge
-            
-            return $s; // Return object yang sudah dimodifikasi
+            $display = $isRisk ? 'Beresiko' : ($isWarn ? 'Waspada' : ($label === 'aman' ? 'Aman' : ($s->kesimpulan ?? 'Normal')));
+            $variant = $isRisk ? 'risk' : ($isWarn ? 'warn' : 'safe');
+            $s->setAttribute('conclusion_display', $display);
+            $s->setAttribute('badge_variant', $variant);
+            return $s;
         });
 
-        // 4. Kirim ke View
+        // 5. Kirim ke View
         return view('bidan.skrining.index', compact('skrinings'));
     }
 
@@ -256,17 +246,29 @@ class SkriningController extends Controller
         }
 
         // 13. Hapus Duplikasi & Reset Index Array
-        $sebabSedang = array_values(array_unique($sebabSedang)); // array_unique: hapus duplikat, array_values: reset index
-        $sebabTinggi = array_values(array_unique($sebabTinggi));
+$sebabSedang = array_values(array_unique($sebabSedang));
+$sebabTinggi = array_values(array_unique($sebabTinggi));
 
-        // 14. Kirim ke View
-        return view('bidan.skrining.show', compact(
-            'skrining',                   // Data skrining lengkap
-            'riwayatPenyakitPasien',      // Array riwayat penyakit pasien
-            'riwayatPenyakitKeluarga',    // Array riwayat penyakit keluarga
-            'sebabSedang',                // Array penyebab risiko sedang
-            'sebabTinggi'                 // Array penyebab risiko tinggi
-        ));
+// 14. Status Rujukan yang Diterima RS
+$acceptedRujukan = \App\Models\RujukanRs::with('rumahSakit')
+    ->where('skrining_id', $skrining->id)
+    ->where('done_status', true)
+    ->where('is_rujuk', true)
+    ->orderByDesc('created_at')
+    ->first();
+$rujukanAccepted = (bool) $acceptedRujukan;
+$rujukanRsName   = optional(optional($acceptedRujukan)->rumahSakit)->nama;
+
+// 15. Kirim ke View
+return view('bidan.skrining.show', compact(
+    'skrining',
+    'riwayatPenyakitPasien',
+    'riwayatPenyakitKeluarga',
+    'sebabSedang',
+    'sebabTinggi',
+    'rujukanAccepted',
+    'rujukanRsName'
+));
     }
 
     /*
@@ -320,7 +322,97 @@ class SkriningController extends Controller
         return redirect()->route('bidan.skrining.show', $skrining->id) // Redirect ke detail
                          ->with('success', 'Skrining telah ditandai selesai diperiksa.'); // Flash message
     }
-}
+
+    public function exportExcel()
+    {
+        $bidan = Auth::user()->bidan;
+        abort_unless($bidan, 403);
+        $puskesmasId = $bidan->puskesmas_id;
+
+        $skrinings = Skrining::with(['pasien.user'])
+            ->where('puskesmas_id', $puskesmasId)
+            ->latest()
+            ->get()
+            ->filter(fn($s) => $this->isSkriningCompleteForSkrining($s))
+            ->values();
+
+        $fileName = 'data-skrining-ibu-hamil-' . date('Y-m-d') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function() use ($skrinings) {
+            $file = fopen('php://output', 'w');
+            fwrite($file, "\xEF\xBB\xBF");
+            fputcsv($file, ['No.', 'Nama Pasien', 'NIK', 'Tanggal Pengisian', 'Alamat', 'No Telp', 'Kesimpulan']);
+            foreach ($skrinings as $index => $s) {
+                $nama    = optional(optional($s->pasien)->user)->name ?? '-';
+                $nik     = optional($s->pasien)->nik ?? '-';
+                $tanggal = $s->created_at ? $s->created_at->format('d/m/Y') : '-';
+                $alamat  = optional($s->pasien)->PKecamatan ?? optional($s->pasien)->PWilayah ?? '-';
+                $telp    = optional(optional($s->pasien)->user)->phone ?? '-';
+                $sedang  = (int)($s->jumlah_resiko_sedang ?? 0);
+                $tinggi  = (int)($s->jumlah_resiko_tinggi ?? 0);
+                $kesimpulan = ($tinggi >= 1 || $sedang >= 2) ? 'Berisiko preeklampsia' : 'Tidak berisiko preeklampsia';
+                fputcsv($file, [
+                    $index + 1,
+                    $nama,
+                    '="' . $nik . '"',
+                    $tanggal,
+                    $alamat,
+                    '="' . $telp . '"',
+                    $kesimpulan,
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportPDF()
+    {
+        $bidan = Auth::user()->bidan;
+        abort_unless($bidan, 403);
+        $puskesmasId = $bidan->puskesmas_id;
+
+        $skrinings = Skrining::with(['pasien.user'])
+            ->where('puskesmas_id', $puskesmasId)
+            ->latest()
+            ->get()
+            ->filter(fn($s) => $this->isSkriningCompleteForSkrining($s))
+            ->values();
+
+        $skrinings->transform(function ($s) {
+            $sedang = (int)($s->jumlah_resiko_sedang ?? 0);
+            $tinggi = (int)($s->jumlah_resiko_tinggi ?? 0);
+            if ($tinggi >= 1 || $sedang >= 2) {
+                $s->kesimpulan  = 'Berisiko preeklampsia';
+                $s->badge_class = 'berisiko';
+            } else {
+                $s->kesimpulan  = 'Tidak berisiko preeklampsia';
+                $s->badge_class = 'tidak-berisiko';
+            }
+            return $s;
+        });
+
+        if ($skrinings->isEmpty()) {
+            return back()->with('error', 'Tidak ada data skrining yang dapat diekspor.');
+        }
+
+        $pdf = Pdf::loadView('bidan.skrining.export-pdf', compact('skrinings'))
+            ->setPaper('a4', 'landscape')
+            ->setOption('defaultFont', 'Arial')
+            ->setOption('isRemoteEnabled', true);
+
+        $fileName = 'data-skrining-ibu-hamil-' . date('Y-m-d') . '.pdf';
+        return $pdf->download($fileName);
+    }
+}    
 
 /*
 |--------------------------------------------------------------------------

@@ -41,10 +41,20 @@ class DataDiriController extends Controller
          * - cegah duplikasi: hanya create jika tidak ada skrining aktif/incomplete
          */
         if ($puskesmasId && $pasienId && \App\Models\Puskesmas::whereKey($puskesmasId)->exists()) {
-            // Cari skrining terakhir (latest), buat baru jika skrining terakhir sudah complete.
             $latest = Skrining::where('pasien_id', $pasienId)->latest()->first();
             if (!$latest || $this->isSkriningCompleteForSkrining($latest)) {
-                // Inisialisasi episode skrining awal (step_form=1) dan reset indikator risiko.
+                Skrining::create([
+                    'pasien_id'            => $pasienId,
+                    'puskesmas_id'         => $puskesmasId,
+                    'status_pre_eklampsia' => null,
+                    'jumlah_resiko_sedang' => null,
+                    'jumlah_resiko_tinggi' => null,
+                    'kesimpulan'           => null,
+                    'step_form'            => 1,
+                    'tindak_lanjut'        => false,
+                    'checked_status'       => false,
+                ]);
+            } elseif ((int) $latest->puskesmas_id !== (int) $puskesmasId) {
                 Skrining::create([
                     'pasien_id'            => $pasienId,
                     'puskesmas_id'         => $puskesmasId,
@@ -87,13 +97,28 @@ class DataDiriController extends Controller
          */
         $latest = Skrining::where('pasien_id', $pasienId)->latest()->first();
         if ($latest && !$this->isSkriningCompleteForSkrining($latest)) {
+            if ((int) $latest->puskesmas_id !== (int) $payload['puskesmas_id']) {
+                $new = Skrining::create([
+                    'pasien_id'            => $pasienId,
+                    'puskesmas_id'         => $payload['puskesmas_id'],
+                    'status_pre_eklampsia' => null,
+                    'jumlah_resiko_sedang' => null,
+                    'jumlah_resiko_tinggi' => null,
+                    'kesimpulan'           => null,
+                    'step_form'            => 1,
+                    'tindak_lanjut'        => false,
+                    'checked_status'       => false,
+                ]);
+                return redirect()
+                    ->route('pasien.data-diri', ['skrining_id' => $new->id])
+                    ->with('ok', 'Pengajuan skrining baru dibuat untuk fasilitas yang dipilih.');
+            }
             return redirect()
-                ->route('pasien.data-diri', ['puskesmas_id' => $payload['puskesmas_id']])
+                ->route('pasien.data-diri', ['skrining_id' => $latest->id])
                 ->with('ok', 'Ada skrining yang belum selesai. Silakan lanjutkan skrining tersebut.');
         }
 
-        // Create skrining awal (step_form=1) untuk puskesmas yang dipilih.
-        Skrining::create([
+        $new = Skrining::create([
             'pasien_id'            => $pasienId,
             'puskesmas_id'         => $payload['puskesmas_id'],
             'status_pre_eklampsia' => null,
@@ -105,9 +130,8 @@ class DataDiriController extends Controller
             'checked_status'       => false,
         ]);
 
-        // Redirect kembali ke form Data Diri dengan pesan sukses.
         return redirect()
-            ->route('pasien.data-diri', ['puskesmas_id' => $payload['puskesmas_id']])
+            ->route('pasien.data-diri', ['skrining_id' => $new->id])
             ->with('ok', 'Pengajuan skrining dibuat. Silakan isi Data Diri.');
     }
 

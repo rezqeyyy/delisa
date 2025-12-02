@@ -39,7 +39,7 @@
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
             {{-- Header halaman --}}
             <header class="mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">List Skrining Ibu Hamil</h1>
+                <h1 class="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#1D1D1D]">List Skrining Ibu Hamil</h1>
             </header>
 
             {{-- Section tabel data skrining --}}
@@ -48,14 +48,20 @@
                     {{-- Header section dengan icon dan deskripsi --}}
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex items-start gap-3">
-                            {{-- Icon clipboard --}}
-                            <span class="w-10 h-10 grid place-items-center rounded-full bg-[#F5F5F5]">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-[#1D1D1D]" fill="currentColor"><path d="M6 2a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2H6Zm2 5h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
-                            </span>
                             <div>
-                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Pre Eklampsia</h2>
+                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Preeklampsia</h2>
                                 <p class="text-xs text-[#7C7C7C]">Daftar pasien skrining preeklampsia terbaru</p>
                             </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a href="{{ route('bidan.export.excel') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /><path d="M9 15h6" /><path d="M12 18V12" /></svg>
+                                Download Excel
+                            </a>
+                            <a href="{{ route('bidan.export.pdf') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /><path d="M9 15h6" /><path d="M12 18V12" /></svg>
+                                Download PDF
+                            </a>
                         </div>
                     </div>
                     <br>

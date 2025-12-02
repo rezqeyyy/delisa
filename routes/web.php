@@ -20,6 +20,9 @@ use App\Http\Controllers\Dinkes\ProfileController as DinkesProfileController;
 use App\Http\Controllers\Dinkes\PasienController;
 
 use App\Http\Controllers\Bidan\ProfileController as BidanProfileController; 
+use App\Http\Controllers\Bidan\PasienNifasController as BidanPasienNifasController;
+use App\Http\Controllers\Bidan\AnakPasienController as BidanAnakPasienController;
+
 use App\Http\Controllers\Rs\ProfileController as RsProfileController;
 
 
@@ -30,6 +33,7 @@ use App\Http\Controllers\Pasien\Skrining\KondisiKesehatanPasienController;
 use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitPasienController;
 use App\Http\Controllers\Pasien\Skrining\RiwayatPenyakitKeluargaController;
 use App\Http\Controllers\Pasien\Skrining\PreeklampsiaController;
+use \App\Http\Controllers\Pasien\ProfileController as PasienProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -161,8 +165,10 @@ Route::middleware('role:puskesmas')
             // Dashboard
             Route::get('/dashboard', [BidanDashboardController::class, 'index'])->name('dashboard');
 
-            // Skrining
+            // Skrining (dengan ekspor Excel & PDF)
             Route::get('/skrining', [\App\Http\Controllers\Bidan\SkriningController::class, 'index'])->name('skrining');
+            Route::get('/skrining/export/excel', [\App\Http\Controllers\Bidan\SkriningController::class, 'exportExcel'])->name('export.excel');
+            Route::get('/skrining/export/pdf', [\App\Http\Controllers\Bidan\SkriningController::class, 'exportPDF'])->name('export.pdf');
 
             // Detail skrining (setelah klik "Ya")
             Route::get('/skrining/{skrining}', [\App\Http\Controllers\Bidan\SkriningController::class, 'show'])
@@ -182,9 +188,13 @@ Route::middleware('role:puskesmas')
             Route::put('/profile', [BidanProfileController::class, 'update'])->name('profile.update');
             Route::delete('/profile/photo', [BidanProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
 
-            Route::get('/pasien-nifas', [\App\Http\Controllers\Bidan\PasienNifasController::class, 'index'])->name('pasien-nifas');
-            Route::get('/pasien-nifas/create', [\App\Http\Controllers\Bidan\PasienNifasController::class, 'create'])->name('pasien-nifas.create');
-            Route::post('/pasien-nifas/store', [\App\Http\Controllers\Bidan\PasienNifasController::class, 'store'])->name('pasien-nifas.store');
+            Route::get('/pasien-nifas', [BidanPasienNifasController::class, 'index'])->name('pasien-nifas');
+            Route::get('/pasien-nifas/create', [BidanPasienNifasController::class, 'create'])->name('pasien-nifas.create');
+            Route::get('/pasien-nifas/{id}/anak', [BidanAnakPasienController::class, 'create'])->name('pasien-nifas.anak.create');
+            Route::post('/pasien-nifas/{id}/anak', [BidanAnakPasienController::class, 'store'])->name('pasien-nifas.store-anak');
+            Route::delete('/pasien-nifas/{id}', [BidanPasienNifasController::class, 'destroy'])->name('pasien-nifas.destroy');
+            Route::post('/pasien-nifas/cek-nik', [BidanPasienNifasController::class, 'cekNik'])->name('pasien-nifas.cek-nik');
+            Route::post('/pasien-nifas/store', [BidanPasienNifasController::class, 'store'])->name('pasien-nifas.store');
         });
 
     // ================== RUMAH SAKIT ==================
@@ -280,9 +290,9 @@ Route::middleware('role:puskesmas')
                 ->name('preeklampsia.store');
 
             // Profile Pasien
-            Route::get('/profile', [\App\Http\Controllers\Pasien\ProfileController::class, 'edit'])->name('profile.edit');
-            Route::put('/profile', [\App\Http\Controllers\Pasien\ProfileController::class, 'update'])->name('profile.update');
-            Route::delete('/profile/photo', [\App\Http\Controllers\Pasien\ProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
+            Route::get('/profile', [PasienProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('/profile', [PasienProfileController::class, 'update'])->name('profile.update');
+            Route::delete('/profile/photo', [PasienProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
 
             // CRUD Skrining oleh Pasien
             Route::get('/skrining/{skrining}', [PasienSkriningController::class, 'show'])->name('skrining.show');

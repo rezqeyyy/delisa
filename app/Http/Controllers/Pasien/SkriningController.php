@@ -370,6 +370,7 @@ class SkriningController extends Controller
          * - map(...) → normalisasi bentuk response untuk UI
          */
         $puskesmas = Puskesmas::query()
+            ->where('is_mandiri', false)
             ->when($q !== '', function ($qr) use ($q) {
                 $qr->where(function ($w) use ($q) {
                     $w->where('nama_puskesmas', 'like', "%{$q}%")

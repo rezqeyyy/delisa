@@ -8,7 +8,7 @@
 
     {{-- Memuat file CSS dan JS utama untuk tampilan dashboard Bidan via Vite --}}
     {{-- File JS dropdown.js mengatur interaksi dropdown (profil, notifikasi, dsb.) --}}
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/bidan/sidebar-toggle.js'])
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
@@ -35,19 +35,10 @@
                     </div>
 
                     <div class="flex items-center gap-3 flex-none justify-end">
-                        {{-- Tombol shortcut (ikon grafik) → menuju Dashboard Puskesmas (route 'puskesmas.dashboard') --}}
-                        <a href="{{ route('puskesmas.dashboard') }}"
-                            class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
-                            <img src="{{ asset('icons/Iconly/Sharp/Light/Chart.svg') }}" alt="Dashboard Puskesmas"
-                                class="w-5 h-5">
+                        {{-- Tombol shortcut (ikon pengaturan) → menuju Edit Profil Bidan (route 'bidan.profile.edit') --}}
+                        <a href="{{ route('bidan.profile.edit') }}" class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
+                            <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90" alt="Setting">
                         </a>
-
-                        {{-- Notifikasi (saat ini hanya tampilan ikon, belum ada dropdown notifikasi) --}}
-                        <button
-                            class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
-                            <img src="{{ asset('icons/Iconly/Sharp/Light/Notification.svg') }}" alt="Notifikasi"
-                                class="w-5 h-5">
-                        </button>
 
                         {{-- Tombol Profil + Dropdown --}}
                         <div id="profileWrapper" class="relative">
@@ -80,8 +71,7 @@
                             </button>
 
                             {{-- Dropdown profil (muncul saat button profile diklik, di-handle oleh JS dropdown.js) --}}
-                            <div id="profileDropdown"
-                                class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
+                            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
                                 <div class="px-4 py-3 border-b border-[#F0F0F0]">
                                     <p class="text-sm font-medium text-[#1D1D1D]">
                                         {{ auth()->user()->name ?? 'Puskesmas' }}
@@ -111,13 +101,6 @@
                         {{-- Kartu ringkasan: menampilkan jumlah pasien skrining berdasarkan asal kota (Depok / Non Depok).
                              Angka diambil dari variabel $daerahAsal yang disiapkan di DashboardController. --}}
                         <h3 class="font-semibold text-lg text-[#1D1D1D]">Daerah Asal Pasien</h3>
-                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
-                            {{-- Tombol kanan atas kartu (saat ini hanya ikon panah, dekoratif / bisa dipakai nanti untuk menu lain) --}}
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none"
-                                stroke="currentColor" stroke-width="2">
-                                <path d="M9 6l6 6-6 6" />
-                            </svg>
-                        </button>
                     </div>
 
                     <div class="flex flex-1 items-center justify-center text-center divide-x divide-[#E9E9E9]">
@@ -143,6 +126,24 @@
                     </p>
                 </div>
 
+                {{-- Kartu Resiko Preeklampsia --}}
+                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Risiko Preeklampsia</h3>
+                    </div>
+                    <div class="space-y-3 mt-6 lg:mt-10">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#7C7C7C]">Pasien Normal</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $resikoNormal ?? 0 }}</span>
+                        </div>
+                        <hr class="border-[#E9E9E9]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#7C7C7C]">Pasien Beresiko Preeklampsia</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $resikoBeresiko ?? 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Kartu Pasien Hadir / Tidak Hadir --}}
                 <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
                     <div class="flex items-start justify-between gap-3 mb-3">
@@ -158,16 +159,15 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="text-xs text-[#7C7C7C] mb-1">Jumlah Hadir</div>
-                            {{-- Jumlah pasien yang skriningnya diperbarui hari ini --}}
-                            <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pasienHadir ?? 0 }}</div>
+                    <div class="space-y-3 mt-6 lg:mt-10">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#7C7C7C]">Jumlah Hadir</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $pasienHadir ?? 0 }}</span>
                         </div>
-                        <div class="text-right">
-                            <div class="text-xs text-[#7C7C7C] mb-1">Tidak Hadir / Tidak Tercatat</div>
-                            {{-- Total skrining - yang hadir --}}
-                            <div class="text-lg font-semibold text-[#FF3B30]">{{ $pasienTidakHadir ?? 0 }}</div>
+                        <hr class="border-[#E9E9E9]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#7C7C7C]">Tidak Hadir / Tidak Tercatat</span>
+                            <span class="font-bold text-[#FF3B30]">{{ $pasienTidakHadir ?? 0 }}</span>
                         </div>
                     </div>
                 </div>
@@ -178,12 +178,6 @@
                         {{-- Kartu ringkasan nifas: total pasien nifas dan yang sudah melakukan Kunjungan Nifas pertama (KFI).
                              Data berasal dari variabel $totalNifas dan $sudahKFI (DashboardController). --}}
                         <h3 class="font-semibold text-lg text-[#1D1D1D]">Data Pasien Nifas</h3>
-                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none"
-                                stroke="currentColor" stroke-width="2">
-                                <path d="M9 6l6 6-6 6" />
-                            </svg>
-                        </button>
                     </div>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
@@ -204,22 +198,18 @@
                         {{-- Kartu status pemantauan nifas: menampilkan jumlah pasien dengan kesimpulan pantauan Sehat / Dirujuk / Meninggal.
                              Diambil dari variabel $pemantauanSehat, $pemantauanDirujuk, $pemantauanMeninggal. --}}
                         <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan</h3>
-                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5"
-                                fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 6l6 6-6 6" />
-                            </svg>
-                        </button>
                     </div>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
                             <span class="text-[#7C7C7C]">Sehat</span>
                             <span class="font-bold text-[#39E93F]">{{ $pemantauanSehat ?? 0 }}</span>
                         </div>
+                        <hr class="border-[#E9E9E9]">
                         <div class="flex items-center justify-between">
                             <span class="text-[#7C7C7C]">Dirujuk</span>
                             <span class="font-bold text-[#FFC400]">{{ $pemantauanDirujuk ?? 0 }}</span>
                         </div>
+                        <hr class="border-[#E9E9E9]">
                         <div class="flex items-center justify-between">
                             <span class="text-[#7C7C7C]">Meninggal</span>
                             <span class="font-bold text-[#FF3B30]">{{ $pemantauanMeninggal ?? 0 }}</span>
@@ -231,11 +221,11 @@
             {{-- SECTION DATA PRE EKLAMSIA TERBARU (TABEL) --}}
             <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden">
                 <div
-                    class="px-4 sm:px-5 py-3 border-b border-[#F0F0F0] bg-[#FAFAFA] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    class="px-4 sm:px-5 py-3 border-b border-[#F0F0F0] bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
                         {{-- Section tabel: menampilkan daftar 5 pasien skrining preeklampsia terbaru.
                              Data berasal dari collection $pasienTerbaru (hasil query di DashboardController). --}}
-                        <h2 class="text-base sm:text-lg font-semibold text-[#1D1D1D]">Data Pasien Pre Eklampsia</h2>
+                        <h2 class="text-base sm:text-lg font-semibold text-[#1D1D1D]">Data Pasien Preeklampsia</h2>
                         <p class="text-xs text-[#7C7C7C]">Daftar pasien skrining preeklampsia terbaru</p>
                     </div>
                     <div class="flex items-center gap-2 flex-wrap">
@@ -255,7 +245,7 @@
                 {{-- Tabel daftar pasien skrining --}}
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
-                        <thead class="text-[#7C7C7C]">
+                        <thead class="bg-[#FFF7FC] text-[#7C7C7C]">
                             <tr class="text-left">
                                 <th class="px-3 py-2">No</th>
                                 <th class="px-3 py-2">Nama Pasien</th>

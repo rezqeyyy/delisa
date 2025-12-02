@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use App\Models\PasienNifasBidan;
 use App\Models\Pasien;
 use App\Models\User;
+use App\Models\Skrining;
 
 /*
 |--------------------------------------------------------------------------
@@ -152,6 +154,81 @@ class PasienNifasController extends Controller
         return view('bidan.pasien-nifas.create');
     }
 
+    public function cekNik(Request $request)
+    {
+        $nik = $request->input('nik');
+        if (!$nik || strlen($nik) !== 16) {
+            return response()->json(['found' => false, 'message' => 'NIK tidak valid. Harus 16 digit.']);
+        }
+        try {
+            $pasien = Pasien::where('nik', $nik)
+                ->with(['user', 'skrinings' => function ($q) { $q->orderBy('created_at', 'desc')->limit(1); }])
+                ->first();
+            if ($pasien) {
+                $status = $this->getStatusRisikoFromSkrining($pasien);
+                return response()->json([
+                    'found' => true,
+                    'message' => 'Pasien ditemukan',
+                    'pasien' => [
+                        'id' => $pasien->id,
+                        'nik' => $pasien->nik,
+                        'nama' => $pasien->user->name ?? '',
+                        'no_telepon' => $pasien->user->phone ?? '',
+                        'provinsi' => $pasien->PProvinsi ?? '',
+                        'kota' => $pasien->PKabupaten ?? '',
+                        'kecamatan' => $pasien->PKecamatan ?? '',
+                        'kelurahan' => $pasien->PWilayah ?? '',
+                        'domisili' => $pasien->address ?? $this->buildDomisili($pasien),
+                        'rt' => $pasien->rt ?? '',
+                        'rw' => $pasien->rw ?? '',
+                        'kode_pos' => $pasien->kode_pos ?? '',
+                        'tempat_lahir' => $pasien->tempat_lahir ?? '',
+                        'tanggal_lahir' => $pasien->tanggal_lahir ?? '',
+                        'status_perkawinan' => is_null($pasien->status_perkawinan) ? '' : (int) $pasien->status_perkawinan,
+                        'pekerjaan' => $pasien->pekerjaan ?? '',
+                        'pendidikan' => $pasien->pendidikan ?? '',
+                        'pembiayaan_kesehatan' => $pasien->pembiayaan_kesehatan ?? '',
+                        'golongan_darah' => $pasien->golongan_darah ?? '',
+                        'no_jkn' => $pasien->no_jkn ?? '',
+                        'status_risiko' => $status['label'],
+                        'status_type' => $status['type'],
+                        'has_skrining' => $pasien->skrinings->count() > 0,
+                    ],
+                ]);
+            }
+            return response()->json(['found' => false, 'message' => 'Pasien dengan NIK tersebut tidak ditemukan. Silakan isi data baru.']);
+        } catch (\Exception $e) {
+            Log::error('Bidan Cek NIK: ' . $e->getMessage());
+            return response()->json(['found' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function getStatusRisikoFromSkrining($pasien)
+    {
+        if (!$pasien) return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
+        $skrining = Skrining::where('pasien_id', $pasien->id)->orderBy('created_at', 'desc')->first();
+        if (!$skrining) return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
+        $rt = $skrining->jumlah_resiko_tinggi ?? 0;
+        $rs = $skrining->jumlah_resiko_sedang ?? 0;
+        $kes = strtolower(trim($skrining->kesimpulan ?? ''));
+        $pe  = strtolower(trim($skrining->status_pre_eklampsia ?? ''));
+        $high = $rt > 0 || in_array($kes, ['beresiko','berisiko','risiko tinggi','tinggi']) || in_array($pe, ['beresiko','berisiko','risiko tinggi','tinggi']);
+        $mid  = $rs > 0 || in_array($kes, ['waspada','menengah','sedang','risiko sedang']) || in_array($pe, ['waspada','menengah','sedang','risiko sedang']);
+        if ($high) return ['label' => 'Beresiko', 'type' => 'beresiko'];
+        if ($mid)  return ['label' => 'Waspada', 'type' => 'waspada'];
+        return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
+    }
+
+    private function buildDomisili($pasien)
+    {
+        $parts = [];
+        if (!empty($pasien->rt)) $parts[] = 'RT ' . $pasien->rt;
+        if (!empty($pasien->rw)) $parts[] = 'RW ' . $pasien->rw;
+        if (!empty($pasien->PWilayah)) $parts[] = 'Kel. ' . $pasien->PWilayah;
+        if (!empty($pasien->PKecamatan)) $parts[] = 'Kec. ' . $pasien->PKecamatan;
+        return implode(', ', $parts);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | METHOD: store()
@@ -165,14 +242,25 @@ class PasienNifasController extends Controller
     {
         // 1. Validasi Input Form
         $validated = $request->validate([
-            'nama_pasien' => 'required|string|max:255',  // Nama wajib, string, max 255 karakter
-            'nik'         => 'required|digits:16',       // NIK wajib, harus 16 digit
-            'no_telepon'  => 'required|string|max:20',   // No telp wajib
-            'provinsi'    => 'required|string|max:100',  // Provinsi wajib
-            'kota'        => 'required|string|max:100',  // Kota wajib
-            'kecamatan'   => 'required|string|max:100',  // Kecamatan wajib
-            'kelurahan'   => 'required|string|max:100',  // Kelurahan wajib
-            'domisili'    => 'required|string',          // Domisili wajib
+            'nama_pasien' => 'required|string|max:255',
+            'nik'         => 'required|digits:16',
+            'no_telepon'  => 'required|string|max:20',
+            'provinsi'    => 'required|string|max:100',
+            'kota'        => 'required|string|max:100',
+            'kecamatan'   => 'required|string|max:100',
+            'kelurahan'   => 'required|string|max:100',
+            'domisili'    => 'required|string',
+            'tempat_lahir'      => 'nullable|string|max:100',
+            'tanggal_lahir'     => 'nullable|date',
+            'status_perkawinan' => 'nullable|in:0,1',
+            'rt'                => 'nullable|string|max:10',
+            'rw'                => 'nullable|string|max:10',
+            'kode_pos'          => 'nullable|string|max:10',
+            'pekerjaan'         => 'nullable|string|max:100',
+            'pendidikan'        => 'nullable|string|max:100',
+            'pembiayaan_kesehatan' => 'nullable|string|max:50',
+            'golongan_darah'    => 'nullable|string|max:5',
+            'no_jkn'            => 'nullable|string|max:20',
         ]);
 
         try {
@@ -197,13 +285,29 @@ class PasienNifasController extends Controller
                     User::where('id', $existingPasien->user_id)->update(['phone' => $validated['no_telepon']]);
                 }
 
-                // Update data alamat pasien
-                $existingPasien->update([
+                $updateData = [
                     'PProvinsi'  => $validated['provinsi'],
                     'PKabupaten' => $validated['kota'],
                     'PKecamatan' => $validated['kecamatan'],
                     'PWilayah'   => $validated['kelurahan'],
-                ]);
+                    'rt'                => $validated['rt'] ?? $existingPasien->rt,
+                    'rw'                => $validated['rw'] ?? $existingPasien->rw,
+                    'kode_pos'          => $validated['kode_pos'] ?? $existingPasien->kode_pos,
+                    'tempat_lahir'      => $validated['tempat_lahir'] ?? $existingPasien->tempat_lahir,
+                    'tanggal_lahir'     => $validated['tanggal_lahir'] ?? $existingPasien->tanggal_lahir,
+                    'status_perkawinan' => isset($validated['status_perkawinan']) ? (int) $validated['status_perkawinan'] : $existingPasien->status_perkawinan,
+                    'pekerjaan'         => $validated['pekerjaan'] ?? $existingPasien->pekerjaan,
+                    'pendidikan'        => $validated['pendidikan'] ?? $existingPasien->pendidikan,
+                    'pembiayaan_kesehatan' => $validated['pembiayaan_kesehatan'] ?? $existingPasien->pembiayaan_kesehatan,
+                    'golongan_darah'    => $validated['golongan_darah'] ?? $existingPasien->golongan_darah,
+                    'no_jkn'            => $validated['no_jkn'] ?? $existingPasien->no_jkn,
+                ];
+                if (Schema::hasColumn('pasiens', 'address')) {
+                    $updateData['address'] = $validated['domisili'];
+                } else if ($existingPasien->user) {
+                    $existingPasien->user->update(['address' => $validated['domisili']]);
+                }
+                $existingPasien->update($updateData);
 
                 $pasien = $existingPasien; // Set variable $pasien ke existing pasien
             } else {
@@ -232,15 +336,31 @@ class PasienNifasController extends Controller
                     'phone'    => $validated['no_telepon'],
                 ]);
 
-                // 3d. Buat Data Pasien Baru
-                $pasien = Pasien::create([
-                    'user_id'    => $user->id, // FK ke user yang baru dibuat
+                $pasienData = [
+                    'user_id'    => $user->id,
                     'nik'        => $validated['nik'],
                     'PProvinsi'  => $validated['provinsi'],
                     'PKabupaten' => $validated['kota'],
                     'PKecamatan' => $validated['kecamatan'],
                     'PWilayah'   => $validated['kelurahan'],
-                ]);
+                    'rt'                => $validated['rt'] ?? null,
+                    'rw'                => $validated['rw'] ?? null,
+                    'kode_pos'          => $validated['kode_pos'] ?? null,
+                    'tempat_lahir'      => $validated['tempat_lahir'] ?? null,
+                    'tanggal_lahir'     => $validated['tanggal_lahir'] ?? null,
+                    'status_perkawinan' => isset($validated['status_perkawinan']) ? (int) $validated['status_perkawinan'] : null,
+                    'pekerjaan'         => $validated['pekerjaan'] ?? null,
+                    'pendidikan'        => $validated['pendidikan'] ?? null,
+                    'pembiayaan_kesehatan' => $validated['pembiayaan_kesehatan'] ?? null,
+                    'golongan_darah'    => $validated['golongan_darah'] ?? null,
+                    'no_jkn'            => $validated['no_jkn'] ?? null,
+                ];
+                if (Schema::hasColumn('pasiens', 'address')) {
+                    $pasienData['address'] = $validated['domisili'];
+                } else {
+                    $user->update(['address' => $validated['domisili']]);
+                }
+                $pasien = Pasien::create($pasienData);
             }
 
             // 4. Ambil Data Bidan yang Login
@@ -285,6 +405,31 @@ class PasienNifasController extends Controller
             
             // Redirect kembali dengan input lama dan pesan error
             return back()->withInput()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $bidan = Auth::user()->bidan;
+            abort_unless($bidan, 403);
+            $bidanId = $bidan->puskesmas_id;
+
+            $row = PasienNifasBidan::where('id', $id)
+                ->where('bidan_id', $bidanId)
+                ->first();
+
+            if (!$row) {
+                return back()->with('error', 'Data nifas tidak ditemukan atau bukan milik puskesmas Anda.');
+            }
+
+            $row->delete();
+
+            return redirect()->route('bidan.pasien-nifas')
+                ->with('success', 'Data pasien nifas berhasil dihapus');
+        } catch (\Throwable $e) {
+            Log::error('Bidan Destroy Pasien Nifas: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menghapus: ' . $e->getMessage());
         }
     }
 }

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Bidan — Tambah Pasien Nifas</title>
 
     {{-- 
@@ -11,7 +12,14 @@
         - resources/js/app.js   → bootstrap JS (Alpine, dsb)
         - resources/js/dropdown.js → behavior dropdown profile di navbar
     --}}
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js'])
+    @vite([
+        'resources/css/app.css', 
+        'resources/js/app.js', 
+        'resources/js/dropdown.js',
+        'resources/js/bidan/sidebar-toggle.js',
+        'resources/js/rs/wilayah.js',
+        'resources/js/bidan/cek-nik.js'
+        ])
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
@@ -105,6 +113,8 @@
                         jika NIK sudah terdaftar, data pasien akan diambil dari tabel <code>pasiens</code> & <code>users</code>.
                     </p>
                 </div>
+                <div id="nikAlert" class="hidden"></div>
+                <div id="statusRisikoCard" class="hidden"></div>
 
                 {{-- 
                     FORM:
@@ -126,158 +136,190 @@
                       class="space-y-5">
                     @csrf
 
-                    {{-- GRID KOLOM 2: Nama, NIK, No Telepon --}}
+                    {{-- GRID KOLOM 2: Nama & NIK --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-1.5">
-                            {{-- Nama Pasien: dipakai untuk kolom users.name dan pasiens.nama (implisit via relasi) --}}
-                            <label for="nama_pasien" class="block text-xs font-medium text-[#666666]">
-                                Nama Pasien <span class="text-pink-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                id="nama_pasien"
-                                name="nama_pasien"
-                                class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500"
-                                placeholder="Nama lengkap pasien"
-                                value="{{ old('nama_pasien') }}"
-                                required>
-                            @error('nama_pasien')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                            @enderror
+                            <label for="nama_pasien" class="block text-xs font-medium text-[#666666]">Nama Pasien <span class="text-pink-600">*</span></label>
+                            <input type="text" id="nama_pasien" name="nama_pasien" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" placeholder="Nama lengkap pasien" value="{{ old('nama_pasien') }}" required>
+                            @error('nama_pasien')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
-
                         <div class="space-y-1.5">
-                            {{-- NIK: kunci utama untuk mengecek apakah pasien sudah pernah dibuat --}}
-                            <label for="nik" class="block text-xs font-medium text-[#666666]">
-                                NIK <span class="text-pink-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                id="nik"
-                                name="nik"
-                                maxlength="16"
-                                class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500"
-                                placeholder="16 digit NIK"
-                                value="{{ old('nik') }}"
-                                required>
-                            @error('nik')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div class="space-y-1.5 md:col-span-2">
-                            {{-- No Telepon pasien: disimpan ke kolom users.phone --}}
-                            <label for="no_telepon" class="block text-xs font-medium text-[#666666]">
-                                Nomor Telepon <span class="text-pink-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                id="no_telepon"
-                                name="no_telepon"
-                                class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500"
-                                placeholder="Nomor HP aktif"
-                                value="{{ old('no_telepon') }}"
-                                required>
-                            @error('no_telepon')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                            @enderror
+                            <label for="nik" class="block text-xs font-medium text-[#666666]">NIK <span class="text-pink-600">*</span></label>
+                            <div class="flex gap-2">
+                                <input type="tel" id="nik" name="nik" maxlength="16" inputmode="numeric" pattern="[0-9]*" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" placeholder="16 digit NIK" value="{{ old('nik') }}" required>
+                                <button type="button" id="btnCekNik" data-url="{{ route('bidan.pasien-nifas.cek-nik') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-[#E91E8C] bg-[#E91E8C]/10 px-4 py-2 text-xs sm:text-sm font-semibold text-[#E91E8C] hover:bg-[#E91E8C] hover:text-white transition-colors whitespace-nowrap">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+                                    <span>Cek</span>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-[#7C7C7C] mt-1">Klik "Cek" untuk mengisi otomatis data jika pasien sudah terdaftar</p>
+                            @error('nik')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
                     </div>
 
-                    {{-- GRID KOLOM 2: Alamat (Provinsi, Kota/Kabupaten) --}}
+                    {{-- GRID KOLOM 2: Tempat & Tanggal Lahir --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-1.5">
-                            {{-- Provinsi domisili pasien (disimpan ke kolom PProvinsi di tabel pasiens) --}}
-                            <label for="provinsi" class="block text-xs font-medium text-[#666666]">
-                                Provinsi <span class="text-pink-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                id="provinsi"
-                                name="provinsi"
-                                class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500"
-                                placeholder="Contoh: Jawa Barat"
-                                value="{{ old('provinsi') }}"
-                                required>
-                            @error('provinsi')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                            @enderror
+                            <label class="block text-xs font-medium text-[#666666]">Tempat Lahir</label>
+                            <input type="text" name="tempat_lahir" id="tempat_lahir" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" placeholder="Contoh: Depok" value="{{ old('tempat_lahir') }}">
+                            @error('tempat_lahir')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
-
                         <div class="space-y-1.5">
-                            {{-- Kota/Kabupaten domisili pasien (disimpan ke PKabupaten) --}}
-                            <label for="kota" class="block text-xs font-medium text-[#666666]">
-                                Kota/Kabupaten <span class="text-pink-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                id="kota"
-                                name="kota"
-                                class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500"
-                                placeholder="Contoh: Kota Depok"
-                                value="{{ old('kota') }}"
-                                required>
-                            @error('kota')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                            @enderror
+                            <label class="block text-xs font-medium text-[#666666]">Tanggal Lahir</label>
+                            <input type="date" name="tanggal_lahir" id="tanggal_lahir" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('tanggal_lahir') }}">
+                            @error('tanggal_lahir')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
                     </div>
 
-                    {{-- GRID KOLOM 2: Kecamatan, Kelurahan --}}
+                    {{-- GRID KOLOM 2: No Telepon & Status Perkawinan --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-1.5">
-                            {{-- Kecamatan (disimpan ke PKecamatan) --}}
-                            <label for="kecamatan" class="block text-xs font-medium text-[#666666]">
-                                Kecamatan <span class="text-pink-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                id="kecamatan"
-                                name="kecamatan"
-                                class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500"
-                                placeholder="Contoh: Beji"
-                                value="{{ old('kecamatan') }}"
-                                required>
-                            @error('kecamatan')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                            @enderror
+                            <label for="no_telepon" class="block text-xs font-medium text-[#666666]">Nomor Telepon <span class="text-pink-600">*</span></label>
+                            <input type="text" id="no_telepon" name="no_telepon" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" placeholder="08xxxxxxxxxx" value="{{ old('no_telepon') }}" required>
+                            @error('no_telepon')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
-
                         <div class="space-y-1.5">
-                            {{-- Kelurahan (disimpan ke PWilayah) --}}
-                            <label for="kelurahan" class="block text-xs font-medium text-[#666666]">
-                                Kelurahan <span class="text-pink-600">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                id="kelurahan"
-                                name="kelurahan"
-                                class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500"
-                                placeholder="Contoh: Beji Timur"
-                                value="{{ old('kelurahan') }}"
-                                required>
-                            @error('kelurahan')
-                                <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                            @enderror
+                            <label class="block text-xs font-medium text-[#666666]">Status Perkawinan</label>
+                            <select name="status_perkawinan" id="status_perkawinan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
+                                <option value="">Pilih Status</option>
+                                <option value="1" {{ (string)old('status_perkawinan') === '1' ? 'selected' : '' }}>Menikah</option>
+                                <option value="0" {{ (string)old('status_perkawinan') === '0' ? 'selected' : '' }}>Belum Menikah</option>
+                            </select>
+                            @error('status_perkawinan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-medium text-[#666666]">Golongan Darah</label>
+                            <select name="golongan_darah" id="golongan_darah" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
+                                <option value="">Pilih Golongan Darah</option>
+                                <option value="A" {{ old('golongan_darah') == 'A' ? 'selected' : '' }}>A</option>
+                                <option value="B" {{ old('golongan_darah') == 'B' ? 'selected' : '' }}>B</option>
+                                <option value="AB" {{ old('golongan_darah') == 'AB' ? 'selected' : '' }}>AB</option>
+                                <option value="O" {{ old('golongan_darah') == 'O' ? 'selected' : '' }}>O</option>
+                            </select>
+                            @error('golongan_darah')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-medium text-[#666666]">Pembiayaan Kesehatan</label>
+                            <select name="pembiayaan_kesehatan" id="pembiayaan_kesehatan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
+                                <option value="">Pilih Pembiayaan</option>
+                                <option value="Pribadi" {{ old('pembiayaan_kesehatan') == 'Pribadi' ? 'selected' : '' }}>Pribadi</option>
+                                <option value="BPJS Kesehatan" {{ old('pembiayaan_kesehatan') == 'BPJS Kesehatan' ? 'selected' : '' }}>BPJS Kesehatan (JKN)</option>
+                                <option value="Asuransi Lain" {{ old('pembiayaan_kesehatan') == 'Asuransi Lain' ? 'selected' : '' }}>Asuransi Lainnya</option>
+                            </select>
+                            @error('pembiayaan_kesehatan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
                     </div>
 
-                    {{-- Kolom Domisili detail (alamat lengkap, keterangan RT/RW, dsb.) --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-medium text-[#666666]">Pendidikan Terakhir</label>
+                            <select name="pendidikan" id="pendidikan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
+                                <option value="">Pilih pendidikan</option>
+                                <option value="Tidak Sekolah" {{ old('pendidikan') == 'Tidak Sekolah' ? 'selected' : '' }}>Tidak Sekolah</option>
+                                <option value="SD" {{ old('pendidikan') == 'SD' ? 'selected' : '' }}>SD</option>
+                                <option value="SMP" {{ old('pendidikan') == 'SMP' ? 'selected' : '' }}>SMP</option>
+                                <option value="SMA" {{ old('pendidikan') == 'SMA' ? 'selected' : '' }}>SMA</option>
+                                <option value="D3" {{ old('pendidikan') == 'D3' ? 'selected' : '' }}>D3</option>
+                                <option value="S1" {{ old('pendidikan') == 'S1' ? 'selected' : '' }}>S1</option>
+                                <option value="S2" {{ old('pendidikan') == 'S2' ? 'selected' : '' }}>S2</option>
+                                <option value="S3" {{ old('pendidikan') == 'S3' ? 'selected' : '' }}>S3</option>
+                            </select>
+                            @error('pendidikan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-medium text-[#666666]">Pekerjaan</label>
+                            <select name="pekerjaan" id="pekerjaan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
+                                <option value="">Pilih pekerjaan</option>
+                                <option value="Ibu Rumah tangga" {{ old('pekerjaan') == 'Ibu Rumah tangga' ? 'selected' : '' }}>Ibu Rumah tangga</option>
+                                <option value="Pegawai Swasta" {{ old('pekerjaan') == 'Pegawai Swasta' ? 'selected' : '' }}>Pegawai Swasta</option>
+                                <option value="ASN/PNS/TNI/Polri" {{ old('pekerjaan') == 'ASN/PNS/TNI/Polri' ? 'selected' : '' }}>ASN/PNS/TNI/Polri</option>
+                                <option value="Wiraswasta" {{ old('pekerjaan') == 'Wiraswasta' ? 'selected' : '' }}>Wiraswasta</option>
+                                <option value="Pekerjaan Lainnya" {{ old('pekerjaan') == 'Pekerjaan Lainnya' ? 'selected' : '' }}>Pekerjaan Lainnya</option>
+                            </select>
+                            @error('pekerjaan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                        </div>
+                    </div>        
+
                     <div class="space-y-1.5">
-                        <label for="domisili" class="block text-xs font-medium text-[#666666]">
-                            Alamat Domisili Lengkap <span class="text-pink-600">*</span>
-                        </label>
-                        <textarea
-                            id="domisili"
-                            name="domisili"
-                            rows="3"
-                            class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500"
-                            placeholder="Tulis alamat lengkap domisili pasien (jalan, RT/RW, dsb.)"
-                            required>{{ old('domisili') }}</textarea>
-                        @error('domisili')
-                            <p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>
-                        @enderror
+                        <label for="domisili" class="block text-xs font-medium text-[#666666]">Domisili (Alamat) <span class="text-pink-600">*</span></label>
+                        <textarea id="domisili" name="domisili" rows="3" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" placeholder="Alamat lengkap tempat tinggal" required>{{ old('domisili') }}</textarea>
+                        @error('domisili')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                     </div>
+
+                    <div id="wilayah-wrapper"
+                         data-url-provinces="{{ route('wilayah.provinces') }}"
+                         data-url-regencies="{{ url('/wilayah/regencies') }}"
+                         data-url-districts="{{ url('/wilayah/districts') }}"
+                         data-url-villages="{{ url('/wilayah/villages') }}"
+                         data-prov="{{ old('provinsi') }}"
+                         data-kab="{{ old('kota') }}"
+                         data-kec="{{ old('kecamatan') }}"
+                         data-kel="{{ old('kelurahan') }}"
+                         class="space-y-4 mt-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label for="provinsi" class="block text-xs font-medium text-[#666666]">Provinsi <span class="text-pink-600">*</span></label>
+                                <select name="provinsi" id="provinsi" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" required>
+                                    <option value="">{{ old('provinsi') ? 'Memuat…' : 'Pilih Provinsi' }}</option>
+                                </select>
+                                @error('provinsi')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                            </div>
+                            <div class="space-y-1.5">
+                                <label for="kabupaten" class="block text-xs font-medium text-[#666666]">Kota/Kabupaten <span class="text-pink-600">*</span></label>
+                                <select name="kota" id="kabupaten" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" required>
+                                    <option value="">{{ old('kota') ? 'Memuat…' : 'Pilih Kota/Kabupaten' }}</option>
+                                </select>
+                                @error('kota')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                                <div class="mt-1 text-xs text-[#B9257F]">* Pilih Provinsi dahulu.</div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label for="kecamatan" class="block text-xs font-medium text-[#666666]">Kecamatan <span class="text-pink-600">*</span></label>
+                                <select name="kecamatan" id="kecamatan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" required>
+                                    <option value="">{{ old('kecamatan') ? 'Memuat…' : 'Pilih Kecamatan' }}</option>
+                                </select>
+                                @error('kecamatan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                                <div class="mt-1 text-xs text-[#B9257F]">* Pilih Kota/Kabupaten dahulu.</div>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label for="kelurahan" class="block text-xs font-medium text-[#666666]">Kelurahan <span class="text-pink-600">*</span></label>
+                                <select name="kelurahan" id="kelurahan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" required>
+                                    <option value="">{{ old('kelurahan') ? 'Memuat…' : 'Pilih Kelurahan' }}</option>
+                                </select>
+                                @error('kelurahan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                                <div class="mt-1 text-xs text-[#B9257F]">* Pilih Kecamatan dahulu.</div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-medium text-[#666666]">RT</label>
+                            <input type="text" name="rt" id="rt" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('rt') }}" placeholder="000">
+                            @error('rt')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-medium text-[#666666]">RW</label>
+                            <input type="text" name="rw" id="rw" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('rw') }}" placeholder="000">
+                            @error('rw')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-medium text-[#666666]">Kode Pos</label>
+                            <input type="text" name="kode_pos" id="kode_pos" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('kode_pos') }}" placeholder="000">
+                            @error('kode_pos')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-medium text-[#666666]">No JKN</label>
+                            <input type="text" name="no_jkn" id="no_jkn" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('no_jkn') }}" placeholder="Masukkan nomor kartu JKN">
+                            @error('no_jkn')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+                                                   
 
                     {{-- FOOTER FORM: tombol kembali & tombol submit --}}
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-[#F0F0F0]">
@@ -339,5 +381,7 @@
             });
         }
     </script>
+
+    @vite(['resources/js/rs/cek-nik.js'])
 </body>
 </html>
