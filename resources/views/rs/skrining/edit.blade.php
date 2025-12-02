@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Riwayat Pasien - DELISA</title>
     
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js'])
+    @vite([
+        'resources/css/app.css',
+        'resources/js/app.js',
+        'resources/js/dropdown.js',
+        'resources/js/rs/sidebar-toggle.js',
+        'resources/js/rs/skrinning-edit.js',
+    ])
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
@@ -133,15 +139,23 @@
                                     <option value="Observasi" {{ $tindakanOld === 'Observasi' ? 'selected' : '' }}>Observasi</option>
                                 </select>
                             </div>
+
+                            {{-- Catatan Riwayat Rujukan --}}
+                            <div class="space-y-1">
+                                <label class="text-[11px] font-semibold text-[#7C7C7C]">
+                                    Catatan Riwayat Rujukan
+                                </label>
+                                <textarea name="catatan" rows="3"
+                                    placeholder="Masukkan catatan riwayat rujukan..."
+                                    class="w-full rounded-xl border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C] resize-none">{{ old('catatan', $riwayatRujukan->catatan ?? '') }}</textarea>
+                            </div>
                         </div>
                     </section>
 
                     {{-- Kartu: Resep Obat --}}
                     @php
-                        $obatOptions = ['Kalsium 1000 - 1500mg', 'Simvastatin 10mg', 'Amlodipine 5mg'];
-                        $existingObat = $resepObats->pluck('resep_obat')->toArray();
-                        $otherResepObats = $resepObats->whereNotIn('resep_obat', $obatOptions)->values();
-                        $nextIndexBase = count($obatOptions) + $otherResepObats->count();
+                        $existingObats = $resepObats ?? collect();
+                        $nextIndexBase = $existingObats->count();
                     @endphp
 
                     <section id="sectionResepObat"
@@ -172,108 +186,63 @@
                                             <th class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
                                                 Digunakan
                                             </th>
+                                            <th class="px-3 sm:px-4 py-2.5 text-center font-semibold uppercase tracking-wide text-[10px] sm:text-[11px] w-16">
+                                                Aksi
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody id="obatTableBody" class="divide-y divide-[#F3F3F3] bg-white">
-                                        {{-- 3 obat default --}}
-                                        @foreach ($obatOptions as $index => $obat)
-                                            @php
-                                                $resep = $resepObats->where('resep_obat', $obat)->first();
-                                                $oldDosis = old('dosis.' . $index, $resep->dosis ?? '');
-                                                $oldPenggunaan = old('penggunaan.' . $index, $resep->penggunaan ?? '');
-                                                $isChecked = !is_null($resep);
-                                            @endphp
-                                            <tr class="{{ $isChecked ? 'bg-[#F9FAFB]' : 'bg-white' }} hover:bg-[#FAFAFA]">
+                                        {{-- Existing medicines --}}
+                                        @forelse ($existingObats as $index => $resep)
+                                            <tr class="bg-white hover:bg-[#FAFAFA] obat-row">
                                                 <td class="px-3 sm:px-4 py-2.5 align-top text-[#1D1D1D]">
-                                                    <input type="hidden" name="resep_obat[{{ $index }}]" value="{{ $obat }}">
-                                                    <span class="font-medium">{{ $obat }}</span>
+                                                    <input type="text" name="resep_obat[{{ $index }}]"
+                                                        placeholder="Nama obat..."
+                                                        value="{{ old('resep_obat.' . $index, $resep->resep_obat ?? '') }}"
+                                                        class="w-full rounded-lg border border-[#E5E5E5] bg-white px-2.5 py-1.5 text-xs sm:text-sm text-[#1D1D1D] font-medium placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
                                                 </td>
                                                 <td class="px-3 sm:px-4 py-2.5 align-top">
                                                     <input type="text" name="dosis[{{ $index }}]"
-                                                        placeholder="Masukkan dosis..." value="{{ $oldDosis }}"
+                                                        placeholder="Masukkan dosis..."
+                                                        value="{{ old('dosis.' . $index, $resep->dosis ?? '') }}"
                                                         class="w-full rounded-lg border border-[#E5E5E5] bg-white px-2.5 py-1.5 text-xs sm:text-sm text-[#1D1D1D] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
                                                 </td>
                                                 <td class="px-3 sm:px-4 py-2.5 align-top">
                                                     <input type="text" name="penggunaan[{{ $index }}]"
-                                                        placeholder="Cara penggunaan..." value="{{ $oldPenggunaan }}"
+                                                        placeholder="Cara penggunaan..."
+                                                        value="{{ old('penggunaan.' . $index, $resep->penggunaan ?? '') }}"
                                                         class="w-full rounded-lg border border-[#E5E5E5] bg-white px-2.5 py-1.5 text-xs sm:text-sm text-[#1D1D1D] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
+                                                </td>
+                                                <td class="px-3 sm:px-4 py-2.5 align-top text-center">
+                                                    <button type="button"
+                                                        data-action="hapus-obat"
+                                                        class="inline-flex items-center justify-center w-8 h-8 rounded-full text-[#DC2626] hover:bg-[#FEE2E2] transition-colors">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M3 6h18"/>
+                                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                                            <line x1="10" y1="11" x2="10" y2="17"/>
+                                                            <line x1="14" y1="11" x2="14" y2="17"/>
+                                                        </svg>
+                                                    </button>
                                                 </td>
                                             </tr>
-                                        @endforeach
-
-                                        {{-- Obat lain yang pernah ditambahkan --}}
-                                        @php $startIndex = count($obatOptions); @endphp
-                                        @foreach ($otherResepObats as $loopIndex => $resep)
-                                            @php
-                                                $i = $startIndex + $loopIndex;
-                                                $oldNama = old('resep_obat.' . $i, $resep->resep_obat ?? '');
-                                                $oldDosis = old('dosis.' . $i, $resep->dosis ?? '');
-                                                $oldPenggunaan = old('penggunaan.' . $i, $resep->penggunaan ?? '');
-                                            @endphp
-                                            <tr class="bg-[#F9FAFB] hover:bg-[#FAFAFA]">
-                                                <td class="px-3 sm:px-4 py-2.5 align-top text-[#1D1D1D]">
-                                                    <input type="text" name="resep_obat[{{ $i }}]"
-                                                        placeholder="Nama obat..." value="{{ $oldNama }}"
-                                                        class="w-full rounded-lg border border-[#E5E5E5] bg-white px-2.5 py-1.5 text-xs sm:text-sm text-[#1D1D1D] font-medium placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
-                                                </td>
-                                                <td class="px-3 sm:px-4 py-2.5 align-top">
-                                                    <input type="text" name="dosis[{{ $i }}]"
-                                                        placeholder="Masukkan dosis..." value="{{ $oldDosis }}"
-                                                        class="w-full rounded-lg border border-[#E5E5E5] bg-white px-2.5 py-1.5 text-xs sm:text-sm text-[#1D1D1D] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
-                                                </td>
-                                                <td class="px-3 sm:px-4 py-2.5 align-top">
-                                                    <input type="text" name="penggunaan[{{ $i }}]"
-                                                        placeholder="Cara penggunaan..." value="{{ $oldPenggunaan }}"
-                                                        class="w-full rounded-lg border border-[#E5E5E5] bg-white px-2.5 py-1.5 text-xs sm:text-sm text-[#1D1D1D] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
+                                        @empty
+                                            <tr id="emptyRow" class="bg-white">
+                                                <td colspan="4" class="px-3 sm:px-4 py-8 text-center text-[#9CA3AF]">
+                                                    <div class="flex flex-col items-center gap-2">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-[#E5E5E5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                            <path d="M10.5 20.5L5.5 15.5L15.5 5.5L20.5 10.5L10.5 20.5Z"/>
+                                                            <path d="M8.5 12.5L12.5 8.5"/>
+                                                            <path d="M2 22L5.5 18.5"/>
+                                                        </svg>
+                                                        <span class="text-xs">Belum ada resep obat. Klik "Tambah Obat" untuk menambahkan.</span>
+                                                    </div>
                                                 </td>
                                             </tr>
-                                        @endforeach
+                                        @endforelse
                                     </tbody>
                                 </table>
-                            </div>
-                        </div>
-
-                        {{-- Modal Tambah Obat --}}
-                        <div id="modalTambahObat" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/40">
-                            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4">
-                                <div class="px-5 py-3 border-b border-[#F0F0F0] flex items-center justify-between">
-                                    <h3 class="text-sm font-semibold text-[#1D1D1D]">Tambah Obat Baru</h3>
-                                    <button type="button" id="btnCloseModal" class="text-[#9CA3AF] hover:text-[#4B4B4B]">
-                                        <i class="fas fa-times text-sm"></i>
-                                    </button>
-                                </div>
-
-                                <div class="px-5 py-4 space-y-3 text-xs sm:text-sm">
-                                    <div>
-                                        <label class="text-[11px] font-semibold text-[#7C7C7C]">Nama Obat</label>
-                                        <input id="inputNamaObat" type="text"
-                                            class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
-                                    </div>
-
-                                    <div>
-                                        <label class="text-[11px] font-semibold text-[#7C7C7C]">Dosis</label>
-                                        <input id="inputDosisObat" type="text"
-                                            class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
-                                    </div>
-
-                                    <div>
-                                        <label class="text-[11px] font-semibold text-[#7C7C7C]">Digunakan</label>
-                                        <input id="inputGunakanObat" type="text"
-                                            class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
-                                    </div>
-                                </div>
-
-                                <div class="px-5 py-3 border-t border-[#F0F0F0] flex justify-end gap-2">
-                                    <button type="button" id="btnCancelModal"
-                                        class="rounded-full border border-[#E5E5E5] px-4 py-1.5 text-xs hover:bg-[#F8F8F8]">
-                                        Batal
-                                    </button>
-
-                                    <button type="button" id="btnSimpanObat"
-                                        class="rounded-full bg-[#E91E8C] px-4 py-1.5 text-xs text-white hover:bg-[#C2185B]">
-                                        Simpan ke Daftar
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </section>
@@ -310,84 +279,5 @@
             </div>
         </main>
     </div>
-
-    <script>
-        // Modal Tambah Obat
-        document.addEventListener('DOMContentLoaded', function() {
-            const btnTambahObat = document.getElementById('btnTambahObat');
-            const modalTambahObat = document.getElementById('modalTambahObat');
-            const btnCloseModal = document.getElementById('btnCloseModal');
-            const btnCancelModal = document.getElementById('btnCancelModal');
-            const btnSimpanObat = document.getElementById('btnSimpanObat');
-            const obatTableBody = document.getElementById('obatTableBody');
-            const sectionResepObat = document.getElementById('sectionResepObat');
-
-            // Open modal
-            btnTambahObat.addEventListener('click', function() {
-                modalTambahObat.classList.remove('hidden');
-                modalTambahObat.classList.add('flex');
-            });
-
-            // Close modal
-            function closeModal() {
-                modalTambahObat.classList.add('hidden');
-                modalTambahObat.classList.remove('flex');
-                document.getElementById('inputNamaObat').value = '';
-                document.getElementById('inputDosisObat').value = '';
-                document.getElementById('inputGunakanObat').value = '';
-            }
-
-            btnCloseModal.addEventListener('click', closeModal);
-            btnCancelModal.addEventListener('click', closeModal);
-
-            // Click outside to close
-            modalTambahObat.addEventListener('click', function(e) {
-                if (e.target === modalTambahObat) {
-                    closeModal();
-                }
-            });
-
-            // Simpan obat baru
-            btnSimpanObat.addEventListener('click', function() {
-                const namaObat = document.getElementById('inputNamaObat').value.trim();
-                const dosisObat = document.getElementById('inputDosisObat').value.trim();
-                const gunakanObat = document.getElementById('inputGunakanObat').value.trim();
-
-                if (!namaObat) {
-                    alert('Nama obat harus diisi!');
-                    return;
-                }
-
-                let nextIndex = parseInt(sectionResepObat.dataset.nextIndex) || 0;
-
-                const newRow = document.createElement('tr');
-                newRow.className = 'bg-[#F9FAFB] hover:bg-[#FAFAFA]';
-                newRow.innerHTML = `
-                    <td class="px-3 sm:px-4 py-2.5 align-top text-[#1D1D1D]">
-                        <input type="text" name="resep_obat[${nextIndex}]"
-                            value="${namaObat}"
-                            class="w-full rounded-lg border border-[#E5E5E5] bg-white px-2.5 py-1.5 text-xs sm:text-sm text-[#1D1D1D] font-medium placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
-                    </td>
-                    <td class="px-3 sm:px-4 py-2.5 align-top">
-                        <input type="text" name="dosis[${nextIndex}]"
-                            value="${dosisObat}"
-                            placeholder="Masukkan dosis..."
-                            class="w-full rounded-lg border border-[#E5E5E5] bg-white px-2.5 py-1.5 text-xs sm:text-sm text-[#1D1D1D] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
-                    </td>
-                    <td class="px-3 sm:px-4 py-2.5 align-top">
-                        <input type="text" name="penggunaan[${nextIndex}]"
-                            value="${gunakanObat}"
-                            placeholder="Cara penggunaan..."
-                            class="w-full rounded-lg border border-[#E5E5E5] bg-white px-2.5 py-1.5 text-xs sm:text-sm text-[#1D1D1D] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
-                    </td>
-                `;
-
-                obatTableBody.appendChild(newRow);
-                sectionResepObat.dataset.nextIndex = nextIndex + 1;
-
-                closeModal();
-            });
-        });
-    </script>
 </body>
 </html>

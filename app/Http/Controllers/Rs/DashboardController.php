@@ -16,7 +16,7 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // RS yang sedang login
         $rsId = $this->getRsId();
@@ -25,9 +25,6 @@ class DashboardController extends Controller
          * ==============================
          * 1. BASIS DATA RUJUKAN RS
          * ==============================
-         * Semua rujukan ke RS ini, dipisah:
-         * - acceptedRujukan: rujukan yang SUDAH diterima (done_status = true)
-         * - pendingRujukan : rujukan yang BELUM diterima (done_status = false)
          */
         $allRujukanForRs = RujukanRs::with(['skrining.pasien.user'])
             ->where('rs_id', $rsId)
@@ -38,27 +35,19 @@ class DashboardController extends Controller
 
         /**
          * ==============================
-         * 2. DATA PASIEN RUJUKAN / NON RUJUKAN (CARD "Data Pasien")
+         * 2. DATA PASIEN RUJUKAN / NON RUJUKAN
          * ==============================
-         * - Pasien Rujukan    = pasien yang punya rujukan ke RS ini dan
-         *                       minimal satu rujukannya SUDAH diterima.
-         * - Pasien Non Rujukan= pasien yang punya rujukan ke RS ini tetapi
-         *                       BELUM ada satupun rujukannya yang diterima.
          */
-
-        // Pasien yang punya rujukan diterima
         $acceptedPatientIds = $acceptedRujukan
             ->pluck('pasien_id')
             ->filter()
             ->unique();
 
-        // Pasien yang punya rujukan pending
         $pendingPatientIds = $pendingRujukan
             ->pluck('pasien_id')
             ->filter()
             ->unique();
 
-        // Non rujukan = pasien yang hanya punya rujukan pending, dan BELUM pernah diterima
         $nonRujukanPatientIds = $pendingPatientIds
             ->diff($acceptedPatientIds);
 
@@ -67,16 +56,14 @@ class DashboardController extends Controller
 
         /**
          * ==============================
-         * 3. DATA PASIEN RUJUKAN (CARD "Data Pasien Rujukan")
+         * 3. DATA PASIEN RUJUKAN
          * ==============================
-         * - Setelah Melahirkan  => pasien rujukan yang sudah masuk data nifas RS ini
-         * - Berisiko            => rujukan KE RS INI yang status skrining-nya berisiko / waspada
          */
         $rujukanSetelahMelahirkan = PasienNifasRs::where('rs_id', $rsId)->count();
 
         $rujukanBeresiko     = 0;
         $resikoNormal        = 0;
-        $resikoPreeklampsia  = 0; // kartu khusus "Resiko Preeklampsia"
+        $resikoPreeklampsia  = 0;
 
         foreach ($acceptedRujukan as $rujukan) {
             $skr = $rujukan->skrining;
@@ -95,7 +82,7 @@ class DashboardController extends Controller
 
             if ($isHigh || $isMed) {
                 $rujukanBeresiko++;
-                $resikoPreeklampsia++;  // Semua yang tidak normal kita hitung sebagai "beresiko preeklampsia"
+                $resikoPreeklampsia++;
             } else {
                 $resikoNormal++;
             }
@@ -103,22 +90,8 @@ class DashboardController extends Controller
 
         /**
          * ==============================
-         * 4. PASIEN HADIR / TIDAK HADIR (CARD "Pasien Hadir")
+         * 4. PASIEN HADIR / TIDAK HADIR
          * ==============================
-         * Definisi:
-         * - Pasien Hadir       = pasien yang rujukannya SUDAH diterima DAN
-         *                        SUDAH dilakukan pemeriksaan lanjutan
-         *                        (minimal satu field lanjutan di rujukan_rs terisi)
-         * - Pasien Tidak Hadir = pasien yang rujukannya SUDAH diterima tetapi
-         *                        BELUM ada pemeriksaan lanjutan sama sekali
-         *                        (semua field lanjutan masih null)
-         *
-         * Field lanjutan yang dicek:
-         *   - pasien_datang
-         *   - riwayat_tekanan_darah
-         *   - hasil_protein_urin
-         *   - perlu_pemeriksaan_lanjut
-         *   - catatan_rujukan
          */
         $pasienHadir = $acceptedRujukan->filter(function (RujukanRs $r) {
             return !is_null($r->pasien_datang)
@@ -133,7 +106,7 @@ class DashboardController extends Controller
 
         /**
          * ==============================
-         * 5. DATA PASIEN NIFAS (CARD "Data Pasien Nifas")
+         * 5. DATA PASIEN NIFAS
          * ==============================
          */
         $totalNifas = PasienNifasRs::where('rs_id', $rsId)->count();
@@ -141,7 +114,6 @@ class DashboardController extends Controller
         $pasienNifasIds = PasienNifasRs::where('rs_id', $rsId)->pluck('id');
 
         if ($pasienNifasIds->isNotEmpty()) {
-            // Nifas yang sudah punya kunjungan KF1
             $sudahKF1 = DB::table('kf')
                 ->whereIn('id_nifas', $pasienNifasIds)
                 ->where('kunjungan_nifas_ke', 1)
@@ -150,7 +122,7 @@ class DashboardController extends Controller
 
             /**
              * ==============================
-             * 6. PEMANTAUAN (CARD "Pemantauan")
+             * 6. PEMANTAUAN
              * ==============================
              */
             $kfBase = DB::table('kf')->whereIn('id_nifas', $pasienNifasIds);
@@ -175,22 +147,71 @@ class DashboardController extends Controller
 
         /**
          * ==============================
-         * 7. TABEL DATA PASIEN RUJUKAN PRE EKLAMPSIA
-         * ==============================
-         * HANYA:
-         * - rujukan ke RS ini (rs_id = $rsId)
-         * - sudah diterima (done_status = true)
-         *
-         * Di sini kita TIDAK lagi memfilter field lanjutan,
-         * supaya semua pasien rujukan yang sudah diterima
-         * tetap muncul di tabel ini, baik sudah diperiksa
-         * maupun belum.
+         * 7. TABEL DATA PASIEN RUJUKAN PRE EKLAMPSIA (DENGAN FILTER)
          * ==============================
          */
-        $pePatients = RujukanRs::with(['skrining.pasien.user'])
+        $peQuery = RujukanRs::with(['skrining.pasien.user'])
             ->where('rs_id', $rsId)
-            ->where('done_status', true)
-            ->orderByDesc('created_at')
+            ->where('done_status', true);
+
+        // Filter berdasarkan NIK
+        if ($request->filled('nik')) {
+            $peQuery->whereHas('skrining.pasien', function ($q) use ($request) {
+                $q->where('nik', 'like', '%' . $request->nik . '%');
+            });
+        }
+
+        // Filter berdasarkan Nama Pasien
+        if ($request->filled('nama')) {
+            $peQuery->whereHas('skrining.pasien.user', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->nama . '%');
+            });
+        }
+
+        // Filter berdasarkan Tanggal Mulai
+        if ($request->filled('tanggal_dari')) {
+            $peQuery->whereHas('skrining', function ($q) use ($request) {
+                $q->whereDate('created_at', '>=', $request->tanggal_dari);
+            });
+        }
+
+        // Filter berdasarkan Tanggal Sampai
+        if ($request->filled('tanggal_sampai')) {
+            $peQuery->whereHas('skrining', function ($q) use ($request) {
+                $q->whereDate('created_at', '<=', $request->tanggal_sampai);
+            });
+        }
+
+        // Filter berdasarkan Status Risiko
+        if ($request->filled('risiko')) {
+            $risikoFilter = $request->risiko;
+            
+            $peQuery->whereHas('skrining', function ($q) use ($risikoFilter) {
+                if ($risikoFilter === 'Beresiko') {
+                    $q->where(function ($subQ) {
+                        $subQ->where('jumlah_resiko_tinggi', '>', 0)
+                            ->orWhereRaw("LOWER(TRIM(kesimpulan)) IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')")
+                            ->orWhereRaw("LOWER(TRIM(status_pre_eklampsia)) IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')");
+                    });
+                } elseif ($risikoFilter === 'Waspada') {
+                    $q->where(function ($subQ) {
+                        $subQ->where('jumlah_resiko_sedang', '>', 0)
+                            ->orWhereRaw("LOWER(TRIM(kesimpulan)) IN ('waspada', 'menengah', 'sedang', 'risiko sedang')")
+                            ->orWhereRaw("LOWER(TRIM(status_pre_eklampsia)) IN ('waspada', 'menengah', 'sedang', 'risiko sedang')");
+                    })->where('jumlah_resiko_tinggi', '<=', 0)
+                      ->whereRaw("LOWER(TRIM(COALESCE(kesimpulan, ''))) NOT IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')");
+                } elseif ($risikoFilter === 'Tidak Berisiko') {
+                    $q->where(function ($subQ) {
+                        $subQ->where('jumlah_resiko_tinggi', '<=', 0)
+                            ->where('jumlah_resiko_sedang', '<=', 0)
+                            ->whereRaw("LOWER(TRIM(COALESCE(kesimpulan, ''))) NOT IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi', 'waspada', 'menengah', 'sedang', 'risiko sedang')")
+                            ->whereRaw("LOWER(TRIM(COALESCE(status_pre_eklampsia, ''))) NOT IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi', 'waspada', 'menengah', 'sedang', 'risiko sedang')");
+                    });
+                }
+            });
+        }
+
+        $pePatients = $peQuery->orderByDesc('created_at')
             ->limit(50)
             ->get()
             ->map(function (RujukanRs $rujukan) {
@@ -230,7 +251,6 @@ class DashboardController extends Controller
                     'alamat'      => $pas->PKecamatan ?? $pas->PWilayah ?? '-',
                     'telp'        => $usr->phone ?? $pas->no_telepon ?? '-',
                     'kesimpulan'  => $isHigh ? 'Beresiko' : ($isMed ? 'Waspada' : 'Tidak Berisiko'),
-                    // Periksa = form lanjutan
                     'detail_url'  => route('rs.skrining.edit', $skr->id ?? 0),
                     'process_url' => $pas && $pas->id
                         ? route('rs.dashboard.proses-nifas', ['id' => $pas->id])
@@ -256,9 +276,6 @@ class DashboardController extends Controller
         ));
     }
 
-    /**
-     * Show detail pasien
-     */
     public function showPasien($id)
     {
         try {
@@ -272,21 +289,15 @@ class DashboardController extends Controller
         }
     }
 
-    /**
-     *  Proses pasien ke data nifas
-     */
     public function prosesPasienNifas(Request $request, $id)
     {
         try {
             DB::beginTransaction();
 
-            // Cari data pasien
             $pasien = Pasien::findOrFail($id);
 
-            // Get RS ID dari user yang login
             $rs_id = $this->getRsId();
 
-            // Cek apakah pasien sudah ada di data nifas
             $existingNifas = PasienNifasRs::where('pasien_id', $pasien->id)
                 ->where('rs_id', $rs_id)
                 ->first();
@@ -299,7 +310,6 @@ class DashboardController extends Controller
                     ->with('info', 'Pasien sudah terdaftar dalam data nifas.');
             }
 
-            // Buat data pasien nifas baru
             $pasienNifas = PasienNifasRs::create([
                 'rs_id'               => $rs_id,
                 'pasien_id'           => $pasien->id,
@@ -322,9 +332,6 @@ class DashboardController extends Controller
         }
     }
 
-    /**
-     * Get RS ID from authenticated user
-     */
     private function getRsId()
     {
         $user = Auth::user();
@@ -333,17 +340,14 @@ class DashboardController extends Controller
             throw new \RuntimeException('User belum login.');
         }
 
-        // 1) Kalau user punya kolom rumah_sakit_id → pakai itu
         if (!empty($user->rumah_sakit_id)) {
             return $user->rumah_sakit_id;
         }
 
-        // 2) Atau kolom rs_id
         if (!empty($user->rs_id)) {
             return $user->rs_id;
         }
 
-        // 3) Kalau di model User ada relasi rumahSakit(), coba pakai
         if (method_exists($user, 'rumahSakit')) {
             $rs = $user->rumahSakit()->first();
             if ($rs) {
@@ -351,11 +355,9 @@ class DashboardController extends Controller
             }
         }
 
-        // 4) Fallback: ambil RS pertama yang benar-benar ada di tabel rumah_sakits
         $rs = RumahSakit::query()->orderBy('id')->first();
 
         if (!$rs) {
-            // Ini benar-benar darurat: tidak ada data rumah sakit sama sekali
             throw new \RuntimeException('Belum ada data rumah sakit di tabel rumah_sakits.');
         }
 

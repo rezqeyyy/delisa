@@ -88,26 +88,6 @@
                         </div>
                     </div>
 
-                    {{-- Statistik Ringkas --}}
-                    <div class="grid grid-cols-3 gap-3 mt-4 mb-4">
-                        @php
-                            $totalBeresiko = $pasienNifas->where('status_type', 'beresiko')->count();
-                            $totalWaspada = $pasienNifas->where('status_type', 'waspada')->count();
-                            $totalNormal = $pasienNifas->where('status_type', 'normal')->count();
-                        @endphp
-                        <div class="bg-red-50 border border-red-100 rounded-xl p-3 text-center">
-                            <div class="text-2xl font-bold text-red-600">{{ $totalBeresiko }}</div>
-                            <div class="text-xs text-red-600">Beresiko</div>
-                        </div>
-                        <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
-                            <div class="text-2xl font-bold text-amber-600">{{ $totalWaspada }}</div>
-                            <div class="text-xs text-amber-600">Waspada</div>
-                        </div>
-                        <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-center">
-                            <div class="text-2xl font-bold text-emerald-600">{{ $totalNormal }}</div>
-                            <div class="text-xs text-emerald-600">Tidak Berisiko</div>
-                        </div>
-                    </div>
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">

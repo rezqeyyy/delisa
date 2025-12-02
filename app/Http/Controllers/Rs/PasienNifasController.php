@@ -101,12 +101,12 @@ class PasienNifasController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function cekNik(Request $request) // Endpoint AJAX untuk cek NIK dan auto-fill data pasien jika ditemukan
+        public function cekNik(Request $request)
     {
-        $nik = $request->input('nik'); // Ambil NIK dari request
+        $nik = $request->input('nik');
 
         // Validasi NIK
-        if (!$nik || strlen($nik) !== 16) { // NIK harus 16 digit
+        if (!$nik || strlen($nik) !== 16) {
             return response()->json([
                 'found' => false,
                 'message' => 'NIK tidak valid. Harus 16 digit.'
@@ -117,31 +117,52 @@ class PasienNifasController extends Controller
             // Cari pasien berdasarkan NIK dengan relasi user dan skrining
             $pasien = Pasien::where('nik', $nik)
                 ->with(['user', 'skrinings' => function($q) {
-                    $q->orderBy('created_at', 'desc')->limit(1); // Ambil skrining terbaru saja
+                    $q->orderBy('created_at', 'desc')->limit(1);
                 }])
                 ->first();
 
-            if ($pasien) { // Jika pasien ditemukan
+            if ($pasien) {
                 // Ambil status risiko dari skrining
                 $statusRisiko = $this->getStatusRisikoFromSkrining($pasien);
 
-                // Pasien ditemukan - return data untuk auto-fill
+                // Pasien ditemukan - return data lengkap untuk auto-fill
                 return response()->json([
                     'found' => true,
                     'message' => 'Pasien ditemukan',
-                    'pasien' => [ // Data untuk mengisi form secara otomatis
-                        'id'            => $pasien->id,
-                        'nik'           => $pasien->nik,
-                        'nama'          => $pasien->user->name ?? '',
-                        'no_telepon'    => $pasien->user->phone ?? '',
-                        'provinsi'      => $pasien->PProvinsi ?? '',
-                        'kota'          => $pasien->PKabupaten ?? '',
-                        'kecamatan'     => $pasien->PKecamatan ?? '',
-                        'kelurahan'     => $pasien->PWilayah ?? '',
-                        'domisili'      => ($pasien->address ?? $this->buildDomisili($pasien)),
-                        'status_risiko' => $statusRisiko['label'],
-                        'status_type'   => $statusRisiko['type'],
-                        'has_skrining'  => $pasien->skrinings->count() > 0,
+                    'pasien' => [
+                        'id'                    => $pasien->id,
+                        'nik'                   => $pasien->nik,
+                        'nama'                  => $pasien->user->name ?? '',
+                        'no_telepon'            => $pasien->user->phone ?? '',
+                        
+                        // Data Wilayah
+                        'provinsi'              => $pasien->PProvinsi ?? '',
+                        'kota'                  => $pasien->PKabupaten ?? '',
+                        'kecamatan'             => $pasien->PKecamatan ?? '',
+                        'kelurahan'             => $pasien->PWilayah ?? '',
+                        
+                        // Data Alamat
+                        'domisili'              => $pasien->address ?? $this->buildDomisili($pasien),
+                        'rt'                    => $pasien->rt ?? '',
+                        'rw'                    => $pasien->rw ?? '',
+                        'kode_pos'              => $pasien->kode_pos ?? '',
+                        
+                        // Data Pribadi
+                        'tempat_lahir'          => $pasien->tempat_lahir ?? '',
+                        'tanggal_lahir'         => $pasien->tanggal_lahir ?? '',
+                        'status_perkawinan'     => $pasien->status_perkawinan ?? '',
+                        'pekerjaan'             => $pasien->pekerjaan ?? '',
+                        'pendidikan'            => $pasien->pendidikan ?? '',
+                        
+                        // Data Kesehatan
+                        'pembiayaan_kesehatan'  => $pasien->pembiayaan_kesehatan ?? '',
+                        'golongan_darah'        => $pasien->golongan_darah ?? '',
+                        'no_jkn'                => $pasien->no_jkn ?? '',
+                        
+                        // Status Risiko
+                        'status_risiko'         => $statusRisiko['label'],
+                        'status_type'           => $statusRisiko['type'],
+                        'has_skrining'          => $pasien->skrinings->count() > 0,
                     ]
                 ]);
             }
@@ -153,7 +174,7 @@ class PasienNifasController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error Cek NIK: ' . $e->getMessage()); // Log error untuk debugging
+            Log::error('Error Cek NIK: ' . $e->getMessage());
 
             return response()->json([
                 'found' => false,
@@ -461,6 +482,43 @@ class PasienNifasController extends Controller
 
         return view('rs.pasien-nifas.show', compact('pasienNifas', 'anakPasien')); // View detail read-only
     }
+
+    /**
+ * Download PDF single pasien nifas
+ */
+public function downloadSinglePDF($id)
+{
+    try {
+        $pasienNifas = PasienNifasRs::with([
+            'pasien.user',
+            'pasien.skrinings',
+            'rs',
+            'anakPasien'
+        ])->findOrFail($id);
+
+        // Ambil status risiko
+        $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
+        $pasienNifas->status_display = $statusRisiko['label'];
+        $pasienNifas->status_type = $statusRisiko['type'];
+
+        // Generate PDF
+        $pdf = Pdf::loadView('rs.pasien-nifas.single-pdf', compact('pasienNifas'));
+        
+        // Set paper dan orientation
+        $pdf->setPaper('A4', 'portrait');
+        
+        // Generate filename
+        $namaPasien = $pasienNifas->pasien->user->name ?? 'Pasien';
+        $filename = 'Data_Nifas_' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $namaPasien) . '_' . date('Y-m-d') . '.pdf';
+        
+        return $pdf->download($filename);
+    } catch (\Exception $e) {
+        Log::error('Error Download Single PDF: ' . $e->getMessage());
+        
+        return back()
+            ->with('error', 'Gagal mengunduh PDF: ' . $e->getMessage());
+    }
+}
 
     /**
      * Download PDF data pasien nifas

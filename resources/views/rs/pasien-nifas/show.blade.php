@@ -503,25 +503,26 @@
             {{-- TOMBOL AKSI BAWAH --}}
             <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
                 <a href="{{ route('rs.pasien-nifas.index') }}"
-                   class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] w-full sm:w-auto">
+                class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] w-full sm:w-auto">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2">
+                        stroke="currentColor" stroke-width="2">
                         <path d="M15 18l-6-6 6-6" />
                     </svg>
                     <span>Kembali ke List</span>
                 </a>
 
                 @if ($pasienNifas->anakPasien->count() > 0)
-                    <button type="button" onclick="window.print()"
-                            class="inline-flex items-center justify-center gap-2 rounded-full bg-[#10B981] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#059669] w-full sm:w-auto">
+                    <a href="{{ route('rs.pasien-nifas.download-single-pdf', $pasienNifas->id) }}"
+                    class="inline-flex items-center justify-center gap-2 rounded-full bg-[#DC2626] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#B91C1C] w-full sm:w-auto">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2">
-                            <path d="M6 9V2h12v7" />
-                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                            <path d="M6 14h12v8H6z" />
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <path d="M14 2v6h6" />
+                            <path d="M12 18v-6" />
+                            <path d="m9 15 3 3 3-3" />
                         </svg>
-                        <span>Cetak Data</span>
-                    </button>
+                        <span>Cetak PDF</span>
+                    </a>
                 @endif
             </div>
 
