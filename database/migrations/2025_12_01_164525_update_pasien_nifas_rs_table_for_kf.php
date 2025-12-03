@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+        public function up(): void
     {
         Schema::table('pasien_nifas_rs', function (Blueprint $table) {
             // ========== UBAH KOLOM LAMA (BACKWARD COMPATIBILITY) ==========
@@ -34,38 +34,61 @@ return new class extends Migration
                 $table->text('kf3_catatan')->nullable()->change();
             }
             
+            // ========== TAMBAH KOLOM KF4 ==========
+            if (!Schema::hasColumn('pasien_nifas_rs', 'kf4_tanggal')) {
+                $table->timestamp('kf4_tanggal')->nullable();
+            }
+            if (!Schema::hasColumn('pasien_nifas_rs', 'kf4_catatan')) {
+                $table->text('kf4_catatan')->nullable();
+            }
+            
             // ========== TAMBAH FOREIGN KEYS KE TABEL BARU ==========
             // Tambah kolom untuk relasi ke kf_kunjungans
             $table->foreignId('kf1_id')
-                  ->nullable()
-                  ->constrained('kf_kunjungans')
-                  ->nullOnDelete();
+                ->nullable()
+                ->constrained('kf_kunjungans')
+                ->nullOnDelete();
             
             $table->foreignId('kf2_id')
-                  ->nullable()
-                  ->constrained('kf_kunjungans')
-                  ->nullOnDelete();
+                ->nullable()
+                ->constrained('kf_kunjungans')
+                ->nullOnDelete();
             
             $table->foreignId('kf3_id')
-                  ->nullable()
-                  ->constrained('kf_kunjungans')
-                  ->nullOnDelete();
+                ->nullable()
+                ->constrained('kf_kunjungans')
+                ->nullOnDelete();
+            
+            // ========== TAMBAH FOREIGN KEY KF4 ==========
+            $table->foreignId('kf4_id')
+                ->nullable()
+                ->constrained('kf_kunjungans')
+                ->nullOnDelete();
         });
     }
 
     /**
      * Reverse the migrations.
      */
-    public function down(): void
+        public function down(): void
     {
         Schema::table('pasien_nifas_rs', function (Blueprint $table) {
             // ========== HAPUS FOREIGN KEYS ==========
             $table->dropForeign(['kf1_id']);
             $table->dropForeign(['kf2_id']);
             $table->dropForeign(['kf3_id']);
+            $table->dropForeign(['kf4_id']); // TAMBAHKAN
             
             // ========== HAPUS KOLOM BARU ==========
-            $table->dropColumn(['kf1_id', 'kf2_id', 'kf3_id']);
+            $table->dropColumn(['kf1_id', 'kf2_id', 'kf3_id', 'kf4_id']); // TAMBAHKAN kf4_id
+            
+            // ========== HAPUS KOLOM KF4 JIKA ADA ==========
+            if (Schema::hasColumn('pasien_nifas_rs', 'kf4_tanggal')) {
+                $table->dropColumn('kf4_tanggal');
+            }
+            if (Schema::hasColumn('pasien_nifas_rs', 'kf4_catatan')) {
+                $table->dropColumn('kf4_catatan');
+            }
             
             // ========== KEMBALIKAN KOLOM LAMA (OPSIONAL) ==========
             // Jika ingin kembalikan ke not nullable

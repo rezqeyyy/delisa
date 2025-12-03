@@ -56,6 +56,7 @@ class KfKunjungan extends Model
             1 => 'KF 1',
             2 => 'KF 2',
             3 => 'KF 3',
+            4 => 'KF 4',
             default => 'Tidak Diketahui',
         };
     }

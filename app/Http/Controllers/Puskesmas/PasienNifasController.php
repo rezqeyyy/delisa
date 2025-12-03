@@ -57,7 +57,7 @@ class PasienNifasController extends Controller
         $pasienNifas = PasienNifasRs::with(['pasien.user'])->findOrFail($id);
         
         // Validasi input jenis KF
-        if (!in_array($jenisKf, [1, 2, 3])) {
+        if (!in_array($jenisKf, [1, 2, 3, 4])) {
             abort(404, 'Jenis KF tidak valid');
         }
         
@@ -125,7 +125,7 @@ class PasienNifasController extends Controller
         $pasienNifas = PasienNifasRs::findOrFail($id);
         
         // Validasi jenis KF
-        if (!in_array($jenisKf, [1, 2, 3])) {
+        if (!in_array($jenisKf, [1, 2, 3, 4])) {
             abort(404, 'Jenis KF tidak valid');
         }
         

@@ -24,6 +24,7 @@ class PasienNifasRs extends Model
         'kf1_tanggal', 'kf1_catatan',
         'kf2_tanggal', 'kf2_catatan',
         'kf3_tanggal', 'kf3_catatan',
+        'kf4_tanggal', 'kf4_catatan',
     ];
 
     // TAMBAH INI: Casting untuk tanggal
@@ -32,6 +33,7 @@ class PasienNifasRs extends Model
         'kf1_tanggal' => 'datetime',
         'kf2_tanggal' => 'datetime',
         'kf3_tanggal' => 'datetime',
+        'kf4_tanggal' => 'datetime',
     ];
 
     /**
@@ -106,6 +108,12 @@ class PasienNifasRs extends Model
                     ->where('jenis_kf', 3);
     }
 
+    public function kfKunjungan4(): HasOne
+    {
+        return $this->hasOne(KfKunjungan::class, 'pasien_nifas_id')
+                    ->where('jenis_kf', 4);
+    }
+
     /**
      * Foreign key relationships (untuk integrasi dengan kolom kf1_id, kf2_id, kf3_id)
      */
@@ -123,6 +131,13 @@ class PasienNifasRs extends Model
     {
         return $this->belongsTo(KfKunjungan::class, 'kf3_id');
     }
+
+    public function kf4()
+    {
+        return $this->belongsTo(KfKunjungan::class, 'kf4_id');
+    }
+
+    
 
     /**
      * Accessor untuk cek apakah sudah ada KF1 (sistem baru)
@@ -148,6 +163,14 @@ class PasienNifasRs extends Model
         return $this->kfKunjungan3()->exists();
     }
 
+        /**
+     * Accessor untuk cek apakah sudah ada KF4 (sistem baru)
+     */
+    public function getHasKf4KunjunganAttribute(): bool
+    {
+        return $this->kfKunjungan4()->exists();
+    }
+
     /**
      * Accessor untuk mendapatkan data KF berdasarkan jenis (sistem baru)
      */
@@ -157,6 +180,7 @@ class PasienNifasRs extends Model
             'kf1' => $this->kfKunjungan1,
             'kf2' => $this->kfKunjungan2,
             'kf3' => $this->kfKunjungan3,
+            'kf4' => $this->kfKunjungan4,
         ];
     }
 
@@ -198,6 +222,8 @@ class PasienNifasRs extends Model
                 return $tanggalMelahirkan->copy()->addDays(7); // Hari ke-3 - ke-7
             case 3:
                 return $tanggalMelahirkan->copy()->addDays(28); // Hari ke-8 - ke-28
+            case 4:
+                return $tanggalMelahirkan->copy()->addDays(42); // TAMBAHKAN: KF4 biasanya hari ke-29-42
             default:
                 return null;
         }
@@ -250,6 +276,8 @@ class PasienNifasRs extends Model
                 return $tanggalMelahirkan->copy()->addDays(3);
             case 3:
                 return $tanggalMelahirkan->copy()->addDays(8);
+            case 4:
+                return $tanggalMelahirkan->copy()->addDays(29);
             default:
                 return null;
         }
@@ -272,6 +300,10 @@ class PasienNifasRs extends Model
             return $this->has_kf2_kunjungan || $this->isKfSelesai(2);
         }
         
+        if ($jenisKf == 4) { // TAMBAHKAN
+            return $this->has_kf3_kunjungan || $this->isKfSelesai(3);
+        }
+
         return false;
     }
 

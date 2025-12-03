@@ -48,7 +48,7 @@
                 </div>
                 
                 <!-- Tombol Download PDF (akan muncul jika ada KF yang sudah dicatat) -->
-                @if($pasienNifas->kf1_tanggal || $pasienNifas->kf2_tanggal || $pasienNifas->kf3_tanggal)
+                @if($pasienNifas->kf1_tanggal || $pasienNifas->kf2_tanggal || $pasienNifas->kf3_tanggal || $pasienNifas->kf4_tanggal)
                 <div class="flex items-center gap-2">
                     <a href="{{ route('puskesmas.pasien-nifas.all-kf.pdf', $pasienNifas->id) }}"
                        class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
@@ -117,7 +117,7 @@
                     <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
                         <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Status Kunjungan Fisiologis (KF)</h2>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            @foreach([1, 2, 3] as $jenisKf)
+                            @foreach([1, 2, 3, 4] as $jenisKf)
                             @php
                                 $status = $pasienNifas->getKfStatus($jenisKf);
                                 $badgeColor = $pasienNifas->getKfBadgeColor($jenisKf);
@@ -208,79 +208,95 @@
                 <!-- Right Column: Timeline & Info -->
                 <div class="space-y-6">
                     <!-- Timeline KF Card -->
-                    @if($pasienNifas->kf1_tanggal || $pasienNifas->kf2_tanggal || $pasienNifas->kf3_tanggal)
-                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
-                        <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Timeline KF</h2>
-                        <div class="space-y-4">
-                            @if($pasienNifas->kf1_tanggal)
-                            <div class="relative pl-8 mb-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-4 before:h-4 before:rounded-full before:bg-blue-500">
-                                <div class="py-2">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="font-semibold text-[#1D1D1D]">KF1</h4>
-                                            <p class="text-sm text-[#7C7C7C]">{{ \Carbon\Carbon::parse($pasienNifas->kf1_tanggal)->format('d/m/Y H:i') }}</p>
-                                        </div>
-                                        <span class="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">Selesai</span>
-                                    </div>
-                                    <p class="text-sm text-[#7C7C7C] mt-2">{{ $pasienNifas->kf1_catatan }}</p>
-                                </div>
-                            </div>
-                            @endif
-                            
-                            @if($pasienNifas->kf2_tanggal)
-                            <div class="relative pl-8 mb-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-4 before:h-4 before:rounded-full before:bg-blue-500">
-                                <div class="py-2">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="font-semibold text-[#1D1D1D]">KF2</h4>
-                                            <p class="text-sm text-[#7C7C7C]">{{ \Carbon\Carbon::parse($pasienNifas->kf2_tanggal)->format('d/m/Y H:i') }}</p>
-                                        </div>
-                                        <span class="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">Selesai</span>
-                                    </div>
-                                    <p class="text-sm text-[#7C7C7C] mt-2">{{ $pasienNifas->kf2_catatan }}</p>
-                                </div>
-                            </div>
-                            @endif
-                            
-                            @if($pasienNifas->kf3_tanggal)
-                            <div class="relative pl-8 mb-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-4 before:h-4 before:rounded-full before:bg-blue-500">
-                                <div class="py-2">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="font-semibold text-[#1D1D1D]">KF3</h4>
-                                            <p class="text-sm text-[#7C7C7C]">{{ \Carbon\Carbon::parse($pasienNifas->kf3_tanggal)->format('d/m/Y H:i') }}</p>
-                                        </div>
-                                        <span class="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">Selesai</span>
-                                    </div>
-                                    <p class="text-sm text-[#7C7C7C] mt-2">{{ $pasienNifas->kf3_catatan }}</p>
-                                </div>
-                            </div>
-                            @endif
-                        </div>
+@if($pasienNifas->kf1_tanggal || $pasienNifas->kf2_tanggal || $pasienNifas->kf3_tanggal || $pasienNifas->kf4_tanggal)
+<div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
+    <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Timeline KF</h2>
+    <div class="space-y-4">
+        @if($pasienNifas->kf1_tanggal)
+        <div class="relative pl-8 mb-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-4 before:h-4 before:rounded-full before:bg-blue-500">
+            <div class="py-2">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="font-semibold text-[#1D1D1D]">KF1</h4>
+                        <p class="text-sm text-[#7C7C7C]">{{ \Carbon\Carbon::parse($pasienNifas->kf1_tanggal)->format('d/m/Y H:i') }}</p>
                     </div>
-                    @endif
-
-                    <!-- Info Periode KF -->
-                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
-                        <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Informasi Periode KF</h2>
-                        <div class="space-y-3">
-                            <div>
-                                <h4 class="font-medium text-[#1D1D1D] text-sm">KF1</h4>
-                                <p class="text-xs text-[#7C7C7C]">6 jam - 2 hari setelah melahirkan</p>
-                            </div>
-                            <div>
-                                <h4 class="font-medium text-[#1D1D1D] text-sm">KF2</h4>
-                                <p class="text-xs text-[#7C7C7C]">Hari ke-3 - ke-7 setelah melahirkan</p>
-                            </div>
-                            <div>
-                                <h4 class="font-medium text-[#1D1D1D] text-sm">KF3</h4>
-                                <p class="text-xs text-[#7C7C7C]">Hari ke-8 - ke-28 setelah melahirkan</p>
-                            </div>
-                        </div>
-                    </div>
+                    <span class="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">Selesai</span>
                 </div>
+                <p class="text-sm text-[#7C7C7C] mt-2">{{ $pasienNifas->kf1_catatan }}</p>
             </div>
+        </div>
+        @endif
+        
+        @if($pasienNifas->kf2_tanggal)
+        <div class="relative pl-8 mb-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-4 before:h-4 before:rounded-full before:bg-blue-500">
+            <div class="py-2">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="font-semibold text-[#1D1D1D]">KF2</h4>
+                        <p class="text-sm text-[#7C7C7C]">{{ \Carbon\Carbon::parse($pasienNifas->kf2_tanggal)->format('d/m/Y H:i') }}</p>
+                    </div>
+                    <span class="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">Selesai</span>
+                </div>
+                <p class="text-sm text-[#7C7C7C] mt-2">{{ $pasienNifas->kf2_catatan }}</p>
+            </div>
+        </div>
+        @endif
+        
+        @if($pasienNifas->kf3_tanggal)
+        <div class="relative pl-8 mb-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-4 before:h-4 before:rounded-full before:bg-blue-500">
+            <div class="py-2">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="font-semibold text-[#1D1D1D]">KF3</h4>
+                        <p class="text-sm text-[#7C7C7C]">{{ \Carbon\Carbon::parse($pasienNifas->kf3_tanggal)->format('d/m/Y H:i') }}</p>
+                    </div>
+                    <span class="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">Selesai</span>
+                </div>
+                <p class="text-sm text-[#7C7C7C] mt-2">{{ $pasienNifas->kf3_catatan }}</p>
+            </div>
+        </div>
+        @endif
+        
+        @if($pasienNifas->kf4_tanggal)
+        <div class="relative pl-8 mb-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-4 before:h-4 before:rounded-full before:bg-blue-500">
+            <div class="py-2">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="font-semibold text-[#1D1D1D]">KF4</h4>
+                        <p class="text-sm text-[#7C7C7C]">{{ \Carbon\Carbon::parse($pasienNifas->kf4_tanggal)->format('d/m/Y H:i') }}</p>
+                    </div>
+                    <span class="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">Selesai</span>
+                </div>
+                <p class="text-sm text-[#7C7C7C] mt-2">{{ $pasienNifas->kf4_catatan }}</p>
+            </div>
+        </div>
+        @endif
+    </div>
+</div>
+@endif
 
+<!-- Info Periode KF -->
+<div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
+    <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Informasi Periode KF</h2>
+    <div class="space-y-3">
+        <div>
+            <h4 class="font-medium text-[#1D1D1D] text-sm">KF1</h4>
+            <p class="text-xs text-[#7C7C7C]">6 jam - 2 hari setelah melahirkan</p>
+        </div>
+        <div>
+            <h4 class="font-medium text-[#1D1D1D] text-sm">KF2</h4>
+            <p class="text-xs text-[#7C7C7C]">Hari ke-3 - ke-7 setelah melahirkan</p>
+        </div>
+        <div>
+            <h4 class="font-medium text-[#1D1D1D] text-sm">KF3</h4>
+            <p class="text-xs text-[#7C7C7C]">Hari ke-8 - ke-28 setelah melahirkan</p>
+        </div>
+        <div>
+            <h4 class="font-medium text-[#1D1D1D] text-sm">KF4</h4>
+            <p class="text-xs text-[#7C7C7C]">Hari ke-29 - ke-42 setelah melahirkan</p>
+        </div>
+    </div>
+</div>
             <!-- Footer -->
             <footer class="text-center text-xs text-[#7C7C7C] py-6">
                 © 2025 Dinas Kesehatan Kota Depok — DeLISA
