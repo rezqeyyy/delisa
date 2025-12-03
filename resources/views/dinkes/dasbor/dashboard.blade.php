@@ -347,17 +347,37 @@
                     $innerH = $H - $padT - $padB;
 
                     $W = 1200; // lebar SVG
-                    // Skala sumbu Y minimal 80, atau mengikuti max data jika lebih besar
-                    $scale = max(80, $max);
+
+                    /**
+                     * SKALA DINAMIS
+                     * - Kalau kunjungan sedikit, skala ikut turun supaya bar kelihatan tinggi.
+                     * - Kalau besar, dinaikkan ke kelipatan 20 terdekat.
+                     */
+                    if ($max <= 10) {
+                        $scale = 10;
+                        $yTicks = [0, 2, 4, 6, 8, 10];
+                    } elseif ($max <= 20) {
+                        $scale = 20;
+                        $yTicks = [0, 5, 10, 15, 20];
+                    } elseif ($max <= 40) {
+                        $scale = 40;
+                        $yTicks = [0, 10, 20, 30, 40];
+                    } elseif ($max <= 80) {
+                        $scale = 80;
+                        $yTicks = [0, 20, 40, 60, 80];
+                    } else {
+                        // Di atas 80 → bulatkan ke kelipatan 20 terdekat
+                        $scale = (int) ceil($max / 20) * 20;
+                        $step = (int) round($scale / 4);
+                        $yTicks = [0, $step, $step * 2, $step * 3, $step * 4];
+                    }
 
                     $gridColor = '#1F2937';
                     $gridOpacity = 0.45;
                     $gridWidth = 1.5;
                     $gridDash = '4,4';
-
-                    // Titik-titik di sumbu Y (0,20,40,60,80)
-                    $yTicks = [0, 20, 40, 60, 80];
                 @endphp
+
 
 
                 {{-- Wrapper agar SVG bisa di-scroll horizontal kalau kurang lebar --}}
