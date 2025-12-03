@@ -87,18 +87,16 @@ class RujukanController extends Controller
     }
 
     /**
-     * Tampilkan daftar rujukan - VERSI SIMPLE
+     * Tampilkan daftar rujukan
      */
     public function index()
     {
         try {
-            // AMBIL DATA DENGAN CARA SEDERHANA
             $rujukans = DB::table('rujukan_rs')
                 ->where('is_rujuk', 1)
                 ->orderBy('created_at', 'desc')
                 ->get();
             
-            // JIKA ADA DATA, AMBIL INFORMASI TAMBAHAN
             if ($rujukans->isNotEmpty()) {
                 foreach ($rujukans as $rujukan) {
                     // Ambil nama pasien
@@ -124,31 +122,49 @@ class RujukanController extends Controller
             return view('puskesmas.rujukan.index', compact('rujukans'));
             
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal memuat data rujukan');
+            return back()->with('error', 'Gagal memuat data rujukan: ' . $e->getMessage());
         }
     }
 
     /**
-     * Tampilkan detail rujukan - VERSI SIMPLE & PASTI BEKERJA
+     * Tampilkan detail rujukan - DEBUG VERSION
      */
     public function show($id)
     {
         try {
+            \Log::info('=== DEBUG SHOW RUJUKAN START ===');
+            \Log::info('ID yang dicari: ' . $id);
+            
             // 1. AMBIL DATA DASAR RUJUKAN
             $rujukan = DB::table('rujukan_rs')
                 ->where('id', $id)
                 ->first();
             
+            \Log::info('Rujukan ditemukan: ' . ($rujukan ? 'YA' : 'TIDAK'));
+            
             if (!$rujukan) {
-                return response()->view('errors.404', [], 404);
+                \Log::error('Rujukan tidak ditemukan!');
+                return back()->with('error', 'Data rujukan dengan ID ' . $id . ' tidak ditemukan');
             }
             
+            \Log::info('Data rujukan: ' . json_encode($rujukan));
+            
             // 2. AMBIL DATA PASIEN
+            \Log::info('Mencari pasien ID: ' . $rujukan->pasien_id);
+            
             $pasien = DB::table('pasiens')
                 ->join('users', 'pasiens.user_id', '=', 'users.id')
                 ->where('pasiens.id', $rujukan->pasien_id)
-                ->select('users.name as nama_pasien', 'pasiens.nik', 'pasiens.tanggal_lahir', 'users.address as alamat', 'users.phone as no_telepon')
+                ->select(
+                    'users.name as nama_pasien', 
+                    'pasiens.nik', 
+                    'pasiens.tanggal_lahir', 
+                    'users.address as alamat', 
+                    'users.phone as no_telepon'
+                )
                 ->first();
+            
+            \Log::info('Pasien ditemukan: ' . ($pasien ? 'YA' : 'TIDAK'));
             
             if ($pasien) {
                 $rujukan->nama_pasien = $pasien->nama_pasien;
@@ -159,10 +175,14 @@ class RujukanController extends Controller
             }
             
             // 3. AMBIL DATA RUMAH SAKIT
+            \Log::info('Mencari RS ID: ' . $rujukan->rs_id);
+            
             $rumahSakit = DB::table('rumah_sakits')
                 ->where('id', $rujukan->rs_id)
                 ->select('nama as nama_rs', 'lokasi as alamat_rs', 'telepon as telepon_rs')
                 ->first();
+            
+            \Log::info('RS ditemukan: ' . ($rumahSakit ? 'YA' : 'TIDAK'));
             
             if ($rumahSakit) {
                 $rujukan->nama_rs = $rumahSakit->nama_rs;
@@ -171,20 +191,29 @@ class RujukanController extends Controller
             }
             
             // 4. AMBIL DATA SKRINING
+            \Log::info('Mencari skrining ID: ' . $rujukan->skrining_id);
+
             $skrining = DB::table('skrinings')
                 ->where('id', $rujukan->skrining_id)
-                ->select('kesimpulan', 'hasil_akhir')
+                ->select('kesimpulan')  // ✅ Hanya ambil kesimpulan
                 ->first();
-            
+
+            \Log::info('Skrining ditemukan: ' . ($skrining ? 'YA' : 'TIDAK'));
+
             if ($skrining) {
                 $rujukan->kesimpulan = $skrining->kesimpulan;
-                $rujukan->hasil_akhir = $skrining->hasil_akhir;
             }
+            
+            \Log::info('Akan render view dengan data lengkap');
+            \Log::info('=== DEBUG SHOW RUJUKAN END ===');
             
             return view('puskesmas.rujukan.show', compact('rujukan'));
             
         } catch (\Exception $e) {
-            return response()->view('errors.500', ['message' => $e->getMessage()], 500);
+            \Log::error('ERROR di show(): ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return back()->with('error', 'ERROR: ' . $e->getMessage());
         }
     }
 
@@ -221,7 +250,7 @@ class RujukanController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan'
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
     }
