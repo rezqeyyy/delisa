@@ -401,6 +401,7 @@ class SkriningController extends Controller
         $bidan = DB::table('bidans as b')
             ->join('users as u', 'u.id', '=', 'b.user_id')
             ->join('puskesmas as p', 'p.id', '=', 'b.puskesmas_id')
+            ->where('p.is_mandiri', true)
             ->when($q !== '', function ($qr) use ($q) {
                 $qr->where(function ($w) use ($q) {
                     $w->where('u.name', 'like', "%{$q}%")

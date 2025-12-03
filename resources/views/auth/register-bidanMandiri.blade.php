@@ -63,7 +63,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Pilih Wilayah Kerja (Puskesmas)</label>
-                    @isset($puskesmasList)
+                    @if(!empty($puskesmasList) && $puskesmasList->count() > 0)
                         <select name="puskesmas_id"
                             class="mt-1 w-full px-4 py-3 rounded-full border @error('puskesmas_id') @else border-[#D91A8B] @enderror focus:outline-none"
                             required>
@@ -75,11 +75,17 @@
                             @endforeach
                         </select>
                     @else
-                        {{-- fallback kalau list belum dikirim dari route --}}
-                        <input name="puskesmas_id" type="number" value="{{ old('puskesmas_id') }}"
-                            placeholder="ID Puskesmas"
-                            class="mt-1 w-full px-4 py-3 rounded-full border border-[#D91A8B] focus:outline-none">
-                    @endisset
+                        <select name="kecamatan_fallback"
+                            class="mt-1 w-full px-4 py-3 rounded-full border @error('kecamatan_fallback') @else border-[#D91A8B] @enderror focus:outline-none"
+                            required>
+                            <option value="">-- Pilih Kecamatan --</option>
+                            @foreach(($kecamatanOptions ?? []) as $value => $label)
+                                <option value="{{ $value }}" {{ old('kecamatan_fallback') === $value ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                    @endif
                 </div>
 
                 <div>

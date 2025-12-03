@@ -35,10 +35,22 @@ class DashboardController extends Controller
         // $columns = DB::getSchemaBuilder()->getColumnListing('pasiens');
         // dd($columns); // Akan menampilkan semua kolom di tabel pasiens
         
-        // ========== DATA PASIEN PRE-EKLAMPSIA ==========
+        // ========== DATA PASIEN PRE-EKLAMPSIA (PAGINASI 5, FILTER KECAMATAN & SELESAI) ==========
+        $userId = auth()->id();
+        $ps = DB::table('puskesmas')->select('id','kecamatan')->where('user_id', $userId)->first();
+        $kecamatan = optional($ps)->kecamatan;
+
         $pePatients = DB::table('skrinings')
             ->join('pasiens', 'skrinings.pasien_id', '=', 'pasiens.id')
             ->join('users', 'users.id', '=', 'pasiens.user_id')
+            ->leftJoin('puskesmas', 'puskesmas.id', '=', 'skrinings.puskesmas_id')
+            ->whereNotNull('skrinings.status_pre_eklampsia')
+            ->when($kecamatan, function ($q) use ($kecamatan) {
+                $q->where(function ($w) use ($kecamatan) {
+                    $w->where('pasiens.PKecamatan', $kecamatan)
+                      ->orWhere('puskesmas.kecamatan', $kecamatan);
+                });
+            })
             ->select(
                 'skrinings.id',
                 'skrinings.status_pre_eklampsia',
@@ -53,9 +65,9 @@ class DashboardController extends Controller
                 'users.phone as phone'
             )
             ->orderBy('skrinings.created_at', 'desc')
-            ->get();
+            ->paginate(5);
 
-        $pePatients = $pePatients->map(function ($item) {
+        $pePatients->getCollection()->transform(function ($item) {
             return (object) [
                 'id' => $item->id,
                 'nama' => $item->nama_pasien,

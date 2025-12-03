@@ -24,26 +24,23 @@ class DataDiriController extends Controller
     // - Mengarahkan ke form data diri untuk melengkapi profil dan alamat.
     public function create(Request $request)
     {
-        // Ambil parameter query string 'puskesmas_id' dan 'bidan_id' dari modal pengajuan.
+        $skriningIdParam = (int) $request->query('skrining_id');
+        if ($skriningIdParam) {
+            return view('pasien.skrining.data-diri');
+        }
+
         $puskesmasId = (int) $request->query('puskesmas_id');
         $bidanId = (int) $request->query('bidan_id');
-        // Jika 'puskesmas_id' kosong tetapi 'bidan_id' diisi, mapping ke puskesmas via tabel bidans.
         if (!$puskesmasId && $bidanId) {
             $puskesmasId = (int) DB::table('bidans')->where('id', $bidanId)->value('puskesmas_id');
         }
-        $user        = Auth::user();
-        $pasienId    = optional($user->pasien)->id;
+        $user     = Auth::user();
+        $pasienId = optional($user->pasien)->id;
 
-        /**
-         * Validasi ringan:
-         * - pastikan puskesmas_id valid → Puskesmas::whereKey(...)->exists()
-         * - pastikan pasien terautentikasi
-         * - cegah duplikasi: hanya create jika tidak ada skrining aktif/incomplete
-         */
         if ($puskesmasId && $pasienId && \App\Models\Puskesmas::whereKey($puskesmasId)->exists()) {
             $latest = Skrining::where('pasien_id', $pasienId)->latest()->first();
             if (!$latest || $this->isSkriningCompleteForSkrining($latest)) {
-                Skrining::create([
+                $latest = Skrining::create([
                     'pasien_id'            => $pasienId,
                     'puskesmas_id'         => $puskesmasId,
                     'status_pre_eklampsia' => null,
@@ -55,7 +52,7 @@ class DataDiriController extends Controller
                     'checked_status'       => false,
                 ]);
             } elseif ((int) $latest->puskesmas_id !== (int) $puskesmasId) {
-                Skrining::create([
+                $latest = Skrining::create([
                     'pasien_id'            => $pasienId,
                     'puskesmas_id'         => $puskesmasId,
                     'status_pre_eklampsia' => null,
@@ -69,7 +66,11 @@ class DataDiriController extends Controller
             }
         }
 
-        // Return view form Data Diri.
+        $current = Skrining::where('pasien_id', $pasienId)->latest()->first();
+        if ($current) {
+            return redirect()->route('pasien.data-diri', ['skrining_id' => $current->id]);
+        }
+
         return view('pasien.skrining.data-diri');
     }
 

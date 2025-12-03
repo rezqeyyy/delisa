@@ -45,6 +45,7 @@ class SkriningController extends Controller
         
         // 2. Ambil Data Skrining dengan Relasi
         $skrinings = Skrining::where('puskesmas_id', $puskesmasId)
+                            ->whereHas('puskesmas', function ($q) { $q->where('is_mandiri', true); })
                             ->with(['pasien.user', 'kondisiKesehatan', 'riwayatKehamilanGpa'])
                             ->latest()
                             ->get();
@@ -331,6 +332,7 @@ return view('bidan.skrining.show', compact(
 
         $skrinings = Skrining::with(['pasien.user'])
             ->where('puskesmas_id', $puskesmasId)
+            ->whereHas('puskesmas', function ($q) { $q->where('is_mandiri', true); })
             ->latest()
             ->get()
             ->filter(fn($s) => $this->isSkriningCompleteForSkrining($s))
@@ -382,6 +384,7 @@ return view('bidan.skrining.show', compact(
 
         $skrinings = Skrining::with(['pasien.user'])
             ->where('puskesmas_id', $puskesmasId)
+            ->whereHas('puskesmas', function ($q) { $q->where('is_mandiri', true); })
             ->latest()
             ->get()
             ->filter(fn($s) => $this->isSkriningCompleteForSkrining($s))

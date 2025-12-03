@@ -65,11 +65,26 @@ Route::middleware('guest')->group(function () {
         $puskesmasList = DB::table('puskesmas')
             ->join('users', 'users.id', '=', 'puskesmas.user_id')
             ->where('users.status', true)
+            ->where('puskesmas.is_mandiri', false)
             ->orderBy('puskesmas.nama_puskesmas')
             ->select('puskesmas.id', 'puskesmas.nama_puskesmas')
             ->get();
 
-        return view('auth.register-bidanMandiri', compact('puskesmasList'));
+        $kecamatanOptions = [
+            'Beji'         => 'Kecamatan Beji',
+            'Bojongsari'   => 'Kecamatan Bojongsari',
+            'Cilodong'     => 'Kecamatan Cilodong',
+            'Cimanggis'    => 'Kecamatan Cimanggis',
+            'Cinere'       => 'Kecamatan Cinere',
+            'Cipayung'     => 'Kecamatan Cipayung',
+            'Limo'         => 'Kecamatan Limo',
+            'Pancoran Mas' => 'Kecamatan Pancoran Mas',
+            'Sawangan'     => 'Kecamatan Sawangan',
+            'Sukmajaya'    => 'Kecamatan Sukmajaya',
+            'Tapos'        => 'Kecamatan Tapos',
+        ];
+
+        return view('auth.register-bidanMandiri', compact('puskesmasList', 'kecamatanOptions'));
     })->name('bidanMandiri.register');
 
     Route::post('register-bidanMandiri', [RoleRegistrationController::class, 'storeBidan'])

@@ -524,7 +524,7 @@ class DataMasterController extends Controller
             'puskesmas_id'       => 'required|exists:puskesmas,id', // harus ada di tabel puskesmas
         ]);
 
-        // Transaksi untuk insert user + bidans
+        // Transaksi untuk insert user + klinik mandiri + bidans
         DB::transaction(function () use ($payload) {
             $user = new User();
             $user->name     = $payload['name'];
@@ -536,10 +536,20 @@ class DataMasterController extends Controller
             $user->role_id  = $this->roleId('bidan');
             $user->save();
 
+            $base = Puskesmas::find($payload['puskesmas_id']);
+            $clinic = new Puskesmas();
+            $clinic->user_id        = $user->id;
+            $clinic->nama_puskesmas = 'Klinik ' . ($payload['name'] ?? 'Bidan');
+            $clinic->kecamatan      = $base ? $base->kecamatan : ($payload['address'] ?? '');
+            $clinic->lokasi         = $payload['address'] ?? '';
+            $clinic->is_mandiri     = true;
+            $clinic->save();
+            Puskesmas::where('id', $clinic->id)->update(['is_mandiri' => true]);
+
             $bidan = new Bidan();
             $bidan->user_id            = $user->id;
             $bidan->nomor_izin_praktek = $payload['nomor_izin_praktek'];
-            $bidan->puskesmas_id       = $payload['puskesmas_id'];
+            $bidan->puskesmas_id       = $clinic->id;
             $bidan->save();
         });
 
@@ -600,6 +610,7 @@ class DataMasterController extends Controller
         $puskesmasList = Puskesmas::query()
             ->join('users', 'users.id', '=', 'puskesmas.user_id')
             ->where('users.status', true)
+            ->where('puskesmas.is_mandiri', false)
             ->orderBy('puskesmas.nama_puskesmas')
             ->select('puskesmas.id', 'puskesmas.nama_puskesmas')
             ->get();
@@ -888,12 +899,37 @@ class DataMasterController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                // Update detail bidan
-                Bidan::where('user_id', $user)->update([
-                    'nomor_izin_praktek' => $payload['nomor_izin_praktek'],
-                    'puskesmas_id'       => $payload['puskesmas_id'],
-                    'updated_at'         => now(),
-                ]);
+                // Pastikan bidan diarahkan ke klinik (is_mandiri=true)
+                $target = DB::table('puskesmas')->where('id', $payload['puskesmas_id'])->first();
+                $existingClinicId = DB::table('puskesmas')
+                    ->where('user_id', $user)
+                    ->where('is_mandiri', true)
+                    ->value('id');
+
+                if ($target && !(bool) $target->is_mandiri) {
+                    $useClinicId = $existingClinicId ?: DB::table('puskesmas')->insertGetId([
+                        'user_id'        => $user,
+                        'nama_puskesmas' => 'Klinik ' . ($payload['name'] ?? 'Bidan'),
+                        'kecamatan'      => $target->kecamatan,
+                        'lokasi'         => $payload['address'] ?? '',
+                        'is_mandiri'     => true,
+                        'created_at'     => now(),
+                        'updated_at'     => now(),
+                    ]);
+                    DB::table('puskesmas')->where('id', $useClinicId)->update(['is_mandiri' => true, 'kecamatan' => $target->kecamatan]);
+
+                    Bidan::where('user_id', $user)->update([
+                        'nomor_izin_praktek' => $payload['nomor_izin_praktek'],
+                        'puskesmas_id'       => $useClinicId,
+                        'updated_at'         => now(),
+                    ]);
+                } else {
+                    Bidan::where('user_id', $user)->update([
+                        'nomor_izin_praktek' => $payload['nomor_izin_praktek'],
+                        'puskesmas_id'       => $payload['puskesmas_id'],
+                        'updated_at'         => now(),
+                    ]);
+                }
             });
         }
 

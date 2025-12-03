@@ -209,15 +209,23 @@ class RoleRegistrationController extends Controller
     /** BIDAN */
     public function storeBidan(Request $r)
     {
+        $kecamatanKeys = [
+            'Beji','Bojongsari','Cilodong','Cimanggis','Cinere','Cipayung','Limo','Pancoran Mas','Sawangan','Sukmajaya','Tapos'
+        ];
         $data = $r->validate([
-            'pic_name'           => 'required|string|max:255',   // Nama lengkap PIC
+            'pic_name'           => 'required|string|max:255',
             'email'              => 'required|email|max:255|unique:users,email',
             'password'           => 'required|string|min:6',
             'phone'              => 'nullable|string|max:50',
-            'lokasi'             => 'nullable|string',           // alamat/klinik
+            'lokasi'             => 'nullable|string',
             'nomor_izin_praktek' => 'required|string|max:255',
-            'puskesmas_id'       => 'required|exists:puskesmas,id', // dropdown wilayah kerja
+            'puskesmas_id'       => 'nullable|exists:puskesmas,id',
+            'kecamatan_fallback' => 'nullable|string|in:' . implode(',', $kecamatanKeys),
         ]);
+
+        if (empty($data['puskesmas_id']) && empty($data['kecamatan_fallback'])) {
+            return back()->withErrors(['puskesmas_id' => 'Pilih puskesmas atau kecamatan.'])->withInput();
+        }
 
         DB::transaction(function () use ($data) {
             $userId = DB::table('users')->insertGetId([
@@ -232,10 +240,31 @@ class RoleRegistrationController extends Controller
                 'updated_at' => now(),
             ]);
 
+            $baseKecamatan = null;
+            if (!empty($data['puskesmas_id'])) {
+                $basePkm = DB::table('puskesmas')->where('id', $data['puskesmas_id'])->first();
+                $baseKecamatan = $basePkm ? $basePkm->kecamatan : null;
+            }
+            if (!$baseKecamatan && !empty($data['kecamatan_fallback'])) {
+                $baseKecamatan = $data['kecamatan_fallback'];
+            }
+
+            $clinicId = DB::table('puskesmas')->insertGetId([
+                'user_id'        => $userId,
+                'nama_puskesmas' => 'Klinik ' . ($data['pic_name'] ?? 'Bidan'),
+                'kecamatan'      => $baseKecamatan ?? ($data['lokasi'] ?? 'Belum diisi'),
+                'lokasi'         => $data['lokasi'] ?? '',
+                'is_mandiri'     => true,
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
+
+            DB::table('puskesmas')->where('id', $clinicId)->update(['is_mandiri' => true]);
+
             DB::table('bidans')->insert([
                 'user_id'            => $userId,
                 'nomor_izin_praktek' => $data['nomor_izin_praktek'],
-                'puskesmas_id'       => $data['puskesmas_id'],
+                'puskesmas_id'       => $clinicId,
                 'created_at'         => now(),
                 'updated_at'         => now(),
             ]);

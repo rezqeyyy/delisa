@@ -44,6 +44,7 @@ class DashboardController extends Controller
 
         // 2. Ambil semua skrining milik puskesmas dan filter yang lengkap
         $skrinings = Skrining::where('puskesmas_id', $puskesmasId)
+            ->whereHas('puskesmas', function ($q) { $q->where('is_mandiri', true); })
             ->with(['pasien.user', 'riwayatKehamilanGpa', 'kondisiKesehatan'])
             ->latest()
             ->get()

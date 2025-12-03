@@ -47,20 +47,19 @@ class SkriningController extends Controller
         // Catatan: Mengambil data skrining beserta relasi pasien dan user.
         $skrinings = Skrining::query()
             ->with(['pasien.user'])
-            // Catatan: Menyaring skrining berdasarkan ID puskesmas atau kecamatan pasien.
             ->when($puskesmasId || $kecamatan, function ($q) use ($puskesmasId, $kecamatan) {
                 $q->where(function ($w) use ($puskesmasId, $kecamatan) {
                     if ($puskesmasId) {
                         $w->orWhere('puskesmas_id', $puskesmasId);
                     }
                     if ($kecamatan) {
-                        $w->orWhereHas('pasien', function ($ww) use ($kecamatan) {
-                            $ww->where('PKecamatan', $kecamatan);
-                        });
+                        $w->orWhereHas('pasien', function ($ww) use ($kecamatan) { $ww->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]); })
+                          ->orWhereHas('puskesmas', function ($wp) use ($kecamatan) { $wp->whereRaw('LOWER("puskesmas"."kecamatan") = LOWER(?)', [$kecamatan]); });
                     }
                 });
             })
-            ->latest() // Urutkan dari yang terbaru
+            ->whereNotNull('status_pre_eklampsia')
+            ->latest()
             ->get();
 
         // Catatan: Filter hanya skrining yang sudah lengkap.
@@ -414,7 +413,7 @@ class SkriningController extends Controller
                         }
                         if ($kecamatan) {
                             $w->orWhereHas('pasien', function ($ww) use ($kecamatan) {
-                                $ww->where('PKecamatan', $kecamatan);
+                                $ww->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]);
                             });
                         }
                     });
@@ -525,7 +524,7 @@ class SkriningController extends Controller
                         }
                         if ($kecamatan) {
                             $w->orWhereHas('pasien', function ($ww) use ($kecamatan) {
-                                $ww->where('PKecamatan', $kecamatan);
+                                $ww->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]);
                             });
                         }
                     });
