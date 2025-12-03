@@ -1,22 +1,17 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Riwayat Pasien - DELISA</title>
-    
-    @vite([
-        'resources/css/app.css',
-        'resources/js/app.js',
-        'resources/js/dropdown.js',
-        'resources/js/rs/sidebar-toggle.js',
-        'resources/js/rs/skrinning-edit.js',
-    ])
+
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js', 'resources/js/rs/skrinning-edit.js'])
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
-        
+
         <x-rs.sidebar />
 
         <main class="flex-1 w-full xl:ml-[260px] bg-[#FAFAFA] max-w-none min-w-0 overflow-y-auto">
@@ -25,10 +20,10 @@
                 {{-- Header --}}
                 <div class="flex items-center gap-3">
                     <a href="{{ route('rs.skrining.index') }}"
-                       class="inline-flex items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-3 py-1.5 text-xs sm:text-sm text-[#4B4B4B] hover:bg-[#F8F8F8]">
+                        class="inline-flex items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-3 py-1.5 text-xs sm:text-sm text-[#4B4B4B] hover:bg-[#F8F8F8]">
                         <span class="inline-flex w-5 h-5 items-center justify-center rounded-full bg-[#F5F5F5]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" stroke-width="2">
+                                stroke="currentColor" stroke-width="2">
                                 <path d="M15 18l-6-6 6-6" />
                             </svg>
                         </span>
@@ -46,7 +41,8 @@
 
                 {{-- Alert sukses --}}
                 @if (session('success'))
-                    <div class="flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs sm:text-sm text-emerald-800">
+                    <div
+                        class="flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs sm:text-sm text-emerald-800">
                         <span class="mt-0.5">
                             <i class="fas fa-check-circle text-sm"></i>
                         </span>
@@ -77,8 +73,12 @@
                                     <select name="pasien_datang"
                                         class="w-full rounded-xl border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
                                         <option value="">Pilih Data Ya/Tidak</option>
-                                        <option value="1" {{ old('pasien_datang', $rujukan->pasien_datang) == 1 ? 'selected' : '' }}>Ya</option>
-                                        <option value="0" {{ old('pasien_datang', $rujukan->pasien_datang) == 0 ? 'selected' : '' }}>Tidak</option>
+                                        <option value="1"
+                                            {{ old('pasien_datang', $rujukan->pasien_datang) == 1 ? 'selected' : '' }}>
+                                            Ya</option>
+                                        <option value="0"
+                                            {{ old('pasien_datang', $rujukan->pasien_datang) == 0 ? 'selected' : '' }}>
+                                            Tidak</option>
                                     </select>
                                 </div>
 
@@ -103,11 +103,16 @@
                                     <select name="perlu_pemeriksaan_lanjut"
                                         class="w-full rounded-xl border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
                                         <option value="">Pilih Data Ya/Tidak</option>
-                                        <option value="1" {{ old('perlu_pemeriksaan_lanjut', $rujukan->perlu_pemeriksaan_lanjut) == 1 ? 'selected' : '' }}>Ya</option>
-                                        <option value="0" {{ old('perlu_pemeriksaan_lanjut', $rujukan->perlu_pemeriksaan_lanjut) == 0 ? 'selected' : '' }}>Tidak</option>
+                                        <option value="1"
+                                            {{ old('perlu_pemeriksaan_lanjut', $rujukan->perlu_pemeriksaan_lanjut) == 1 ? 'selected' : '' }}>
+                                            Ya</option>
+                                        <option value="0"
+                                            {{ old('perlu_pemeriksaan_lanjut', $rujukan->perlu_pemeriksaan_lanjut) == 0 ? 'selected' : '' }}>
+                                            Tidak</option>
                                     </select>
                                     <p class="text-[10px] text-[#9CA3AF] mt-1">
-                                        * Jika pasien tidak datang maka cukup isi kolom kedatangan dan opsi pemeriksaan ulang.
+                                        * Jika pasien tidak datang maka cukup isi kolom kedatangan dan opsi pemeriksaan
+                                        ulang.
                                     </p>
                                 </div>
 
@@ -123,6 +128,46 @@
                                 </div>
                             </div>
 
+                            {{-- Anjuran Kontrol & Kunjungan Berikutnya --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {{-- Anjuran Kontrol --}}
+                                <div class="space-y-1">
+                                    <label class="text-[11px] font-semibold text-[#7C7C7C]">
+                                        Anjuran Kontrol
+                                    </label>
+                                    @php
+                                        $anjuranOld = old(
+                                            'anjuran_kontrol',
+                                            optional($riwayatRujukan)->anjuran_kontrol ?? '',
+                                        );
+                                    @endphp
+                                    <select name="anjuran_kontrol"
+                                        class="w-full rounded-xl border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
+                                        <option value="">Pilih tujuan kontrol</option>
+                                        <option value="fktp" {{ $anjuranOld === 'fktp' ? 'selected' : '' }}>
+                                            FKTP (Puskesmas)
+                                        </option>
+                                        <option value="rs" {{ $anjuranOld === 'rs' ? 'selected' : '' }}>
+                                            Rumah Sakit
+                                        </option>
+                                    </select>
+                                    <p class="text-[10px] text-[#9CA3AF] mt-1">
+                                        Sesuaikan dengan tujuan kontrol berikutnya yang dianjurkan dokter.
+                                    </p>
+                                </div>
+
+                                {{-- Kunjungan Berikutnya --}}
+                                <div class="space-y-1">
+                                    <label class="text-[11px] font-semibold text-[#7C7C7C]">
+                                        Kunjungan Berikutnya
+                                    </label>
+                                    <input type="text" name="kunjungan_berikutnya"
+                                        placeholder="Misal: kontrol 1 minggu lagi di PKM"
+                                        value="{{ old('kunjungan_berikutnya', optional($riwayatRujukan)->kunjungan_berikutnya ?? '') }}"
+                                        class="w-full rounded-xl border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
+                                </div>
+                            </div>
+
                             {{-- Tindakan Medis --}}
                             <div class="space-y-1">
                                 <label class="text-[11px] font-semibold text-[#7C7C7C]">
@@ -134,9 +179,12 @@
                                 <select name="tindakan"
                                     class="w-full rounded-xl border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
                                     <option value="">Pilih Data</option>
-                                    <option value="Rawat Inap" {{ $tindakanOld === 'Rawat Inap' ? 'selected' : '' }}>Rawat Inap</option>
-                                    <option value="Rawat Jalan" {{ $tindakanOld === 'Rawat Jalan' ? 'selected' : '' }}>Rawat Jalan</option>
-                                    <option value="Observasi" {{ $tindakanOld === 'Observasi' ? 'selected' : '' }}>Observasi</option>
+                                    <option value="Rawat Inap" {{ $tindakanOld === 'Rawat Inap' ? 'selected' : '' }}>
+                                        Rawat Inap</option>
+                                    <option value="Rawat Jalan" {{ $tindakanOld === 'Rawat Jalan' ? 'selected' : '' }}>
+                                        Rawat Jalan</option>
+                                    <option value="Observasi" {{ $tindakanOld === 'Observasi' ? 'selected' : '' }}>
+                                        Observasi</option>
                                 </select>
                             </div>
 
@@ -145,8 +193,7 @@
                                 <label class="text-[11px] font-semibold text-[#7C7C7C]">
                                     Catatan Riwayat Rujukan
                                 </label>
-                                <textarea name="catatan" rows="3"
-                                    placeholder="Masukkan catatan riwayat rujukan..."
+                                <textarea name="catatan" rows="3" placeholder="Masukkan catatan riwayat rujukan..."
                                     class="w-full rounded-xl border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C] resize-none">{{ old('catatan', $riwayatRujukan->catatan ?? '') }}</textarea>
                             </div>
                         </div>
@@ -161,7 +208,8 @@
                     <section id="sectionResepObat"
                         class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden"
                         data-next-index="{{ $nextIndexBase }}">
-                        <div class="px-4 sm:px-5 py-3 border-b border-[#F0F0F0] bg-[#FAFAFA] flex items-center justify-between gap-2">
+                        <div
+                            class="px-4 sm:px-5 py-3 border-b border-[#F0F0F0] bg-[#FAFAFA] flex items-center justify-between gap-2">
                             <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">
                                 Resep Obat
                             </h2>
@@ -177,16 +225,20 @@
                                 <table class="min-w-full text-xs sm:text-sm">
                                     <thead class="bg-[#FAFAFA] text-[#6B7280]">
                                         <tr>
-                                            <th class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
+                                            <th
+                                                class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
                                                 Nama Obat
                                             </th>
-                                            <th class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
+                                            <th
+                                                class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
                                                 Dosis
                                             </th>
-                                            <th class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
+                                            <th
+                                                class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
                                                 Digunakan
                                             </th>
-                                            <th class="px-3 sm:px-4 py-2.5 text-center font-semibold uppercase tracking-wide text-[10px] sm:text-[11px] w-16">
+                                            <th
+                                                class="px-3 sm:px-4 py-2.5 text-center font-semibold uppercase tracking-wide text-[10px] sm:text-[11px] w-16">
                                                 Aksi
                                             </th>
                                         </tr>
@@ -214,29 +266,37 @@
                                                         class="w-full rounded-lg border border-[#E5E5E5] bg-white px-2.5 py-1.5 text-xs sm:text-sm text-[#1D1D1D] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#E91E8C]/30 focus:border-[#E91E8C]">
                                                 </td>
                                                 <td class="px-3 sm:px-4 py-2.5 align-top text-center">
-                                                    <button type="button"
-                                                        data-action="hapus-obat"
+                                                    <button type="button" data-action="hapus-obat"
                                                         class="inline-flex items-center justify-center w-8 h-8 rounded-full text-[#DC2626] hover:bg-[#FEE2E2] transition-colors">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M3 6h18"/>
-                                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
-                                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                                            <line x1="10" y1="11" x2="10" y2="17"/>
-                                                            <line x1="14" y1="11" x2="14" y2="17"/>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2">
+                                                            <path d="M3 6h18" />
+                                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                            <line x1="10" y1="11" x2="10"
+                                                                y2="17" />
+                                                            <line x1="14" y1="11" x2="14"
+                                                                y2="17" />
                                                         </svg>
                                                     </button>
                                                 </td>
                                             </tr>
                                         @empty
                                             <tr id="emptyRow" class="bg-white">
-                                                <td colspan="4" class="px-3 sm:px-4 py-8 text-center text-[#9CA3AF]">
+                                                <td colspan="4"
+                                                    class="px-3 sm:px-4 py-8 text-center text-[#9CA3AF]">
                                                     <div class="flex flex-col items-center gap-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-[#E5E5E5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                                            <path d="M10.5 20.5L5.5 15.5L15.5 5.5L20.5 10.5L10.5 20.5Z"/>
-                                                            <path d="M8.5 12.5L12.5 8.5"/>
-                                                            <path d="M2 22L5.5 18.5"/>
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                            class="w-8 h-8 text-[#E5E5E5]" viewBox="0 0 24 24"
+                                                            fill="none" stroke="currentColor" stroke-width="1.5">
+                                                            <path
+                                                                d="M10.5 20.5L5.5 15.5L15.5 5.5L20.5 10.5L10.5 20.5Z" />
+                                                            <path d="M8.5 12.5L12.5 8.5" />
+                                                            <path d="M2 22L5.5 18.5" />
                                                         </svg>
-                                                        <span class="text-xs">Belum ada resep obat. Klik "Tambah Obat" untuk menambahkan.</span>
+                                                        <span class="text-xs">Belum ada resep obat. Klik "Tambah Obat"
+                                                            untuk menambahkan.</span>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -251,8 +311,8 @@
                     <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
                         <a href="{{ route('rs.skrining.index') }}"
                             class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] w-full sm:w-auto">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M15 18l-6-6 6-6" />
                             </svg>
                             <span>Kembali</span>
@@ -261,11 +321,11 @@
                         <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                             <button type="submit"
                                 class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-5 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#C2185B] w-full sm:w-auto">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="2">
-                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                                    <polyline points="17,21 17,13 7,13 7,21"/>
-                                    <polyline points="7,3 7,8 15,8"/>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                                    <polyline points="17,21 17,13 7,13 7,21" />
+                                    <polyline points="7,3 7,8 15,8" />
                                 </svg>
                                 <span>Simpan Data</span>
                             </button>
@@ -280,4 +340,5 @@
         </main>
     </div>
 </body>
+
 </html>

@@ -15,9 +15,8 @@ use App\Models\Skrining;
 use App\Models\KondisiKesehatan;
 use App\Models\RiwayatKehamilanGpa;
 use App\Models\RiwayatKehamilan;
-use App\Models\PasienNifasBidan;
 use App\Models\PasienNifasRs;
-use App\Models\Kf;
+use App\Models\KfKunjungan;   // ✅ Pemantauan KF pakai tabel kf_kunjungans
 use App\Models\RujukanRs;
 
 class PasienController extends Controller
@@ -93,9 +92,9 @@ class PasienController extends Controller
          */
         $kondisi = $skrining
             ? KondisiKesehatan::query()
-                ->where('skrining_id', $skrining->id)
-                ->orderByDesc('created_at')
-                ->first()
+            ->where('skrining_id', $skrining->id)
+            ->orderByDesc('created_at')
+            ->first()
             : null;
 
         // ===================== GPA =====================
@@ -108,74 +107,100 @@ class PasienController extends Controller
             ->orderByDesc('created_at')
             ->first();
 
-            
-        // ===================== Episode Nifas milik pasien =====================
+                // ===================== Ringkasan KF via kf_kunjungans =====================
         /**
-         * Mendefinisikan query subselect untuk mengambil semua ID episode nifas
-         * milik pasien, dari dua sumber:
-         * - pasien_nifas_bidan
-         * - pasien_nifas_rs
+         * Sesuai ketentuan terbaru:
+         * - Fokus per pasien: apakah KF1–KF4 PERNAH dilakukan, dan jika ya
+         *   kesimpulan terakhirnya apa (Sehat/Dirujuk/Meninggal/dll).
          *
-         * Keduanya di-union sehingga menjadi satu set ID episode (id dari masing-masing tabel).
-         * Query ini nanti dipakai di whereIn pada tabel kf.
+         * Langkah:
+         * 1. Ambil semua episode nifas RS milik pasien ini (pasien_nifas_rs).
+         * 2. Ambil seluruh kf_kunjungans milik episode tersebut.
+         * 3. Untuk tiap jenis_kf (KF1..KF4), ambil 1 catatan terakhir (latest)
+         *    sebagai status KF-n untuk pasien ini.
+         * 4. (Opsional) Tetap hitung agregat kesimpulan_pantauan untuk keperluan lain.
          */
-        $episodeIdsQuery = PasienNifasBidan::query()
-            // Ambil kolom id episode nifas dari bidan
+
+        // 1) Ambil semua episode nifas RS untuk pasien ini
+        $episodeNifasRsIds = PasienNifasRs::query()
             ->where('pasien_id', $pasienId)
-            ->select('id')
-            // Union dengan id episode dari RS
-            ->union(
-                PasienNifasRs::query()
-                    ->where('pasien_id', $pasienId)
-                    ->select('id')
-            );
+            ->pluck('id')
+            ->all();
 
-        // ========= Ringkasan KF (kunjungan nifas) =========
-        /**
-         * Hitung ringkasan kunjungan nifas (KF) berdasarkan id_nifas:
-         * - Tabel kf menyimpan catatan kunjungan nifas per episode.
-         * - whereIn('k.id_nifas', $episodeIdsQuery) memastikan hanya KF milik pasien ini.
-         * - selectRaw: ambil kunjungan_nifas_ke sebagai integer (ke), dan COUNT(*) sebagai total.
-         * - groupBy ke → hasil: per KF-1, KF-2, KF-3, KF-4 berapa total kunjungannya.
-         */
-        $kfSummary = Kf::query()
-            ->from('kf as k')
-            // Filter episode yang id_nifas-nya termasuk dalam episode pasien ini
-            ->whereIn('k.id_nifas', $episodeIdsQuery)
-            // Ambil nomor kunjungan dan jumlahnya
-            ->selectRaw('k.kunjungan_nifas_ke::int as ke, COUNT(*)::int as total')
-            // Kelompokkan berdasarkan nomor kunjungan nifas
-            ->groupBy('ke')
-            // Urutkan ascending per ke (1, 2, 3, 4)
-            ->orderBy('ke')
-            // Ambil semua hasil
-            ->get();
+        // Default: jika tidak ada nifas RS, ringkasan KF kosong.
+        $kfSummary  = collect();
+        $kfPantauan = collect();
 
-        // ========= Ringkasan kesimpulan pantauan =========
-        /**
-         * Hitung ringkasan kesimpulan pantauan nifas:
-         * - misalnya: Sehat, Dirujuk, Meninggal.
-         * - groupBy k.kesimpulan_pantauan dan hitung jumlahnya.
-         * - pluck('total','kesimpulan_pantauan') → associative array:
-         *   [
-         *       'Sehat'    => 10,
-         *       'Dirujuk'  => 2,
-         *       'Meninggal'=> 1,
-         *   ]
-         */
-        $kfPantauan = Kf::query()
-            ->from('kf as k')
-            ->whereIn('k.id_nifas', $episodeIdsQuery)
-            ->selectRaw("k.kesimpulan_pantauan, COUNT(*)::int as total")
-            ->groupBy('k.kesimpulan_pantauan')
-            ->pluck('total', 'kesimpulan_pantauan');
+        if (!empty($episodeNifasRsIds)) {
+            // 2) Ambil seluruh kf_kunjungans milik pasien ini
+            $rawKf = KfKunjungan::query()
+                ->from('kf_kunjungans as kk')
+                ->whereIn('kk.pasien_nifas_id', $episodeNifasRsIds)
+                // urutkan sehingga created_at terbaru berada di bawah group jenis_kf yang sama
+                ->orderBy('kk.created_at', 'desc')
+                ->get();
 
-        // ===================== Rujukan RS terakhir =====================
+            // 3) Susun status per KF1..KF4 (ambil catatan terbaru per jenis_kf)
+            $byKe = [];
+
+            foreach ($rawKf as $row) {
+                // contoh isi: 'KF1', 'kf 2', '2', dll → ambil digit pertamanya
+                $jenis = strtolower(trim($row->jenis_kf));
+                $ke    = null;
+
+                if (preg_match('/(\d+)/', $jenis, $m)) {
+                    $ke = (int) $m[1];
+                }
+
+                if ($ke === null || $ke < 1 || $ke > 4) {
+                    continue;
+                }
+
+                // Jika belum pernah di-set, gunakan record ini sebagai "latest" untuk KF tersebut
+                if (! array_key_exists($ke, $byKe)) {
+                    $byKe[$ke] = (object) [
+                        'ke'         => $ke,
+                        'done'       => true,
+                        'kesimpulan' => $row->kesimpulan_pantauan, // bisa 'Sehat', 'Dirujuk', 'Meninggal', dst
+                    ];
+                }
+            }
+
+            // Pastikan KF1–KF4 selalu ada (kalau belum pernah dilakukan → done = false)
+            $kfSummary = collect();
+            foreach ([1, 2, 3, 4] as $ke) {
+                if (! isset($byKe[$ke])) {
+                    $kfSummary->push((object) [
+                        'ke'         => $ke,
+                        'done'       => false,
+                        'kesimpulan' => null,
+                    ]);
+                } else {
+                    $kfSummary->push($byKe[$ke]);
+                }
+            }
+
+            // 4) Ringkasan kesimpulan pantauan (masih dihitung kalau nanti mau dipakai tempat lain)
+            $kfPantauan = KfKunjungan::query()
+                ->from('kf_kunjungans as kk')
+                ->whereIn('kk.pasien_nifas_id', $episodeNifasRsIds)
+                ->selectRaw('kk.kesimpulan_pantauan, COUNT(*)::int as total')
+                ->groupBy('kk.kesimpulan_pantauan')
+                ->pluck('total', 'kesimpulan_pantauan');
+        }
+
+
+        // ===================== Rujukan RS + ringkasan tindakan dokter =====================
         /**
          * Ambil riwayat rujukan RS:
-         * - Tabel rujukan_rs (rr) di-leftJoin dengan rumah_sakits (rs) untuk nama RS.
-         * - Filter berdasarkan pasien_id.
-         * - Urutkan terbaru, batasi 5 record terakhir.
+         * - Header: tabel rujukan_rs (rr) + rumah_sakits (rs) → nama RS, status, pasien_datang, dsb.
+         * - Detail klinis & tindakan dokter: tabel riwayat_rujukans
+         *   (tanggal_datang, tekanan_darah, anjuran_kontrol, kunjungan_berikutnya, tindakan, catatan).
+         *
+         * Dinkes butuh:
+         * - Riwayat rujukan pasien dari PKM ke RS.
+         * - Status pasien rujukan (datang/tidak datang).
+         * - Terapi/anjuran lanjutan & tindakan dokter.
          */
         $rujukan = RujukanRs::query()
             ->from('rujukan_rs as rr')
@@ -191,6 +216,30 @@ class PasienController extends Controller
             ->limit(5)
             // Ambil collection
             ->get();
+
+        // Tambahkan ringkasan tindakan dokter & terapi (mengambil log terakhir dari riwayat_rujukans)
+        if ($rujukan->isNotEmpty()) {
+            $rujukanIds = $rujukan->pluck('id')->all();
+
+            $riwayat = DB::table('riwayat_rujukans as rw')
+                ->whereIn('rw.rujukan_id', $rujukanIds)
+                ->orderBy('rw.created_at') // nanti ambil last() per rujukan
+                ->get()
+                ->groupBy('rujukan_id');
+
+            $rujukan->transform(function ($item) use ($riwayat) {
+                $last = optional($riwayat->get($item->id))->last();
+
+                $item->rw_tanggal_datang        = $last->tanggal_datang        ?? null;
+                $item->rw_tekanan_darah        = $last->tekanan_darah         ?? null;
+                $item->rw_anjuran_kontrol      = $last->anjuran_kontrol       ?? null;
+                $item->rw_kunjungan_berikutnya = $last->kunjungan_berikutnya ?? null;
+                $item->rw_tindakan             = $last->tindakan              ?? null;
+                $item->rw_catatan              = $last->catatan               ?? null;
+
+                return $item;
+            });
+        }
 
         // ===================== Riwayat Penyakit (skrining terbaru) =====================
         /**
@@ -283,23 +332,22 @@ class PasienController extends Controller
          * - skrining         → skrining terbaru (punya ->tanggal & ->tanggal_waktu)
          * - kondisi          → kondisi_kesehatans terbaru (jika ada)
          * - gpa              → data GPA terakhir
-         * - riwayatKehamilan → riwayat 10 kehamilan terakhir
-         * - kfSummary        → ringkasan kunjungan nifas (jumlah KF 1,2,3,4)
-         * - kfPantauan       → ringkasan kesimpulan pantauan (Sehat, Dirujuk, Meninggal, dst) dalam bentuk map
-         * - rujukan          → 5 rujukan RS terakhir
+         * - kfSummary        → ringkasan kunjungan nifas KF1–KF4 (dari kf_kunjungans)
+         * - kfPantauan       → ringkasan kesimpulan pantauan nifas (Sehat/Dirujuk/Meninggal, dst)
+         * - rujukan          → 5 rujukan RS terakhir + ringkasan tindakan dokter (riwayat_rujukans)
          * - riwayatPenyakit  → array nama penyakit yang dicentang (kecuali 'lainnya')
          * - penyakitLainnya  → string jawaban_lainnya jika pasien mengisi penyakit lain.
          */
         return view('dinkes.pasien.pasien-show', [
-            'pasien'            => $pasien,
-            'skrining'          => $skrining,      // punya ->tanggal & ->tanggal_waktu
-            'kondisi'           => $kondisi,
-            'gpa'               => $gpa,
-            'kfSummary'         => $kfSummary,
-            'kfPantauan'        => $kfPantauan,
-            'rujukan'           => $rujukan,
-            'riwayatPenyakit'   => $riwayatPenyakit,
-            'penyakitLainnya'   => $penyakitLainnya,
+            'pasien'          => $pasien,
+            'skrining'        => $skrining,      // punya ->tanggal & ->tanggal_waktu
+            'kondisi'         => $kondisi,
+            'gpa'             => $gpa,
+            'kfSummary'       => $kfSummary,
+            'kfPantauan'      => $kfPantauan,
+            'rujukan'         => $rujukan,
+            'riwayatPenyakit' => $riwayatPenyakit,
+            'penyakitLainnya' => $penyakitLainnya,
         ]);
     }
 }

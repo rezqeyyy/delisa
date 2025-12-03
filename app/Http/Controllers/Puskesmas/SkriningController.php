@@ -53,8 +53,12 @@ class SkriningController extends Controller
                         $w->orWhere('puskesmas_id', $puskesmasId);
                     }
                     if ($kecamatan) {
-                        $w->orWhereHas('pasien', function ($ww) use ($kecamatan) { $ww->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]); })
-                          ->orWhereHas('puskesmas', function ($wp) use ($kecamatan) { $wp->whereRaw('LOWER("puskesmas"."kecamatan") = LOWER(?)', [$kecamatan]); });
+                        $w->orWhereHas('pasien', function ($ww) use ($kecamatan) { 
+                            $ww->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]); 
+                        })
+                        ->orWhereHas('puskesmas', function ($wp) use ($kecamatan) { 
+                            $wp->whereRaw('LOWER("puskesmas"."kecamatan") = LOWER(?)', [$kecamatan]); 
+                        });
                     }
                 });
             })
@@ -379,6 +383,48 @@ class SkriningController extends Controller
         // Catatan: Redirect kembali ke halaman detail skrining dengan pesan sukses.
         return redirect()->route('puskesmas.skrining.show', $skrining->id)
             ->with('status', 'Permintaan rujukan dikirim ke rumah sakit.');
+    }
+
+    /**
+     * Memverifikasi skrining oleh petugas puskesmas (mengubah checked_status menjadi true).
+     *
+     * @param Request $request
+     * @param Skrining $skrining
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function verify(Request $request, Skrining $skrining)
+    {
+        // Catatan: Mendapatkan ID pengguna yang sedang login.
+        $userId = optional(Auth::user())->id;
+        // Catatan: Mengambil data puskesmas milik pengguna.
+        $ps = DB::table('puskesmas')->select('id','kecamatan')->where('user_id', $userId)->first();
+        // Catatan: Jika data puskesmas tidak ditemukan, kembalikan error 404.
+        abort_unless($ps, 404);
+
+        // Catatan: Ambil kecamatan pasien untuk validasi akses.
+        $kecPasien = optional($skrining->pasien)->PKecamatan;
+        // Catatan: Cek apakah skrining milik puskesmas ini atau pasien dari kecamatan yang sama.
+        $allowed = (($skrining->puskesmas_id === $ps->id) || ($kecPasien === $ps->kecamatan));
+        // Catatan: Jika tidak diizinkan, kembalikan error 403 (Forbidden).
+        abort_unless($allowed, 403);
+
+        // Catatan: Pastikan skrining sudah lengkap sebelum diverifikasi.
+        abort_unless($this->isSkriningCompleteForSkrining($skrining), 404);
+
+        // Catatan: Jika sudah diverifikasi sebelumnya, tidak perlu diulang.
+        if ($skrining->checked_status) {
+            return redirect()
+                ->route('puskesmas.skrining.show', $skrining->id)
+                ->with('status', 'Skrining sudah diverifikasi sebelumnya.');
+        }
+
+        // Catatan: Set checked_status menjadi true dan simpan.
+        $skrining->checked_status = true;
+        $skrining->save();
+
+        return redirect()
+            ->route('puskesmas.skrining.show', $skrining->id)
+            ->with('success', 'Skrining berhasil diverifikasi.');
     }
 
     /**

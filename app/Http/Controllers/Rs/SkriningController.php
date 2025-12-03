@@ -63,7 +63,7 @@ class SkriningController extends Controller
         // Filter berdasarkan Status Risiko
         if ($request->filled('risiko')) {
             $risikoFilter = $request->risiko;
-            
+
             $query->whereHas('skrining', function ($q) use ($risikoFilter) {
                 if ($risikoFilter === 'Beresiko') {
                     $q->where(function ($subQ) {
@@ -77,7 +77,7 @@ class SkriningController extends Controller
                             ->orWhereRaw("LOWER(TRIM(kesimpulan)) IN ('waspada', 'menengah', 'sedang', 'risiko sedang')")
                             ->orWhereRaw("LOWER(TRIM(status_pre_eklampsia)) IN ('waspada', 'menengah', 'sedang', 'risiko sedang')");
                     })->where('jumlah_resiko_tinggi', '<=', 0)
-                      ->whereRaw("LOWER(TRIM(COALESCE(kesimpulan, ''))) NOT IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')");
+                        ->whereRaw("LOWER(TRIM(COALESCE(kesimpulan, ''))) NOT IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')");
                 } elseif ($risikoFilter === 'Tidak Berisiko') {
                     $q->where(function ($subQ) {
                         $subQ->where('jumlah_resiko_tinggi', '<=', 0)
@@ -99,22 +99,21 @@ class SkriningController extends Controller
             $usr = optional($pas)->user;
 
             $raw = strtolower(trim($skr->kesimpulan ?? $skr->status_pre_eklampsia ?? ''));
-            
+
             $isHigh = ($skr->jumlah_resiko_tinggi ?? 0) > 0
-                || in_array($raw, ['beresiko','berisiko','risiko tinggi','tinggi']);
-            
+                || in_array($raw, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']);
+
             $isMed  = ($skr->jumlah_resiko_sedang ?? 0) > 0
-                || in_array($raw, ['waspada','menengah','sedang','risiko sedang']);
+                || in_array($raw, ['waspada', 'menengah', 'sedang', 'risiko sedang']);
 
             $rujukan->nik        = $pas->nik ?? '-';
             $rujukan->nama       = $usr->name ?? 'Nama Tidak Tersedia';
             $rujukan->tanggal    = optional($skr->created_at)->format('d/m/Y');
             $rujukan->alamat     = $pas->PKecamatan ?? $pas->PWilayah ?? '-';
             $rujukan->telp       = $usr->phone ?? $pas->no_telepon ?? '-';
-            
-            $rujukan->kesimpulan = $isHigh ? 'Beresiko' :
-                                  ($isMed ? 'Waspada' :
-                                  'Tidak Berisiko');
+
+            $rujukan->kesimpulan = $isHigh ? 'Beresiko' : ($isMed ? 'Waspada' :
+                'Tidak Berisiko');
 
             $rujukan->detail_url  = route('rs.skrining.show', $skr->id);
             $rujukan->process_url = route('rs.skrining.edit', $skr->id);
@@ -216,6 +215,8 @@ class SkriningController extends Controller
             'hasil_protein_urin'     => 'nullable|string',
             'tindakan'               => 'nullable|string',
             'catatan'                => 'nullable|string',
+            'anjuran_kontrol'          => 'nullable|in:fktp,rs',
+            'kunjungan_berikutnya'     => 'nullable|string',
             'resep_obat'      => 'nullable|array',
             'resep_obat.*'    => 'nullable|string',
             'dosis'           => 'nullable|array',
@@ -225,7 +226,7 @@ class SkriningController extends Controller
         ]);
 
         DB::transaction(function () use ($skrining, $rsId, $validated) {
-            
+
             $rujukan = RujukanRs::updateOrCreate(
                 [
                     'skrining_id' => $skrining->id,
@@ -256,6 +257,8 @@ class SkriningController extends Controller
                         'tindakan'      => $validated['tindakan'] ?? null,
                         'tekanan_darah' => $validated['riwayat_tekanan_darah'] ?? null,
                         'catatan'       => $validated['catatan'] ?? null,
+                        'anjuran_kontrol'      => $validated['anjuran_kontrol'] ?? null,
+                        'kunjungan_berikutnya' => $validated['kunjungan_berikutnya'] ?? null,
                         'updated_at'    => $now,
                     ]);
 
@@ -268,18 +271,27 @@ class SkriningController extends Controller
                     'tekanan_darah'  => $validated['riwayat_tekanan_darah'] ?? null,
                     'tindakan'       => $validated['tindakan'] ?? null,
                     'catatan'        => $validated['catatan'] ?? null,
+                    'anjuran_kontrol'     => $validated['anjuran_kontrol'] ?? null,
+                    'kunjungan_berikutnya' => $validated['kunjungan_berikutnya'] ?? null,
                     'created_at'     => $now,
                     'updated_at'     => $now,
                 ]);
             }
 
-            ResepObat::where('rujukan_rs_id', $rujukan->id)->delete();
+            ResepObat::where(function ($query) use ($rujukan, $riwayatId) {
+                $query->where('rujukan_rs_id', $rujukan->id);
+
+                if ($riwayatId) {
+                    $query->orWhere('riwayat_rujukan_id', $riwayatId);
+                }
+            })->delete();
 
             if (!empty($validated['resep_obat'])) {
                 foreach ($validated['resep_obat'] as $index => $obat) {
                     if (!empty($obat)) {
                         ResepObat::create([
                             'rujukan_rs_id'      => $rujukan->id,
+                            'riwayat_rujukan_id' => $riwayatId,
                             'resep_obat'         => $obat,
                             'dosis'              => $validated['dosis'][$index] ?? null,
                             'penggunaan'         => $validated['penggunaan'][$index] ?? null,
@@ -337,7 +349,7 @@ class SkriningController extends Controller
         $pdf->setPaper('A4', 'portrait');
 
         $filename = 'Hasil_Pemeriksaan_' . ($skrining->pasien->user->name ?? 'Pasien') . '_' . now()->format('Y-m-d') . '.pdf';
-        
+
         $filename = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $filename);
 
         return $pdf->download($filename);
