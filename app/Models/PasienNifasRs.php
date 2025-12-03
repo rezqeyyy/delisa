@@ -30,6 +30,7 @@ class PasienNifasRs extends Model
     // TAMBAH INI: Casting untuk tanggal
     protected $casts = [
         'tanggal_melahirkan' => 'date',
+        'tanggal_mulai_nifas'  => 'date',
         'kf1_tanggal' => 'datetime',
         'kf2_tanggal' => 'datetime',
         'kf3_tanggal' => 'datetime',
@@ -87,7 +88,7 @@ class PasienNifasRs extends Model
     public function kfKunjungan1(): HasOne
     {
         return $this->hasOne(KfKunjungan::class, 'pasien_nifas_id')
-                    ->where('jenis_kf', 1);
+            ->where('jenis_kf', 1);
     }
 
     /**
@@ -96,7 +97,7 @@ class PasienNifasRs extends Model
     public function kfKunjungan2(): HasOne
     {
         return $this->hasOne(KfKunjungan::class, 'pasien_nifas_id')
-                    ->where('jenis_kf', 2);
+            ->where('jenis_kf', 2);
     }
 
     /**
@@ -105,7 +106,7 @@ class PasienNifasRs extends Model
     public function kfKunjungan3(): HasOne
     {
         return $this->hasOne(KfKunjungan::class, 'pasien_nifas_id')
-                    ->where('jenis_kf', 3);
+            ->where('jenis_kf', 3);
     }
 
     public function kfKunjungan4(): HasOne
@@ -214,7 +215,7 @@ class PasienNifasRs extends Model
         if (!$this->tanggal_melahirkan) return null;
 
         $tanggalMelahirkan = Carbon::parse($this->tanggal_melahirkan);
-        
+
         switch ($jenisKf) {
             case 1:
                 return $tanggalMelahirkan->copy()->addDays(2); // 6 jam - 2 hari
@@ -241,7 +242,7 @@ class PasienNifasRs extends Model
 
         $now = Carbon::now();
         $deadline = $this->getKfDeadline($jenisKf);
-        
+
         if (!$deadline) return 'tidak_ada_data';
 
         // Jika sudah lewat deadline
@@ -251,7 +252,7 @@ class PasienNifasRs extends Model
 
         // Hitung mulai periode
         $mulai = $this->getKfMulai($jenisKf);
-        
+
         // Jika sudah masuk periode
         if ($now->greaterThanOrEqualTo($mulai)) {
             return 'dalam_periode';
@@ -268,7 +269,7 @@ class PasienNifasRs extends Model
         if (!$this->tanggal_melahirkan) return null;
 
         $tanggalMelahirkan = Carbon::parse($this->tanggal_melahirkan);
-        
+
         switch ($jenisKf) {
             case 1:
                 return $tanggalMelahirkan->copy()->addHours(6);
@@ -290,12 +291,12 @@ class PasienNifasRs extends Model
     {
         // KF1 selalu bisa
         if ($jenisKf == 1) return true;
-        
+
         // Untuk KF2 dan KF3, cek sistem baru atau lama
         if ($jenisKf == 2) {
             return $this->has_kf1_kunjungan || $this->isKfSelesai(1);
         }
-        
+
         if ($jenisKf == 3) {
             return $this->has_kf2_kunjungan || $this->isKfSelesai(2);
         }
@@ -313,13 +314,18 @@ class PasienNifasRs extends Model
     public function getKfBadgeColor($jenisKf)
     {
         $status = $this->getKfStatus($jenisKf);
-        
+
         switch ($status) {
-            case 'selesai': return 'success';
-            case 'dalam_periode': return 'warning';
-            case 'terlambat': return 'danger';
-            case 'belum_mulai': return 'secondary';
-            default: return 'secondary';
+            case 'selesai':
+                return 'success';
+            case 'dalam_periode':
+                return 'warning';
+            case 'terlambat':
+                return 'danger';
+            case 'belum_mulai':
+                return 'secondary';
+            default:
+                return 'secondary';
         }
     }
 
@@ -329,13 +335,18 @@ class PasienNifasRs extends Model
     public function getKfIcon($jenisKf)
     {
         $status = $this->getKfStatus($jenisKf);
-        
+
         switch ($status) {
-            case 'selesai': return '✓';
-            case 'dalam_periode': return '!';
-            case 'terlambat': return '⚠';
-            case 'belum_mulai': return '○';
-            default: return '?';
+            case 'selesai':
+                return '✓';
+            case 'dalam_periode':
+                return '!';
+            case 'terlambat':
+                return '⚠';
+            case 'belum_mulai':
+                return '○';
+            default:
+                return '?';
         }
     }
 }

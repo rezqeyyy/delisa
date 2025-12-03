@@ -437,7 +437,7 @@
                             @php
                                 $anjuranLabel = null;
                                 if ($r->rw_anjuran_kontrol === 'fktp') {
-                                    $anjuranLabel = 'Kontrol ke FKTP (Puskesmas/Klinik)';
+                                    $anjuranLabel = 'Kontrol ke FKTP (Puskesmas)';
                                 } elseif ($r->rw_anjuran_kontrol === 'rs') {
                                     $anjuranLabel = 'Kontrol ke Rumah Sakit (RS)';
                                 }

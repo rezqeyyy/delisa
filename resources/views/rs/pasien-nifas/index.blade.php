@@ -93,7 +93,6 @@
                         <table class="w-full text-sm">
                             <thead class="text-[#7C7C7C] bg-[#FAFAFA]">
                                 <tr class="text-left">
-                                    <th class="px-3 py-2 w-10"><input type="checkbox" class="rounded"></th>
                                     <th class="px-3 py-2">NIK Pasien</th>
                                     <th class="px-3 py-2">Nama Pasien</th>
                                     <th class="px-3 py-2">Tanggal Mulai Nifas</th>
@@ -119,7 +118,6 @@
                                         };
                                     @endphp
                                     <tr class="hover:bg-[#FFF7FC]/50">
-                                        <td class="px-3 py-3"><input type="checkbox" class="rounded"></td>
                                         <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $pas->nik ?? '-' }}</td>
                                         <td class="px-3 py-3">{{ $usr->name ?? '-' }}</td>
                                         <td class="px-3 py-3">{{ optional($pn->tanggal_mulai_nifas)->format('d/m/Y') ?? '-' }}</td>

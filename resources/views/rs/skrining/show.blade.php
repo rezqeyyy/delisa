@@ -333,7 +333,7 @@
                                             @php
                                                 $anjuranLabel = null;
                                                 if ($riwayatRujukan->anjuran_kontrol === 'fktp') {
-                                                    $anjuranLabel = 'Kontrol ke FKTP (Puskesmas/Klinik)';
+                                                    $anjuranLabel = 'Kontrol ke FKTP (Puskesmas)';
                                                 } elseif ($riwayatRujukan->anjuran_kontrol === 'rs') {
                                                     $anjuranLabel = 'Kontrol ke Rumah Sakit (RS)';
                                                 }
