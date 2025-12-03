@@ -101,11 +101,13 @@
 
                                     {{-- Kunjungan Nifas (KF1–KF4) --}}
                                     <td class="px-4 py-3">
+                                        @php($maxKe = $pasien->max_ke ?? 0)
+                                        @php($nextKe = $pasien->next_ke ?? 1)
                                         <div class="flex items-center gap-2">
-                                            <button class="px-3 py-1.5 rounded-full border border-[#E5E5E5] text-xs">KF 1</button>
-                                            <button class="px-3 py-1.5 rounded-full border border-[#E5E5E5] text-xs">KF 2</button>
-                                            <button class="px-3 py-1.5 rounded-full border border-[#E5E5E5] text-xs">KF 3</button>
-                                            <button class="px-3 py-1.5 rounded-full border border-[#E5E5E5] text-xs">KF 4</button>
+                                            <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasien->id, 'jenisKf' => 1]) }}" class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= 1 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : ($nextKe === 1 ? 'border-[#E91E8C] text-[#E91E8C]' : 'border-[#E5E5E5]') }}">KF 1{{ $maxKe >= 1 ? ' ✓' : '' }}</a>
+                                            <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasien->id, 'jenisKf' => 2]) }}" class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= 2 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : ($nextKe === 2 ? 'border-[#E91E8C] text-[#E91E8C]' : 'border-[#E5E5E5]') }}">KF 2{{ $maxKe >= 2 ? ' ✓' : '' }}</a>
+                                            <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasien->id, 'jenisKf' => 3]) }}" class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= 3 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : ($nextKe === 3 ? 'border-[#E91E8C] text-[#E91E8C]' : 'border-[#E5E5E5]') }}">KF 3{{ $maxKe >= 3 ? ' ✓' : '' }}</a>
+                                            <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasien->id, 'jenisKf' => 4]) }}" class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= 4 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : ($nextKe === 4 ? 'border-[#E91E8C] text-[#E91E8C]' : 'border-[#E5E5E5]') }}">KF 4{{ $maxKe >= 4 ? ' ✓' : '' }}</a>
                                         </div>
                                     </td>
 
@@ -119,9 +121,9 @@
                                             @endif
 
                                             @if (Route::has('bidan.pasien-nifas.show'))
-                                                <a href="{{ route('bidan.pasien-nifas.show', $pasien->id) }}" class="px-3 py-1.5 rounded-full border border-[#E5E5E5] text-xs">Detail</a>
+                                                <a href="{{ route('bidan.pasien-nifas.show', $pasien->id) }}" class="px-3 py-1.5 rounded-full border border-[#E5E5E5] text-xs">View</a>
                                             @else
-                                                <button type="button" class="px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 text-xs" title="Route detail belum tersedia" disabled>Detail</button>
+                                                <button type="button" class="px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 text-xs" title="Route detail belum tersedia" disabled>View</button>
                                             @endif
 
                                             @if (Route::has('bidan.pasien-nifas.destroy'))

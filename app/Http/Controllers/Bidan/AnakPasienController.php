@@ -16,8 +16,7 @@ class AnakPasienController extends Controller
         $bidan = Auth::user()->bidan;
         if (!$bidan) abort(403);
         $row = PasienNifasBidan::findOrFail($id);
-        $nifasId = $row->pasien_id;
-        return view('bidan.pasien-nifas.anak-create', ['nifasId' => $nifasId, 'rowId' => $row->id]);
+        return view('bidan.pasien-nifas.anak-create', ['nifasId' => $row->id, 'rowId' => $row->id]);
     }
 
     public function store(Request $request, $id)
@@ -46,7 +45,7 @@ class AnakPasienController extends Controller
             'catatan_kondisi_ibu' => 'nullable|string',
         ]);
 
-        if ((int) $data['nifas_id'] !== (int) $row->pasien_id) {
+        if ((int) $data['nifas_id'] !== (int) $row->id) {
             abort(403);
         }
 
@@ -58,7 +57,7 @@ class AnakPasienController extends Controller
         }
 
         $payload = [
-            'nifas_id' => $data['nifas_id'],
+            'nifas_id' => $row->id,
             'anak_ke' => $data['anak_ke'],
             'tanggal_lahir' => $data['tanggal_lahir'],
             'jenis_kelamin' => $data['jenis_kelamin'],

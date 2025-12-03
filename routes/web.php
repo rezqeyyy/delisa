@@ -192,6 +192,10 @@ Route::middleware('role:puskesmas')
             Route::get('/pasien-nifas/create', [BidanPasienNifasController::class, 'create'])->name('pasien-nifas.create');
             Route::get('/pasien-nifas/{id}/anak', [BidanAnakPasienController::class, 'create'])->name('pasien-nifas.anak.create');
             Route::post('/pasien-nifas/{id}/anak', [BidanAnakPasienController::class, 'store'])->name('pasien-nifas.store-anak');
+            Route::get('/pasien-nifas/{id}/show', [BidanPasienNifasController::class, 'detail'])->name('pasien-nifas.show');
+            Route::get('/pasien-nifas/{id}/detail', [BidanPasienNifasController::class, 'detail'])->name('pasien-nifas.detail');
+            Route::get('/pasien-nifas/{id}/kf/{jenisKf}', [BidanPasienNifasController::class, 'formKf'])->name('pasien-nifas.kf-form');
+            Route::post('/pasien-nifas/{id}/kf/{jenisKf}', [BidanPasienNifasController::class, 'catatKf'])->name('pasien-nifas.kf.catat');
             Route::delete('/pasien-nifas/{id}', [BidanPasienNifasController::class, 'destroy'])->name('pasien-nifas.destroy');
             Route::post('/pasien-nifas/cek-nik', [BidanPasienNifasController::class, 'cekNik'])->name('pasien-nifas.cek-nik');
             Route::post('/pasien-nifas/store', [BidanPasienNifasController::class, 'store'])->name('pasien-nifas.store');

@@ -245,7 +245,7 @@
                 {{-- Tabel daftar pasien skrining --}}
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
-                        <thead class="bg-[#FFF7FC] text-[#7C7C7C]">
+                        <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
                             <tr class="text-left">
                                 <th class="px-3 py-2">No</th>
                                 <th class="px-3 py-2">Nama Pasien</th>

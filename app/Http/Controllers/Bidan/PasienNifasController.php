@@ -13,6 +13,8 @@ use App\Models\PasienNifasBidan;
 use App\Models\Pasien;
 use App\Models\User;
 use App\Models\Skrining;
+use App\Models\AnakPasien;
+use App\Models\Kf;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,62 +67,43 @@ class PasienNifasController extends Controller
             ->paginate(10); // 10 data per halaman
 
         // 3. Ambil Status KF (Kunjungan Nifas) Terakhir
-        $ids = $pasienNifas->getCollection()->pluck('id')->all(); // Ambil semua ID pasien nifas
-        
-        $kfDone = DB::table('kf') // Query tabel kf (kunjungan nifas)
-            ->selectRaw('id_nifas, MAX(kunjungan_nifas_ke)::int as max_ke') // Ambil kunjungan terakhir
-            ->whereIn('id_nifas', $ids) // Filter per ID pasien nifas
-            ->groupBy('id_nifas') // Group per pasien
+        $idsPasien = $pasienNifas->getCollection()->pluck('pasien_id')->all();
+        $kfDone = DB::table('kf')
+            ->selectRaw('id_nifas, MAX(kunjungan_nifas_ke)::int as max_ke')
+            ->whereIn('id_nifas', $idsPasien)
+            ->groupBy('id_nifas')
             ->get()
-            ->keyBy('id_nifas'); // Index by id_nifas untuk lookup cepat
+            ->keyBy('id_nifas');
 
         // 4. Define Jadwal KF (Kunjungan Nifas)
-        // KF1: 3 hari, KF2: 7 hari, KF3: 14 hari, KF4: 42 hari setelah melahirkan
-        $dueDays = [1=>3, 2=>7, 3=>14, 4=>42];
+        // KF1: 6–48 jam (~2 hari), KF2: 3–7 hari, KF3: 8–28 hari, KF4: 29–42 hari
+        $dueDays = [1=>2, 2=>7, 3=>28, 4=>42];
         
         $today = Carbon::today(); // Tanggal hari ini
 
         // 5. Transform Data untuk Hitung Peringatan
         $pasienNifas->getCollection()->transform(function ($row) use ($kfDone, $dueDays, $today) {
-            // Ambil kunjungan terakhir (max_ke), default 0 jika belum ada
-            $maxKe = optional($kfDone->get($row->id))->max_ke ?? 0;
-            
-            // Hitung kunjungan berikutnya yang harus dilakukan
-            $nextKe = min(4, $maxKe + 1); // Maksimal KF4, jadi min(4, maxKe+1)
-            
-            // Hitung selisih hari dari tanggal mulai nifas sampai hari ini
+            $maxKe = optional($kfDone->get($row->pasien_id))->max_ke ?? 0;
+            $nextKe = min(4, $maxKe + 1);
             $days = $row->tanggal ? Carbon::parse($row->tanggal)->diffInDays($today) : 0;
-            
-            // Ambil batas hari untuk kunjungan berikutnya
-            $due = $dueDays[$nextKe] ?? 42; // Default 42 hari jika tidak ada
-            
-            // Tentukan Label & Warna Badge Peringatan
+            $due = $dueDays[$nextKe] ?? 42;
             if ($row->tanggal === null) {
-                // Jika tanggal null, status aman (tidak ada deadline)
                 $label = 'Aman';
-                $cls = 'bg-[#2EDB58] text-white'; // Hijau
-            }
-            elseif ($days > $due) {
-                // Jika sudah lewat deadline -> TELAT
+                $cls = 'bg-[#2EDB58] text-white';
+            } elseif ($days > $due) {
                 $label = 'Telat';
-                $cls = 'bg-[#FF3B30] text-white'; // Merah
-            }
-            elseif ($days >= max(0, $due - 1)) {
-                // Jika 1 hari sebelum deadline atau pas deadline -> MEPET
+                $cls = 'bg-[#FF3B30] text-white';
+            } elseif ($days >= max(0, $due - 1)) {
                 $label = 'Mepet';
-                $cls = 'bg-[#FFC400] text-[#1D1D1D]'; // Kuning
-            }
-            else {
-                // Jika masih jauh dari deadline -> AMAN
+                $cls = 'bg-[#FFC400] text-[#1D1D1D]';
+            } else {
                 $label = 'Aman';
-                $cls = 'bg-[#2EDB58] text-white'; // Hijau
+                $cls = 'bg-[#2EDB58] text-white';
             }
-            
-            // Set attribute baru ke object
-            $row->peringat_label = $label; // Label peringatan (Aman/Mepet/Telat)
-            $row->badge_class = $cls;      // Class CSS untuk badge
-            $row->next_ke = $nextKe;       // KF ke berapa berikutnya
-            
+            $row->peringat_label = $label;
+            $row->badge_class = $cls;
+            $row->next_ke = $nextKe;
+            $row->max_ke = $maxKe;
             return $row;
         });
 
@@ -431,6 +414,109 @@ class PasienNifasController extends Controller
             Log::error('Bidan Destroy Pasien Nifas: ' . $e->getMessage());
             return back()->with('error', 'Gagal menghapus: ' . $e->getMessage());
         }
+    }
+
+    public function detail($id)
+    {
+        $bidan = Auth::user()->bidan;
+        abort_unless($bidan, 403);
+
+        $pasienNifas = PasienNifasBidan::with(['pasien.user'])->findOrFail($id);
+        $status = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
+        $pasienNifas->status_display = $status['label'];
+        $pasienNifas->status_type = $status['type'];
+
+        $anakPasien = AnakPasien::where('nifas_id', $pasienNifas->id)->get();
+        $kfList = Kf::with('anak')
+            ->where('id_nifas', $pasienNifas->pasien_id)
+            ->orderByDesc('tanggal_kunjungan')
+            ->get();
+
+        return view('bidan.pasien-nifas.show', compact('pasienNifas', 'anakPasien', 'kfList'));
+    }
+
+    public function formKf($id, $jenisKf)
+    {
+        $bidan = Auth::user()->bidan;
+        abort_unless($bidan, 403);
+        if (!in_array((int)$jenisKf, [1,2,3,4], true)) abort(404);
+
+        $pasienNifas = PasienNifasBidan::with(['pasien.user'])->findOrFail($id);
+        $anakList = AnakPasien::where('nifas_id', $id)->get();
+        $status = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
+        $pasienNifas->status_display = $status['label'];
+        $pasienNifas->status_type = $status['type'];
+
+        $selectedAnakId = $anakList->count() === 1 ? $anakList->first()->id : null;
+        $existingKf = null;
+        if ($selectedAnakId) {
+            $existingKf = Kf::where('id_nifas', $pasienNifas->pasien_id)
+                ->where('id_anak', $selectedAnakId)
+                ->where('kunjungan_nifas_ke', (int)$jenisKf)
+                ->first();
+        }
+
+        return view('bidan.pasien-nifas.kf-form', compact('pasienNifas', 'jenisKf', 'anakList', 'selectedAnakId', 'existingKf'));
+    }
+
+    public function catatKf(Request $request, $id, $jenisKf)
+    {
+        $bidan = Auth::user()->bidan;
+        abort_unless($bidan, 403);
+        if (!in_array((int)$jenisKf, [1,2,3,4], true)) abort(404);
+
+        $pasienNifas = PasienNifasBidan::findOrFail($id);
+
+        $data = $request->validate([
+            'id_anak' => 'required|exists:anak_pasien,id',
+            'tanggal_kunjungan' => 'required|date',
+            'sbp' => 'nullable|integer',
+            'dbp' => 'nullable|integer',
+            'map' => 'nullable|numeric',
+            'keadaan_umum' => 'nullable|string',
+            'tanda_bahaya' => 'nullable|string',
+            'kesimpulan_pantauan' => 'required|in:Sehat,Dirujuk,Meninggal',
+        ]);
+
+        $mapRaw = $request->input('map', null);
+        if (is_string($mapRaw)) {
+            $mapRaw = str_replace(',', '.', $mapRaw);
+        }
+        $map = null;
+        if (isset($data['sbp'], $data['dbp']) && is_numeric($data['sbp']) && is_numeric($data['dbp'])) {
+            $map = round(((float)$data['sbp'] + (2 * (float)$data['dbp'])) / 3, 2);
+        } elseif ($mapRaw !== null && is_numeric($mapRaw)) {
+            $map = round((float)$mapRaw, 2);
+        } else {
+            $map = null;
+        }
+        $mapInt = $map !== null ? (int) round($map) : null;
+
+        $payload = [
+            'id_nifas' => $pasienNifas->pasien_id,
+            'id_anak' => $data['id_anak'],
+            'kunjungan_nifas_ke' => (int)$jenisKf,
+            'tanggal_kunjungan' => $data['tanggal_kunjungan'],
+            'sbp' => $data['sbp'] ?? null,
+            'dbp' => $data['dbp'] ?? null,
+            'map' => $mapInt,
+            'keadaan_umum' => $data['keadaan_umum'] ?? null,
+            'tanda_bahaya' => $data['tanda_bahaya'] ?? null,
+            'kesimpulan_pantauan' => $data['kesimpulan_pantauan'],
+        ];
+
+        $existing = Kf::where('id_nifas', $pasienNifas->pasien_id)
+            ->where('id_anak', $data['id_anak'])
+            ->where('kunjungan_nifas_ke', (int)$jenisKf)
+            ->first();
+
+        if ($existing) {
+            $existing->update($payload);
+        } else {
+            Kf::create($payload);
+        }
+
+        return redirect()->route('bidan.pasien-nifas.detail', $id)->with('success', 'KF'.$jenisKf.' berhasil disimpan');
     }
 }
 
