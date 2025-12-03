@@ -278,7 +278,6 @@
             </section>
 
             {{-- CHART: Kunjungan Nifas per Bulan (KF) --}}
-            {{-- Kunjungan Nifas per Bulan (KF) --}}
             <section class="bg-white rounded-2xl p-5 shadow-md relative">
                 {{-- Header section chart KF --}}
                 <div class="flex flex-wrap items-center gap-2 mb-4">
@@ -301,7 +300,6 @@
                 </div>
 
                 {{-- Panel filter (floating card), default disembunyikan --}}
-                {{-- Panel filter --}}
                 <div id="kfFilterPanel"
                     class="hidden absolute right-4 sm:right-5 top-16 z-20 w-[calc(100%-2rem)] sm:w-64 bg-white border border-[#E5E7EB] rounded-2xl shadow-xl p-4">
                     {{-- Form filter tahun (GET) --}}

@@ -461,7 +461,7 @@ class PasienNifasController extends Controller
         $row->max_kf_done = (int) $maxKe;
 
         $row->next_kf_ke = $nextKe;
-        
+
         $tanggalMulai = $row->tanggal_mulai_nifas
             ? Carbon::parse($row->tanggal_mulai_nifas)
             : null;
@@ -481,24 +481,26 @@ class PasienNifasController extends Controller
 
         // === Teks kolom "Jadwal KF" ===
         if ($jadwalDate) {
-            $kfLabel = $namaKf[$nextKe] ?? (string) $nextKe;
+            // Pakai format KF1, KF2, KF3, KF4 (bukan "KF satu/dua/tiga/empat")
+            $kfLabel = 'KF' . $nextKe;
 
             if ($hariSisa === null) {
-                $row->jadwal_kf_text = "Jadwal KF {$kfLabel} belum diketahui";
+                $row->jadwal_kf_text = "Jadwal {$kfLabel} belum diketahui";
             } elseif ($hariSisa > 0) {
                 $row->jadwal_kf_text = sprintf(
-                    'KF %s akan dilakukan tanggal %s',
+                    '%s akan dilakukan pada tanggal %s',
                     $kfLabel,
-                    $jadwalDate->translatedFormat('d F Y')
+                    // Paksa locale Indonesia → Januari, Februari, dst.
+                    $jadwalDate->locale('id')->translatedFormat('d F Y')
                 );
             } elseif ($hariSisa === 0) {
                 $row->jadwal_kf_text = sprintf(
-                    'Hari ini jadwal KF %s',
+                    'Hari ini jadwal %s',
                     $kfLabel
                 );
             } else {
                 $row->jadwal_kf_text = sprintf(
-                    'KF %s sudah terlewat %d hari',
+                    '%s sudah terlewat %d hari',
                     $kfLabel,
                     abs($hariSisa)
                 );
@@ -506,6 +508,7 @@ class PasienNifasController extends Controller
         } else {
             $row->jadwal_kf_text = 'Jadwal KF belum tersedia';
         }
+
 
         // === Badge "Sisa Waktu" (UI seperti di Figma) ===
         if ($hariSisa === null) {
