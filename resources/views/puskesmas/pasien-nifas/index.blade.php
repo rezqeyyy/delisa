@@ -138,15 +138,16 @@
                                             $kf1Status = $item->getKfStatus(1);
                                             $kf2Status = $item->getKfStatus(2);
                                             $kf3Status = $item->getKfStatus(3);
+                                            $kf4Status = $item->getKfStatus(4); // TAMBAHKAN
                                             
                                             // Tentukan badge warna berdasarkan status terburuk
-                                            if($kf1Status == 'terlambat' || $kf2Status == 'terlambat' || $kf3Status == 'terlambat') {
+                                            if($kf1Status == 'terlambat' || $kf2Status == 'terlambat' || $kf3Status == 'terlambat' || $kf4Status == 'terlambat') {
                                                 $badgeColor = 'bg-red-100 text-red-800';
                                                 $badgeText = 'Ada KF Terlambat';
-                                            } elseif($kf1Status == 'dalam_periode' || $kf2Status == 'dalam_periode' || $kf3Status == 'dalam_periode') {
+                                            } elseif($kf1Status == 'dalam_periode' || $kf2Status == 'dalam_periode' || $kf3Status == 'dalam_periode' || $kf4Status == 'dalam_periode') {
                                                 $badgeColor = 'bg-amber-100 text-amber-800';
                                                 $badgeText = 'Perlu KF';
-                                            } elseif($kf1Status == 'selesai' && $kf2Status == 'selesai' && $kf3Status == 'selesai') {
+                                            } elseif($kf1Status == 'selesai' && $kf2Status == 'selesai' && $kf3Status == 'selesai' && $kf4Status == 'selesai') {
                                                 $badgeColor = 'bg-green-100 text-green-800';
                                                 $badgeText = 'Semua KF Selesai';
                                             } else {
@@ -226,6 +227,25 @@
                                             @else
                                                 <span class="p-1.5 rounded-lg border border-gray-300 bg-gray-50 cursor-not-allowed" title="KF3 Belum Tersedia">
                                                     <span class="text-xs font-bold text-gray-400">KF3</span>
+                                                </span>
+                                            @endif
+
+                                            <!-- Tombol KF4 -->
+                                            @if($item->canDoKf(4) && !$item->isKfSelesai(4))
+                                                <a href="{{ route('puskesmas.pasien-nifas.form-kf', ['id' => $item->id, 'jenisKf' => 4]) }}" 
+                                                class="p-1.5 rounded-lg border {{ $item->getKfStatus(4) == 'terlambat' ? 'border-red-300 bg-red-50 hover:bg-red-100' : 'border-amber-300 bg-amber-50 hover:bg-amber-100' }} transition-colors"
+                                                title="Catat KF4 - {{ $item->getKfStatus(4) == 'terlambat' ? 'TERLAMBAT' : 'Dalam Periode' }}">
+                                                    <span class="text-xs font-bold {{ $item->getKfStatus(4) == 'terlambat' ? 'text-red-600' : 'text-amber-600' }}">
+                                                        KF4
+                                                    </span>
+                                                </a>
+                                            @elseif($item->isKfSelesai(4))
+                                                <span class="p-1.5 rounded-lg border border-green-300 bg-green-50 cursor-default" title="KF4 Sudah Selesai">
+                                                    <span class="text-xs font-bold text-green-600">✓</span>
+                                                </span>
+                                            @else
+                                                <span class="p-1.5 rounded-lg border border-gray-300 bg-gray-50 cursor-not-allowed" title="KF4 Belum Tersedia">
+                                                    <span class="text-xs font-bold text-gray-400">KF4</span>
                                                 </span>
                                             @endif
                                         </div>

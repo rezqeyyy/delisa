@@ -326,6 +326,11 @@
                     <td>Hari ke-8 - ke-28 setelah melahirkan</td>
                     <td>Minggu ke-2 sampai ke-4 pasca persalinan</td>
                 </tr>
+                <tr>
+                    <td><strong>KF4</strong></td>
+                    <td>Hari ke-29 - ke-42 setelah melahirkan</td>
+                    <td>Minggu ke-5 sampai ke-6 pasca persalinan</td>
+                </tr>
             </tbody>
         </table>
         <div style="font-size: 11px; color: #666; font-style: italic; margin-top: 10px;">

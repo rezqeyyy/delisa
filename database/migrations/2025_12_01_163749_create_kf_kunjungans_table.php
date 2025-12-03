@@ -20,7 +20,7 @@ return new class extends Migration
                   ->constrained('pasien_nifas_rs')
                   ->onDelete('cascade');
             
-            $table->enum('jenis_kf', [1, 2, 3]); // KF1, KF2, KF3
+            $table->enum('jenis_kf', [1, 2, 3, 4]); // KF1, KF2, KF3, KF4
             
             // ========== FIELD DARI DOKUMEN PKM ==========
             // 1. Tanggal Kunjungan
