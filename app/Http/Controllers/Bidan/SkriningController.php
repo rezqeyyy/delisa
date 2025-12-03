@@ -324,11 +324,20 @@ return view('bidan.skrining.show', compact(
                          ->with('success', 'Skrining telah ditandai selesai diperiksa.'); // Flash message
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | METHOD: exportExcel()
+    |--------------------------------------------------------------------------
+    | Fungsi: Ekspor data skrining ibu hamil ke file CSV
+    | Return: Stream response CSV dengan header yang sesuai
+    |--------------------------------------------------------------------------
+    */
     public function exportExcel()
     {
         $bidan = Auth::user()->bidan;
         abort_unless($bidan, 403);
         $puskesmasId = $bidan->puskesmas_id;
+        $facilityName = optional($bidan->puskesmas)->nama_puskesmas ?? 'Puskesmas';
 
         $skrinings = Skrining::with(['pasien.user'])
             ->where('puskesmas_id', $puskesmasId)
@@ -376,11 +385,20 @@ return view('bidan.skrining.show', compact(
         return response()->stream($callback, 200, $headers);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | METHOD: exportPDF()
+    |--------------------------------------------------------------------------
+    | Fungsi: Ekspor data skrining ibu hamil ke PDF (layout landscape)
+    | Return: Download file PDF berisi daftar skrining
+    |--------------------------------------------------------------------------
+    */
     public function exportPDF()
     {
         $bidan = Auth::user()->bidan;
         abort_unless($bidan, 403);
         $puskesmasId = $bidan->puskesmas_id;
+        $facilityName = optional($bidan->puskesmas)->nama_puskesmas ?? 'Puskesmas';
 
         $skrinings = Skrining::with(['pasien.user'])
             ->where('puskesmas_id', $puskesmasId)
@@ -407,7 +425,7 @@ return view('bidan.skrining.show', compact(
             return back()->with('error', 'Tidak ada data skrining yang dapat diekspor.');
         }
 
-        $pdf = Pdf::loadView('bidan.skrining.export-pdf', compact('skrinings'))
+        $pdf = Pdf::loadView('bidan.skrining.export-pdf', compact('skrinings', 'facilityName'))
             ->setPaper('a4', 'landscape')
             ->setOption('defaultFont', 'Arial')
             ->setOption('isRemoteEnabled', true);

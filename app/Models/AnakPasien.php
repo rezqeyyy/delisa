@@ -10,6 +10,7 @@ class AnakPasien extends Model
     
     protected $fillable = [
         'nifas_id',
+        'nifas_bidan_id',
         'anak_ke',
         'tanggal_lahir',
         'jenis_kelamin',
@@ -39,5 +40,10 @@ class AnakPasien extends Model
     public function pasien()
     {
         return $this->belongsTo(Pasien::class, 'nifas_id');
+    }
+
+    public function nifasBidan()
+    {
+        return $this->belongsTo(\App\Models\PasienNifasBidan::class, 'nifas_bidan_id');
     }
 }

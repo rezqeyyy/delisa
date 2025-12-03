@@ -55,7 +55,7 @@
                     <div class="grid grid-cols-2">
                         <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">Tanggal Mulai Nifas</div>
                         <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
-                            {{ optional($pasienNifas->tanggal_mulai_nifas)->format('d/m/Y') ?? '-' }}
+                            {{ $pasienNifas->tanggal_mulai_nifas ? \Carbon\Carbon::parse($pasienNifas->tanggal_mulai_nifas)->format('d/m/Y') : '-' }}
                         </div>
                     </div>
                     <div class="grid grid-cols-2">
@@ -108,19 +108,21 @@
                 <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasienNifas->id, 'jenisKf' => 1]) }}" class="text-xs text-[#B9257F]">Catat KF</a>
             </div>
             <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
-                <table class="w-full text-xs sm:text-sm">
-                    <thead class="text-[#7C7C7C] bg-[#FAFAFA]">
-                        <tr class="text-left">
-                            <th class="px-4 py-2">Anak Ke</th>
-                            <th class="px-4 py-2">Nama</th>
-                            <th class="px-4 py-2">Jenis Kelamin</th>
-                            <th class="px-4 py-2">Tanggal Lahir</th>
-                            <th class="px-4 py-2">Berat (gram)</th>
-                            <th class="px-4 py-2">Panjang (cm)</th>
-                            <th class="px-4 py-2">Lingkar Kepala (cm)</th>
-                            <th class="px-4 py-2">Kondisi Ibu</th>
-                        </tr>
-                    </thead>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-xs sm:text-sm">
+                        <thead class="text-[#7C7C7C] bg-[#FAFAFA]">
+                            <tr class="text-left">
+                                <th class="px-4 py-2">Anak Ke</th>
+                                <th class="px-4 py-2">Nama</th>
+                                <th class="px-4 py-2">Jenis Kelamin</th>
+                                <th class="px-4 py-2">Tanggal Lahir</th>
+                                <th class="px-4 py-2">Berat (gram)</th>
+                                <th class="px-4 py-2">Panjang (cm)</th>
+                                <th class="px-4 py-2">Lingkar Kepala (cm)</th>
+                                <th class="px-4 py-2">Kondisi Ibu</th>
+                                <th class="px-4 py-2">Aksi</th>
+                            </tr>
+                        </thead>
                     <tbody class="divide-y divide-[#E9E9E9]">
                         @forelse($anakPasien as $anak)
                             <tr>
@@ -132,9 +134,19 @@
                                 <td class="px-4 py-2">{{ $anak->panjang_lahir_anak }}</td>
                                 <td class="px-4 py-2">{{ $anak->lingkar_kepala_anak }}</td>
                                 <td class="px-4 py-2">{{ $anak->kondisi_ibu ?? '-' }}</td>
+                                <td class="px-4 py-2">
+                                    <div class="inline-flex items-center gap-2 whitespace-nowrap">
+                                        <a href="{{ route('bidan.pasien-nifas.anak.edit', ['id' => $pasienNifas->id, 'anakId' => $anak->id]) }}" class="px-3 py-1.5 rounded-full border text-xs border-[#E5E5E5]">Edit</a>
+                                        <form action="{{ route('bidan.pasien-nifas.anak.destroy', ['id' => $pasienNifas->id, 'anakId' => $anak->id]) }}" method="POST" onsubmit="return confirm('Hapus data anak ini?');" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="px-3 py-1.5 rounded-full border border-red-200 text-red-700 hover:bg-red-50 text-xs">Hapus</button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         @empty
-                            <tr><td colspan="8" class="px-4 py-4 text-center text-[#7C7C7C]">Belum ada data anak.</td></tr>
+                            <tr><td colspan="9" class="px-4 py-4 text-center text-[#7C7C7C]">Belum ada data anak.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -157,6 +169,7 @@
                             <th class="px-4 py-2">Kesimpulan</th>
                             <th class="px-4 py-2">Keadaan Umum</th>
                             <th class="px-4 py-2">Tanda Bahaya</th>
+                            <th class="px-4 py-2">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-[#E9E9E9]">
@@ -170,6 +183,13 @@
                                 <td class="px-4 py-2">{{ $kf->kesimpulan_pantauan ?? '-' }}</td>
                                 <td class="px-4 py-2">{{ $kf->keadaan_umum ?? '-' }}</td>
                                 <td class="px-4 py-2">{{ $kf->tanda_bahaya ?? '-' }}</td>
+                                <td class="px-4 py-2">
+                                    <form action="{{ route('bidan.pasien-nifas.kf.destroy', ['id' => $pasienNifas->id, 'kfId' => $kf->id]) }}" method="POST" onsubmit="return confirm('Hapus data KF ini?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-3 py-1.5 rounded-full border border-red-200 text-red-700 hover:bg-red-50 text-xs">Hapus</button>
+                                    </form>
+                                </td>
                             </tr>
                         @empty
                             <tr><td colspan="8" class="px-4 py-4 text-center text-[#7C7C7C]">Belum ada kunjungan nifas.</td></tr>

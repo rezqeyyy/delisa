@@ -54,6 +54,14 @@
             </div>
 
             <form method="POST" action="{{ route('pasien.riwayat-penyakit-keluarga.store') }}">
+                @if ($errors->any())
+                    <div class="mt-4 p-4 rounded-md bg-red-50 border border-red-200 text-red-700">
+                        @foreach ($errors->all() as $error)
+                            <p class="text-sm">{{ $error }}</p>
+                        @endforeach
+                    </div>
+                @endif
+                
                 @csrf
                 <input type="hidden" name="skrining_id" value="{{ request('skrining_id') }}">
                 <div class="mt-6">

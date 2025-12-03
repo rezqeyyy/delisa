@@ -55,31 +55,34 @@
             @endif
             
             <form method="POST"
-                  action="{{ route('bidan.pasien-nifas.store-anak', $rowId ?? request()->route('id')) }}"
+                  action="{{ isset($anak) ? route('bidan.pasien-nifas.anak.update', ['id' => $rowId ?? request()->route('id'), 'anakId' => $anak->id]) : route('bidan.pasien-nifas.store-anak', $rowId ?? request()->route('id')) }}"
                   class="space-y-5">
                 @csrf
+                @if(isset($anak))
+                    @method('PUT')
+                @endif
 
                 <input type="hidden" name="nifas_id" value="{{ $nifasId ?? '' }}"/>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Nama Anak</label>
-                        <input type="text" name="nama_anak" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('nama_anak') }}" placeholder="Nama lengkap anak">
+                        <input type="text" name="nama_anak" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('nama_anak', optional($anak)->nama_anak) }}" placeholder="Nama lengkap anak">
                         @error('nama_anak')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Anak ke-</label>
-                        <input type="number" name="anak_ke" min="1" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('anak_ke') }}" placeholder="Contoh: 1">
+                        <input type="number" name="anak_ke" min="1" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('anak_ke', optional($anak)->anak_ke) }}" placeholder="Contoh: 1">
                         @error('anak_ke')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Tanggal Lahir</label>
-                        <input type="date" name="tanggal_lahir" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('tanggal_lahir') }}">
+                        <input type="date" name="tanggal_lahir" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('tanggal_lahir', optional($anak)->tanggal_lahir) }}">
                         @error('tanggal_lahir')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Jenis Kelamin</label>
-                        @php $jk = old('jenis_kelamin'); @endphp
+                        @php $jk = old('jenis_kelamin', optional($anak)->jenis_kelamin); @endphp
                         <select name="jenis_kelamin" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
                             <option value="">Pilih</option>
                             <option value="Laki-laki" {{ $jk === 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
@@ -92,17 +95,17 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Usia Kehamilan Saat Lahir (minggu)</label>
-                        <input type="number" name="usia_kehamilan_saat_lahir" min="20" max="45" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('usia_kehamilan_saat_lahir') }}" placeholder="Contoh: 38">
+                        <input type="number" name="usia_kehamilan_saat_lahir" min="20" max="45" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('usia_kehamilan_saat_lahir', optional($anak)->usia_kehamilan_saat_lahir) }}" placeholder="Contoh: 38">
                         @error('usia_kehamilan_saat_lahir')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Berat Lahir (gram)</label>
-                        <input type="number" name="berat_lahir_anak" min="500" max="6000" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('berat_lahir_anak') }}" placeholder="Contoh: 3000">
+                        <input type="number" name="berat_lahir_anak" min="500" max="6000" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('berat_lahir_anak', optional($anak)->berat_lahir_anak) }}" placeholder="Contoh: 3000">
                         @error('berat_lahir_anak')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Panjang Lahir (cm)</label>
-                        <input type="number" name="panjang_lahir_anak" min="25" max="65" step="0.1" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('panjang_lahir_anak') }}" placeholder="Contoh: 50">
+                        <input type="number" name="panjang_lahir_anak" min="25" max="65" step="0.1" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('panjang_lahir_anak', optional($anak)->panjang_lahir_anak) }}" placeholder="Contoh: 50">
                         @error('panjang_lahir_anak')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                     </div>
                 </div>
@@ -110,12 +113,12 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Lingkar Kepala (cm)</label>
-                        <input type="number" name="lingkar_kepala_anak" min="20" max="45" step="0.1" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('lingkar_kepala_anak') }}" placeholder="Contoh: 33">
+                        <input type="number" name="lingkar_kepala_anak" min="20" max="45" step="0.1" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('lingkar_kepala_anak', optional($anak)->lingkar_kepala_anak) }}" placeholder="Contoh: 33">
                         @error('lingkar_kepala_anak')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Memiliki Buku KIA</label>
-                        @php $kia = old('memiliki_buku_kia'); @endphp
+                        @php $kia = old('memiliki_buku_kia', optional($anak)->memiliki_buku_kia !== null ? (string) optional($anak)->memiliki_buku_kia : null); @endphp
                         <select name="memiliki_buku_kia" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
                             <option value="">Pilih</option>
                             <option value="1" {{ $kia === '1' ? 'selected' : '' }}>Ya</option>
@@ -125,7 +128,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Buku KIA Bayi Kecil</label>
-                        @php $kiaKecil = old('buku_kia_bayi_kecil'); @endphp
+                        @php $kiaKecil = old('buku_kia_bayi_kecil', optional($anak)->buku_kia_bayi_kecil !== null ? (string) optional($anak)->buku_kia_bayi_kecil : null); @endphp
                         <select name="buku_kia_bayi_kecil" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
                             <option value="">Pilih</option>
                             <option value="1" {{ $kiaKecil === '1' ? 'selected' : '' }}>Ya</option>
@@ -138,7 +141,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">IMD (Inisiasi Menyusu Dini)</label>
-                        @php $imd = old('imd'); @endphp
+                        @php $imd = old('imd', optional($anak)->imd !== null ? (string) optional($anak)->imd : null); @endphp
                         <select name="imd" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
                             <option value="">Pilih</option>
                             <option value="1" {{ $imd === '1' ? 'selected' : '' }}>Ya</option>
@@ -148,7 +151,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Kondisi Ibu</label>
-                        @php $kIbu = old('kondisi_ibu'); @endphp
+                        @php $kIbu = old('kondisi_ibu', optional($anak)->kondisi_ibu); @endphp
                         <select name="kondisi_ibu" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
                             <option value="">Pilih</option>
                             <option value="aman" {{ $kIbu === 'aman' ? 'selected' : '' }}>Aman</option>
@@ -161,19 +164,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Riwayat Penyakit (pisahkan dengan koma)</label>
-                        <textarea name="riwayat_penyakit" rows="3" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" placeholder="Contoh: Asma, Alergi">{{ old('riwayat_penyakit') }}</textarea>
+                        <textarea name="riwayat_penyakit" rows="3" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" placeholder="Contoh: Asma, Alergi">{{ old('riwayat_penyakit', (is_array(optional($anak)->riwayat_penyakit) ? implode(', ', optional($anak)->riwayat_penyakit) : optional($anak)->riwayat_penyakit)) }}</textarea>
                         @error('riwayat_penyakit')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-[#666666]">Keterangan Masalah Lain</label>
-                        <textarea name="keterangan_masalah_lain" rows="3" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" placeholder="Jika ada masalah lain">{{ old('keterangan_masalah_lain') }}</textarea>
+                        <textarea name="keterangan_masalah_lain" rows="3" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" placeholder="Jika ada masalah lain">{{ old('keterangan_masalah_lain', optional($anak)->keterangan_masalah_lain) }}</textarea>
                         @error('keterangan_masalah_lain')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-[#666666]">Catatan Kondisi Ibu</label>
-                    <textarea name="catatan_kondisi_ibu" rows="3" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" placeholder="Catatan tambahan terkait kondisi ibu">{{ old('catatan_kondisi_ibu') }}</textarea>
+                    <textarea name="catatan_kondisi_ibu" rows="3" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" placeholder="Catatan tambahan terkait kondisi ibu">{{ old('catatan_kondisi_ibu', optional($anak)->catatan_kondisi_ibu) }}</textarea>
                     @error('catatan_kondisi_ibu')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                 </div>
 

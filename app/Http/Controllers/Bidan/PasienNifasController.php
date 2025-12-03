@@ -67,43 +67,96 @@ class PasienNifasController extends Controller
             ->paginate(10); // 10 data per halaman
 
         // 3. Ambil Status KF (Kunjungan Nifas) Terakhir
-        $idsPasien = $pasienNifas->getCollection()->pluck('pasien_id')->all();
+        $idsEpisode = $pasienNifas->getCollection()->pluck('id')->all();
         $kfDone = DB::table('kf')
             ->selectRaw('id_nifas, MAX(kunjungan_nifas_ke)::int as max_ke')
-            ->whereIn('id_nifas', $idsPasien)
+            ->whereIn('id_nifas', $idsEpisode)
             ->groupBy('id_nifas')
             ->get()
             ->keyBy('id_nifas');
+
+        $kfChildren = DB::table('kf')
+            ->join('anak_pasien', 'kf.id_anak', '=', 'anak_pasien.id')
+            ->select('kf.id_nifas', 'kf.kunjungan_nifas_ke', 'anak_pasien.anak_ke', 'anak_pasien.nama_anak')
+            ->whereIn('kf.id_nifas', $idsEpisode)
+            ->orderByDesc('kf.tanggal_kunjungan')
+            ->get();
+        $kfChildMap = [];
+        foreach ($kfChildren as $k) {
+            if (!isset($kfChildMap[$k->id_nifas][$k->kunjungan_nifas_ke])) {
+                $kfChildMap[$k->id_nifas][$k->kunjungan_nifas_ke] = ['anak_ke' => $k->anak_ke, 'nama' => $k->nama_anak];
+            }
+        }
 
         // 4. Define Jadwal KF (Kunjungan Nifas)
         // KF1: 6–48 jam (~2 hari), KF2: 3–7 hari, KF3: 8–28 hari, KF4: 29–42 hari
         $dueDays = [1=>2, 2=>7, 3=>28, 4=>42];
         
         $today = Carbon::today(); // Tanggal hari ini
+        $now = Carbon::now();
 
         // 5. Transform Data untuk Hitung Peringatan
-        $pasienNifas->getCollection()->transform(function ($row) use ($kfDone, $dueDays, $today) {
-            $maxKe = optional($kfDone->get($row->pasien_id))->max_ke ?? 0;
+        $windowsDays = [2=>['start'=>3,'end'=>7], 3=>['start'=>8,'end'=>28], 4=>['start'=>29,'end'=>42]];
+        $pasienNifas->getCollection()->transform(function ($row) use ($kfDone, $windowsDays, $today, $now, $kfChildMap) {
+            $maxKe = optional($kfDone->get($row->id))->max_ke ?? 0;
+            if ($maxKe >= 4) {
+                $row->peringat_label = 'Selesai semua';
+                $row->peringat_state = 'done';
+                $row->badge_class = 'bg-[#2EDB58] text-white';
+                $row->next_ke = 4;
+                $row->max_ke = $maxKe;
+                return $row;
+            }
             $nextKe = min(4, $maxKe + 1);
-            $days = $row->tanggal ? Carbon::parse($row->tanggal)->diffInDays($today) : 0;
-            $due = $dueDays[$nextKe] ?? 42;
-            if ($row->tanggal === null) {
-                $label = 'Aman';
-                $cls = 'bg-[#2EDB58] text-white';
-            } elseif ($days > $due) {
-                $label = 'Telat';
-                $cls = 'bg-[#FF3B30] text-white';
-            } elseif ($days >= max(0, $due - 1)) {
-                $label = 'Mepet';
-                $cls = 'bg-[#FFC400] text-[#1D1D1D]';
+            if (!$row->tanggal) {
+                $row->peringat_label = 'Tidak ada tanggal';
+                $row->peringat_state = 'no_date';
+                $row->badge_class = 'bg-[#6c757d] text-white';
+                $row->next_ke = $nextKe;
+                $row->max_ke = $maxKe;
+                return $row;
+            }
+            $base = Carbon::parse($row->tanggal);
+            if ($nextKe === 1) {
+                $hours = $base->diffInHours($now);
+                $startH = 6; $endH = 48;
+                if ($hours > $endH) {
+                    $label = 'Telat menuju KF1';
+                    $state = 'late';
+                    $cls = 'bg-[#FF3B30] text-white';
+                } elseif ($hours >= $startH) {
+                    $label = 'Dalam periode KF1';
+                    $state = 'window';
+                    $cls = 'bg-[#FFC400] text-[#1D1D1D]';
+                } else {
+                    $label = 'J-'.max(0, $startH - $hours).' menuju KF1';
+                    $state = 'early';
+                    $cls = 'bg-[#6c757d] text-white';
+                }
             } else {
-                $label = 'Aman';
-                $cls = 'bg-[#2EDB58] text-white';
+                $days = $base->diffInDays($today);
+                $startDays = $windowsDays[$nextKe]['start'] ?? 0;
+                $endDays = $windowsDays[$nextKe]['end'] ?? 42;
+                if ($days > $endDays) {
+                    $label = 'Telat menuju KF'.$nextKe;
+                    $state = 'late';
+                    $cls = 'bg-[#FF3B30] text-white';
+                } elseif ($days >= $startDays) {
+                    $label = 'Dalam periode KF'.$nextKe;
+                    $state = 'window';
+                    $cls = 'bg-[#FFC400] text-[#1D1D1D]';
+                } else {
+                    $label = 'H-'.max(0, $startDays - $days).' menuju KF'.$nextKe;
+                    $state = 'early';
+                    $cls = 'bg-[#6c757d] text-white';
+                }
             }
             $row->peringat_label = $label;
+            $row->peringat_state = $state;
             $row->badge_class = $cls;
             $row->next_ke = $nextKe;
             $row->max_ke = $maxKe;
+            $row->kf_child = $kfChildMap[$row->id] ?? [];
             return $row;
         });
 
@@ -354,18 +407,7 @@ class PasienNifasController extends Controller
             $bidanId = $bidan->puskesmas_id; // ID puskesmas bidan
 
             // 5. Cek Apakah Pasien Sudah Terdaftar di Nifas Bidan Ini
-            $existingNifas = PasienNifasBidan::where('pasien_id', $pasien->id)
-                ->where('bidan_id', $bidanId)
-                ->first();
-
-            if ($existingNifas) {
-                // Jika sudah terdaftar, commit transaction dan redirect dengan pesan info
-                DB::commit();
-                return redirect()->route('bidan.pasien-nifas')
-                    ->with('info', 'Pasien sudah terdaftar dalam daftar nifas.');
-            }
-
-            // 6. Buat Relasi Pasien Nifas - Bidan
+            // 6. Buat Relasi Pasien Nifas - Bidan (episode baru selalu dibuat)
             PasienNifasBidan::create([
                 'bidan_id'             => $bidanId,    // ID puskesmas bidan
                 'pasien_id'            => $pasien->id, // ID pasien
@@ -391,6 +433,15 @@ class PasienNifasController extends Controller
         }
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | METHOD: destroy($id)
+    |--------------------------------------------------------------------------
+    | Fungsi: Menghapus relasi pasien nifas milik puskesmas bidan login
+    | Parameter: $id (ID pada tabel `pasien_nifas_bidan`)
+    | Return: Redirect ke daftar dengan pesan sukses/error
+    |--------------------------------------------------------------------------
+    */
     public function destroy($id)
     {
         try {
@@ -416,6 +467,15 @@ class PasienNifasController extends Controller
         }
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | METHOD: detail($id)
+    |--------------------------------------------------------------------------
+    | Fungsi: Menampilkan detail pasien nifas + riwayat KF dan data anak
+    | Parameter: $id (ID pada tabel `pasien_nifas_bidan`)
+    | Return: View 'bidan.pasien-nifas.show' dengan data terkait
+    |--------------------------------------------------------------------------
+    */
     public function detail($id)
     {
         $bidan = Auth::user()->bidan;
@@ -426,15 +486,24 @@ class PasienNifasController extends Controller
         $pasienNifas->status_display = $status['label'];
         $pasienNifas->status_type = $status['type'];
 
-        $anakPasien = AnakPasien::where('nifas_id', $pasienNifas->id)->get();
+        $anakPasien = AnakPasien::where('nifas_bidan_id', $pasienNifas->id)->get();
         $kfList = Kf::with('anak')
-            ->where('id_nifas', $pasienNifas->pasien_id)
+            ->where('id_nifas', $pasienNifas->id)
             ->orderByDesc('tanggal_kunjungan')
             ->get();
 
         return view('bidan.pasien-nifas.show', compact('pasienNifas', 'anakPasien', 'kfList'));
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | METHOD: formKf($id, $jenisKf)
+    |--------------------------------------------------------------------------
+    | Fungsi: Menampilkan form input kunjungan nifas (KF1–KF4)
+    | Parameter: $id (ID pasien nifas), $jenisKf (1|2|3|4)
+    | Return: View 'bidan.pasien-nifas.kf-form' beserta data awal
+    |--------------------------------------------------------------------------
+    */
     public function formKf($id, $jenisKf)
     {
         $bidan = Auth::user()->bidan;
@@ -442,23 +511,29 @@ class PasienNifasController extends Controller
         if (!in_array((int)$jenisKf, [1,2,3,4], true)) abort(404);
 
         $pasienNifas = PasienNifasBidan::with(['pasien.user'])->findOrFail($id);
-        $anakList = AnakPasien::where('nifas_id', $id)->get();
+        $anakList = AnakPasien::where('nifas_bidan_id', $id)->get();
         $status = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
         $pasienNifas->status_display = $status['label'];
         $pasienNifas->status_type = $status['type'];
 
-        $selectedAnakId = $anakList->count() === 1 ? $anakList->first()->id : null;
-        $existingKf = null;
-        if ($selectedAnakId) {
-            $existingKf = Kf::where('id_nifas', $pasienNifas->pasien_id)
-                ->where('id_anak', $selectedAnakId)
-                ->where('kunjungan_nifas_ke', (int)$jenisKf)
-                ->first();
-        }
+        $existingKf = Kf::where('id_nifas', $pasienNifas->id)
+            ->where('kunjungan_nifas_ke', (int)$jenisKf)
+            ->orderByDesc('tanggal_kunjungan')
+            ->first();
+        $selectedAnakId = old('id_anak') ?? optional($existingKf)->id_anak ?? ($anakList->count() === 1 ? $anakList->first()->id : null);
 
         return view('bidan.pasien-nifas.kf-form', compact('pasienNifas', 'jenisKf', 'anakList', 'selectedAnakId', 'existingKf'));
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | METHOD: catatKf(Request $request, $id, $jenisKf)
+    |--------------------------------------------------------------------------
+    | Fungsi: Menyimpan/Update data kunjungan nifas (KF1–KF4) per anak
+    | Parameter: $request, $id (ID pasien nifas), $jenisKf (1|2|3|4)
+    | Return: Redirect ke detail dengan pesan sukses
+    |--------------------------------------------------------------------------
+    */
     public function catatKf(Request $request, $id, $jenisKf)
     {
         $bidan = Auth::user()->bidan;
@@ -493,7 +568,7 @@ class PasienNifasController extends Controller
         $mapInt = $map !== null ? (int) round($map) : null;
 
         $payload = [
-            'id_nifas' => $pasienNifas->pasien_id,
+            'id_nifas' => $pasienNifas->id,
             'id_anak' => $data['id_anak'],
             'kunjungan_nifas_ke' => (int)$jenisKf,
             'tanggal_kunjungan' => $data['tanggal_kunjungan'],
@@ -505,8 +580,7 @@ class PasienNifasController extends Controller
             'kesimpulan_pantauan' => $data['kesimpulan_pantauan'],
         ];
 
-        $existing = Kf::where('id_nifas', $pasienNifas->pasien_id)
-            ->where('id_anak', $data['id_anak'])
+        $existing = Kf::where('id_nifas', $pasienNifas->id)
             ->where('kunjungan_nifas_ke', (int)$jenisKf)
             ->first();
 
@@ -517,6 +591,20 @@ class PasienNifasController extends Controller
         }
 
         return redirect()->route('bidan.pasien-nifas.detail', $id)->with('success', 'KF'.$jenisKf.' berhasil disimpan');
+    }
+
+    public function hapusKf($id, $kfId)
+    {
+        $bidan = Auth::user()->bidan;
+        abort_unless($bidan, 403);
+
+        $pasienNifas = PasienNifasBidan::findOrFail($id);
+        $kf = Kf::where('id', $kfId)
+            ->where('id_nifas', $pasienNifas->id)
+            ->firstOrFail();
+        $kf->delete();
+
+        return redirect()->route('bidan.pasien-nifas.detail', $id)->with('success', 'Data KF berhasil dihapus');
     }
 }
 

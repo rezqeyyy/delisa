@@ -57,6 +57,14 @@
             </div>
 
             <form method="POST" action="{{ route('pasien.preeklampsia.store') }}">
+                @if ($errors->any())
+                    <div class="mt-4 p-4 rounded-md bg-red-50 border border-red-200 text-red-700">
+                        @foreach ($errors->all() as $error)
+                            <p class="text-sm">{{ $error }}</p>
+                        @endforeach
+                    </div>
+                @endif
+                
                 @csrf
                 <input type="hidden" name="skrining_id" value="{{ request('skrining_id') }}">
                 <div class="mt-6">
@@ -90,18 +98,23 @@
                                 <div class="font-medium mb-3">{{ $num }}. {{ $text }}</div>
                                 <div class="flex items-center space-x-6">
                                     <label class="inline-flex items-center">
-                                        <input type="radio" name="pertanyaan{{ $num }}" value="ya" class="hidden peer"
+                                        <input type="radio" name="pertanyaan{{ $num }}" value="ya" class="hidden peer" {{ in_array($num, [3,4,7]) ? 'disabled' : '' }}
                                             {{ !empty($answers) && ($answers['pertanyaan'.$num] ?? false) ? 'checked' : '' }}>
                                         <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                         <span class="text-sm">Ya</span>
                                     </label>
                                     <label class="inline-flex items-center">
-                                        <input type="radio" name="pertanyaan{{ $num }}" value="tidak" class="hidden peer"
+                                        <input type="radio" name="pertanyaan{{ $num }}" value="tidak" class="hidden peer" {{ in_array($num, [3,4,7]) ? 'disabled' : '' }}
                                             {{ !empty($answers) ? (($answers['pertanyaan'.$num] ?? false) ? '' : 'checked') : 'checked' }}>
                                         <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                         <span class="text-sm">Tidak</span>
                                     </label>
                                 </div>
+
+                                @if(in_array($num, [3,4,7]))
+                                    <p class="mt-2 text-xs text-[#B9257F]">*Terisi otomatis.</p>
+                                @endif
+                        
                             </div>
                         @endforeach
 
@@ -110,18 +123,23 @@
                                 <div class="font-medium mb-3">{{ $num }}. {{ $text }}</div>
                                 <div class="flex items-center space-x-6">
                                     <label class="inline-flex items-center">
-                                        <input type="radio" name="pertanyaan{{ $num }}" value="ya" class="hidden peer"
+                                        <input type="radio" name="pertanyaan{{ $num }}" value="ya" class="hidden peer" {{ $num === 11 ? 'disabled' : '' }}
                                             {{ !empty($answers) && ($answers['pertanyaan'.$num] ?? false) ? 'checked' : '' }}>
                                         <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                         <span class="text-sm">Ya</span>
                                     </label>
                                     <label class="inline-flex items-center">
-                                        <input type="radio" name="pertanyaan{{ $num }}" value="tidak" class="hidden peer"
+                                        <input type="radio" name="pertanyaan{{ $num }}" value="tidak" class="hidden peer" {{ $num === 11 ? 'disabled' : '' }}
                                             {{ !empty($answers) ? (($answers['pertanyaan'.$num] ?? false) ? '' : 'checked') : 'checked' }}>
                                         <span class="w-5 h-5 rounded-full border border-gray-400 inline-block mr-2 peer-checked:bg-[#B9257F] peer-checked:border-[#B9257F]"></span>
                                         <span class="text-sm">Tidak</span>
                                     </label>
                                 </div>
+
+                                @if(in_array($num, [11]))
+                                    <p class="mt-2 text-xs text-[#B9257F]">*Terisi otomatis.</p>
+                                @endif
+
                             </div>
                         @endforeach
                     </div>

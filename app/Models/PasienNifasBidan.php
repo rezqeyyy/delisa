@@ -28,6 +28,10 @@ class PasienNifasBidan extends Model
         'tanggal_mulai_nifas',
     ];
 
+    protected $casts = [
+        'tanggal_mulai_nifas' => 'date',
+    ];
+
     /**
      * Relasi ke model Bidan.
      * Asumsi: secara logika "bidan_id" mengarah ke tabel "bidans" (model Bidan).

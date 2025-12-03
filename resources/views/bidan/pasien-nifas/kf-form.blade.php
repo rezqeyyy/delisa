@@ -28,6 +28,13 @@
                 </div>
 
                 <form action="{{ route('bidan.pasien-nifas.kf.catat', ['id' => $pasienNifas->id, 'jenisKf' => $jenisKf]) }}" method="POST" class="space-y-4">
+                    @if ($errors->any())
+                        <div class="mt-4 p-4 rounded-md bg-red-50 border border-red-200 text-red-700">
+                            @foreach ($errors->all() as $error)
+                                <p class="text-sm">{{ $error }}</p>
+                            @endforeach
+                        </div>
+                    @endif
                     @csrf
 
                     <div>

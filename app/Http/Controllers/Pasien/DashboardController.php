@@ -61,17 +61,13 @@ class DashboardController extends Controller
          * - withQueryString() → parameter filter tetap ada saat paging
          */
         $skrinings = Skrining::where('pasien_id', $pasienId)
-            ->when($status !== '', function ($q) use ($status, $kesimpulanAliases, $preeklampsiaAliases) {
-                if ($status === 'Skrining belum selesai') {
-                    $q->where('step_form', '<', 6);
-                } else {
-                    $kesVals = $kesimpulanAliases[$status] ?? [$status];
-                    $preVals = $preeklampsiaAliases[$status] ?? [$status];
-                    $q->where(function ($w) use ($kesVals, $preVals) {
-                        $w->whereIn('kesimpulan', $kesVals)
-                          ->orWhereIn('status_pre_eklampsia', $preVals);
-                    });
-                }
+            ->when(($status !== '' && $status !== 'Skrining belum selesai'), function ($q) use ($status, $kesimpulanAliases, $preeklampsiaAliases) {
+                $kesVals = $kesimpulanAliases[$status] ?? [$status];
+                $preVals = $preeklampsiaAliases[$status] ?? [$status];
+                $q->where(function ($w) use ($kesVals, $preVals) {
+                    $w->whereIn('kesimpulan', $kesVals)
+                      ->orWhereIn('status_pre_eklampsia', $preVals);
+                });
             })
             ->when(($dateFrom !== '' || $dateTo !== ''), function ($q) use ($dateFrom, $dateTo) {
                 if ($dateFrom !== '' && $dateTo !== '') {
@@ -87,6 +83,12 @@ class DashboardController extends Controller
             ->latest()
             ->paginate(10)
             ->withQueryString();
+
+        if ($status === 'Skrining belum selesai') {
+            $skrinings->setCollection(
+                $skrinings->getCollection()->filter(function ($s) { return ! $this->isSkriningCompleteForSkrining($s); })->values()
+            );
+        }
 
         /* {{-- ==== TRANSFORM TAMPILAN (KESIMPULAN & BADGE) ==== --}} */
         

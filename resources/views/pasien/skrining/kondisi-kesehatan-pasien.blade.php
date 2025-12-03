@@ -69,6 +69,14 @@
             </p>
 
             <form action="{{ route('pasien.kondisi-kesehatan-pasien.store') }}" method="POST">
+                @if ($errors->any())
+                    <div class="mt-4 p-4 rounded-md bg-red-50 border border-red-200 text-red-700">
+                        @foreach ($errors->all() as $error)
+                            <p class="text-sm">{{ $error }}</p>
+                        @endforeach
+                    </div>
+                @endif
+                
                 @csrf
                 <input type="hidden" name="skrining_id" value="{{ request('skrining_id') }}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">

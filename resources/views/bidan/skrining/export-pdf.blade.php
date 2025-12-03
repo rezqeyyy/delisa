@@ -12,14 +12,15 @@
         }
         .header { 
             text-align: center; 
-            margin-bottom: 30px;
-            border-bottom: 2px solid #333;
+            margin-bottom: 25px;
             padding-bottom: 15px;
+            border-bottom: 3px solid #E91E8C;
         }
         .header h1 { 
             margin: 0; 
-            color: #333;
-            font-size: 24px;
+            color: #E91E8C;
+            font-size: 18px;
+            font-weight: 700;
         }
         .header p { 
             margin: 5px 0; 
@@ -32,14 +33,13 @@
             font-size: 10px;
         }
         th, td {
-            border: 1px solid #ddd;
             padding: 8px 6px;
             text-align: left;
         }
         th {
-            background-color: #f5f5f5;
+            background-color: #E91E8C;
             font-weight: bold;
-            color: #333;
+            color: #fff;
         }
         tr:nth-child(even) {
             background-color: #f9f9f9;
@@ -89,6 +89,7 @@
     <div class="header">
         <h1>DATA SKRINING IBU HAMIL</h1>
         <p>Dinas Kesehatan Kota Depok - DeLISA</p>
+        <p>Fasilitas: {{ $facilityName ?? (optional(optional(Auth::user())->bidan)->puskesmas->nama_puskesmas ?? '-') }}</p>
         <p>Periode: {{ date('d/m/Y') }}</p>
     </div>
 

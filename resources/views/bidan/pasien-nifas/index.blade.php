@@ -94,7 +94,13 @@
 
                                     {{-- Badge status (Aman / Peringatan) --}}
                                     <td class="px-4 py-3">
-                                        <span class="inline-flex items-center rounded-full px-4 h-8 text-sm font-semibold {{ $pasien->badge_class ?? 'bg-[#2EDB58] text-white' }}">
+                                        @php($state = $pasien->peringat_state ?? 'early')
+                                        <span class="inline-flex items-center rounded-full px-4 h-8 text-sm font-semibold
+                                            @if($state==='late') bg-red-100 text-red-800 border border-red-200
+                                            @elseif($state==='window') bg-amber-100 text-amber-800 border border-amber-200
+                                            @elseif($state==='done') bg-emerald-100 text-emerald-800 border border-emerald-200
+                                            @elseif($state==='no_date') bg-gray-100 text-gray-700 border border-gray-200
+                                            @else bg-gray-100 text-gray-700 border border-gray-200 @endif">
                                             {{ $pasien->peringat_label ?? 'Aman' }}
                                         </span>
                                     </td>
@@ -103,11 +109,41 @@
                                     <td class="px-4 py-3">
                                         @php($maxKe = $pasien->max_ke ?? 0)
                                         @php($nextKe = $pasien->next_ke ?? 1)
-                                        <div class="flex items-center gap-2">
-                                            <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasien->id, 'jenisKf' => 1]) }}" class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= 1 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : ($nextKe === 1 ? 'border-[#E91E8C] text-[#E91E8C]' : 'border-[#E5E5E5]') }}">KF 1{{ $maxKe >= 1 ? ' ✓' : '' }}</a>
-                                            <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasien->id, 'jenisKf' => 2]) }}" class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= 2 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : ($nextKe === 2 ? 'border-[#E91E8C] text-[#E91E8C]' : 'border-[#E5E5E5]') }}">KF 2{{ $maxKe >= 2 ? ' ✓' : '' }}</a>
-                                            <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasien->id, 'jenisKf' => 3]) }}" class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= 3 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : ($nextKe === 3 ? 'border-[#E91E8C] text-[#E91E8C]' : 'border-[#E5E5E5]') }}">KF 3{{ $maxKe >= 3 ? ' ✓' : '' }}</a>
-                                            <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasien->id, 'jenisKf' => 4]) }}" class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= 4 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : ($nextKe === 4 ? 'border-[#E91E8C] text-[#E91E8C]' : 'border-[#E5E5E5]') }}">KF 4{{ $maxKe >= 4 ? ' ✓' : '' }}</a>
+                                        <div class="overflow-x-auto">
+                                            <div class="inline-flex items-center gap-4 whitespace-nowrap min-w-max">
+                                                <div class="flex flex-col items-start">
+                                                    <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasien->id, 'jenisKf' => 1]) }}" @if($maxKe>=1) aria-disabled="true" @endif class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= 1 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 pointer-events-none opacity-60 cursor-not-allowed' : ($nextKe === 1 ? 'border-[#E91E8C] text-[#E91E8C]' : 'border-[#E5E5E5]') }}">KF 1{{ $maxKe >= 1 ? ' ✓' : '' }}</a>
+                                                    @if(isset($pasien->kf_child[1]))
+                                                        @php($childData = $pasien->kf_child[1])
+                                                        @php($childLast = (is_array($childData) && isset($childData[0])) ? end($childData) : $childData)
+                                                        <span class="text-[10px] text-[#7C7C7C]">Anak ke-{{ $childLast['anak_ke'] }} — {{ $childLast['nama'] }}</span>
+                                                    @endif
+                                                </div>
+                                                <div class="flex flex-col items-start">
+                                                    <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasien->id, 'jenisKf' => 2]) }}" @if($maxKe>=2) aria-disabled="true" @endif class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= 2 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 pointer-events-none opacity-60 cursor-not-allowed' : ($nextKe === 2 ? 'border-[#E91E8C] text-[#E91E8C]' : 'border-[#E5E5E5]') }}">KF 2{{ $maxKe >= 2 ? ' ✓' : '' }}</a>
+                                                    @if(isset($pasien->kf_child[2]))
+                                                        @php($childData = $pasien->kf_child[2])
+                                                        @php($childLast = (is_array($childData) && isset($childData[0])) ? end($childData) : $childData)
+                                                        <span class="text-[10px] text-[#7C7C7C]">Anak ke-{{ $childLast['anak_ke'] }} — {{ $childLast['nama'] }}</span>
+                                                    @endif
+                                                </div>
+                                                <div class="flex flex-col items-start">
+                                                    <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasien->id, 'jenisKf' => 3]) }}" @if($maxKe>=3) aria-disabled="true" @endif class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= 3 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 pointer-events-none opacity-60 cursor-not-allowed' : ($nextKe === 3 ? 'border-[#E91E8C] text-[#E91E8C]' : 'border-[#E5E5E5]') }}">KF 3{{ $maxKe >= 3 ? ' ✓' : '' }}</a>
+                                                    @if(isset($pasien->kf_child[3]))
+                                                        @php($childData = $pasien->kf_child[3])
+                                                        @php($childLast = (is_array($childData) && isset($childData[0])) ? end($childData) : $childData)
+                                                        <span class="text-[10px] text-[#7C7C7C]">Anak ke-{{ $childLast['anak_ke'] }} — {{ $childLast['nama'] }}</span>
+                                                    @endif
+                                                </div>
+                                                <div class="flex flex-col items-start">
+                                                    <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasien->id, 'jenisKf' => 4]) }}" @if($maxKe>=4) aria-disabled="true" @endif class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= 4 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 pointer-events-none opacity-60 cursor-not-allowed' : ($nextKe === 4 ? 'border-[#E91E8C] text-[#E91E8C]' : 'border-[#E5E5E5]') }}">KF 4{{ $maxKe >= 4 ? ' ✓' : '' }}</a>
+                                                    @if(isset($pasien->kf_child[4]))
+                                                        @php($childData = $pasien->kf_child[4])
+                                                        @php($childLast = (is_array($childData) && isset($childData[0])) ? end($childData) : $childData)
+                                                        <span class="text-[10px] text-[#7C7C7C]">Anak ke-{{ $childLast['anak_ke'] }} — {{ $childLast['nama'] }}</span>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
 
