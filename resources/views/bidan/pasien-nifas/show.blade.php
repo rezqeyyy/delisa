@@ -45,85 +45,89 @@
             </div>
         </div>
 
-        <section class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
-            <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
-                <div class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
-                    <div class="px-4 sm:px-6 py-3 border-r border-[#F0F0F0]">Informasi</div>
+        <section class="bg-white rounded-3xl p-4 sm:p-6">
+            <div class="mb-4">
+                <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Data Pasien</h2>
+            </div>
+            <div class="bg-white rounded-1xl shadow-sm overflow-hidden">
+                <div class="grid grid-cols-2 text-xs sm:text-sm font-semibold bg-[#FDECF5] ">
+                    <div class="px-4 sm:px-6 py-3">Informasi</div>
                     <div class="px-4 sm:px-6 py-3">Data</div>
                 </div>
-                <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
+                <div class="text-xs sm:text-sm">
                     <div class="grid grid-cols-2">
-                        <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">Tanggal Mulai Nifas</div>
+                        <div class="px-4 sm:px-6 py-3 font-semibold">Tanggal Mulai Nifas</div>
                         <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
                             {{ $pasienNifas->tanggal_mulai_nifas ? \Carbon\Carbon::parse($pasienNifas->tanggal_mulai_nifas)->format('d/m/Y') : '-' }}
                         </div>
                     </div>
                     <div class="grid grid-cols-2">
-                        <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">Nama</div>
+                        <div class="px-4 sm:px-6 py-3 font-semibold">Nama</div>
                         <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">{{ $pasienNifas->pasien->user->name ?? '-' }}</div>
                     </div>
                     <div class="grid grid-cols-2">
-                        <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">NIK</div>
+                        <div class="px-4 sm:px-6 py-3 font-semibold">NIK</div>
                         <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">{{ $pasienNifas->pasien->nik ?? '-' }}</div>
                     </div>
                     <div class="grid grid-cols-2">
-                        <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">Alamat</div>
+                        <div class="px-4 sm:px-6 py-3 font-semibold">Alamat</div>
                         <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
                             {{ $pasienNifas->pasien->PWilayah ?? '-' }}, {{ $pasienNifas->pasien->PKecamatan ?? '-' }},
                             {{ $pasienNifas->pasien->PKabupaten ?? '-' }}, {{ $pasienNifas->pasien->PProvinsi ?? '-' }}
                         </div>
                     </div>
                     <div class="grid grid-cols-2">
-                        <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">Nomor Telepon</div>
+                        <div class="px-4 sm:px-6 py-3 font-semibold">Nomor Telepon</div>
                         <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">{{ $pasienNifas->pasien->user->phone ?? '-' }}</div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
+        <section class="bg-white rounded-3xl p-4 sm:p-6">
             <div class="mb-4">
                 <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Ringkasan Data Anak</h2>
             </div>
-            <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
-                <div class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
-                    <div class="px-4 sm:px-6 py-3 border-r border-[#F0F0F0]">Informasi</div>
+            <div class="bg-white rounded-1xl shadow-sm overflow-hidden">
+                <div class="grid grid-cols-2 text-xs sm:text-sm font-semibold bg-[#FDECF5]">
+                    <div class="px-4 sm:px-6 py-3">Informasi</div>
                     <div class="px-4 sm:px-6 py-3">Data</div>
                 </div>
-                <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
+                <div class="text-xs sm:text-sm">
                     <div class="grid grid-cols-2">
-                        <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">Total Anak Terdaftar</div>
+                        <div class="px-4 sm:px-6 py-3 font-semibold">Total Anak Terdaftar</div>
                         <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">{{ $anakPasien->count() }}</div>
                     </div>
                     <div class="grid grid-cols-2">
-                        <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">Usia Kehamilan Anak Pertama</div>
+                        <div class="px-4 sm:px-6 py-3 font-semibold">Usia Kehamilan Anak Pertama</div>
                         <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">{{ $anakPertama?->usia_kehamilan_saat_lahir ?? '-' }}</div>
                     </div>
                 </div>
             </div>
         </section>
-        <section class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
+
+        <section class="bg-white rounded-3xl p-4 sm:p-6">
             <div class="mb-4 flex items-center justify-between">
                 <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Detail Anak</h2>
                 <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasienNifas->id, 'jenisKf' => 1]) }}" class="text-xs text-[#B9257F]">Catat KF</a>
             </div>
-            <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
+            <div class="bg-white rounded-1xl shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-xs sm:text-sm">
-                        <thead class="text-[#7C7C7C] bg-[#FAFAFA]">
+                        <thead class="bg-[#FFF7FC]">
                             <tr class="text-left">
-                                <th class="px-4 py-2">Anak Ke</th>
-                                <th class="px-4 py-2">Nama</th>
-                                <th class="px-4 py-2">Jenis Kelamin</th>
-                                <th class="px-4 py-2">Tanggal Lahir</th>
-                                <th class="px-4 py-2">Berat (gram)</th>
-                                <th class="px-4 py-2">Panjang (cm)</th>
-                                <th class="px-4 py-2">Lingkar Kepala (cm)</th>
-                                <th class="px-4 py-2">Kondisi Ibu</th>
-                                <th class="px-4 py-2">Aksi</th>
+                                <th class="px-4 py-2 font-semibold">Anak Ke</th>
+                                <th class="px-4 py-2 font-semibold">Nama</th>
+                                <th class="px-4 py-2 font-semibold">Jenis Kelamin</th>
+                                <th class="px-4 py-2 font-semibold">Tanggal Lahir</th>
+                                <th class="px-4 py-2 font-semibold">Berat (gram)</th>
+                                <th class="px-4 py-2 font-semibold">Panjang (cm)</th>
+                                <th class="px-4 py-2 font-semibold">Lingkar Kepala (cm)</th>
+                                <th class="px-4 py-2 font-semibold">Kondisi Ibu</th>
+                                <th class="px-4 py-2 font-semibold">Aksi</th>
                             </tr>
                         </thead>
-                    <tbody class="divide-y divide-[#E9E9E9]">
+                    <tbody class="min-w-full text-xs sm:text-sm">
                         @forelse($anakPasien as $anak)
                             <tr>
                                 <td class="px-4 py-2">{{ $anak->anak_ke }}</td>
@@ -153,26 +157,26 @@
             </div>
         </section>
 
-        <section class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
+        <section class="bg-white rounded-3xl p-4 sm:p-6">
             <div class="mb-4">
                 <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Riwayat Kunjungan Nifas (KF)</h2>
             </div>
-            <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
+            <div class="bg-white rounded-1xl shadow-sm overflow-hidden">
                 <table class="w-full text-xs sm:text-sm">
-                    <thead class="text-[#7C7C7C] bg-[#FAFAFA]">
+                    <thead class="bg-[#FFF7FC]">
                         <tr class="text-left">
-                            <th class="px-4 py-2">KF</th>
-                            <th class="px-4 py-2">Tanggal</th>
-                            <th class="px-4 py-2">Anak</th>
-                            <th class="px-4 py-2">SBP/DBP</th>
-                            <th class="px-4 py-2">MAP</th>
-                            <th class="px-4 py-2">Kesimpulan</th>
-                            <th class="px-4 py-2">Keadaan Umum</th>
-                            <th class="px-4 py-2">Tanda Bahaya</th>
-                            <th class="px-4 py-2">Aksi</th>
+                            <th class="px-4 py-2 font-semibold">KF</th>
+                            <th class="px-4 py-2 font-semibold">Tanggal</th>
+                            <th class="px-4 py-2 font-semibold">Anak</th>
+                            <th class="px-4 py-2 font-semibold">SBP/DBP</th>
+                            <th class="px-4 py-2 font-semibold">MAP</th>
+                            <th class="px-4 py-2 font-semibold">Kesimpulan</th>
+                            <th class="px-4 py-2 font-semibold">Keadaan Umum</th>
+                            <th class="px-4 py-2 font-semibold">Tanda Bahaya</th>
+                            <th class="px-4 py-2 font-semibold">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-[#E9E9E9]">
+                    <tbody class="min-w-full text-xs sm:text-sm">
                         @forelse($kfList as $kf)
                             <tr>
                                 <td class="px-4 py-2">KF{{ $kf->kunjungan_nifas_ke }}</td>
