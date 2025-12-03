@@ -218,20 +218,88 @@
                                         </span>
                                     </div>
 
-                                    <div class="text-xs">
+                                    <div class="text-xs space-y-1.5">
                                         <span class="text-[#7C7C7C]">Jadwal KF:</span>
-                                        <span class="block">
+
+                                        @php
+                                            $maxKfDone = isset($row->max_kf_done)
+                                                ? (int) $row->max_kf_done
+                                                : max(0, (int) (($row->next_kf_ke ?? 1) - 1));
+
+                                            $badgeBase =
+                                                'inline-flex items-center rounded-full px-2 py-[3px] text-[10px] font-medium border';
+                                        @endphp
+
+                                        {{-- Barisan badge KF1–KF4 --}}
+                                        <div class="flex flex-wrap gap-1.5">
+                                            @for ($kf = 1; $kf <= 4; $kf++)
+                                                @php
+                                                    $isDone = $maxKfDone >= $kf;
+
+                                                    if ($isDone) {
+                                                        $badgeClass =
+                                                            $badgeBase .
+                                                            ' bg-[#DCFCE7] border-[#16A34A] text-[#166534]';
+                                                    } else {
+                                                        $badgeClass =
+                                                            $badgeBase .
+                                                            ' bg-[#F3F4F6] border-[#D1D5DB] text-[#6B7280]';
+                                                    }
+                                                @endphp
+
+                                                <span class="{{ $badgeClass }}">
+                                                    KF{{ $kf }}
+                                                    @if ($isDone)
+                                                        <span class="ml-1 text-[9px]">✓</span>
+                                                    @endif
+                                                </span>
+                                            @endfor
+                                        </div>
+
+                                        {{-- Teks jadwal KF berikutnya --}}
+                                        <span class="block text-[11px] leading-snug text-[#4B5563]">
                                             {{ $row->jadwal_kf_text }}
                                         </span>
                                     </div>
 
+
+
                                     <div class="text-xs flex items-center gap-2 mt-1.5">
                                         <span class="text-[#7C7C7C]">Sisa waktu:</span>
+
+                                        @php
+                                            $hari = $row->hari_sisa;
+
+                                            if (is_null($hari)) {
+                                                // Tidak ada tanggal nifas → tidak bisa dihitung
+                                                $badgeClass = 'bg-[#E5E7EB] text-[#374151]';
+                                                $sisaLabel = '—';
+                                            } elseif ($hari >= 7) {
+                                                // Hijau: sisa >= 7 hari
+                                                $badgeClass = 'bg-[#2EDB58] text-white';
+                                                $sisaLabel = 'Sisa ' . $hari . ' Hari';
+                                            } elseif ($hari >= 4) {
+                                                // Kuning: 4–6 hari
+                                                $badgeClass = 'bg-[#FFC400] text-[#1D1D1D]';
+                                                $sisaLabel = 'Sisa ' . $hari . ' Hari';
+                                            } elseif ($hari >= 0) {
+                                                // Merah: 0–3 hari
+                                                $badgeClass = 'bg-[#FF3B30] text-white';
+                                                $sisaLabel = 'Sisa ' . $hari . ' Hari';
+                                            } else {
+                                                // Hitam: sudah lewat → minus
+                                                $telat = abs($hari);
+                                                $badgeClass = 'bg-[#000000] text-white';
+                                                $sisaLabel = 'Sisa -' . $telat . ' Hari';
+                                            }
+                                        @endphp
+
                                         <span
-                                            class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold {{ $row->badge_class }}">
-                                            {{ $row->sisa_waktu_label }}
+                                            class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold {{ $badgeClass }}">
+                                            {{ $sisaLabel }}
                                         </span>
                                     </div>
+
                                 </div>
 
                                 <div class="flex flex-col gap-2">
@@ -296,20 +364,87 @@
                                             {{ $row->puskesmas_nama ?? '—' }}
                                         </td>
 
-                                        {{-- Jadwal KF --}}
-                                        <td class="px-4 py-3">
-                                            {{ $row->jadwal_kf_text }}
-                                        </td>
+                                        {{-- Jadwal KF + badge progres KF --}}
+                                        <td class="px-4 py-3 align-top">
+                                            @php
+                                                $maxKfDone = isset($row->max_kf_done)
+                                                    ? (int) $row->max_kf_done
+                                                    : max(0, (int) (($row->next_kf_ke ?? 1) - 1));
 
-                                        {{-- Sisa Waktu --}}
-                                        <td class="px-4 py-3">
-                                            <div class="flex items-center justify-center">
-                                                <span
-                                                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $row->badge_class }}">
-                                                    {{ $row->sisa_waktu_label }}
+                                                // Sedikit diperkecil: text 10px, padding lebih sempit
+                                                $badgeBase =
+                                                    'inline-flex items-center rounded-full px-2 py-[3px] text-[10px] font-medium border';
+                                            @endphp
+
+                                            <div class="flex flex-col items-start gap-2">
+                                                {{-- Baris badge KF1–KF4 --}}
+                                                <div class="flex flex-wrap gap-1.5">
+                                                    @for ($kf = 1; $kf <= 4; $kf++)
+                                                        @php
+                                                            $isDone = $maxKfDone >= $kf;
+
+                                                            if ($isDone) {
+                                                                // Hijau lembut untuk KF yang sudah dilakukan
+                                                                $badgeClass =
+                                                                    $badgeBase .
+                                                                    ' bg-[#DCFCE7] border-[#16A34A] text-[#166534]';
+                                                            } else {
+                                                                // Abu lembut untuk KF yang belum dilakukan
+                                                                $badgeClass =
+                                                                    $badgeBase .
+                                                                    ' bg-[#F3F4F6] border-[#D1D5DB] text-[#6B7280]';
+                                                            }
+                                                        @endphp
+
+                                                        <span class="{{ $badgeClass }}">
+                                                            KF{{ $kf }}
+                                                            @if ($isDone)
+                                                                <span class="ml-1 text-[9px]">✓</span>
+                                                            @endif
+                                                        </span>
+                                                    @endfor
+                                                </div>
+
+                                                {{-- Teks jadwal KF berikutnya --}}
+                                                <span class="text-[11px] leading-snug text-[#4B5563]">
+                                                    {{ $row->jadwal_kf_text }}
                                                 </span>
                                             </div>
                                         </td>
+
+
+                                        {{-- Sisa Waktu --}}
+                                        <td class="px-4 py-3">
+                                            @php
+                                                $hari = $row->hari_sisa;
+
+                                                if (is_null($hari)) {
+                                                    $badgeClass = 'bg-[#E5E7EB] text-[#374151]';
+                                                    $sisaLabel = '—';
+                                                } elseif ($hari >= 7) {
+                                                    $badgeClass = 'bg-[#2EDB58] text-white';
+                                                    $sisaLabel = 'Sisa ' . $hari . ' Hari';
+                                                } elseif ($hari >= 4) {
+                                                    $badgeClass = 'bg-[#FFC400] text-[#1D1D1D]';
+                                                    $sisaLabel = 'Sisa ' . $hari . ' Hari';
+                                                } elseif ($hari >= 0) {
+                                                    $badgeClass = 'bg-[#FF3B30] text-white';
+                                                    $sisaLabel = 'Sisa ' . $hari . ' Hari';
+                                                } else {
+                                                    $telat = abs($hari);
+                                                    $badgeClass = 'bg-[#000000] text-white';
+                                                    $sisaLabel = 'Sisa -' . $telat . ' Hari';
+                                                }
+                                            @endphp
+
+                                            <div class="flex items-center justify-center">
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $badgeClass }}">
+                                                    {{ $sisaLabel }}
+                                                </span>
+                                            </div>
+                                        </td>
+
                                     </tr>
                                 @empty
                                     <tr>

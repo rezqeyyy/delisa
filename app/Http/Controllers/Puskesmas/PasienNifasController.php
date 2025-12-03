@@ -101,7 +101,8 @@ class PasienNifasController extends Controller
             'tanggal_kunjungan' => 'required|date|before_or_equal:' . now(),
             'sbp' => 'nullable|integer|min:50|max:300',
             'dbp' => 'nullable|integer|min:30|max:200',
-            'map' => 'nullable|integer|min:40|max:250',
+            // map boleh desimal di form → numeric, nanti di-cast ke integer
+            'map' => 'nullable|numeric|min:40|max:250',
             'keadaan_umum' => 'nullable|string|max:1000',
             'tanda_bahaya' => 'nullable|string|max:1000',
             'kesimpulan_pantauan' => 'required|in:Sehat,Dirujuk,Meninggal',
@@ -138,6 +139,13 @@ class PasienNifasController extends Controller
         try {
             DB::beginTransaction();
 
+            // Normalisasi MAP: dukung "80,00" atau "80.00"
+            $mapValue = null;
+            if ($request->filled('map')) {
+                $rawMap = str_replace(',', '.', $request->map);
+                $mapValue = (int) round((float) $rawMap);
+            }
+
             // ========== SIMPAN KE TABEL BARU (kf_kunjungans) ==========
             $kfKunjungan = KfKunjungan::updateOrCreate(
                 [
@@ -148,7 +156,7 @@ class PasienNifasController extends Controller
                     'tanggal_kunjungan' => Carbon::parse($request->tanggal_kunjungan),
                     'sbp' => $request->sbp ? (int) $request->sbp : null,
                     'dbp' => $request->dbp ? (int) $request->dbp : null,
-                    'map' => $request->map ? (int) $request->map : null,
+                    'map' => $mapValue,
                     'keadaan_umum' => $request->keadaan_umum,
                     'tanda_bahaya' => $request->tanda_bahaya,
                     'kesimpulan_pantauan' => $request->kesimpulan_pantauan,
@@ -186,7 +194,7 @@ class PasienNifasController extends Controller
             DB::rollBack();
             
             // Log error untuk debugging
-            \Log::error('Gagal menyimpan KF (sistem baru): ' . $e->getMessage(), [
+            Log::error('Gagal menyimpan KF (sistem baru): ' . $e->getMessage(), [
                 'id' => $id,
                 'jenis_kf' => $jenisKf,
                 'request' => $request->all(),
@@ -198,6 +206,7 @@ class PasienNifasController extends Controller
                 ->withInput();
         }
     }
+
     public function downloadKfPdf($id, $jenisKf)
     {
         try {

@@ -11,34 +11,6 @@
         'resources/js/dropdown.js', 
         'resources/js/puskesmas/sidebar-toggle.js'
     ])
-    
-    <style>
-        .timeline-item {
-            position: relative;
-            padding-left: 2rem;
-            margin-bottom: 1.5rem;
-        }
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0.5rem;
-            width: 1rem;
-            height: 1rem;
-            border-radius: 50%;
-            background-color: #3b82f6;
-        }
-        .timeline-content {
-            padding: 0.5rem 0;
-        }
-        .badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-    </style>
 </head>
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
@@ -68,31 +40,29 @@
                 </div>
             @endif
 
-           <!-- Header dengan Tombol Download PDF -->
-<div class="flex items-center justify-between mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-[#1D1D1D]">Detail Pasien Nifas</h1>
-        <p class="text-[#7C7C7C] mt-1">Informasi lengkap dan riwayat KF pasien</p>
-    </div>
-    
-    <!-- Tombol Download PDF (akan muncul jika ada KF yang sudah dicatat) -->
-    @if($pasienNifas->kf1_tanggal || $pasienNifas->kf2_tanggal || $pasienNifas->kf3_tanggal)
-    <div class="flex items-center gap-2">
-        <a href="{{ route('puskesmas.pasien-nifas.all-kf.pdf', $pasienNifas->id) }}"
-        class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
-                <path d="M9 15h6" />
-                <path d="M12 18V12" />
-            </svg>
-            Download Semua KF
-        </a>
-    </div>
-    @endif
-</div>
-
-            
+            <!-- Header dengan Tombol Download PDF -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-[#1D1D1D]">Detail Pasien Nifas</h1>
+                    <p class="text-[#7C7C7C] mt-1">Informasi lengkap dan riwayat KF pasien</p>
+                </div>
+                
+                <!-- Tombol Download PDF (akan muncul jika ada KF yang sudah dicatat) -->
+                @if($pasienNifas->kf1_tanggal || $pasienNifas->kf2_tanggal || $pasienNifas->kf3_tanggal)
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('puskesmas.pasien-nifas.all-kf.pdf', $pasienNifas->id) }}"
+                       class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                            <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
+                            <path d="M9 15h6" />
+                            <path d="M12 18V12" />
+                        </svg>
+                        Download Semua KF
+                    </a>
+                </div>
+                @endif
+            </div>
 
             <!-- Main Content -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -158,7 +128,7 @@
                             <div class="border rounded-xl p-4 {{ $status == 'selesai' ? 'border-green-200 bg-green-50' : 'border-[#E9E9E9]' }}">
                                 <div class="flex justify-between items-start mb-2">
                                     <h3 class="font-semibold text-[#1D1D1D]">KF{{ $jenisKf }}</h3>
-                                    <span class="badge 
+                                    <span class="inline-block px-2 py-1 rounded text-sm font-medium
                                         @if($badgeColor == 'success') bg-green-100 text-green-800
                                         @elseif($badgeColor == 'warning') bg-amber-100 text-amber-800
                                         @elseif($badgeColor == 'danger') bg-red-100 text-red-800
@@ -203,32 +173,32 @@
                                     </p>
                                     @endif
                                 @endif
-                            @if(!$pasienNifas->isKfSelesai($jenisKf))
-                                @php
-                                    $status = $pasienNifas->getKfStatus($jenisKf);
-                                    $isDisabled = $status == 'belum_mulai';
-                                    $tooltip = '';
-                                    
-                                    if ($status == 'belum_mulai') {
-                                        $mulai = $pasienNifas->getKfMulai($jenisKf);
-                                        $tooltip = $mulai ? "Dapat dilakukan mulai " . $mulai->format('d/m/Y H:i') : "Belum dapat dilakukan";
-                                    }
-                                @endphp
-                                <div class="mt-3">
-                                    @if($isDisabled)
-                                        <button class="inline-block px-3 py-1 text-sm bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed"
-                                                title="{{ $tooltip }}"
-                                                disabled>
-                                            Catat KF{{ $jenisKf }}
-                                        </button>
-                                    @else
-                                        <a href="{{ route('puskesmas.pasien-nifas.form-kf', ['id' => $pasienNifas->id, 'jenisKf' => $jenisKf]) }}" 
-                                        class="inline-block px-3 py-1 text-sm bg-[#B9257F] text-white rounded-lg hover:bg-[#9D1B6A] transition-colors">
-                                            Catat KF{{ $jenisKf }}
-                                        </a>
-                                    @endif
-                                </div>
-                            @endif
+                                @if(!$pasienNifas->isKfSelesai($jenisKf))
+                                    @php
+                                        $status = $pasienNifas->getKfStatus($jenisKf);
+                                        $isDisabled = $status == 'belum_mulai';
+                                        $tooltip = '';
+                                        
+                                        if ($status == 'belum_mulai') {
+                                            $mulai = $pasienNifas->getKfMulai($jenisKf);
+                                            $tooltip = $mulai ? "Dapat dilakukan mulai " . $mulai->format('d/m/Y H:i') : "Belum dapat dilakukan";
+                                        }
+                                    @endphp
+                                    <div class="mt-3">
+                                        @if($isDisabled)
+                                            <button class="inline-block px-3 py-1 text-sm bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed"
+                                                    title="{{ $tooltip }}"
+                                                    disabled>
+                                                Catat KF{{ $jenisKf }}
+                                            </button>
+                                        @else
+                                            <a href="{{ route('puskesmas.pasien-nifas.form-kf', ['id' => $pasienNifas->id, 'jenisKf' => $jenisKf]) }}" 
+                                               class="inline-block px-3 py-1 text-sm bg-[#B9257F] text-white rounded-lg hover:bg-[#9D1B6A] transition-colors">
+                                                Catat KF{{ $jenisKf }}
+                                            </a>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
                             @endforeach
                         </div>
@@ -243,14 +213,14 @@
                         <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Timeline KF</h2>
                         <div class="space-y-4">
                             @if($pasienNifas->kf1_tanggal)
-                            <div class="timeline-item">
-                                <div class="timeline-content">
+                            <div class="relative pl-8 mb-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-4 before:h-4 before:rounded-full before:bg-blue-500">
+                                <div class="py-2">
                                     <div class="flex justify-between items-start">
                                         <div>
                                             <h4 class="font-semibold text-[#1D1D1D]">KF1</h4>
                                             <p class="text-sm text-[#7C7C7C]">{{ \Carbon\Carbon::parse($pasienNifas->kf1_tanggal)->format('d/m/Y H:i') }}</p>
                                         </div>
-                                        <span class="badge bg-green-100 text-green-800">Selesai</span>
+                                        <span class="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">Selesai</span>
                                     </div>
                                     <p class="text-sm text-[#7C7C7C] mt-2">{{ $pasienNifas->kf1_catatan }}</p>
                                 </div>
@@ -258,14 +228,14 @@
                             @endif
                             
                             @if($pasienNifas->kf2_tanggal)
-                            <div class="timeline-item">
-                                <div class="timeline-content">
+                            <div class="relative pl-8 mb-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-4 before:h-4 before:rounded-full before:bg-blue-500">
+                                <div class="py-2">
                                     <div class="flex justify-between items-start">
                                         <div>
                                             <h4 class="font-semibold text-[#1D1D1D]">KF2</h4>
                                             <p class="text-sm text-[#7C7C7C]">{{ \Carbon\Carbon::parse($pasienNifas->kf2_tanggal)->format('d/m/Y H:i') }}</p>
                                         </div>
-                                        <span class="badge bg-green-100 text-green-800">Selesai</span>
+                                        <span class="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">Selesai</span>
                                     </div>
                                     <p class="text-sm text-[#7C7C7C] mt-2">{{ $pasienNifas->kf2_catatan }}</p>
                                 </div>
@@ -273,14 +243,14 @@
                             @endif
                             
                             @if($pasienNifas->kf3_tanggal)
-                            <div class="timeline-item">
-                                <div class="timeline-content">
+                            <div class="relative pl-8 mb-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-4 before:h-4 before:rounded-full before:bg-blue-500">
+                                <div class="py-2">
                                     <div class="flex justify-between items-start">
                                         <div>
                                             <h4 class="font-semibold text-[#1D1D1D]">KF3</h4>
                                             <p class="text-sm text-[#7C7C7C]">{{ \Carbon\Carbon::parse($pasienNifas->kf3_tanggal)->format('d/m/Y H:i') }}</p>
                                         </div>
-                                        <span class="badge bg-green-100 text-green-800">Selesai</span>
+                                        <span class="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">Selesai</span>
                                     </div>
                                     <p class="text-sm text-[#7C7C7C] mt-2">{{ $pasienNifas->kf3_catatan }}</p>
                                 </div>
