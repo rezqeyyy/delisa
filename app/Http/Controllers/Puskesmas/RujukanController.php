@@ -4,12 +4,10 @@ namespace App\Http\Controllers\Puskesmas;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\RumahSakit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Skrining;
-use App\Models\RujukanRs;
+
 class RujukanController extends Controller
 {
     /**

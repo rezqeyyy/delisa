@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Puskesmas;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -36,7 +37,7 @@ class DashboardController extends Controller
         // dd($columns); // Akan menampilkan semua kolom di tabel pasiens
         
         // ========== DATA PASIEN PRE-EKLAMPSIA (PAGINASI 5, FILTER KECAMATAN & SELESAI) ==========
-        $userId = auth()->id();
+        $userId = Auth::id();
         $ps = DB::table('puskesmas')->select('id','kecamatan')->where('user_id', $userId)->first();
         $kecamatan = optional($ps)->kecamatan;
 

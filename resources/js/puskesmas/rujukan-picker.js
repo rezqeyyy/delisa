@@ -1,3 +1,5 @@
+import Swal from 'sweetalert2';
+
 (function () {
     const btn = document.querySelector("#btnAjukanRujukan");
     if (!btn) return;
@@ -52,14 +54,17 @@
     const list = modal.querySelector("#rsList");
     const btnSubmit = modal.querySelector("#submitRujukanBtn");
     const rsIdInput = modal.querySelector("#rsIdInput");
-    const catatanTextarea = modal.querySelector("#catatanRujukan"); // ELEMEN BARU
-    const showPopup = (opts) => {
-        if (window.Swal && typeof Swal.fire === "function") {
-            // SweetAlert2 tersedia → kembalikan Promise aslinya
-            return Swal.fire(opts);
-        }
+    const catatanTextarea = modal.querySelector("#catatanRujukan");
 
-        // Fallback ke alert biasa, tapi tetap kembalikan Promise
+    const showPopup = (opts) => {
+        // Pakai SweetAlert2 dari import; fallback ke alert biasa kalau error
+        try {
+            if (Swal && typeof Swal.fire === "function") {
+                return Swal.fire(opts);
+            }
+        } catch (e) {
+            // ignore
+        }
         alert(String(opts?.text || ""));
         return Promise.resolve();
     };
@@ -90,7 +95,7 @@
         modal.classList.add("flex");
         input.value = "";
         rsIdInput.value = "";
-        catatanTextarea.value = ""; // RESET TEXTAREA
+        catatanTextarea.value = "";
         setSubmitEnabled(false);
         loadOptions("");
         setTimeout(() => input.focus(), 50);
@@ -100,7 +105,7 @@
         modal.classList.add("hidden");
         modal.classList.remove("flex");
         rsIdInput.value = "";
-        catatanTextarea.value = ""; // RESET TEXTAREA
+        catatanTextarea.value = "";
         setSubmitEnabled(false);
         list.innerHTML = "";
     }
@@ -132,7 +137,6 @@
         list.innerHTML = items
             .map((item) => {
                 const title = item.nama || "-";
-                // SESUAIKAN DENGAN STRUKTUR DATA BARU
                 const subtitle = [
                     "Lokasi:",
                     item.alamat || "-",
@@ -171,7 +175,6 @@
         });
     }
 
-    // FUNGSI BARU: HANDLE SUBMIT VIA AJAX
     async function handleSubmit() {
         if (!validateForm()) {
             showPopup({
@@ -192,7 +195,7 @@
 
         try {
             btnSubmit.disabled = true;
-            btnSubmit.innerHTML = "Mengirim...";
+            btnSubmit.textContent = "Mengirim...";
 
             const response = await fetch(submitUrl, {
                 method: "POST",
@@ -206,7 +209,6 @@
             const result = await response.json();
 
             if (result.success) {
-                // ✅ POPUP SUKSES - GANTI ALERT BIASA
                 showPopup({
                     icon: "success",
                     title: "Berhasil!",
@@ -215,10 +217,9 @@
                     confirmButtonText: "OK",
                 }).then(() => {
                     closeModal();
-                    location.reload(); // Refresh untuk update status button
+                    location.reload();
                 });
             } else {
-                // ✅ POPUP ERROR
                 showPopup({
                     icon: "error",
                     title: "Gagal",
@@ -226,7 +227,7 @@
                     confirmButtonColor: "#B9257F",
                 });
                 btnSubmit.disabled = false;
-                btnSubmit.innerHTML = "Kirim Permintaan Rujukan";
+                btnSubmit.textContent = "Kirim Permintaan Rujukan";
             }
         } catch (error) {
             showPopup({
@@ -236,7 +237,7 @@
                 confirmButtonColor: "#B9257F",
             });
             btnSubmit.disabled = false;
-            btnSubmit.innerHTML = "Kirim Permintaan Rujukan";
+            btnSubmit.textContent = "Kirim Permintaan Rujukan";
         }
     }
 
@@ -248,7 +249,7 @@
     });
 
     btnClose.addEventListener("click", closeModal);
-    btnSubmit.addEventListener("click", handleSubmit); // EVENT LISTENER BARU
+    btnSubmit.addEventListener("click", handleSubmit);
 
     modal.addEventListener("click", (e) => {
         if (e.target === modal) closeModal();
@@ -259,7 +260,6 @@
             closeModal();
     });
 
-    // VALIDASI REAL-TIME SAAT TYPING DI CATATAN
     catatanTextarea.addEventListener("input", () => {
         setSubmitEnabled(validateForm());
     });

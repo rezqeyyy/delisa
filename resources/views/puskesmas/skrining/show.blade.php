@@ -11,10 +11,7 @@
         'resources/js/pasien/imt.js', 
         'resources/js/puskesmas/sidebar-toggle.js',
         'resources/js/puskesmas/rujukan-picker.js'
-        ])
-        
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    ])
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
