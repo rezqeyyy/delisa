@@ -1,14 +1,15 @@
-(function(){
-    const btn = document.querySelector('#btnAjukanRujukan');
+(function () {
+    const btn = document.querySelector("#btnAjukanRujukan");
     if (!btn) return;
 
-    const submitUrl = btn.dataset?.submitUrl || '';
-    const searchUrl = btn.dataset?.searchUrl || '';
-    const csrfToken = btn.dataset?.csrf || '';
+    const submitUrl = btn.dataset?.submitUrl || "";
+    const searchUrl = btn.dataset?.searchUrl || "";
+    const csrfToken = btn.dataset?.csrf || "";
 
-    const modal = document.createElement('div');
-    modal.id = 'rujukanModal';
-    modal.className = 'fixed inset-0 z-[100] hidden items-center justify-center bg-black/40';
+    const modal = document.createElement("div");
+    modal.id = "rujukanModal";
+    modal.className =
+        "fixed inset-0 z-[100] hidden items-center justify-center bg-black/40";
     modal.innerHTML = `
       <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-lg">
         <div class="flex items-center justify-between mb-4">
@@ -46,188 +47,226 @@
     `;
     document.body.appendChild(modal);
 
-    const btnClose = modal.querySelector('#closeRujukanModal');
-    const input = modal.querySelector('#rsSearchInput');
-    const list = modal.querySelector('#rsList');
-    const btnSubmit = modal.querySelector('#submitRujukanBtn');
-    const rsIdInput = modal.querySelector('#rsIdInput');
-    const catatanTextarea = modal.querySelector('#catatanRujukan'); // ELEMEN BARU
-    const showPopup = (opts) => (window.Swal && typeof Swal.fire === 'function') ? Swal.fire(opts) : alert(String(opts?.text || ''));
+    const btnClose = modal.querySelector("#closeRujukanModal");
+    const input = modal.querySelector("#rsSearchInput");
+    const list = modal.querySelector("#rsList");
+    const btnSubmit = modal.querySelector("#submitRujukanBtn");
+    const rsIdInput = modal.querySelector("#rsIdInput");
+    const catatanTextarea = modal.querySelector("#catatanRujukan"); // ELEMEN BARU
+    const showPopup = (opts) => {
+        if (window.Swal && typeof Swal.fire === "function") {
+            // SweetAlert2 tersedia → kembalikan Promise aslinya
+            return Swal.fire(opts);
+        }
+
+        // Fallback ke alert biasa, tapi tetap kembalikan Promise
+        alert(String(opts?.text || ""));
+        return Promise.resolve();
+    };
 
     function setSubmitEnabled(enabled) {
-      btnSubmit.classList.remove('bg-gray-400','hover:bg-gray-500','bg-[#B9257F]','hover:bg-[#a31f70]');
-      if (enabled) {
-        btnSubmit.classList.add('bg-[#B9257F]','hover:bg-[#a31f70]');
-        btnSubmit.disabled = false;
-      } else {
-        btnSubmit.classList.add('bg-gray-400');
-        btnSubmit.disabled = true;
-      }
+        btnSubmit.classList.remove(
+            "bg-gray-400",
+            "hover:bg-gray-500",
+            "bg-[#B9257F]",
+            "hover:bg-[#a31f70]",
+        );
+        if (enabled) {
+            btnSubmit.classList.add("bg-[#B9257F]", "hover:bg-[#a31f70]");
+            btnSubmit.disabled = false;
+        } else {
+            btnSubmit.classList.add("bg-gray-400");
+            btnSubmit.disabled = true;
+        }
     }
 
     function validateForm() {
-      const hasRsSelected = Boolean(rsIdInput.value);
-      return hasRsSelected;
+        const hasRsSelected = Boolean(rsIdInput.value);
+        return hasRsSelected;
     }
 
     function openModal() {
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      input.value = '';
-      rsIdInput.value = '';
-      catatanTextarea.value = ''; // RESET TEXTAREA
-      setSubmitEnabled(false);
-      loadOptions('');
-      setTimeout(() => input.focus(), 50);
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        input.value = "";
+        rsIdInput.value = "";
+        catatanTextarea.value = ""; // RESET TEXTAREA
+        setSubmitEnabled(false);
+        loadOptions("");
+        setTimeout(() => input.focus(), 50);
     }
 
     function closeModal() {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-      rsIdInput.value = '';
-      catatanTextarea.value = ''; // RESET TEXTAREA
-      setSubmitEnabled(false);
-      list.innerHTML = '';
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        rsIdInput.value = "";
+        catatanTextarea.value = ""; // RESET TEXTAREA
+        setSubmitEnabled(false);
+        list.innerHTML = "";
     }
 
     async function loadOptions(q) {
-      try {
-        const url = new URL(searchUrl, window.location.origin);
-        url.searchParams.set('q', q || '');
-        const res = await fetch(url.toString(), { method: 'GET', credentials: 'include' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        renderList(data);
-      } catch {
-        list.innerHTML = '<div class="p-3 text-sm text-red-600">Gagal memuat daftar rumah sakit.</div>';
-      }
+        try {
+            const url = new URL(searchUrl, window.location.origin);
+            url.searchParams.set("q", q || "");
+            const res = await fetch(url.toString(), {
+                method: "GET",
+                credentials: "include",
+            });
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const data = await res.json();
+            renderList(data);
+        } catch (err) {
+            console.error("Error loadOptions RS:", err); // 🔍 DEBUG JS
+            list.innerHTML =
+                '<div class="p-3 text-sm text-red-600">Gagal memuat daftar rumah sakit.</div>';
+        }
     }
 
-      function renderList(items) {
-      if (!items?.length) {
-          list.innerHTML = '<div class="p-3 text-sm text-[#6B7280]">Tidak ada hasil.</div>';
-          return;
-      }
-      list.innerHTML = items.map(item => {
-          const title = item.nama || '-';
-          // SESUAIKAN DENGAN STRUKTUR DATA BARU
-          const subtitle = ['Lokasi:', item.alamat || '-', 'Kec:', item.kecamatan || '-'].join(' ');
-          return `
+    function renderList(items) {
+        if (!items?.length) {
+            list.innerHTML =
+                '<div class="p-3 text-sm text-[#6B7280]">Tidak ada hasil.</div>';
+            return;
+        }
+        list.innerHTML = items
+            .map((item) => {
+                const title = item.nama || "-";
+                // SESUAIKAN DENGAN STRUKTUR DATA BARU
+                const subtitle = [
+                    "Lokasi:",
+                    item.alamat || "-",
+                    "Kec:",
+                    item.kecamatan || "-",
+                    "Kel:",
+                    item.kelurahan || "-",
+                ].join(" ");
+                return `
               <button type="button" data-id="${item.id}"
                       class="w-full text-left px-4 py-2 hover:bg-[#F9E5F1] border-b last:border-b-0">
                   <div class="font-medium text-[#1D1D1D]">${title}</div>
                   <div class="text-xs text-[#6B7280]">${subtitle}</div>
               </button>
           `;
-      }).join('');
-      
-      list.querySelectorAll('button[data-id]').forEach(it => {
-          it.addEventListener('click', () => {
-              list.querySelectorAll('button[data-id]').forEach(el => {
-                  el.classList.remove('bg-[#F9E5F1]','border','border-[#B9257F]/40');
-              });
-              it.classList.add('bg-[#F9E5F1]','border','border-[#B9257F]/40');
-              rsIdInput.value = it.getAttribute('data-id') || '';
-              setSubmitEnabled(validateForm());
-          });
-      });
-  }
+            })
+            .join("");
+
+        list.querySelectorAll("button[data-id]").forEach((it) => {
+            it.addEventListener("click", () => {
+                list.querySelectorAll("button[data-id]").forEach((el) => {
+                    el.classList.remove(
+                        "bg-[#F9E5F1]",
+                        "border",
+                        "border-[#B9257F]/40",
+                    );
+                });
+                it.classList.add(
+                    "bg-[#F9E5F1]",
+                    "border",
+                    "border-[#B9257F]/40",
+                );
+                rsIdInput.value = it.getAttribute("data-id") || "";
+                setSubmitEnabled(validateForm());
+            });
+        });
+    }
 
     // FUNGSI BARU: HANDLE SUBMIT VIA AJAX
-      async function handleSubmit() {
-      if (!validateForm()) {
-          showPopup({
-              icon: 'warning',
-              title: 'Data belum lengkap',
-              text: 'Pilih rumah sakit terlebih dahulu.',
-              confirmButtonColor: '#B9257F'
-          });
-          input.focus();
-          return;
-      }
+    async function handleSubmit() {
+        if (!validateForm()) {
+            showPopup({
+                icon: "warning",
+                title: "Data belum lengkap",
+                text: "Pilih rumah sakit terlebih dahulu.",
+                confirmButtonColor: "#B9257F",
+            });
+            input.focus();
+            return;
+        }
 
-      const submitData = {
-          rs_id: rsIdInput.value,
-          catatan_rujukan: (catatanTextarea.value.trim() || null),
-          _token: csrfToken
-      };
+        const submitData = {
+            rs_id: rsIdInput.value,
+            catatan_rujukan: catatanTextarea.value.trim() || null,
+            _token: csrfToken,
+        };
 
-      try {
-          btnSubmit.disabled = true;
-          btnSubmit.innerHTML = 'Mengirim...';
-          
-          const response = await fetch(submitUrl, {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'X-CSRF-TOKEN': csrfToken
-              },
-              body: JSON.stringify(submitData)
-          });
+        try {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = "Mengirim...";
 
-          const result = await response.json();
+            const response = await fetch(submitUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrfToken,
+                },
+                body: JSON.stringify(submitData),
+            });
 
-          if (result.success) {
-              // ✅ POPUP SUKSES - GANTI ALERT BIASA
-              showPopup({
-                  icon: 'success',
-                  title: 'Berhasil!',
-                  text: 'Rujukan berhasil diajukan',
-                  confirmButtonColor: '#B9257F',
-                  confirmButtonText: 'OK'
-              }).then(() => {
-                  closeModal();
-                  location.reload(); // Refresh untuk update status button
-              });
-          } else {
-              // ✅ POPUP ERROR
-              showPopup({
-                  icon: 'error',
-                  title: 'Gagal',
-                  text: result.message || 'Gagal mengajukan rujukan',
-                  confirmButtonColor: '#B9257F'
-              });
-              btnSubmit.disabled = false;
-              btnSubmit.innerHTML = 'Kirim Permintaan Rujukan';
-          }
-      } catch (error) {
-          showPopup({
-              icon: 'error',
-              title: 'Error',
-              text: 'Terjadi kesalahan: ' + error.message,
-              confirmButtonColor: '#B9257F'
-          });
-          btnSubmit.disabled = false;
-          btnSubmit.innerHTML = 'Kirim Permintaan Rujukan';
-      }
-  }
+            const result = await response.json();
+
+            if (result.success) {
+                // ✅ POPUP SUKSES - GANTI ALERT BIASA
+                showPopup({
+                    icon: "success",
+                    title: "Berhasil!",
+                    text: "Rujukan berhasil diajukan",
+                    confirmButtonColor: "#B9257F",
+                    confirmButtonText: "OK",
+                }).then(() => {
+                    closeModal();
+                    location.reload(); // Refresh untuk update status button
+                });
+            } else {
+                // ✅ POPUP ERROR
+                showPopup({
+                    icon: "error",
+                    title: "Gagal",
+                    text: result.message || "Gagal mengajukan rujukan",
+                    confirmButtonColor: "#B9257F",
+                });
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = "Kirim Permintaan Rujukan";
+            }
+        } catch (error) {
+            showPopup({
+                icon: "error",
+                title: "Error",
+                text: "Terjadi kesalahan: " + error.message,
+                confirmButtonColor: "#B9257F",
+            });
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = "Kirim Permintaan Rujukan";
+        }
+    }
 
     // EVENT LISTENERS
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (btn.disabled) return;
-      openModal();
+    btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (btn.disabled) return;
+        openModal();
     });
-    
-    btnClose.addEventListener('click', closeModal);
-    btnSubmit.addEventListener('click', handleSubmit); // EVENT LISTENER BARU
-    
-    modal.addEventListener('click', (e) => { 
-      if (e.target === modal) closeModal(); 
+
+    btnClose.addEventListener("click", closeModal);
+    btnSubmit.addEventListener("click", handleSubmit); // EVENT LISTENER BARU
+
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
     });
-    
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !modal.classList.contains("hidden"))
+            closeModal();
     });
 
     // VALIDASI REAL-TIME SAAT TYPING DI CATATAN
-    catatanTextarea.addEventListener('input', () => {
-      setSubmitEnabled(validateForm());
+    catatanTextarea.addEventListener("input", () => {
+        setSubmitEnabled(validateForm());
     });
 
     let typingTimer = null;
-    input.addEventListener('input', () => {
-      clearTimeout(typingTimer);
-      typingTimer = setTimeout(() => loadOptions(input.value.trim()), 250);
+    input.addEventListener("input", () => {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => loadOptions(input.value.trim()), 250);
     });
 })();

@@ -12,6 +12,8 @@
         'resources/js/puskesmas/sidebar-toggle.js',
         'resources/js/puskesmas/rujukan-picker.js'
         ])
+        
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
 
@@ -257,15 +259,18 @@
                             </form>
                         @endif
 
-                        <button id="btnAjukanRujukan"
-                                data-submit-url="{{ route('puskesmas.skrining.rujuk', $skrining->id) }}"
-                                data-search-url="{{ route('puskesmas.rs.search') }}"
-                                data-csrf="{{ csrf_token() }}"
-                                type="button"
-                                class="rounded-lg bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a31f70] {{ $hasReferral ? 'cursor-not-allowed opacity-60' : '' }}"
-                                {{ $hasReferral ? 'disabled' : '' }}>
-                            Ajukan Rujukan
-                        </button>
+                        {{-- Hanya tampil jika pasien BERISIKO preeklampsia --}}
+                        @if($isBerisiko)
+                            <button id="btnAjukanRujukan"
+                                    data-submit-url="{{ route('puskesmas.skrining.rujuk', $skrining->id) }}"
+                                    data-search-url="{{ route('puskesmas.rs.search') }}"
+                                    data-csrf="{{ csrf_token() }}"
+                                    type="button"
+                                    class="rounded-lg bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a31f70] {{ $hasReferral ? 'cursor-not-allowed opacity-60' : '' }}"
+                                    {{ $hasReferral ? 'disabled' : '' }}>
+                                Ajukan Rujukan
+                            </button>
+                        @endif
                     </div>
                 </div>
             </div>

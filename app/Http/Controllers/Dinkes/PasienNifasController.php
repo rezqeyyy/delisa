@@ -87,7 +87,7 @@ class PasienNifasController extends Controller
                 'merah'        => 2, // sisa 0–3 hari
                 'kuning'       => 3, // sisa 4–6 hari
                 'hijau'        => 4, // sisa ≥ 7 hari
-                'tanpa_jadwal' => 5, // jadwal KF belum tersedia / tidak ada tanggal nifas
+                'tanpa_jadwal' => 5, // jadwal KF belum tersedia / tidak ada tanggal nifas / sudah selesai semua KF
             ];
 
             if (isset($priorityMap[$priority])) {
@@ -256,7 +256,7 @@ class PasienNifasController extends Controller
         $rows = $baseQuery->get();
 
         // 2) Hitung progres KF + priority level, supaya urutan export
-        //    mengikuti sort yang sama dengan halaman index.
+        //    mengikuti sort yang sama dengan halaman index().
         $nifasIds = $rows->pluck('nifas_id')->filter()->values()->all();
 
         $kfDone = collect();
@@ -292,10 +292,10 @@ class PasienNifasController extends Controller
         // Filter berdasarkan warna prioritas (opsional)
         if (!empty($priority)) {
             $priorityMap = [
-                'hitam'       => 1,
-                'merah'       => 2,
-                'kuning'      => 3,
-                'hijau'       => 4,
+                'hitam'        => 1,
+                'merah'        => 2,
+                'kuning'       => 3,
+                'hijau'        => 4,
                 'tanpa_jadwal' => 5,
             ];
 
@@ -441,6 +441,7 @@ class PasienNifasController extends Controller
      * - Belum pernah KF → jadwal KF1 tetap dihitung.
      * - Hari ini (0 hari) → dianggap masih sisa waktu (badge merah, bukan telat).
      * - Telat → badge hitam, teks "Sisa -X Hari".
+     * - JIKA SUDAH KF4 → dianggap selesai, tidak ada sisa waktu.
      */
     private function hitungKfDanPrioritas($row, $kfDone, array $dueDays, Carbon $today, array $namaKf)
     {
@@ -449,17 +450,35 @@ class PasienNifasController extends Controller
         $hasKf = $nifasId && $kfDone->has($nifasId);
 
         if ($hasKf) {
-            $maxKe  = optional($kfDone->get($nifasId))->max_ke ?? 0;
-            $nextKe = min(4, $maxKe + 1); // maksimal KF4
+            $maxKe = (int) ($kfDone->get($nifasId)->max_ke ?? 0);
+            // batasi agar tidak lewat 4
+            $maxKe = max(0, min(4, $maxKe));
         } else {
             // Belum pernah KF sama sekali → mulai dari KF1
-            $maxKe  = 0;
-            $nextKe = 1;
+            $maxKe = 0;
         }
 
-        // SIMPAN KF MAKSIMAL YANG SUDAH DILAKUKAN → dipakai di view
-        $row->max_kf_done = (int) $maxKe;
+        // KF maksimal yang sudah dilakukan (dipakai di Blade)
+        $row->max_kf_done = $maxKe;
 
+        // === JIKA SUDAH KF4 → SEMUA KUNJUNGAN SELESAI ===
+        if ($maxKe >= 4) {
+            $row->next_kf_ke      = null;
+            $row->jadwal_kf_date  = null;
+            $row->hari_sisa       = null;
+
+            $row->jadwal_kf_text   = 'Seluruh kunjungan KF (KF1–KF4) sudah dilakukan';
+            $row->sisa_waktu_label = 'Selesai';
+            // badge netral / abu-abu
+            $row->badge_class     = 'bg-[#E5E7EB] text-[#374151]';
+            // masukkan ke level "tanpa_jadwal" (paling rendah prioritas)
+            $row->priority_level  = 5;
+
+            return $row;
+        }
+
+        // Belum selesai semua KF → tentukan KF berikutnya
+        $nextKe = $maxKe + 1;
         $row->next_kf_ke = $nextKe;
 
         $tanggalMulai = $row->tanggal_mulai_nifas
@@ -481,7 +500,6 @@ class PasienNifasController extends Controller
 
         // === Teks kolom "Jadwal KF" ===
         if ($jadwalDate) {
-            // Pakai format KF1, KF2, KF3, KF4 (bukan "KF satu/dua/tiga/empat")
             $kfLabel = 'KF' . $nextKe;
 
             if ($hariSisa === null) {
@@ -490,7 +508,6 @@ class PasienNifasController extends Controller
                 $row->jadwal_kf_text = sprintf(
                     '%s akan dilakukan pada tanggal %s',
                     $kfLabel,
-                    // Paksa locale Indonesia → Januari, Februari, dst.
                     $jadwalDate->locale('id')->translatedFormat('d F Y')
                 );
             } elseif ($hariSisa === 0) {
@@ -508,7 +525,6 @@ class PasienNifasController extends Controller
         } else {
             $row->jadwal_kf_text = 'Jadwal KF belum tersedia';
         }
-
 
         // === Badge "Sisa Waktu" (UI seperti di Figma) ===
         if ($hariSisa === null) {

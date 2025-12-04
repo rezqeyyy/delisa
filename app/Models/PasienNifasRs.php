@@ -19,13 +19,29 @@ class PasienNifasRs extends Model
         'rs_id',
         'pasien_id',
         'tanggal_mulai_nifas',
-        // TAMBAH INI: Kolom KF dari migration
         'tanggal_melahirkan',
-        'kf1_tanggal', 'kf1_catatan',
-        'kf2_tanggal', 'kf2_catatan',
-        'kf3_tanggal', 'kf3_catatan',
-        'kf4_tanggal', 'kf4_catatan',
+
+        // KF1
+        'kf1_tanggal',
+        'kf1_catatan',
+        'kf1_id',
+
+        // KF2
+        'kf2_tanggal',
+        'kf2_catatan',
+        'kf2_id',
+
+        // KF3
+        'kf3_tanggal',
+        'kf3_catatan',
+        'kf3_id',
+
+        // KF4 (baru)
+        'kf4_tanggal',
+        'kf4_catatan',
+        'kf4_id',
     ];
+
 
     // TAMBAH INI: Casting untuk tanggal
     protected $casts = [
@@ -112,7 +128,7 @@ class PasienNifasRs extends Model
     public function kfKunjungan4(): HasOne
     {
         return $this->hasOne(KfKunjungan::class, 'pasien_nifas_id')
-                    ->where('jenis_kf', 4);
+            ->where('jenis_kf', 4);
     }
 
     /**
@@ -138,7 +154,7 @@ class PasienNifasRs extends Model
         return $this->belongsTo(KfKunjungan::class, 'kf4_id');
     }
 
-    
+
 
     /**
      * Accessor untuk cek apakah sudah ada KF1 (sistem baru)
@@ -164,7 +180,7 @@ class PasienNifasRs extends Model
         return $this->kfKunjungan3()->exists();
     }
 
-        /**
+    /**
      * Accessor untuk cek apakah sudah ada KF4 (sistem baru)
      */
     public function getHasKf4KunjunganAttribute(): bool
@@ -300,7 +316,7 @@ class PasienNifasRs extends Model
         if ($jenisKf == 3) {
             return $this->has_kf2_kunjungan || $this->isKfSelesai(2);
         }
-        
+
         if ($jenisKf == 4) { // TAMBAHKAN
             return $this->has_kf3_kunjungan || $this->isKfSelesai(3);
         }
