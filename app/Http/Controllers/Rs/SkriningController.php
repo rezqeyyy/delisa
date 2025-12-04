@@ -139,8 +139,10 @@ class SkriningController extends Controller
 
         $rsId = Auth::user()->rumahSakit->id ?? null;
 
+        // 🔧 AMBIL RUJUKAN TERBARU UNTUK SKRINING + RS INI
         $rujukan = RujukanRs::where('skrining_id', $skrining->id)
             ->where('rs_id', $rsId)
+            ->orderByDesc('created_at')
             ->first();
 
         $resepObats = collect();
@@ -161,6 +163,7 @@ class SkriningController extends Controller
         return view('rs.skrining.show', compact('skrining', 'rujukan', 'riwayatRujukan', 'resepObats'));
     }
 
+
     public function edit($id)
     {
         $skrining = Skrining::with([
@@ -172,17 +175,23 @@ class SkriningController extends Controller
 
         $rsId = Auth::user()->rumahSakit->id ?? null;
 
-        $rujukan = RujukanRs::firstOrCreate(
-            [
+        // 🔧 CARI RUJUKAN TERBARU UNTUK SKRINING + RS INI
+        $rujukan = RujukanRs::where('skrining_id', $skrining->id)
+            ->where('pasien_id', $skrining->pasien_id)
+            ->where('rs_id', $rsId)
+            ->orderByDesc('created_at')
+            ->first();
+
+        // Kalau belum pernah ada rujukan sama sekali, baru create
+        if (! $rujukan) {
+            $rujukan = RujukanRs::create([
                 'skrining_id' => $skrining->id,
                 'pasien_id'   => $skrining->pasien_id,
                 'rs_id'       => $rsId,
-            ],
-            [
                 'done_status' => false,
                 'is_rujuk'    => false,
-            ]
-        );
+            ]);
+        }
 
         $riwayatRujukan = DB::table('riwayat_rujukans')
             ->where('rujukan_id', $rujukan->id)
@@ -202,38 +211,45 @@ class SkriningController extends Controller
         ));
     }
 
+
     public function update(Request $request, $id)
     {
         $skrining = Skrining::findOrFail($id);
         $rsId = Auth::user()->rumahSakit->id ?? null;
 
         $validated = $request->validate([
-            'pasien_datang'          => 'nullable|boolean',
-            'perlu_pemeriksaan_lanjut' => 'nullable|boolean',
-            'catatan_rujukan'        => 'nullable|string',
-            'riwayat_tekanan_darah'  => 'nullable|string',
-            'hasil_protein_urin'     => 'nullable|string',
-            'tindakan'               => 'nullable|string',
-            'catatan'                => 'nullable|string',
-            'anjuran_kontrol'          => 'nullable|in:fktp,rs',
-            'kunjungan_berikutnya'     => 'nullable|string',
-            'resep_obat'      => 'nullable|array',
-            'resep_obat.*'    => 'nullable|string',
-            'dosis'           => 'nullable|array',
-            'dosis.*'         => 'nullable|string',
-            'penggunaan'      => 'nullable|array',
-            'penggunaan.*'    => 'nullable|string',
+            'pasien_datang'              => 'nullable|boolean',
+            'perlu_pemeriksaan_lanjut'   => 'nullable|boolean',
+            'catatan_rujukan'            => 'nullable|string',
+            'riwayat_tekanan_darah'      => 'nullable|string',
+            'hasil_protein_urin'         => 'nullable|string',
+            'tindakan'                   => 'nullable|string',
+            'catatan'                    => 'nullable|string',
+            'anjuran_kontrol'            => 'nullable|in:fktp,rs',
+            'kunjungan_berikutnya'       => 'nullable|string',
+            'resep_obat'                 => 'nullable|array',
+            'resep_obat.*'               => 'nullable|string',
+            'dosis'                      => 'nullable|array',
+            'dosis.*'                    => 'nullable|string',
+            'penggunaan'                 => 'nullable|array',
+            'penggunaan.*'               => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($skrining, $rsId, $validated) {
 
-            $rujukan = RujukanRs::updateOrCreate(
-                [
-                    'skrining_id' => $skrining->id,
-                    'pasien_id'   => $skrining->pasien_id,
-                    'rs_id'       => $rsId
-                ],
-                [
+            // 🔧 CARI RUJUKAN TERBARU UNTUK SKRINING + RS INI
+            $rujukan = RujukanRs::where('skrining_id', $skrining->id)
+                ->where('pasien_id', $skrining->pasien_id)
+                ->where('rs_id', $rsId)
+                ->orderByDesc('created_at')
+                ->first();
+
+            if (! $rujukan) {
+                // Kalau entah bagaimana belum ada rujukan, kita buat baru
+                $rujukan = RujukanRs::create([
+                    'skrining_id'            => $skrining->id,
+                    'pasien_id'              => $skrining->pasien_id,
+                    'rs_id'                  => $rsId,
                     'pasien_datang'          => $validated['pasien_datang'] ?? null,
                     'perlu_pemeriksaan_lanjut' => $validated['perlu_pemeriksaan_lanjut'] ?? null,
                     'riwayat_tekanan_darah'  => $validated['riwayat_tekanan_darah'] ?? null,
@@ -241,8 +257,19 @@ class SkriningController extends Controller
                     'catatan_rujukan'        => $validated['catatan_rujukan'] ?? null,
                     'done_status'            => true,
                     'is_rujuk'               => true,
-                ]
-            );
+                ]);
+            } else {
+                // Update rujukan yang TERBARU
+                $rujukan->update([
+                    'pasien_datang'            => $validated['pasien_datang'] ?? null,
+                    'perlu_pemeriksaan_lanjut' => $validated['perlu_pemeriksaan_lanjut'] ?? null,
+                    'riwayat_tekanan_darah'    => $validated['riwayat_tekanan_darah'] ?? null,
+                    'hasil_protein_urin'       => $validated['hasil_protein_urin'] ?? null,
+                    'catatan_rujukan'          => $validated['catatan_rujukan'] ?? null,
+                    'done_status'              => true,
+                    'is_rujuk'                 => true,
+                ]);
+            }
 
             $existingRiwayat = DB::table('riwayat_rujukans')
                 ->where('rujukan_id', $rujukan->id)
@@ -254,30 +281,31 @@ class SkriningController extends Controller
                 DB::table('riwayat_rujukans')
                     ->where('id', $existingRiwayat->id)
                     ->update([
-                        'tindakan'      => $validated['tindakan'] ?? null,
-                        'tekanan_darah' => $validated['riwayat_tekanan_darah'] ?? null,
-                        'catatan'       => $validated['catatan'] ?? null,
-                        'anjuran_kontrol'      => $validated['anjuran_kontrol'] ?? null,
-                        'kunjungan_berikutnya' => $validated['kunjungan_berikutnya'] ?? null,
-                        'updated_at'    => $now,
+                        'tindakan'              => $validated['tindakan'] ?? null,
+                        'tekanan_darah'         => $validated['riwayat_tekanan_darah'] ?? null,
+                        'catatan'               => $validated['catatan'] ?? null,
+                        'anjuran_kontrol'       => $validated['anjuran_kontrol'] ?? null,
+                        'kunjungan_berikutnya'  => $validated['kunjungan_berikutnya'] ?? null,
+                        'updated_at'            => $now,
                     ]);
 
                 $riwayatId = $existingRiwayat->id;
             } else {
                 $riwayatId = DB::table('riwayat_rujukans')->insertGetId([
-                    'rujukan_id'     => $rujukan->id,
-                    'skrining_id'    => $skrining->id,
-                    'tanggal_datang' => $now->toDateString(),
-                    'tekanan_darah'  => $validated['riwayat_tekanan_darah'] ?? null,
-                    'tindakan'       => $validated['tindakan'] ?? null,
-                    'catatan'        => $validated['catatan'] ?? null,
-                    'anjuran_kontrol'     => $validated['anjuran_kontrol'] ?? null,
-                    'kunjungan_berikutnya' => $validated['kunjungan_berikutnya'] ?? null,
-                    'created_at'     => $now,
-                    'updated_at'     => $now,
+                    'rujukan_id'            => $rujukan->id,
+                    'skrining_id'           => $skrining->id,
+                    'tanggal_datang'        => $now->toDateString(),
+                    'tekanan_darah'         => $validated['riwayat_tekanan_darah'] ?? null,
+                    'tindakan'              => $validated['tindakan'] ?? null,
+                    'catatan'               => $validated['catatan'] ?? null,
+                    'anjuran_kontrol'       => $validated['anjuran_kontrol'] ?? null,
+                    'kunjungan_berikutnya'  => $validated['kunjungan_berikutnya'] ?? null,
+                    'created_at'            => $now,
+                    'updated_at'            => $now,
                 ]);
             }
 
+            // Resep obat: tetap sama seperti punyamu, hanya pastikan pakai $rujukan->id & $riwayatId yang benar
             ResepObat::where(function ($query) use ($rujukan, $riwayatId) {
                 $query->where('rujukan_rs_id', $rujukan->id);
 
@@ -306,6 +334,7 @@ class SkriningController extends Controller
             ->with('success', 'Data berhasil disimpan!');
     }
 
+
     public function exportPdf($id)
     {
         $skrining = Skrining::with([
@@ -319,7 +348,9 @@ class SkriningController extends Controller
 
         $rujukan = RujukanRs::where('skrining_id', $skrining->id)
             ->where('rs_id', $rsId)
+            ->orderByDesc('created_at')
             ->first();
+
 
         $resepObats = collect();
         $riwayatRujukan = null;

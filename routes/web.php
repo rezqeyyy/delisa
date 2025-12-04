@@ -117,7 +117,6 @@ Route::middleware('role:puskesmas')
         Route::get('/skrining', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'index'])->name('skrining');
         Route::get('/skrining/{skrining}', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'show'])->name('skrining.show');
         Route::patch('skrining/{skrining}/verify', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'verify'])->name('skrining.verify');
-        Route::post('skrining/{skrining}/rujuk', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'rujuk'])->name('skrining.rujuk');
 
 
         // ✅ RUTE RUJUKAN - DIPINDAH KE RUJUKAN CONTROLLER

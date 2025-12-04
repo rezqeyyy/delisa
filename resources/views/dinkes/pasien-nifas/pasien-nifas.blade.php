@@ -268,30 +268,9 @@
                                         <span class="text-[#7C7C7C]">Sisa waktu:</span>
 
                                         @php
-                                            $hari = $row->hari_sisa;
-
-                                            if (is_null($hari)) {
-                                                // Tidak ada tanggal nifas → tidak bisa dihitung
-                                                $badgeClass = 'bg-[#E5E7EB] text-[#374151]';
-                                                $sisaLabel = '—';
-                                            } elseif ($hari >= 7) {
-                                                // Hijau: sisa >= 7 hari
-                                                $badgeClass = 'bg-[#2EDB58] text-white';
-                                                $sisaLabel = 'Sisa ' . $hari . ' Hari';
-                                            } elseif ($hari >= 4) {
-                                                // Kuning: 4–6 hari
-                                                $badgeClass = 'bg-[#FFC400] text-[#1D1D1D]';
-                                                $sisaLabel = 'Sisa ' . $hari . ' Hari';
-                                            } elseif ($hari >= 0) {
-                                                // Merah: 0–3 hari
-                                                $badgeClass = 'bg-[#FF3B30] text-white';
-                                                $sisaLabel = 'Sisa ' . $hari . ' Hari';
-                                            } else {
-                                                // Hitam: sudah lewat → minus
-                                                $telat = abs($hari);
-                                                $badgeClass = 'bg-[#000000] text-white';
-                                                $sisaLabel = 'Sisa -' . $telat . ' Hari';
-                                            }
+                                            // Pakai hasil dari controller (hitungKfDanPrioritas)
+                                            $badgeClass = $row->badge_class ?? 'bg-[#E5E7EB] text-[#374151]';
+                                            $sisaLabel = $row->sisa_waktu_label ?? '—';
                                         @endphp
 
                                         <span
@@ -299,6 +278,7 @@
                                             {{ $sisaLabel }}
                                         </span>
                                     </div>
+
 
                                 </div>
 
@@ -416,25 +396,9 @@
                                         {{-- Sisa Waktu --}}
                                         <td class="px-4 py-3">
                                             @php
-                                                $hari = $row->hari_sisa;
-
-                                                if (is_null($hari)) {
-                                                    $badgeClass = 'bg-[#E5E7EB] text-[#374151]';
-                                                    $sisaLabel = '—';
-                                                } elseif ($hari >= 7) {
-                                                    $badgeClass = 'bg-[#2EDB58] text-white';
-                                                    $sisaLabel = 'Sisa ' . $hari . ' Hari';
-                                                } elseif ($hari >= 4) {
-                                                    $badgeClass = 'bg-[#FFC400] text-[#1D1D1D]';
-                                                    $sisaLabel = 'Sisa ' . $hari . ' Hari';
-                                                } elseif ($hari >= 0) {
-                                                    $badgeClass = 'bg-[#FF3B30] text-white';
-                                                    $sisaLabel = 'Sisa ' . $hari . ' Hari';
-                                                } else {
-                                                    $telat = abs($hari);
-                                                    $badgeClass = 'bg-[#000000] text-white';
-                                                    $sisaLabel = 'Sisa -' . $telat . ' Hari';
-                                                }
+                                                // Pakai label + kelas yang sudah dihitung di controller
+                                                $badgeClass = $row->badge_class ?? 'bg-[#E5E7EB] text-[#374151]';
+                                                $sisaLabel = $row->sisa_waktu_label ?? '—';
                                             @endphp
 
                                             <div class="flex items-center justify-center">

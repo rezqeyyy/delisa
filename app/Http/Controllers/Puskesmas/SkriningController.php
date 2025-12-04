@@ -36,7 +36,7 @@ class SkriningController extends Controller
 
         // Catatan: Mengambil data puskesmas milik pengguna.
         $ps = DB::table('puskesmas')
-            ->select('id','kecamatan')
+            ->select('id', 'kecamatan')
             ->where('user_id', $userId)
             ->first();
 
@@ -53,12 +53,12 @@ class SkriningController extends Controller
                         $w->orWhere('puskesmas_id', $puskesmasId);
                     }
                     if ($kecamatan) {
-                        $w->orWhereHas('pasien', function ($ww) use ($kecamatan) { 
-                            $ww->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]); 
+                        $w->orWhereHas('pasien', function ($ww) use ($kecamatan) {
+                            $ww->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]);
                         })
-                        ->orWhereHas('puskesmas', function ($wp) use ($kecamatan) { 
-                            $wp->whereRaw('LOWER("puskesmas"."kecamatan") = LOWER(?)', [$kecamatan]); 
-                        });
+                            ->orWhereHas('puskesmas', function ($wp) use ($kecamatan) {
+                                $wp->whereRaw('LOWER("puskesmas"."kecamatan") = LOWER(?)', [$kecamatan]);
+                            });
                     }
                 });
             })
@@ -110,12 +110,13 @@ class SkriningController extends Controller
      * @param Skrining $skrining Model skrining yang diambil berdasarkan ID.
      * @return \Illuminate\Contracts\View\View
      */
+
     public function show(Skrining $skrining)
     {
         // Catatan: Mendapatkan ID pengguna yang sedang login.
         $userId = optional(Auth::user())->id;
         // Catatan: Mengambil data puskesmas milik pengguna.
-        $ps = DB::table('puskesmas')->select('id','kecamatan')->where('user_id', $userId)->first();
+        $ps = DB::table('puskesmas')->select('id', 'kecamatan')->where('user_id', $userId)->first();
         // Catatan: Jika data puskesmas tidak ditemukan, kembalikan error 404.
         abort_unless($ps, 404);
 
@@ -128,10 +129,13 @@ class SkriningController extends Controller
         // Catatan: Jika skrining belum lengkap, kembalikan error 404.
         abort_unless($this->isSkriningCompleteForSkrining($skrining), 404);
 
-        // Catatan: Hitung jumlah risiko untuk menentukan kesimpulan.
+        // Catatan: Hitung jumlah risiko untuk menentukan kesimpulan & status berisiko/tidak.
         $resikoSedang = (int)($skrining->jumlah_resiko_sedang ?? 0);
         $resikoTinggi = (int)($skrining->jumlah_resiko_tinggi ?? 0);
-        $conclusion = ($resikoTinggi >= 1 || $resikoSedang >= 2) ? 'Berisiko preeklampsia' : 'Tidak berisiko preeklampsia';
+
+        $isBerisiko = ($resikoTinggi >= 1 || $resikoSedang >= 2);
+        $conclusion = $isBerisiko ? 'Berisiko preeklampsia' : 'Tidak berisiko preeklampsia';
+
         $key = strtolower(trim($conclusion));
         $badgeClasses = [
             'berisiko preeklampsia' => 'bg-red-600 text-white',
@@ -139,6 +143,15 @@ class SkriningController extends Controller
             'skrining belum selesai' => 'bg-gray-200 text-gray-900',
         ];
         $cls = $badgeClasses[$key] ?? 'bg-[#E9E9E9] text-[#1D1D1D]';
+
+        // Debug: log kondisi risiko & kesimpulan
+        Log::info('Puskesmas.SkriningController@show', [
+            'skrining_id'        => $skrining->id,
+            'resiko_sedang'      => $resikoSedang,
+            'resiko_tinggi'      => $resikoTinggi,
+            'is_berisiko'        => $isBerisiko,
+            'conclusion_display' => $conclusion,
+        ]);
 
         // Catatan: Load relasi-relasi yang dibutuhkan untuk tampilan detail.
         $skrining->load(['pasien.user', 'kondisiKesehatan', 'riwayatKehamilanGpa']);
@@ -198,16 +211,16 @@ class SkriningController extends Controller
 
         // Catatan: Ambil ID kuisioner risiko sedang dari database.
         $preKuisModerate = DB::table('kuisioner_pasiens')
-            ->where('status_soal','pre_eklampsia')
-            ->whereIn('nama_pertanyaan',$preModerateNames)
-            ->get(['id','nama_pertanyaan'])
+            ->where('status_soal', 'pre_eklampsia')
+            ->whereIn('nama_pertanyaan', $preModerateNames)
+            ->get(['id', 'nama_pertanyaan'])
             ->keyBy('nama_pertanyaan');
 
         // Catatan: Ambil jawaban kuisioner risiko sedang dari database.
         $preJawabModerate = DB::table('jawaban_kuisioners')
-            ->where('skrining_id',$skrining->id)
-            ->whereIn('kuisioner_id',$preKuisModerate->pluck('id')->all())
-            ->get(['kuisioner_id','jawaban'])
+            ->where('skrining_id', $skrining->id)
+            ->whereIn('kuisioner_id', $preKuisModerate->pluck('id')->all())
+            ->get(['kuisioner_id', 'jawaban'])
             ->keyBy('kuisioner_id');
 
         // Catatan: Tambahkan faktor risiko sedang berdasarkan jawaban.
@@ -238,16 +251,16 @@ class SkriningController extends Controller
 
         // Catatan: Ambil ID kuisioner risiko tinggi dari database.
         $preKuisHigh = DB::table('kuisioner_pasiens')
-            ->where('status_soal','pre_eklampsia')
-            ->whereIn('nama_pertanyaan',$preHighNames)
-            ->get(['id','nama_pertanyaan'])
+            ->where('status_soal', 'pre_eklampsia')
+            ->whereIn('nama_pertanyaan', $preHighNames)
+            ->get(['id', 'nama_pertanyaan'])
             ->keyBy('nama_pertanyaan');
 
         // Catatan: Ambil jawaban kuisioner risiko tinggi dari database.
         $preJawabHigh = DB::table('jawaban_kuisioners')
-            ->where('skrining_id',$skrining->id)
-            ->whereIn('kuisioner_id',$preKuisHigh->pluck('id')->all())
-            ->get(['kuisioner_id','jawaban'])
+            ->where('skrining_id', $skrining->id)
+            ->whereIn('kuisioner_id', $preKuisHigh->pluck('id')->all())
+            ->get(['kuisioner_id', 'jawaban'])
             ->keyBy('kuisioner_id');
 
         // Catatan: Tambahkan faktor risiko tinggi berdasarkan jawaban.
@@ -260,24 +273,24 @@ class SkriningController extends Controller
 
         // Catatan: Ambil riwayat penyakit pribadi dari jawaban kuisioner individu.
         $riwayatPenyakitPasien = DB::table('jawaban_kuisioners as j')
-            ->join('kuisioner_pasiens as k','k.id','=','j.kuisioner_id')
+            ->join('kuisioner_pasiens as k', 'k.id', '=', 'j.kuisioner_id')
             ->where('j.skrining_id', $skrining->id)
-            ->where('k.status_soal','individu')
+            ->where('k.status_soal', 'individu')
             ->where('j.jawaban', true)
-            ->select('k.nama_pertanyaan','j.jawaban_lainnya')
+            ->select('k.nama_pertanyaan', 'j.jawaban_lainnya')
             ->get()
-            ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: '.$r->jawaban_lainnya) : $r->nama_pertanyaan)
+            ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: ' . $r->jawaban_lainnya) : $r->nama_pertanyaan)
             ->values()->all();
 
         // Catatan: Ambil riwayat penyakit keluarga dari jawaban kuisioner keluarga.
         $riwayatPenyakitKeluarga = DB::table('jawaban_kuisioners as j')
-            ->join('kuisioner_pasiens as k','k.id','=','j.kuisioner_id')
+            ->join('kuisioner_pasiens as k', 'k.id', '=', 'j.kuisioner_id')
             ->where('j.skrining_id', $skrining->id)
-            ->where('k.status_soal','keluarga')
+            ->where('k.status_soal', 'keluarga')
             ->where('j.jawaban', true)
-            ->select('k.nama_pertanyaan','j.jawaban_lainnya')
+            ->select('k.nama_pertanyaan', 'j.jawaban_lainnya')
             ->get()
-            ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: '.$r->jawaban_lainnya) : $r->nama_pertanyaan)
+            ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: ' . $r->jawaban_lainnya) : $r->nama_pertanyaan)
             ->values()->all();
 
         // Catatan: Ambil data pasien untuk ditampilkan.
@@ -287,14 +300,33 @@ class SkriningController extends Controller
         $alamat  = optional(optional($skrining->pasien)->user)->address ?? '-';
         $telp    = optional(optional($skrining->pasien)->user)->phone ?? '-';
 
-        // Catatan: Cek apakah sudah ada rujukan untuk skrining ini.
-        $hasReferral = DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists();
+        // Catatan: Cek apakah sudah ada rujukan AKTIF untuk skrining ini
+        // (done_status = 0, is_rujuk = 1 → status "menunggu")
+        $hasReferral = DB::table('rujukan_rs')
+            ->where('skrining_id', $skrining->id)
+            ->where('is_rujuk', 1)
+            ->where('done_status', 0)
+            ->exists();
 
         // Catatan: Kirim data ke view untuk ditampilkan.
         return view('puskesmas.skrining.show', compact(
-            'skrining','nama','nik','tanggal','alamat','telp','conclusion','cls','sebabSedang','sebabTinggi','hasReferral','riwayatPenyakitPasien','riwayatPenyakitKeluarga'
+            'skrining',
+            'nama',
+            'nik',
+            'tanggal',
+            'alamat',
+            'telp',
+            'conclusion',
+            'cls',
+            'sebabSedang',
+            'sebabTinggi',
+            'hasReferral',
+            'riwayatPenyakitPasien',
+            'riwayatPenyakitKeluarga',
+            'isBerisiko' // ✅ penting untuk Blade agar hanya pasien berisiko yang bisa rujuk
         ));
     }
+
 
     /**
      * Endpoint AJAX untuk mencari rumah sakit berdasarkan input pencarian.
@@ -304,34 +336,37 @@ class SkriningController extends Controller
      */
     public function rsSearch(Request $request)
     {
-        // Catatan: Ambil input pencarian dan bersihkan spasi.
-        $q = trim($request->get('q',''));
-        // Catatan: Query untuk mencari rumah sakit.
-        $rs = RumahSakit::query()
-            ->when($q !== '', function ($qr) use ($q) {
-                $qr->where(function ($w) use ($q) {
-                    $w->where('nama', 'like', "%{$q}%")
-                      ->orWhere('kecamatan', 'like', "%{$q}%")
-                      ->orWhere('kelurahan', 'like', "%{$q}%");
+        try {
+            $search = $request->get('q', '');
+            $query  = DB::table('rumah_sakits');
+
+            if (!empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nama', 'like', "%{$search}%")
+                        ->orWhere('kecamatan', 'like', "%{$search}%")
+                        ->orWhere('kelurahan', 'like', "%{$search}%")
+                        ->orWhere('lokasi', 'like', "%{$search}%");
                 });
-            })
-            ->orderBy('nama') // Urutkan berdasarkan nama rumah sakit.
-            ->limit(30) // Batasi hasil maksimal 30.
-            ->get(['id','nama','kecamatan','kelurahan']);
+            }
 
-        // Catatan: Format hasil pencarian untuk ditampilkan di dropdown.
-        $list = $rs->map(function ($row) {
-            return [
-                'id'        => $row->id,
-                'nama'      => $row->nama,
-                'kecamatan' => $row->kecamatan,
-                'kelurahan' => $row->kelurahan,
-            ];
-        })->values();
+            $data = $query
+                ->select(
+                    'id',
+                    'nama',
+                    DB::raw('lokasi as alamat'),
+                    'kecamatan',
+                    'kelurahan'
+                )
+                ->orderBy('nama')
+                ->get();
 
-        // Catatan: Kembalikan hasil dalam bentuk JSON.
-        return response()->json($list);
+            return response()->json($data);
+        } catch (\Exception $e) {
+            return response()->json([], 500);
+        }
     }
+
+
 
     /**
      * Mengajukan rujukan skrining ke rumah sakit tertentu.
@@ -340,50 +375,50 @@ class SkriningController extends Controller
      * @param Skrining $skrining Model skrining yang akan dirujuk.
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function rujuk(Request $request, Skrining $skrining)
-    {
-        // Catatan: Mendapatkan ID pengguna yang sedang login.
-        $userId = optional(Auth::user())->id;
-        // Catatan: Mengambil data puskesmas milik pengguna.
-        $ps = DB::table('puskesmas')->select('id','kecamatan')->where('user_id', $userId)->first();
-        // Catatan: Jika data puskesmas tidak ditemukan, kembalikan error 404.
-        abort_unless($ps, 404);
+    // public function rujuk(Request $request, Skrining $skrining)
+    // {
+    //     // Catatan: Mendapatkan ID pengguna yang sedang login.
+    //     $userId = optional(Auth::user())->id;
+    //     // Catatan: Mengambil data puskesmas milik pengguna.
+    //     $ps = DB::table('puskesmas')->select('id', 'kecamatan')->where('user_id', $userId)->first();
+    //     // Catatan: Jika data puskesmas tidak ditemukan, kembalikan error 404.
+    //     abort_unless($ps, 404);
 
-        // Catatan: Ambil kecamatan pasien untuk validasi akses.
-        $kecPasien = optional($skrining->pasien)->PKecamatan;
-        // Catatan: Cek apakah skrining milik puskesmas ini atau pasien dari kecamatan yang sama.
-        $allowed = (($skrining->puskesmas_id === $ps->id) || ($kecPasien === $ps->kecamatan));
-        // Catatan: Jika tidak diizinkan, kembalikan error 403 (Forbidden).
-        abort_unless($allowed, 403);
+    //     // Catatan: Ambil kecamatan pasien untuk validasi akses.
+    //     $kecPasien = optional($skrining->pasien)->PKecamatan;
+    //     // Catatan: Cek apakah skrining milik puskesmas ini atau pasien dari kecamatan yang sama.
+    //     $allowed = (($skrining->puskesmas_id === $ps->id) || ($kecPasien === $ps->kecamatan));
+    //     // Catatan: Jika tidak diizinkan, kembalikan error 403 (Forbidden).
+    //     abort_unless($allowed, 403);
 
-        // Catatan: Pastikan skrining sudah lengkap sebelum dirujuk.
-        abort_unless($this->isSkriningCompleteForSkrining($skrining), 404);
+    //     // Catatan: Pastikan skrining sudah lengkap sebelum dirujuk.
+    //     abort_unless($this->isSkriningCompleteForSkrining($skrining), 404);
 
-        // Catatan: Validasi input ID rumah sakit.
-        $validated = $request->validate([
-            'rs_id' => 'required|exists:rumah_sakits,id',
-        ]);
+    //     // Catatan: Validasi input ID rumah sakit.
+    //     $validated = $request->validate([
+    //         'rs_id' => 'required|exists:rumah_sakits,id',
+    //     ]);
 
-        // Catatan: Cegah duplikasi rujukan untuk skrining yang sama.
-        $already = RujukanRs::where('skrining_id', $skrining->id)->exists();
-        if ($already) {
-            return redirect()->route('puskesmas.skrining.show', $skrining->id)
-                ->with('status', 'Rujukan sudah diajukan untuk skrining ini.');
-        }
+    //     // Catatan: Cegah duplikasi rujukan untuk skrining yang sama.
+    //     $already = RujukanRs::where('skrining_id', $skrining->id)->exists();
+    //     if ($already) {
+    //         return redirect()->route('puskesmas.skrining.show', $skrining->id)
+    //             ->with('status', 'Rujukan sudah diajukan untuk skrining ini.');
+    //     }
 
-        // Catatan: Buat rujukan baru di database.
-        RujukanRs::create([
-            'pasien_id'   => $skrining->pasien_id,
-            'rs_id'       => $validated['rs_id'],
-            'skrining_id' => $skrining->id,
-            'is_rujuk'    => true, // Menandakan bahwa ini adalah rujukan aktif.
-            'done_status' => false, // Belum selesai.
-        ]);
+    //     // Catatan: Buat rujukan baru di database.
+    //     RujukanRs::create([
+    //         'pasien_id'   => $skrining->pasien_id,
+    //         'rs_id'       => $validated['rs_id'],
+    //         'skrining_id' => $skrining->id,
+    //         'is_rujuk'    => true, // Menandakan bahwa ini adalah rujukan aktif.
+    //         'done_status' => false, // Belum selesai.
+    //     ]);
 
-        // Catatan: Redirect kembali ke halaman detail skrining dengan pesan sukses.
-        return redirect()->route('puskesmas.skrining.show', $skrining->id)
-            ->with('status', 'Permintaan rujukan dikirim ke rumah sakit.');
-    }
+    //     // Catatan: Redirect kembali ke halaman detail skrining dengan pesan sukses.
+    //     return redirect()->route('puskesmas.skrining.show', $skrining->id)
+    //         ->with('status', 'Permintaan rujukan dikirim ke rumah sakit.');
+    // }
 
     /**
      * Memverifikasi skrining oleh petugas puskesmas (mengubah checked_status menjadi true).
@@ -397,7 +432,7 @@ class SkriningController extends Controller
         // Catatan: Mendapatkan ID pengguna yang sedang login.
         $userId = optional(Auth::user())->id;
         // Catatan: Mengambil data puskesmas milik pengguna.
-        $ps = DB::table('puskesmas')->select('id','kecamatan')->where('user_id', $userId)->first();
+        $ps = DB::table('puskesmas')->select('id', 'kecamatan')->where('user_id', $userId)->first();
         // Catatan: Jika data puskesmas tidak ditemukan, kembalikan error 404.
         abort_unless($ps, 404);
 
@@ -440,7 +475,7 @@ class SkriningController extends Controller
 
             // Catatan: Mengambil data puskesmas milik pengguna.
             $ps = DB::table('puskesmas')
-                ->select('id','kecamatan')
+                ->select('id', 'kecamatan')
                 ->where('user_id', $userId)
                 ->first();
 
@@ -485,12 +520,12 @@ class SkriningController extends Controller
             ];
 
             // Catatan: Callback untuk menulis data ke output stream.
-            $callback = function() use ($skrinings) {
+            $callback = function () use ($skrinings) {
                 $file = fopen('php://output', 'w');
-                
+
                 // Catatan: Tambahkan BOM (Byte Order Mark) untuk UTF-8 agar tampilan di Excel benar.
                 fwrite($file, "\xEF\xBB\xBF");
-                
+
                 // Catatan: Header CSV.
                 fputcsv($file, ['No.', 'Nama Pasien', 'NIK', 'Tanggal Pengisian', 'Alamat', 'No Telp', 'Kesimpulan']);
 
@@ -501,7 +536,7 @@ class SkriningController extends Controller
                     $tanggal = $skrining->created_at ? $skrining->created_at->format('d/m/Y') : '-';
                     $alamat = optional(optional($skrining->pasien)->user)->address ?? '-';
                     $telp = optional(optional($skrining->pasien)->user)->phone ?? '-';
-                    
+
                     $resikoSedang = (int)($skrining->jumlah_resiko_sedang ?? 0);
                     $resikoTinggi = (int)($skrining->jumlah_resiko_tinggi ?? 0);
 
@@ -523,13 +558,12 @@ class SkriningController extends Controller
                         $kesimpulan
                     ]);
                 }
-                
+
                 fclose($file);
             };
 
             // Catatan: Kembalikan response stream untuk download file.
             return response()->stream($callback, 200, $headers);
-
         } catch (\Exception $e) {
             // Catatan: Log error jika terjadi exception.
             Log::error('Export Error: ' . $e->getMessage());
@@ -551,7 +585,7 @@ class SkriningController extends Controller
 
             // Catatan: Mengambil data puskesmas milik pengguna.
             $ps = DB::table('puskesmas')
-                ->select('id','kecamatan')
+                ->select('id', 'kecamatan')
                 ->where('user_id', $userId)
                 ->first();
 
@@ -612,20 +646,19 @@ class SkriningController extends Controller
 
             // Catatan: Generate PDF
             $pdf = Pdf::loadView('puskesmas.skrining.export-pdf', compact('skrinings'))
-                     ->setPaper('a4', 'landscape')
-                     ->setOption('defaultFont', 'Arial')
-                     ->setOption('isRemoteEnabled', true);
+                ->setPaper('a4', 'landscape')
+                ->setOption('defaultFont', 'Arial')
+                ->setOption('isRemoteEnabled', true);
 
             $fileName = 'data-skrining-ibu-hamil-' . date('Y-m-d') . '.pdf';
 
             // Catatan: Download PDF
             return $pdf->download($fileName);
-
         } catch (\Exception $e) {
             // Catatan: Log error jika terjadi exception.
             Log::error('PDF Export Error: ' . $e->getMessage());
             Log::error('PDF Export Trace: ' . $e->getTraceAsString());
-            
+
             // Catatan: Kembali ke halaman sebelumnya dengan pesan error.
             return back()->with('error', 'Terjadi kesalahan saat mengekspor PDF: ' . $e->getMessage());
         }

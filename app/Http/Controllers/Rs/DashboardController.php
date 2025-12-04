@@ -8,6 +8,7 @@ use App\Models\PasienNifasRs;
 use App\Models\Skrining;
 use App\Models\RumahSakit;
 use App\Models\RujukanRs;
+use App\Models\KfKunjungan; // ✅ Tambahan: model pemantauan KF yang baru
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +49,7 @@ class DashboardController extends Controller
             ->filter()
             ->unique();
 
+        // Pasien yang hanya punya rujukan pending dan belum pernah selesai
         $nonRujukanPatientIds = $pendingPatientIds
             ->diff($acceptedPatientIds);
 
@@ -56,7 +58,7 @@ class DashboardController extends Controller
 
         /**
          * ==============================
-         * 3. DATA PASIEN RUJUKAN
+         * 3. DATA PASIEN RUJUKAN (RISIKO)
          * ==============================
          */
         $rujukanSetelahMelahirkan = PasienNifasRs::where('rs_id', $rsId)->count();
@@ -101,31 +103,64 @@ class DashboardController extends Controller
                 || !is_null($r->catatan_rujukan);
         })->count();
 
-        $totalAccepted   = $acceptedRujukan->count();
+        $totalAccepted    = $acceptedRujukan->count();
         $pasienTidakHadir = max(0, $totalAccepted - $pasienHadir);
 
         /**
          * ==============================
-         * 5. DATA PASIEN NIFAS
+         * 5. DATA PASIEN NIFAS (RS)
          * ==============================
          */
         $totalNifas = PasienNifasRs::where('rs_id', $rsId)->count();
 
+        // Ambil ID nifas RS (primary key pasien_nifas_rs)
         $pasienNifasIds = PasienNifasRs::where('rs_id', $rsId)->pluck('id');
 
+        // Inisialisasi default
+        $sudahKF1            = 0;
+        $pemantauanSehat     = 0;
+        $pemantauanDirujuk   = 0;
+        $pemantauanMeninggal = 0;
+
         if ($pasienNifasIds->isNotEmpty()) {
-            $sudahKF1 = DB::table('kf')
-                ->whereIn('id_nifas', $pasienNifasIds)
-                ->where('kunjungan_nifas_ke', 1)
-                ->distinct('id_nifas')
-                ->count('id_nifas');
+            // 🔎 Debugging: cek ID nifas yang dipakai
+            Log::debug('RS Dashboard - Pasien Nifas RS', [
+                'rs_id'           => $rsId,
+                'pasien_nifas_ids' => $pasienNifasIds->values()->all(),
+            ]);
 
             /**
              * ==============================
-             * 6. PEMANTAUAN
+             * 5a. PASIEN YANG SUDAH KF1
              * ==============================
+             *
+             * Tabel pemantauan: kf_kunjungans
+             * - pasien_nifas_id → relasi ke pasien_nifas_rs.id
+             * - jenis_kf        → KF1 / KF2 / KF3 / KF4 (varchar)
              */
-            $kfBase = DB::table('kf')->whereIn('id_nifas', $pasienNifasIds);
+            $jenisKf1Candidates = ['KF1', 'kf1', '1', 'kf_1', 'KF 1'];
+
+            $sudahKF1 = KfKunjungan::query()
+                ->whereIn('pasien_nifas_id', $pasienNifasIds)
+                ->whereIn('jenis_kf', $jenisKf1Candidates)
+                ->distinct('pasien_nifas_id')
+                ->count('pasien_nifas_id');
+
+            Log::debug('RS Dashboard - Hitung KF1 RS', [
+                'rs_id'    => $rsId,
+                'sudahKF1' => $sudahKF1,
+            ]);
+
+            /**
+             * ==============================
+             * 6. PEMANTAUAN KF (SEHAT / DIRUJUK / MENINGGAL)
+             * ==============================
+             *
+             * Semua diambil dari kf_kunjungans:
+             * - kesimpulan_pantauan: 'Sehat', 'Dirujuk', 'Meninggal', dst.
+             */
+            $kfBase = KfKunjungan::query()
+                ->whereIn('pasien_nifas_id', $pasienNifasIds);
 
             $pemantauanSehat = (clone $kfBase)
                 ->where('kesimpulan_pantauan', 'Sehat')
@@ -138,11 +173,13 @@ class DashboardController extends Controller
             $pemantauanMeninggal = (clone $kfBase)
                 ->where('kesimpulan_pantauan', 'Meninggal')
                 ->count();
-        } else {
-            $sudahKF1            = 0;
-            $pemantauanSehat     = 0;
-            $pemantauanDirujuk   = 0;
-            $pemantauanMeninggal = 0;
+
+            Log::debug('RS Dashboard - Rekap pemantauan KF RS', [
+                'rs_id'              => $rsId,
+                'pemantauanSehat'    => $pemantauanSehat,
+                'pemantauanDirujuk'  => $pemantauanDirujuk,
+                'pemantauanMeninggal'=> $pemantauanMeninggal,
+            ]);
         }
 
         /**
@@ -185,7 +222,7 @@ class DashboardController extends Controller
         // Filter berdasarkan Status Risiko
         if ($request->filled('risiko')) {
             $risikoFilter = $request->risiko;
-            
+
             $peQuery->whereHas('skrining', function ($q) use ($risikoFilter) {
                 if ($risikoFilter === 'Beresiko') {
                     $q->where(function ($subQ) {
@@ -199,7 +236,8 @@ class DashboardController extends Controller
                             ->orWhereRaw("LOWER(TRIM(kesimpulan)) IN ('waspada', 'menengah', 'sedang', 'risiko sedang')")
                             ->orWhereRaw("LOWER(TRIM(status_pre_eklampsia)) IN ('waspada', 'menengah', 'sedang', 'risiko sedang')");
                     })->where('jumlah_resiko_tinggi', '<=', 0)
-                      ->whereRaw("LOWER(TRIM(COALESCE(kesimpulan, ''))) NOT IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')");
+                        ->whereRaw("LOWER(TRIM(COALESCE(kesimpulan, ''))) NOT IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')")
+                        ->whereRaw("LOWER(TRIM(COALESCE(status_pre_eklampsia, ''))) NOT IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')");
                 } elseif ($risikoFilter === 'Tidak Berisiko') {
                     $q->where(function ($subQ) {
                         $subQ->where('jumlah_resiko_tinggi', '<=', 0)
