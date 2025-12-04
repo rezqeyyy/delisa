@@ -27,7 +27,7 @@
                     <div class="px-2 py-2 text-center {{ (int)$jenisKf === 4 ? 'bg-white/10 rounded-lg' : '' }}">KF 4<br><span class="text-white/70 font-normal">29 - 42 Hari</span></div>
                 </div>
 
-                <form action="{{ route('bidan.pasien-nifas.kf.catat', ['id' => $pasienNifas->id, 'jenisKf' => $jenisKf]) }}" method="POST" class="space-y-4">
+                <form action="{{ route('bidan.pasien-nifas.kf-anak.catat', ['id' => $pasienNifas->id, 'anakId' => $selectedAnakId, 'jenisKf' => $jenisKf]) }}" method="POST" class="space-y-4">
                     @if ($errors->any())
                         <div class="mt-4 p-4 rounded-md bg-red-50 border border-red-200 text-red-700">
                             @foreach ($errors->all() as $error)
@@ -38,13 +38,12 @@
                     @csrf
 
                     <div>
-                        <label class="block text-xs font-medium text-[#666666]">Pilih Anak</label>
-                        <select name="id_anak" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" required>
-                            <option value="">Pilih</option>
-                            @foreach($anakList as $anak)
-                                <option value="{{ $anak->id }}" {{ ($selectedAnakId ?? null) === $anak->id ? 'selected' : '' }}>Anak ke-{{ $anak->anak_ke }} — {{ $anak->nama_anak }}</option>
-                            @endforeach
-                        </select>
+                        <label class="block text-xs font-medium text-[#666666]">Anak</label>
+                        <input type="hidden" name="id_anak" value="{{ $selectedAnakId }}">
+                        <div class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm bg-gray-50">
+                            @php($anak = $anakList->firstWhere('id', $selectedAnakId))
+                            {{ $anak ? ('Anak ke-' . $anak->anak_ke . ' — ' . $anak->nama_anak) : 'Pilih anak dari halaman sebelumnya' }}
+                        </div>
                         @error('id_anak')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                     </div>
 

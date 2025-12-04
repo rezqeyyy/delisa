@@ -56,7 +56,7 @@
                         </svg>
                     </a>
                     <h1 class="ml-3 text-3xl font-bold text-gray-800">
-                        Tambah Data Detail Pasien
+                        Tambah Data Pasien Nifas
                     </h1>
                 </div>
             </div>
@@ -179,18 +179,6 @@
                             @error('no_telepon')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
                         <div class="space-y-1.5">
-                            <label class="block text-xs font-medium text-[#666666]">Status Perkawinan</label>
-                            <select name="status_perkawinan" id="status_perkawinan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
-                                <option value="">Pilih Status</option>
-                                <option value="1" {{ (string)old('status_perkawinan') === '1' ? 'selected' : '' }}>Menikah</option>
-                                <option value="0" {{ (string)old('status_perkawinan') === '0' ? 'selected' : '' }}>Belum Menikah</option>
-                            </select>
-                            @error('status_perkawinan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                        <div class="space-y-1.5">
                             <label class="block text-xs font-medium text-[#666666]">Golongan Darah</label>
                             <select name="golongan_darah" id="golongan_darah" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
                                 <option value="">Pilih Golongan Darah</option>
@@ -201,48 +189,8 @@
                             </select>
                             @error('golongan_darah')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
-                        <div class="space-y-1.5">
-                            <label class="block text-xs font-medium text-[#666666]">Pembiayaan Kesehatan</label>
-                            <select name="pembiayaan_kesehatan" id="pembiayaan_kesehatan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
-                                <option value="">Pilih Pembiayaan</option>
-                                <option value="Pribadi" {{ old('pembiayaan_kesehatan') == 'Pribadi' ? 'selected' : '' }}>Pribadi</option>
-                                <option value="BPJS Kesehatan" {{ old('pembiayaan_kesehatan') == 'BPJS Kesehatan' ? 'selected' : '' }}>BPJS Kesehatan (JKN)</option>
-                                <option value="Asuransi Lain" {{ old('pembiayaan_kesehatan') == 'Asuransi Lain' ? 'selected' : '' }}>Asuransi Lainnya</option>
-                            </select>
-                            @error('pembiayaan_kesehatan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                        <div class="space-y-1.5">
-                            <label class="block text-xs font-medium text-[#666666]">Pendidikan Terakhir</label>
-                            <select name="pendidikan" id="pendidikan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
-                                <option value="">Pilih pendidikan</option>
-                                <option value="Tidak Sekolah" {{ old('pendidikan') == 'Tidak Sekolah' ? 'selected' : '' }}>Tidak Sekolah</option>
-                                <option value="SD" {{ old('pendidikan') == 'SD' ? 'selected' : '' }}>SD</option>
-                                <option value="SMP" {{ old('pendidikan') == 'SMP' ? 'selected' : '' }}>SMP</option>
-                                <option value="SMA" {{ old('pendidikan') == 'SMA' ? 'selected' : '' }}>SMA</option>
-                                <option value="D3" {{ old('pendidikan') == 'D3' ? 'selected' : '' }}>D3</option>
-                                <option value="S1" {{ old('pendidikan') == 'S1' ? 'selected' : '' }}>S1</option>
-                                <option value="S2" {{ old('pendidikan') == 'S2' ? 'selected' : '' }}>S2</option>
-                                <option value="S3" {{ old('pendidikan') == 'S3' ? 'selected' : '' }}>S3</option>
-                            </select>
-                            @error('pendidikan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="block text-xs font-medium text-[#666666]">Pekerjaan</label>
-                            <select name="pekerjaan" id="pekerjaan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
-                                <option value="">Pilih pekerjaan</option>
-                                <option value="Ibu Rumah tangga" {{ old('pekerjaan') == 'Ibu Rumah tangga' ? 'selected' : '' }}>Ibu Rumah tangga</option>
-                                <option value="Pegawai Swasta" {{ old('pekerjaan') == 'Pegawai Swasta' ? 'selected' : '' }}>Pegawai Swasta</option>
-                                <option value="ASN/PNS/TNI/Polri" {{ old('pekerjaan') == 'ASN/PNS/TNI/Polri' ? 'selected' : '' }}>ASN/PNS/TNI/Polri</option>
-                                <option value="Wiraswasta" {{ old('pekerjaan') == 'Wiraswasta' ? 'selected' : '' }}>Wiraswasta</option>
-                                <option value="Pekerjaan Lainnya" {{ old('pekerjaan') == 'Pekerjaan Lainnya' ? 'selected' : '' }}>Pekerjaan Lainnya</option>
-                            </select>
-                            @error('pekerjaan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
-                        </div>
-                    </div>        
-
+                    </div>                 
+                
                     <div class="space-y-1.5">
                         <label for="domisili" class="block text-xs font-medium text-[#666666]">Domisili (Alamat) <span class="text-pink-600">*</span></label>
                         <textarea id="domisili" name="domisili" rows="3" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" placeholder="Alamat lengkap tempat tinggal" required>{{ old('domisili') }}</textarea>
@@ -294,32 +242,7 @@
                                 <div class="mt-1 text-xs text-[#B9257F]">* Pilih Kecamatan dahulu.</div>
                             </div>
                         </div>
-                    </div>
-
-
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
-                        <div class="space-y-1.5">
-                            <label class="block text-xs font-medium text-[#666666]">RT</label>
-                            <input type="text" name="rt" id="rt" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('rt') }}" placeholder="000">
-                            @error('rt')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="block text-xs font-medium text-[#666666]">RW</label>
-                            <input type="text" name="rw" id="rw" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('rw') }}" placeholder="000">
-                            @error('rw')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="block text-xs font-medium text-[#666666]">Kode Pos</label>
-                            <input type="text" name="kode_pos" id="kode_pos" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('kode_pos') }}" placeholder="000">
-                            @error('kode_pos')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="block text-xs font-medium text-[#666666]">No JKN</label>
-                            <input type="text" name="no_jkn" id="no_jkn" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('no_jkn') }}" placeholder="Masukkan nomor kartu JKN">
-                            @error('no_jkn')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
-                                                   
+                    </div>                                                   
 
                     {{-- FOOTER FORM: tombol kembali & tombol submit --}}
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-[#F0F0F0]">

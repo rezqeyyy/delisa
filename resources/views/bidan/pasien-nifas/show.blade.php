@@ -47,7 +47,7 @@
 
         <section class="bg-white rounded-3xl p-4 sm:p-6">
             <div class="mb-4">
-                <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Data Pasien</h2>
+                <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Ringkasan Data Pasien</h2>
             </div>
             <div class="bg-white rounded-1xl shadow-sm overflow-hidden">
                 <div class="grid grid-cols-2 text-xs sm:text-sm font-semibold bg-[#FDECF5] ">
@@ -85,31 +85,8 @@
         </section>
 
         <section class="bg-white rounded-3xl p-4 sm:p-6">
-            <div class="mb-4">
-                <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Ringkasan Data Anak</h2>
-            </div>
-            <div class="bg-white rounded-1xl shadow-sm overflow-hidden">
-                <div class="grid grid-cols-2 text-xs sm:text-sm font-semibold bg-[#FDECF5]">
-                    <div class="px-4 sm:px-6 py-3">Informasi</div>
-                    <div class="px-4 sm:px-6 py-3">Data</div>
-                </div>
-                <div class="text-xs sm:text-sm">
-                    <div class="grid grid-cols-2">
-                        <div class="px-4 sm:px-6 py-3 font-semibold">Total Anak Terdaftar</div>
-                        <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">{{ $anakPasien->count() }}</div>
-                    </div>
-                    <div class="grid grid-cols-2">
-                        <div class="px-4 sm:px-6 py-3 font-semibold">Usia Kehamilan Anak Pertama</div>
-                        <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">{{ $anakPertama?->usia_kehamilan_saat_lahir ?? '-' }}</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="bg-white rounded-3xl p-4 sm:p-6">
             <div class="mb-4 flex items-center justify-between">
-                <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Detail Anak</h2>
-                <a href="{{ route('bidan.pasien-nifas.kf-form', ['id' => $pasienNifas->id, 'jenisKf' => 1]) }}" class="text-xs text-[#B9257F]">Catat KF</a>
+                <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Detail Anak</h2>>
             </div>
             <div class="bg-white rounded-1xl shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
@@ -159,47 +136,53 @@
 
         <section class="bg-white rounded-3xl p-4 sm:p-6">
             <div class="mb-4">
-                <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Riwayat Kunjungan Nifas (KF)</h2>
+                <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Status Kunjungan Nifas (KF)</h2>
             </div>
-            <div class="bg-white rounded-1xl shadow-sm overflow-hidden">
-                <table class="w-full text-xs sm:text-sm">
-                    <thead class="bg-[#FFF7FC]">
-                        <tr class="text-left">
-                            <th class="px-4 py-2 font-semibold">KF</th>
-                            <th class="px-4 py-2 font-semibold">Tanggal</th>
-                            <th class="px-4 py-2 font-semibold">Anak</th>
-                            <th class="px-4 py-2 font-semibold">SBP/DBP</th>
-                            <th class="px-4 py-2 font-semibold">MAP</th>
-                            <th class="px-4 py-2 font-semibold">Kesimpulan</th>
-                            <th class="px-4 py-2 font-semibold">Keadaan Umum</th>
-                            <th class="px-4 py-2 font-semibold">Tanda Bahaya</th>
-                            <th class="px-4 py-2 font-semibold">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="min-w-full text-xs sm:text-sm">
-                        @forelse($kfList as $kf)
-                            <tr>
-                                <td class="px-4 py-2">KF{{ $kf->kunjungan_nifas_ke }}</td>
-                                <td class="px-4 py-2">{{ $kf->tanggal_kunjungan ? \Carbon\Carbon::parse($kf->tanggal_kunjungan)->format('d/m/Y') : '-' }}</td>
-                                <td class="px-4 py-2">{{ optional($kf->anak)->nama_anak ? ('Anak ke-' . ($kf->anak->anak_ke ?? '-') . ' — ' . $kf->anak->nama_anak) : '-' }}</td>
-                                <td class="px-4 py-2">{{ $kf->sbp }} / {{ $kf->dbp }} mmHg</td>
-                                <td class="px-4 py-2">{{ $kf->map !== null ? number_format($kf->map, 0) : '-' }}</td>
-                                <td class="px-4 py-2">{{ $kf->kesimpulan_pantauan ?? '-' }}</td>
-                                <td class="px-4 py-2">{{ $kf->keadaan_umum ?? '-' }}</td>
-                                <td class="px-4 py-2">{{ $kf->tanda_bahaya ?? '-' }}</td>
-                                <td class="px-4 py-2">
-                                    <form action="{{ route('bidan.pasien-nifas.kf.destroy', ['id' => $pasienNifas->id, 'kfId' => $kf->id]) }}" method="POST" onsubmit="return confirm('Hapus data KF ini?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="px-3 py-1.5 rounded-full border border-red-200 text-red-700 hover:bg-red-50 text-xs">Hapus</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="8" class="px-4 py-4 text-center text-[#7C7C7C]">Belum ada kunjungan nifas.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach([1,2,3,4] as $jk)
+                <div class="rounded-2xl border {{ isset($kfDoneByJenis[$jk]) ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-[#E5E5E5]' }} p-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-semibold">KF{{ $jk }}</h3>
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs {{ isset($kfDoneByJenis[$jk]) ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600 border border-gray-200' }}">{{ isset($kfDoneByJenis[$jk]) ? '✓' : '?' }}</span>
+                    </div>
+                    <div class="mt-2 text-xs text-[#1D1D1D]">
+                        @if(isset($kfDoneByJenis[$jk]))
+                            Selesai: {{ $kfDoneByJenis[$jk]->last_date ? \Carbon\Carbon::parse($kfDoneByJenis[$jk]->last_date)->format('d/m/Y H:i') : '-' }}
+                        @else
+                            Status: Tidak Diketahui
+                        @endif
+                    </div>
+                    <div class="mt-3">
+                        @if($firstAnakId)
+                        <a href="{{ route('bidan.pasien-nifas.kf-anak.form', ['id' => $pasienNifas->id, 'anakId' => $firstAnakId, 'jenisKf' => $jk]) }}" class="inline-flex items-center rounded-full bg-[#E91E8C] px-4 py-2 text-xs font-semibold text-white hover:bg-[#C2185B]">Catat KF{{ $jk }}</a>
+                        @else
+                        <button type="button" class="inline-flex items-center rounded-full bg-gray-200 px-4 py-2 text-xs font-semibold text-gray-600" disabled>Tambah Data Anak dahulu</button>
+                        @endif
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </section>
+
+        <section class="bg-white rounded-3xl p-4 sm:p-6">
+            <div class="mb-4">
+                <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Timeline KF</h2>
+            </div>
+            <div class="space-y-3">
+                @foreach([1,2,3,4] as $jk)
+                <div class="flex items-center justify-between rounded-xl border bg-white px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <span class="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+                        <span class="text-sm font-semibold">KF{{ $jk }}</span>
+                    </div>
+                    <div class="text-xs text-[#1D1D1D]">
+                        {{ isset($kfDoneByJenis[$jk]) && $kfDoneByJenis[$jk]->last_date ? \Carbon\Carbon::parse($kfDoneByJenis[$jk]->last_date)->format('d/m/Y H:i') : '-' }}
+                    </div>
+                    <div>
+                        <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ isset($kfDoneByJenis[$jk]) ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-gray-100 text-gray-700 border border-gray-200' }}">{{ isset($kfDoneByJenis[$jk]) ? 'Selesai' : 'Belum' }}</span>
+                    </div>
+                </div>
+                @endforeach
             </div>
         </section>
     </main>

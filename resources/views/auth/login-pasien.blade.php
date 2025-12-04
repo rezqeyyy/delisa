@@ -111,7 +111,7 @@
                                 id="nik"
                                 maxlength="16"
                                 inputmode="numeric" pattern="[0-9]*"
-                                placeholder="0000000000000000"
+                                placeholder="16 Digit NIK"
                                 required
                                 class="mt-1 block w-full px-4 py-3 border border-gray-300
                                        rounded-xl shadow-sm placeholder-gray-400

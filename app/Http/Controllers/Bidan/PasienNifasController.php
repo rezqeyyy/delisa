@@ -45,47 +45,45 @@ class PasienNifasController extends Controller
 
         $puskesmasId = $bidan->puskesmas_id;
 
-        // 2. Ambil Data Pasien Nifas dengan Join
-        // Join 3 tabel: pasien_nifas_bidan, pasiens, users
+        // 2. Ambil Semua Episode Nifas milik puskesmas bidan ini (tanpa deduplikasi per pasien)
         $pasienNifas = DB::table('pasien_nifas_bidan')
-            ->join('pasiens', 'pasien_nifas_bidan.pasien_id', '=', 'pasiens.id') // Join ke tabel pasiens
-            ->join('users', 'pasiens.user_id', '=', 'users.id') // Join ke tabel users
+            ->join('pasiens', 'pasien_nifas_bidan.pasien_id', '=', 'pasiens.id')
+            ->join('users', 'pasiens.user_id', '=', 'users.id')
             ->select(
-                'pasien_nifas_bidan.id',                             // ID relasi nifas-bidan
-                'pasien_nifas_bidan.pasien_id',                      // ID pasien
-                'pasien_nifas_bidan.tanggal_mulai_nifas as tanggal', // Tanggal mulai nifas (alias: tanggal)
-                'pasien_nifas_bidan.created_at',                     // Tanggal dibuat
-                'pasiens.nik',                                       // NIK pasien
-                'users.name as nama_pasien',                         // Nama pasien dari tabel users
-                'users.phone as telp',                               // No telp dari users
-                'pasiens.PKecamatan as alamat',                      // Kecamatan sebagai alamat
-                'pasiens.PWilayah as kelurahan'                      // Kelurahan
+                'pasien_nifas_bidan.id',
+                'pasien_nifas_bidan.pasien_id',
+                'pasien_nifas_bidan.tanggal_mulai_nifas as tanggal',
+                'pasien_nifas_bidan.created_at',
+                'pasiens.nik',
+                'users.name as nama_pasien',
+                'users.phone as telp',
+                'pasiens.PKecamatan as alamat',
+                'pasiens.PWilayah as kelurahan'
             )
-            ->where('pasien_nifas_bidan.bidan_id', $puskesmasId) // Filter per puskesmas
-            ->orderByDesc('pasien_nifas_bidan.tanggal_mulai_nifas') // Urutkan tanggal terbaru
-            ->orderByDesc('pasien_nifas_bidan.created_at')          // Urutkan created_at terbaru
-            ->paginate(10); // 10 data per halaman
+            ->where('pasien_nifas_bidan.bidan_id', $puskesmasId)
+            ->orderByDesc('pasien_nifas_bidan.tanggal_mulai_nifas')
+            ->orderByDesc('pasien_nifas_bidan.created_at')
+            ->paginate(10);
 
         // 3. Ambil Status KF (Kunjungan Nifas) Terakhir
-        $idsEpisode = $pasienNifas->getCollection()->pluck('id')->all();
+        $episodeIds = $pasienNifas->getCollection()->pluck('id')->all();
         $kfDone = DB::table('kf')
-            ->selectRaw('id_nifas, MAX(kunjungan_nifas_ke)::int as max_ke')
-            ->whereIn('id_nifas', $idsEpisode)
-            ->groupBy('id_nifas')
+            ->join('anak_pasien', 'kf.id_anak', '=', 'anak_pasien.id')
+            ->selectRaw('anak_pasien.nifas_bidan_id as episode_id, MAX(kf.kunjungan_nifas_ke)::int as max_ke')
+            ->whereIn('anak_pasien.nifas_bidan_id', $episodeIds)
+            ->groupBy('anak_pasien.nifas_bidan_id')
             ->get()
-            ->keyBy('id_nifas');
+            ->keyBy('episode_id');
 
         $kfChildren = DB::table('kf')
             ->join('anak_pasien', 'kf.id_anak', '=', 'anak_pasien.id')
-            ->select('kf.id_nifas', 'kf.kunjungan_nifas_ke', 'anak_pasien.anak_ke', 'anak_pasien.nama_anak')
-            ->whereIn('kf.id_nifas', $idsEpisode)
+            ->select('anak_pasien.nifas_bidan_id as episode_id', 'kf.kunjungan_nifas_ke', 'anak_pasien.anak_ke', 'anak_pasien.nama_anak')
+            ->whereIn('anak_pasien.nifas_bidan_id', $episodeIds)
             ->orderByDesc('kf.tanggal_kunjungan')
             ->get();
         $kfChildMap = [];
         foreach ($kfChildren as $k) {
-            if (!isset($kfChildMap[$k->id_nifas][$k->kunjungan_nifas_ke])) {
-                $kfChildMap[$k->id_nifas][$k->kunjungan_nifas_ke] = ['anak_ke' => $k->anak_ke, 'nama' => $k->nama_anak];
-            }
+            $kfChildMap[$k->episode_id][$k->kunjungan_nifas_ke][] = ['anak_ke' => $k->anak_ke, 'nama' => $k->nama_anak];
         }
 
         // 4. Define Jadwal KF (Kunjungan Nifas)
@@ -288,15 +286,7 @@ class PasienNifasController extends Controller
             'domisili'    => 'required|string',
             'tempat_lahir'      => 'nullable|string|max:100',
             'tanggal_lahir'     => 'nullable|date',
-            'status_perkawinan' => 'nullable|in:0,1',
-            'rt'                => 'nullable|string|max:10',
-            'rw'                => 'nullable|string|max:10',
-            'kode_pos'          => 'nullable|string|max:10',
-            'pekerjaan'         => 'nullable|string|max:100',
-            'pendidikan'        => 'nullable|string|max:100',
-            'pembiayaan_kesehatan' => 'nullable|string|max:50',
             'golongan_darah'    => 'nullable|string|max:5',
-            'no_jkn'            => 'nullable|string|max:20',
         ]);
 
         try {
@@ -326,17 +316,9 @@ class PasienNifasController extends Controller
                     'PKabupaten' => $validated['kota'],
                     'PKecamatan' => $validated['kecamatan'],
                     'PWilayah'   => $validated['kelurahan'],
-                    'rt'                => $validated['rt'] ?? $existingPasien->rt,
-                    'rw'                => $validated['rw'] ?? $existingPasien->rw,
-                    'kode_pos'          => $validated['kode_pos'] ?? $existingPasien->kode_pos,
                     'tempat_lahir'      => $validated['tempat_lahir'] ?? $existingPasien->tempat_lahir,
                     'tanggal_lahir'     => $validated['tanggal_lahir'] ?? $existingPasien->tanggal_lahir,
-                    'status_perkawinan' => isset($validated['status_perkawinan']) ? (int) $validated['status_perkawinan'] : $existingPasien->status_perkawinan,
-                    'pekerjaan'         => $validated['pekerjaan'] ?? $existingPasien->pekerjaan,
-                    'pendidikan'        => $validated['pendidikan'] ?? $existingPasien->pendidikan,
-                    'pembiayaan_kesehatan' => $validated['pembiayaan_kesehatan'] ?? $existingPasien->pembiayaan_kesehatan,
                     'golongan_darah'    => $validated['golongan_darah'] ?? $existingPasien->golongan_darah,
-                    'no_jkn'            => $validated['no_jkn'] ?? $existingPasien->no_jkn,
                 ];
                 if (Schema::hasColumn('pasiens', 'address')) {
                     $updateData['address'] = $validated['domisili'];
@@ -379,17 +361,9 @@ class PasienNifasController extends Controller
                     'PKabupaten' => $validated['kota'],
                     'PKecamatan' => $validated['kecamatan'],
                     'PWilayah'   => $validated['kelurahan'],
-                    'rt'                => $validated['rt'] ?? null,
-                    'rw'                => $validated['rw'] ?? null,
-                    'kode_pos'          => $validated['kode_pos'] ?? null,
                     'tempat_lahir'      => $validated['tempat_lahir'] ?? null,
                     'tanggal_lahir'     => $validated['tanggal_lahir'] ?? null,
-                    'status_perkawinan' => isset($validated['status_perkawinan']) ? (int) $validated['status_perkawinan'] : null,
-                    'pekerjaan'         => $validated['pekerjaan'] ?? null,
-                    'pendidikan'        => $validated['pendidikan'] ?? null,
-                    'pembiayaan_kesehatan' => $validated['pembiayaan_kesehatan'] ?? null,
                     'golongan_darah'    => $validated['golongan_darah'] ?? null,
-                    'no_jkn'            => $validated['no_jkn'] ?? null,
                 ];
                 if (Schema::hasColumn('pasiens', 'address')) {
                     $pasienData['address'] = $validated['domisili'];
@@ -487,24 +461,20 @@ class PasienNifasController extends Controller
         $pasienNifas->status_type = $status['type'];
 
         $anakPasien = AnakPasien::where('nifas_bidan_id', $pasienNifas->id)->get();
-        $kfList = Kf::with('anak')
-            ->where('id_nifas', $pasienNifas->id)
-            ->orderByDesc('tanggal_kunjungan')
-            ->get();
+        $firstAnakId = optional($anakPasien->first())->id;
 
-        return view('bidan.pasien-nifas.show', compact('pasienNifas', 'anakPasien', 'kfList'));
+        $kfDoneByJenis = DB::table('kf')
+            ->join('anak_pasien', 'kf.id_anak', '=', 'anak_pasien.id')
+            ->select('kf.kunjungan_nifas_ke', DB::raw('MAX(kf.tanggal_kunjungan) as last_date'))
+            ->where('anak_pasien.nifas_bidan_id', $pasienNifas->id)
+            ->groupBy('kf.kunjungan_nifas_ke')
+            ->get()
+            ->keyBy('kunjungan_nifas_ke');
+
+        return view('bidan.pasien-nifas.show', compact('pasienNifas', 'anakPasien', 'kfDoneByJenis', 'firstAnakId'));
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | METHOD: formKf($id, $jenisKf)
-    |--------------------------------------------------------------------------
-    | Fungsi: Menampilkan form input kunjungan nifas (KF1–KF4)
-    | Parameter: $id (ID pasien nifas), $jenisKf (1|2|3|4)
-    | Return: View 'bidan.pasien-nifas.kf-form' beserta data awal
-    |--------------------------------------------------------------------------
-    */
-    public function formKf($id, $jenisKf)
+    public function formKfAnak($id, $anakId, $jenisKf)
     {
         $bidan = Auth::user()->bidan;
         abort_unless($bidan, 403);
@@ -512,38 +482,30 @@ class PasienNifasController extends Controller
 
         $pasienNifas = PasienNifasBidan::with(['pasien.user'])->findOrFail($id);
         $anakList = AnakPasien::where('nifas_bidan_id', $id)->get();
+        $selectedAnakId = (int) $anakId;
         $status = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
         $pasienNifas->status_display = $status['label'];
         $pasienNifas->status_type = $status['type'];
 
-        $existingKf = Kf::where('id_nifas', $pasienNifas->id)
+        $existingKf = Kf::where('id_nifas', $pasienNifas->pasien_id)
+            ->where('id_anak', $selectedAnakId)
             ->where('kunjungan_nifas_ke', (int)$jenisKf)
             ->orderByDesc('tanggal_kunjungan')
             ->first();
-        $selectedAnakId = old('id_anak') ?? optional($existingKf)->id_anak ?? ($anakList->count() === 1 ? $anakList->first()->id : null);
 
         return view('bidan.pasien-nifas.kf-form', compact('pasienNifas', 'jenisKf', 'anakList', 'selectedAnakId', 'existingKf'));
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | METHOD: catatKf(Request $request, $id, $jenisKf)
-    |--------------------------------------------------------------------------
-    | Fungsi: Menyimpan/Update data kunjungan nifas (KF1–KF4) per anak
-    | Parameter: $request, $id (ID pasien nifas), $jenisKf (1|2|3|4)
-    | Return: Redirect ke detail dengan pesan sukses
-    |--------------------------------------------------------------------------
-    */
-    public function catatKf(Request $request, $id, $jenisKf)
+    public function catatKfAnak(Request $request, $id, $anakId, $jenisKf)
     {
         $bidan = Auth::user()->bidan;
         abort_unless($bidan, 403);
         if (!in_array((int)$jenisKf, [1,2,3,4], true)) abort(404);
 
         $pasienNifas = PasienNifasBidan::findOrFail($id);
+        $anak = AnakPasien::where('id', $anakId)->where('nifas_bidan_id', $pasienNifas->id)->firstOrFail();
 
         $data = $request->validate([
-            'id_anak' => 'required|exists:anak_pasien,id',
             'tanggal_kunjungan' => 'required|date',
             'sbp' => 'nullable|integer',
             'dbp' => 'nullable|integer',
@@ -554,22 +516,18 @@ class PasienNifasController extends Controller
         ]);
 
         $mapRaw = $request->input('map', null);
-        if (is_string($mapRaw)) {
-            $mapRaw = str_replace(',', '.', $mapRaw);
-        }
+        if (is_string($mapRaw)) { $mapRaw = str_replace(',', '.', $mapRaw); }
         $map = null;
         if (isset($data['sbp'], $data['dbp']) && is_numeric($data['sbp']) && is_numeric($data['dbp'])) {
             $map = round(((float)$data['sbp'] + (2 * (float)$data['dbp'])) / 3, 2);
         } elseif ($mapRaw !== null && is_numeric($mapRaw)) {
             $map = round((float)$mapRaw, 2);
-        } else {
-            $map = null;
-        }
+        } else { $map = null; }
         $mapInt = $map !== null ? (int) round($map) : null;
 
         $payload = [
-            'id_nifas' => $pasienNifas->id,
-            'id_anak' => $data['id_anak'],
+            'id_nifas' => $pasienNifas->pasien_id,
+            'id_anak' => (int) $anakId,
             'kunjungan_nifas_ke' => (int)$jenisKf,
             'tanggal_kunjungan' => $data['tanggal_kunjungan'],
             'sbp' => $data['sbp'] ?? null,
@@ -580,32 +538,16 @@ class PasienNifasController extends Controller
             'kesimpulan_pantauan' => $data['kesimpulan_pantauan'],
         ];
 
-        $existing = Kf::where('id_nifas', $pasienNifas->id)
+        $existing = Kf::where('id_nifas', $pasienNifas->pasien_id)
+            ->where('id_anak', (int) $anakId)
             ->where('kunjungan_nifas_ke', (int)$jenisKf)
             ->first();
 
-        if ($existing) {
-            $existing->update($payload);
-        } else {
-            Kf::create($payload);
-        }
+        if ($existing) { $existing->update($payload); } else { Kf::create($payload); }
 
         return redirect()->route('bidan.pasien-nifas.detail', $id)->with('success', 'KF'.$jenisKf.' berhasil disimpan');
     }
 
-    public function hapusKf($id, $kfId)
-    {
-        $bidan = Auth::user()->bidan;
-        abort_unless($bidan, 403);
-
-        $pasienNifas = PasienNifasBidan::findOrFail($id);
-        $kf = Kf::where('id', $kfId)
-            ->where('id_nifas', $pasienNifas->id)
-            ->firstOrFail();
-        $kf->delete();
-
-        return redirect()->route('bidan.pasien-nifas.detail', $id)->with('success', 'Data KF berhasil dihapus');
-    }
 }
 
 /*
