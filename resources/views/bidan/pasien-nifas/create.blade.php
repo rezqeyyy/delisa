@@ -152,7 +152,7 @@
                                     <span>Cek</span>
                                 </button>
                             </div>
-                            <p class="text-[10px] text-[#7C7C7C] mt-1">Klik "Cek" untuk mengisi otomatis data jika pasien sudah terdaftar</p>
+                            <div class="mt-1 text-xs text-[#B9257F]">Klik "Cek" untuk mengisi otomatis data jika pasien sudah terdaftar.</div>
                             @error('nik')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
                     </div>
@@ -160,18 +160,18 @@
                     {{-- GRID KOLOM 2: Tempat & Tanggal Lahir --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-1.5">
-                            <label class="block text-xs font-medium text-[#666666]">Tempat Lahir</label>
+                            <label for="tempat_lahir" class="block text-xs font-medium text-[#666666]">Tempat Lahir <span class="text-pink-600">*</span></label>
                             <input type="text" name="tempat_lahir" id="tempat_lahir" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" placeholder="Contoh: Depok" value="{{ old('tempat_lahir') }}">
                             @error('tempat_lahir')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
                         <div class="space-y-1.5">
-                            <label class="block text-xs font-medium text-[#666666]">Tanggal Lahir</label>
+                            <label class="block text-xs font-medium text-[#666666]">Tanggal Lahir <span class="text-pink-600">*</span></label>
                             <input type="date" name="tanggal_lahir" id="tanggal_lahir" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm" value="{{ old('tanggal_lahir') }}">
                             @error('tanggal_lahir')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
                     </div>
 
-                    {{-- GRID KOLOM 2: No Telepon & Status Perkawinan --}}
+                    {{-- GRID KOLOM 2: No Telepon & Golongan Darah --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                             <label for="no_telepon" class="block text-xs font-medium text-[#666666]">Nomor Telepon <span class="text-pink-600">*</span></label>
@@ -179,7 +179,7 @@
                             @error('no_telepon')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
                         <div class="space-y-1.5">
-                            <label class="block text-xs font-medium text-[#666666]">Golongan Darah</label>
+                            <label class="block text-xs font-medium text-[#666666]">Golongan Darah <span class="text-pink-600">*</span></label>
                             <select name="golongan_darah" id="golongan_darah" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
                                 <option value="">Pilih Golongan Darah</option>
                                 <option value="A" {{ old('golongan_darah') == 'A' ? 'selected' : '' }}>A</option>
@@ -189,8 +189,43 @@
                             </select>
                             @error('golongan_darah')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
                         </div>
-                    </div>                 
-                
+                    </div>
+
+                    {{-- GRID KOLOM 3: Status Perkawinan, Pendidikan, Pembiayaan Kesehatan (opsional) --}}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="space-y-1.5">
+                            <label for="status_perkawinan" class="block text-xs font-medium text-[#666666]">Status Perkawinan</label>
+                            <select id="status_perkawinan" name="status_perkawinan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
+                                <option value="">Pilih...</option>
+                                <option value="1" {{ old('status_perkawinan')==='1' ? 'selected' : '' }}>Menikah</option>
+                                <option value="0" {{ old('status_perkawinan')==='0' ? 'selected' : '' }}>Belum Kawin</option>
+                            </select>
+                            @error('status_perkawinan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="pendidikan" class="block text-xs font-medium text-[#666666]">Pendidikan Terakhir</label>
+                            <select id="pendidikan" name="pendidikan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
+                                <option value="">Pilih...</option>
+                                @php $pOpts=['SD','SMP','SMA','D3','S1','S2','S3']; @endphp
+                                @foreach($pOpts as $opt)
+                                    <option value="{{ $opt }}" {{ old('pendidikan')===$opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                @endforeach
+                            </select>
+                            @error('pendidikan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="pembiayaan_kesehatan" class="block text-xs font-medium text-[#666666]">Pembiayaan Kesehatan</label>
+                            <select id="pembiayaan_kesehatan" name="pembiayaan_kesehatan" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm">
+                                <option value="">Pilih...</option>
+                                @php $bOpts=['BPJS Kesehatan','Pribadi','Asuransi Lain']; @endphp
+                                @foreach($bOpts as $opt)
+                                    <option value="{{ $opt }}" {{ old('pembiayaan_kesehatan')===$opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                @endforeach
+                            </select>
+                            @error('pembiayaan_kesehatan')<p class="text-[11px] text-red-600 mt-0.5">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+                    
                     <div class="space-y-1.5">
                         <label for="domisili" class="block text-xs font-medium text-[#666666]">Domisili (Alamat) <span class="text-pink-600">*</span></label>
                         <textarea id="domisili" name="domisili" rows="3" class="w-full rounded-xl border border-[#E5E5E5] px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" placeholder="Alamat lengkap tempat tinggal" required>{{ old('domisili') }}</textarea>

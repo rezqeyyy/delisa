@@ -76,7 +76,7 @@
             const data = await res.json();
             renderList(data);
         } catch {
-            list.innerHTML = '<div class="p-3 text-sm text-red-600">Gagal memuat daftar puskesmas.</div>';
+            list.innerHTML = '<div class="p-3 text-sm text-red-600">Gagal memuat daftar puskesmas/klinik.</div>';
         }
     }
 

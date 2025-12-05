@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 // Carbon untuk manipulasi tanggal
 use Carbon\Carbon;
+// Schema untuk deteksi kolom tersedia
+use Illuminate\Support\Facades\Schema;
 
 // Mengimpor model Skrining (tabel skrinings).
 use App\Models\Skrining;
@@ -358,74 +360,69 @@ class SkriningController extends Controller
      */
     public function puskesmasSearch(Request $request)
     {
-        // Ambil parameter query string 'q' untuk pencarian puskesmas/bidan.
-        $q = trim($request->query('q', ''));
+        $qRaw   = (string) $request->query('q', '');
+        $qLower = mb_strtolower(trim($qRaw));
+        $tokens = array_values(array_filter(preg_split('/\s+/', $qLower, -1, PREG_SPLIT_NO_EMPTY)));
 
-        /**
-         * Query ke tabel puskesmas:
-         * - when($q !== '', ...) → jika q diisi, filter nama/kecamatan/lokasi
-         * - orderBy('nama_puskesmas') → urut A–Z
-         * - limit(20) → batasi 20 hasil
-         * - get([...]) → ambil kolom penting
-         * - map(...) → normalisasi bentuk response untuk UI
-         */
-        $puskesmas = Puskesmas::query()
-            ->where('is_mandiri', false)
-            ->when($q !== '', function ($qr) use ($q) {
-                $qr->where(function ($w) use ($q) {
-                    $w->where('nama_puskesmas', 'like', "%{$q}%")
-                      ->orWhere('kecamatan', 'like', "%{$q}%")
-                      ->orWhere('lokasi', 'like', "%{$q}%");
-                });
-            })
-            ->orderBy('nama_puskesmas')
-            ->limit(20)
-            ->get(['id', 'nama_puskesmas', 'kecamatan'])
-            ->map(function ($row) {
-                return [
+        $typeFilter = null; // 'puskesmas' | 'bidan' | null
+        foreach ($tokens as $i => $t) {
+            if (in_array($t, ['puskesmas','pkm'], true)) { $typeFilter = 'puskesmas'; unset($tokens[$i]); }
+            elseif (in_array($t, ['bidan','klinik'], true)) { $typeFilter = 'bidan'; unset($tokens[$i]); }
+        }
+        $tokens = array_values($tokens);
+
+        $applyTokensOr = function ($qr, array $columns) use ($tokens, $qLower) {
+            $terms = !empty($tokens) ? $tokens : ($qLower !== '' ? [$qLower] : []);
+            if (empty($terms)) return;
+            $qr->where(function ($w) use ($terms, $columns) {
+                foreach ($terms as $t) {
+                    foreach ($columns as $col) {
+                        $w->orWhereRaw('LOWER(' . $col . ') LIKE ?', ['%' . $t . '%']);
+                    }
+                }
+            });
+        };
+
+        // PUSKESMAS
+        $puskesmas = collect();
+        if ($typeFilter !== 'bidan') {
+            $pkmQ = Puskesmas::query()->where('is_mandiri', false);
+            $pkmCols = Schema::hasColumn('puskesmas','lokasi') ? ['nama_puskesmas','kecamatan','lokasi'] : ['nama_puskesmas','kecamatan'];
+            $applyTokensOr($pkmQ, $pkmCols);
+            $puskesmas = $pkmQ
+                ->orderBy('nama_puskesmas')
+                ->limit(20)
+                ->get(['id','nama_puskesmas','kecamatan'])
+                ->map(fn($row) => [
                     'id' => $row->id,
                     'nama_puskesmas' => $row->nama_puskesmas,
                     'kecamatan' => $row->kecamatan,
                     'type' => 'puskesmas',
-                ];
-            });
+                ]);
+        }
 
-        /**
-         * Query ke tabel bidans:
-         * - join users (nama bidan/klinik) dan puskesmas (kecamatan)
-         * - when($q !== '', ...) → filter nama bidan / nama puskesmas / kecamatan
-         * - orderBy('u.name') → urut nama
-         * - limit(20), get([...])
-         * - map(...) → normalisasi response (type='bidan')
-         */
-        $bidan = DB::table('bidans as b')
-            ->join('users as u', 'u.id', '=', 'b.user_id')
-            ->join('puskesmas as p', 'p.id', '=', 'b.puskesmas_id')
-            ->where('p.is_mandiri', true)
-            ->when($q !== '', function ($qr) use ($q) {
-                $qr->where(function ($w) use ($q) {
-                    $w->where('u.name', 'like', "%{$q}%")
-                      ->orWhere('p.nama_puskesmas', 'like', "%{$q}%")
-                      ->orWhere('p.kecamatan', 'like', "%{$q}%");
-                });
-            })
-            ->orderBy('u.name')
-            ->limit(20)
-            ->get(['b.id as id', 'u.name as klinik_nama', 'p.kecamatan as kecamatan', 'p.id as puskesmas_id'])
-            ->map(function ($row) {
-                return [
+        // BIDAN MANDIRI
+        $bidan = collect();
+        if ($typeFilter !== 'puskesmas') {
+            $bdQ = DB::table('bidans as b')
+                ->join('users as u', 'u.id', '=', 'b.user_id')
+                ->join('puskesmas as p', 'p.id', '=', 'b.puskesmas_id')
+                ->where('p.is_mandiri', true);
+            $applyTokensOr($bdQ, ['u.name','p.nama_puskesmas','p.kecamatan']);
+            $bidan = $bdQ
+                ->orderBy('u.name')
+                ->limit(20)
+                ->get(['b.id as id','u.name as klinik_nama','p.kecamatan as kecamatan','p.id as puskesmas_id'])
+                ->map(fn($row) => [
                     'id' => $row->id,
                     'klinik_nama' => $row->klinik_nama,
                     'kecamatan' => $row->kecamatan,
                     'puskesmas_id' => $row->puskesmas_id,
                     'type' => 'bidan',
-                ];
-            });
+                ]);
+        }
 
-        // Gabungkan hasil puskesmas dan bidan; ambil maksimal 20 item.
         $combined = $puskesmas->merge($bidan)->take(20)->values();
-
-        // Kembalikan JSON untuk dipakai modal pencarian fasilitas.
         return response()->json($combined);
     }
 

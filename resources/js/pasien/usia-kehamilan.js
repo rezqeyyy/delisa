@@ -25,29 +25,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper: format Date -> string yyyy-mm-dd untuk diisi ke input type="date"
     function compute() {
-        const lmp = parseDate(hphtEl.value);        // HPHT
-        const scr = parseDate(skriningEl.value);    // Tanggal skrining
+        const lmp = parseDate(hphtEl.value);
+        const scr = parseDate(skriningEl.value);
 
-        // Validasi: butuh kedua tanggal dan skrining >= HPHT
-        // Jika tidak valid, kembalikan tampilan hasil ke default dan kosongkan hidden (agar tidak terkirim angka salah).
-        if (!lmp || !scr || scr < lmp) {
-            usiaResultEl.value = defaultText;
-            usiaHiddenEl.value = '';
+        const isValid = !!lmp && !!scr && scr >= lmp;
+
+        if (!isValid) {
+            usiaResultEl.disabled = false;
+            usiaResultEl.placeholder = 'Masukkan usia kehamilan (minggu)';
+            if (usiaResultEl.value === defaultText || /minggu$/.test(usiaResultEl.value)) {
+                usiaResultEl.value = '';
+            }
+            const manualWeeks = parseInt(usiaResultEl.value, 10);
+            usiaHiddenEl.value = isNaN(manualWeeks) ? '' : String(manualWeeks);
             return;
         }
 
         const diffDays = Math.floor((scr.getTime() - lmp.getTime()) / MS_PER_DAY);
-        const weeks = Math.floor(diffDays / 7);     // usia dalam minggu (pembulatan ke bawah)
+        const weeks = Math.floor(diffDays / 7);
 
-        // Tampilkan usia kehamilan dan simpan ke hidden
+        usiaResultEl.disabled = true;
+        usiaResultEl.placeholder = '';
         usiaResultEl.value = `${weeks} minggu`;
         usiaHiddenEl.value = String(weeks);
-
     }
 
     // Reaktif: hitung setiap kali HPHT atau tanggal skrining berubah
     hphtEl.addEventListener('input', compute);
     skriningEl.addEventListener('input', compute);
+
+    // Mode manual: saat input usia diubah, sinkronkan hidden jika HPHT tidak valid
+    usiaResultEl.addEventListener('input', () => {
+        const lmp = parseDate(hphtEl.value);
+        const scr = parseDate(skriningEl.value);
+        const isValid = !!lmp && !!scr && scr >= lmp;
+        if (!isValid) {
+            const manualWeeks = parseInt(usiaResultEl.value, 10);
+            usiaHiddenEl.value = isNaN(manualWeeks) ? '' : String(manualWeeks);
+        }
+    });
 
     // Hitung saat awal jika ada nilai
     compute();

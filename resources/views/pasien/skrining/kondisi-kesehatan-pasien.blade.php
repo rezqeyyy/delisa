@@ -172,7 +172,7 @@
                         <div>
                             <label class="block text-sm font-medium text-[#1D1D1D]">Usia Kehamilan (Minggu)</label>
                             <input type="text" id="usia_kehamilan_result" disabled
-                                class="mt-2 w-full rounded-full border border-[#B9257F] bg-[#F8FAFB] px-5 py-3 text-sm text-black"
+                                class="w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
                                 value="{{ optional($kk)->usia_kehamilan ? optional($kk)->usia_kehamilan . ' minggu' : 'Akan terisi otomatis oleh sistem' }}">
                             <input type="hidden" name="usia_kehamilan_minggu" id="usia_kehamilan_hidden" value="{{ old('usia_kehamilan_minggu', optional($kk)->usia_kehamilan) }}">
                         </div>

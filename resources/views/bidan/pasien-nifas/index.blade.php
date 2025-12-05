@@ -11,7 +11,8 @@
         'resources/css/app.css', 
         'resources/js/app.js', 
         'resources/js/dropdown.js',
-        'resources/js/bidan/sidebar-toggle.js'
+        'resources/js/bidan/sidebar-toggle.js',
+        'resources/js/bidan/delete-confirm.js'
     ])
 </head>
 
@@ -130,10 +131,10 @@
                                             @endif
 
                                             @if (Route::has('bidan.pasien-nifas.destroy'))
-                                                <form action="{{ route('bidan.pasien-nifas.destroy', $pasien->id) }}" method="POST" class="inline" onsubmit="return confirm('Hapus data pasien nifas ini?');">
+                                                <form action="{{ route('bidan.pasien-nifas.destroy', $pasien->id) }}" method="POST" class="inline js-delete-skrining-form">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="px-3 py-1.5 rounded-full border border-red-200 text-red-700 hover:bg-red-50 text-xs">Hapus</button>
+                                                    <button type="button" class="js-delete-skrining-btn px-3 py-1.5 rounded-full border border-red-200 text-red-700 hover:bg-red-50 text-xs">Hapus</button>
                                                 </form>
                                             @else
                                                 <button type="button" class="px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 text-xs" title="Route hapus belum tersedia" disabled>Hapus</button>

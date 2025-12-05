@@ -7,8 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Elemen hasil (tampilan) dan hidden (dikirm ke server)
     const tppResultEl = document.getElementById('tpp_result');
     const tppHiddenEl = document.getElementById('tpp_hidden');
+    const usiaHiddenEl = document.getElementById('usia_kehamilan_hidden');
 
-    if (!hphtEl || !skriningEl || !tppResultEl || !tppHiddenEl) return;
+    if (!hphtEl || !skriningEl || !tppResultEl || !tppHiddenEl || !usiaHiddenEl) return;
 
     // Konstanta milidetik per hari untuk konversi selisih waktu
     const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -30,26 +31,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fungsi utama perhitungan
     function computeTPP() {
-        const lmp = parseDate(hphtEl.value);        // HPHT
-        const scr = parseDate(skriningEl.value);    // Tanggal skrining
+        const lmp = parseDate(hphtEl.value);
+        const scr = parseDate(skriningEl.value);
 
-        // Validasi: butuh kedua tanggal dan skrining >= HPHT
-        // Jika tidak valid, kembalikan tampilan hasil ke default dan kosongkan hidden (agar tidak terkirim angka salah).    
-        if (!lmp || !scr || scr < lmp) {
-            tppResultEl.value = '';
-            tppHiddenEl.value = '';
-            return;
-        }
-        // TPP = HPHT + 280 hari (40 minggu)
-        const tppDate = new Date(lmp.getTime() + 280 * MS_PER_DAY);
-        const tppStr = formatDateInput(tppDate);
+        if (scr && lmp && scr >= lmp) {
+            const tppDate = new Date(lmp.getTime() + 280 * MS_PER_DAY);
+            const tppStr = formatDateInput(tppDate);
             tppResultEl.value = tppStr;
             tppHiddenEl.value = tppStr;
+            return;
+        }
+
+        const weeks = parseInt(usiaHiddenEl.value, 10);
+        if (scr && !isNaN(weeks) && weeks >= 0) {
+            const tppDate = new Date(scr.getTime() + (280 - (weeks * 7)) * MS_PER_DAY);
+            const tppStr = formatDateInput(tppDate);
+            tppResultEl.value = tppStr;
+            tppHiddenEl.value = tppStr;
+            return;
+        }
+
+        tppResultEl.value = '';
+        tppHiddenEl.value = '';
     }
 
     // Reaktif: hitung setiap kali HPHT atau tanggal skrining berubah
     hphtEl.addEventListener('input', computeTPP);
     skriningEl.addEventListener('input', computeTPP);
+
+    const usiaResultEl = document.getElementById('usia_kehamilan_result');
+    if (usiaResultEl) {
+        usiaResultEl.addEventListener('input', computeTPP);
+    }
 
     // Hitung saat awal jika ada nilai
     computeTPP();

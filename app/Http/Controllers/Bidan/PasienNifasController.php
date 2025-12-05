@@ -212,7 +212,7 @@ class PasienNifasController extends Controller
                         'kota' => $pasien->PKabupaten ?? '',
                         'kecamatan' => $pasien->PKecamatan ?? '',
                         'kelurahan' => $pasien->PWilayah ?? '',
-                        'domisili' => $pasien->address ?? $this->buildDomisili($pasien),
+                        'domisili' => ($pasien->address ?? ($pasien->user->address ?? null)) ?? $this->buildDomisili($pasien),
                         'rt' => $pasien->rt ?? '',
                         'rw' => $pasien->rw ?? '',
                         'kode_pos' => $pasien->kode_pos ?? '',
@@ -287,6 +287,9 @@ class PasienNifasController extends Controller
             'tempat_lahir'      => 'nullable|string|max:100',
             'tanggal_lahir'     => 'nullable|date',
             'golongan_darah'    => 'nullable|string|max:5',
+            'status_perkawinan' => 'nullable|in:0,1',
+            'pendidikan'        => 'nullable|string|max:100',
+            'pembiayaan_kesehatan' => 'nullable|string|max:100',
         ]);
 
         try {
@@ -319,6 +322,9 @@ class PasienNifasController extends Controller
                     'tempat_lahir'      => $validated['tempat_lahir'] ?? $existingPasien->tempat_lahir,
                     'tanggal_lahir'     => $validated['tanggal_lahir'] ?? $existingPasien->tanggal_lahir,
                     'golongan_darah'    => $validated['golongan_darah'] ?? $existingPasien->golongan_darah,
+                    'status_perkawinan' => array_key_exists('status_perkawinan', $validated) ? $validated['status_perkawinan'] : $existingPasien->status_perkawinan,
+                    'pendidikan'        => $validated['pendidikan'] ?? $existingPasien->pendidikan,
+                    'pembiayaan_kesehatan' => $validated['pembiayaan_kesehatan'] ?? $existingPasien->pembiayaan_kesehatan,
                 ];
                 if (Schema::hasColumn('pasiens', 'address')) {
                     $updateData['address'] = $validated['domisili'];
@@ -364,6 +370,9 @@ class PasienNifasController extends Controller
                     'tempat_lahir'      => $validated['tempat_lahir'] ?? null,
                     'tanggal_lahir'     => $validated['tanggal_lahir'] ?? null,
                     'golongan_darah'    => $validated['golongan_darah'] ?? null,
+                    'status_perkawinan' => $validated['status_perkawinan'] ?? null,
+                    'pendidikan'        => $validated['pendidikan'] ?? null,
+                    'pembiayaan_kesehatan' => $validated['pembiayaan_kesehatan'] ?? null,
                 ];
                 if (Schema::hasColumn('pasiens', 'address')) {
                     $pasienData['address'] = $validated['domisili'];

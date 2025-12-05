@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bidan — Detail Pasien Nifas</title>
-    @vite(['resources/css/app.css','resources/js/app.js','resources/js/dropdown.js','resources/js/bidan/sidebar-toggle.js'])
+    @vite(['resources/css/app.css','resources/js/app.js','resources/js/dropdown.js','resources/js/bidan/sidebar-toggle.js','resources/js/bidan/delete-confirm.js'])
 </head>
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
 <div class="flex min-h-screen" x-data="{ openSidebar: false }">
@@ -70,23 +70,23 @@
                         <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">{{ $pasienNifas->pasien->nik ?? '-' }}</div>
                     </div>
                     <div class="grid grid-cols-2">
-                        <div class="px-4 sm:px-6 py-3 font-semibold">Alamat</div>
-                        <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
-                            {{ $pasienNifas->pasien->PWilayah ?? '-' }}, {{ $pasienNifas->pasien->PKecamatan ?? '-' }},
-                            {{ $pasienNifas->pasien->PKabupaten ?? '-' }}, {{ $pasienNifas->pasien->PProvinsi ?? '-' }}
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2">
                         <div class="px-4 sm:px-6 py-3 font-semibold">Nomor Telepon</div>
                         <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">{{ $pasienNifas->pasien->user->phone ?? '-' }}</div>
                     </div>
+                    <div class="grid grid-cols-2">
+                        <div class="px-4 sm:px-6 py-3 font-semibold">Alamat</div>
+                        <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
+                            {{ $pasienNifas->pasien->PProvinsi ?? '-' }}, {{ $pasienNifas->pasien->PKabupaten ?? '-' }},
+                            {{ $pasienNifas->pasien->PKecamatan ?? '-' }}, {{ $pasienNifas->pasien->PWilayah ?? '-' }}
+                        </div>
+                    </div>                    
                 </div>
             </div>
         </section>
 
         <section class="bg-white rounded-3xl p-4 sm:p-6">
             <div class="mb-4 flex items-center justify-between">
-                <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Detail Anak</h2>>
+                <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Detail Anak</h2>
             </div>
             <div class="bg-white rounded-1xl shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
@@ -118,10 +118,10 @@
                                 <td class="px-4 py-2">
                                     <div class="inline-flex items-center gap-2 whitespace-nowrap">
                                         <a href="{{ route('bidan.pasien-nifas.anak.edit', ['id' => $pasienNifas->id, 'anakId' => $anak->id]) }}" class="px-3 py-1.5 rounded-full border text-xs border-[#E5E5E5]">Edit</a>
-                                        <form action="{{ route('bidan.pasien-nifas.anak.destroy', ['id' => $pasienNifas->id, 'anakId' => $anak->id]) }}" method="POST" onsubmit="return confirm('Hapus data anak ini?');" class="inline">
+                                        <form action="{{ route('bidan.pasien-nifas.anak.destroy', ['id' => $pasienNifas->id, 'anakId' => $anak->id]) }}" method="POST" class="inline js-delete-skrining-form" data-delete-title="Hapus Data Anak?" data-delete-desc="Tindakan ini tidak bisa dibatalkan.">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="px-3 py-1.5 rounded-full border border-red-200 text-red-700 hover:bg-red-50 text-xs">Hapus</button>
+                                            <button type="button" class="js-delete-skrining-btn px-3 py-1.5 rounded-full border border-red-200 text-red-700 hover:bg-red-50 text-xs">Hapus</button>
                                         </form>
                                     </div>
                                 </td>

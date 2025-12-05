@@ -52,8 +52,8 @@ class KondisiKesehatanPasienController extends Controller
             'sdp'                        => ['nullable', 'integer', 'min:0'],
             'dbp'                        => ['nullable', 'integer', 'min:0'],
             'pemeriksaan_protein_urine'  => ['required', 'in:Negatif,Positif 1,Positif 2,Positif 3,Belum dilakukan Pemeriksaan'],
-            'hpht'                       => ['required', 'date'],
-            'tanggal_skrining'           => ['required', 'date', 'after_or_equal:hpht'],
+            'hpht'                       => ['nullable', 'date'],
+            'tanggal_skrining'           => ['required', 'date'],
             'usia_kehamilan_minggu'      => ['nullable', 'integer', 'min:0'],
         ]);
 
@@ -101,14 +101,17 @@ class KondisiKesehatanPasienController extends Controller
         }
 
         // Usia kehamilan minggu dan TPP
-        $hpht        = Carbon::parse($data['hpht']);
+        $hpht        = !empty($data['hpht']) ? Carbon::parse($data['hpht']) : null;
         $tglSkrining = Carbon::parse($data['tanggal_skrining']);
-        $diffDays    = $hpht->diffInDays($tglSkrining, false);
-        $usiaMinggu  = $diffDays >= 0 ? intdiv($diffDays, 7) : 0;
-        if ($diffDays < 0 && isset($data['usia_kehamilan_minggu'])) {
-            $usiaMinggu = (int) $data['usia_kehamilan_minggu'];
+        if ($hpht && $tglSkrining->greaterThanOrEqualTo($hpht)) {
+            $diffDays   = $hpht->diffInDays($tglSkrining);
+            $usiaMinggu = intdiv($diffDays, 7);
+            $tpp        = $hpht->copy()->addDays(280)->toDateString();
+        } else {
+            $usiaMinggu = isset($data['usia_kehamilan_minggu']) ? (int) $data['usia_kehamilan_minggu'] : 0;
+            $sisaHari   = max(0, 280 - ($usiaMinggu * 7));
+            $tpp        = $tglSkrining->copy()->addDays($sisaHari)->toDateString();
         }
-        $tpp = $hpht->copy()->addDays(280)->toDateString();
 
         /**
          * Transaksi penyimpanan Kondisi Kesehatan:
@@ -123,7 +126,7 @@ class KondisiKesehatanPasienController extends Controller
                     'berat_badan_saat_hamil'        => (float) $data['berat_badan_saat_hamil'],
                     'imt'                           => (float) $imt,
                     'status_imt'                    => $kategoriImt,
-                    'hpht'                          => $data['hpht'],
+                    'hpht'                          => $data['hpht'] ?? null,
                     'tanggal_skrining'              => $data['tanggal_skrining'],
                     'usia_kehamilan'                => (int) $usiaMinggu,
                     'tanggal_perkiraan_persalinan'  => $tpp,
