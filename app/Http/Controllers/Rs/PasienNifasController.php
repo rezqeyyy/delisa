@@ -142,7 +142,7 @@ class PasienNifasController extends Controller
                         'kelurahan'             => $pasien->PWilayah ?? '',
                         
                         // Data Alamat
-                        'domisili'              => $pasien->address ?? $this->buildDomisili($pasien),
+                        'domisili'              => ($pasien->address ?? ($pasien->user->address ?? null)) ?? $this->buildDomisili($pasien),
                         'rt'                    => $pasien->rt ?? '',
                         'rw'                    => $pasien->rw ?? '',
                         'kode_pos'              => $pasien->kode_pos ?? '',

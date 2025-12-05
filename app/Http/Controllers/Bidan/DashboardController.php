@@ -54,7 +54,10 @@ class DashboardController extends Controller
         // 3. Card: Daerah Asal Pasien (Depok vs Non-Depok) dari skrining lengkap
         $pasienIds = $skrinings->pluck('pasien_id')->unique();
         $pasienList = Pasien::whereIn('id', $pasienIds)->get(['PKabupaten']);
-        $depok = $pasienList->filter(fn($p) => $p->PKabupaten === 'Depok')->count();
+        $depok = $pasienList->filter(function ($p) {
+            $kab = mb_strtolower(trim($p->PKabupaten ?? ''));
+            return $kab !== '' && strpos($kab, 'depok') !== false;
+        })->count();
         $nonDepok = $pasienList->count() - $depok;
         $daerahAsal = (object) ['depok' => $depok, 'non_depok' => $nonDepok];
 

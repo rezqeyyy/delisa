@@ -125,6 +125,7 @@ class DashboardController extends Controller
             $s->conclusion_display = $conclusion;
             $s->badge_class        = $badgeClasses[$key] ?? 'bg-[#E9E9E9] text-[#1D1D1D]';
             $s->has_referral       = DB::table('rujukan_rs')->where('skrining_id', $s->id)->exists();
+            $s->is_verified        = (bool) ($s->checked_status ?? false);
             return $s;
         });
 

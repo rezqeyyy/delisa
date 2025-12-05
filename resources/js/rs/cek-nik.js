@@ -73,46 +73,34 @@ document.addEventListener('DOMContentLoaded', function() {
      * Auto-fill semua field form dengan data pasien
      */
     function autofillForm(pasien) {
-        // Data Identitas
         setFieldValue('nama_pasien', pasien.nama);
         setFieldValue('no_telepon', pasien.no_telepon);
-        
-        // Data Wilayah - trigger change untuk cascade dropdown
-        if (pasien.provinsi) {
-            setFieldValue('provinsi', pasien.provinsi);
-            // Trigger change event untuk load kabupaten
-            const provinsiSelect = document.getElementById('provinsi');
-            if (provinsiSelect) {
-                // Set attribute untuk digunakan oleh wilayah.js
-                const wilayahWrapper = document.getElementById('wilayah-wrapper');
-                if (wilayahWrapper) {
-                    wilayahWrapper.setAttribute('data-prov', pasien.provinsi);
-                    wilayahWrapper.setAttribute('data-kab', pasien.kota);
-                    wilayahWrapper.setAttribute('data-kec', pasien.kecamatan);
-                    wilayahWrapper.setAttribute('data-kel', pasien.kelurahan);
-                }
-                
-                // Trigger change untuk wilayah.js handle cascade
-                const event = new Event('change', { bubbles: true });
-                provinsiSelect.dispatchEvent(event);
-            }
+
+        if (window.WilayahCascade) {
+            window.WilayahCascade.setByNames({
+                prov: pasien.provinsi || '',
+                kab:  pasien.kota || '',
+                kec:  pasien.kecamatan || '',
+                kel:  pasien.kelurahan || ''
+            });
         }
-        
-        // Data Alamat
+
         setFieldValue('domisili', pasien.domisili);
         setFieldValue('rt', pasien.rt);
         setFieldValue('rw', pasien.rw);
         setFieldValue('kode_pos', pasien.kode_pos);
-        
-        // Data Pribadi
+
+        function normalizeDate(v){ if(!v) return v; const s=String(v); if(s.includes('/')){const [d,m,y]=s.split('/'); if(d&&m&&y){return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;} } return s; }
+        function mapStatusPerkawinanRS(v){ const t=String(v||'').toLowerCase(); if(v===1||v==='1'||t.includes('menikah')||t.includes('kawin')) return 'Kawin'; if(v===0||v==='0'||t.includes('belum')) return 'Belum Kawin'; return ''; }
+        function mapPembiayaanRS(v){ const s=String(v||'').toLowerCase(); if(s.includes('bpjs')||s.includes('jkn')) return 'BPJS'; if(s.includes('pribadi')||s.includes('umum')||s.includes('tunai')) return 'UMUM'; if(s.includes('internasional')) return 'INTERNASIONAL'; if(s.includes('asuransi')) return 'LAINNYA'; return ''; }
+
         setFieldValue('tempat_lahir', pasien.tempat_lahir);
-        setFieldValue('tanggal_lahir', pasien.tanggal_lahir);
-        setFieldValue('status_perkawinan', pasien.status_perkawinan);
+        setFieldValue('tanggal_lahir', normalizeDate(pasien.tanggal_lahir));
+        setFieldValue('status_perkawinan', mapStatusPerkawinanRS(pasien.status_perkawinan));
         setFieldValue('pekerjaan', pasien.pekerjaan);
         setFieldValue('pendidikan', pasien.pendidikan);
-        
-        // Data Kesehatan
-        setFieldValue('pembiayaan_kesehatan', pasien.pembiayaan_kesehatan);
+
+        setFieldValue('pembiayaan_kesehatan', mapPembiayaanRS(pasien.pembiayaan_kesehatan));
         setFieldValue('golongan_darah', pasien.golongan_darah);
         setFieldValue('no_jkn', pasien.no_jkn);
     }
@@ -122,13 +110,22 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function setFieldValue(fieldId, value) {
         const field = document.getElementById(fieldId);
-        if (field && value) {
-            field.value = value;
-            
-            // Trigger change event untuk field yang punya dependency
-            const event = new Event('change', { bubbles: true });
-            field.dispatchEvent(event);
+        if (!field) return;
+        const val = (value === null || value === undefined) ? '' : String(value).trim();
+
+        if (field.tagName === 'SELECT') {
+            const opts = Array.from(field.options);
+            const byValue = opts.find(opt => String(opt.value).trim().toLowerCase() === val.toLowerCase());
+            const byText  = opts.find(opt => opt.textContent.trim().toLowerCase() === val.toLowerCase());
+            if (byValue) field.value = byValue.value;
+            else if (byText) field.value = byText.value;
+            else field.value = val;
+        } else {
+            field.value = val;
         }
+
+        const event = new Event('change', { bubbles: true });
+        field.dispatchEvent(event);
     }
 
     /**

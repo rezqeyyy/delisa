@@ -129,7 +129,7 @@ class SkriningController extends Controller
             ? 'Skrining belum selesai'
             : (($resikoTinggi >= 1 || $resikoSedang >= 2)
                 ? 'Berisiko Preeklampsia'
-                : 'Tidak berisiko');
+                : 'Normal');
 
         // $rekomendasi: pesan tindak lanjut default sebelum mempertimbangkan status rujukan RS
         $rekomendasi  = ($resikoTinggi >= 1 || $resikoSedang >= 2)
@@ -300,10 +300,10 @@ class SkriningController extends Controller
     {
         $this->authorizeAccess($skrining);
 
-        $locked = \Illuminate\Support\Facades\DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists();
+        $locked = \Illuminate\Support\Facades\DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists() || (bool) $skrining->checked_status;
         if ($locked) {
             return redirect()->route('pasien.skrining.show', $skrining->id)
-                ->with('error', 'Skrining sudah diajukan rujukan dan tidak dapat diedit.');
+                ->with('error', 'Skrining sudah diverifikasi oleh puskesmas atau telah diajukan rujukan, tidak dapat diedit.');
         }
 
         return redirect()->route('pasien.data-diri', ['skrining_id' => $skrining->id]);
@@ -333,10 +333,10 @@ class SkriningController extends Controller
     {
         $this->authorizeAccess($skrining);
 
-        $locked = \Illuminate\Support\Facades\DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists();
+        $locked = \Illuminate\Support\Facades\DB::table('rujukan_rs')->where('skrining_id', $skrining->id)->exists() || (bool) $skrining->checked_status;
         if ($locked) {
             return redirect()->route('pasien.skrining.show', $skrining->id)
-                ->with('error', 'Skrining sudah diajukan rujukan dan tidak dapat dihapus.');
+                ->with('error', 'Skrining sudah diverifikasi oleh puskesmas atau telah diajukan rujukan, tidak dapat dihapus.');
         }
 
         //DB::transaction -> operasi database yang saling berkaitan dan harus dijalankan secara aman serta konsisten.

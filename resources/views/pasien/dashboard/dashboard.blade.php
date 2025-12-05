@@ -100,8 +100,8 @@
                                     <select id="statusSelect" name="status"
                                             class="w-full pl-3 pr-9 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
                                         <option value="" {{ $currentStatus === '' ? 'selected' : '' }}>Cari Berdasarkan Status</option>
-                                        <option value="Tidak berisiko preeklampsia" {{ $currentStatus === 'Tidak berisiko preeklampsia' ? 'selected' : '' }}>Tidak berisiko preeklampsia</option>
-                                        <option value="Berisiko preeklampsia" {{ $currentStatus === 'Berisiko preeklampsia' ? 'selected' : '' }}>Berisiko preeklampsia</option>
+                                        <option value="Tidak berisiko preeklampsia" {{ $currentStatus === 'Tidak berisiko preeklampsia' ? 'selected' : '' }}>Normal</option>
+                                        <option value="Berisiko preeklampsia" {{ $currentStatus === 'Berisiko preeklampsia' ? 'selected' : '' }}>Berisiko</option>
                                         <option value="Skrining belum selesai" {{ $currentStatus === 'Skrining belum selesai' ? 'selected' : '' }}>Skrining belum selesai</option>
                                     </select>
                                 </div>
@@ -125,7 +125,6 @@
                         data-start-url="{{ route('pasien.data-diri') }}"
                         data-search-url="{{ route('pasien.puskesmas.search') }}"
                         class="inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 h-9 rounded-full bg-[#B9257F] text-white text-sm font-semibold shadow hover:bg-[#a31f70] w-full md:w-[220px] md:ml-3 flex-none">
-                            <span class="text-base leading-none">+</span>
                             <span class="leading-none">Tambah Skrining</span>
                         </a>
                     </div>
@@ -155,7 +154,9 @@
                                 $alamat   = optional(optional($skrining->pasien)->user)->address ?? '-';
                                 $resikoSedang = (int)($skrining->jumlah_resiko_sedang ?? 0);
                                 $resikoTinggi = (int)($skrining->jumlah_resiko_tinggi ?? 0);
-                                $conclusion = $skrining->conclusion_display ?? ($skrining->kesimpulan ?? 'Normal');
+                                $kesimpulanRaw = $skrining->conclusion_display ?? ($skrining->kesimpulan ?? '');
+                                $normConc = strtolower(trim($kesimpulanRaw));
+                                $conclusion = $normConc === 'tidak berisiko preeklampsia' ? 'Normal' : (in_array($normConc, ['berisiko preeklampsia','beresiko preeklampsia','beresiko']) ? 'Berisiko' : ($kesimpulanRaw ?: 'Normal'));
                                 $cls = $skrining->badge_class ?? 'bg-[#2EDB58] text-white';
                                 $editUrl = route('pasien.skrining.edit', $skrining->id);
                                 $viewUrl = route('pasien.skrining.show', $skrining->id);
@@ -175,7 +176,7 @@
                                     </td>
                                     <td class="px-3 py-3 md:px-6 md:py-4">
                                         <div class="flex items-center gap-2">
-                                            @if(empty($skrining->has_referral))
+                                            @if(empty($skrining->has_referral) && empty($skrining->is_verified))
                                                 <a href="{{ $editUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">Edit</a>
                                             @else
                                                 <span class="px-4 py-1.5 rounded-full bg-[#F2F2F2] border border-[#E5E5E5] text-[#7C7C7C]">Edit</span>
@@ -183,7 +184,7 @@
 
                                             <a href="{{ $viewUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">View</a>
 
-                                            @if(empty($skrining->has_referral))
+                                            @if(empty($skrining->has_referral) && empty($skrining->is_verified))
                                             <form method="POST" action="{{ route('pasien.skrining.destroy', $skrining->id) }}" class="js-delete-skrining-form">
                                                 @csrf
                                                 @method('DELETE')
@@ -233,8 +234,13 @@
                 <div class="bg-white rounded-2xl p-4 shadow-md">
                     <h2 class="text-xl font-semibold text-[#1D1D1D] mb-3">Risiko Preeklamsia</h2>
                     <div class="rounded-xl {{ $riskBoxClass ?? 'bg-[#E9E9E9] text-[#1D1D1D]' }} p-4 text-center">
+                        @php
+                            $riskRaw = $riskPreeklampsia ?? '';
+                            $riskNorm = strtolower(trim($riskRaw));
+                            $riskDisplay = $riskNorm === 'tidak berisiko preeklampsia' ? 'Normal' : (in_array($riskNorm, ['berisiko preeklampsia','beresiko preeklampsia','beresiko']) ? 'Berisiko' : ($riskRaw ?: 'Belum ada'));
+                        @endphp
                         <span class="text-lg font-semibold">
-                            {{ $riskPreeklampsia ? $riskPreeklampsia : 'Belum ada' }}
+                            {{ $riskDisplay }}
                         </span>
                     </div>
 

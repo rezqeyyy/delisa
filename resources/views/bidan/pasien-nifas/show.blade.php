@@ -149,7 +149,7 @@
                         @if(isset($kfDoneByJenis[$jk]))
                             Selesai: {{ $kfDoneByJenis[$jk]->last_date ? \Carbon\Carbon::parse($kfDoneByJenis[$jk]->last_date)->format('d/m/Y H:i') : '-' }}
                         @else
-                            Status: Tidak Diketahui
+                            Status: Belum dicatat
                         @endif
                     </div>
                     <div class="mt-3">
