@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+
 
 // Excel .xlsx
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -20,7 +22,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\Pasien;
 use App\Models\PasienNifasBidan;
 use App\Models\PasienNifasRs;
-use App\Models\AnakPasien;
 use App\Models\KfKunjungan;        // ✅ PAKAI TABEL kf_kunjungans
 use App\Models\Puskesmas;
 
@@ -45,18 +46,67 @@ class PasienNifasController extends Controller
         // Ambil semua episode nifas (diproses di Collection lalu dipaginate manual)
         $allRows = $baseQuery->get();
 
-        // Kumpulkan id_nifas untuk cek progres KF
-        $nifasIds = $allRows->pluck('nifas_id')->filter()->values()->all();
+        /**
+         * ==========================================
+         *  🔍 PERBAIKAN: AMBIL PROGRES KF BERDASARKAN
+         *  PASIEN_ID + EPISODE NIFAS RS TERBARU
+         *  (bukan lagi pakai nifas_id campur bidan/rs)
+         * ==========================================
+         */
+        $kfDone    = collect();
+        $pasienIds = $allRows->pluck('pasien_id')->filter()->values()->all();
 
-        $kfDone = collect();
-        if (!empty($nifasIds)) {
-            // Sekarang pakai kf_kunjungans: pasien_nifas_id + jenis_kf
-            $kfDone = KfKunjungan::query()
-                ->selectRaw('pasien_nifas_id, MAX(jenis_kf)::int as max_ke')
-                ->whereIn('pasien_nifas_id', $nifasIds)
-                ->groupBy('pasien_nifas_id')
-                ->get()
-                ->keyBy('pasien_nifas_id');
+        $rsEpisodeIds = [];
+        if (!empty($pasienIds)) {
+            // Ambil episode nifas RS terbaru per pasien
+            $rsEpisodes = DB::table('pasien_nifas_rs')
+                ->select('id', 'pasien_id', 'tanggal_mulai_nifas', 'tanggal_melahirkan', 'created_at')
+                ->whereIn('pasien_id', $pasienIds)
+                ->orderByDesc('created_at')
+                ->get();
+
+            // Ambil hanya episode RS TERBARU per pasien
+            $rsByPasien = [];
+            foreach ($rsEpisodes as $ep) {
+                if (!isset($rsByPasien[$ep->pasien_id])) {
+                    $rsByPasien[$ep->pasien_id] = $ep;
+                }
+            }
+
+            foreach ($rsByPasien as $pid => $ep) {
+                if (!empty($ep->id)) {
+                    $rsEpisodeIds[] = $ep->id;
+                }
+            }
+
+            if (!empty($rsEpisodeIds)) {
+                // Hitung max KF per episode RS
+                $kfByEpisode = DB::table('kf_kunjungans')
+                    ->selectRaw('pasien_nifas_id, MAX(jenis_kf)::int as max_ke')
+                    ->whereIn('pasien_nifas_id', $rsEpisodeIds)
+                    ->groupBy('pasien_nifas_id')
+                    ->get()
+                    ->keyBy('pasien_nifas_id');
+
+                // Remap: pasien_id => info KF episode RS terbarunya
+                $map = [];
+                foreach ($rsByPasien as $pid => $ep) {
+                    $episodeStat = $kfByEpisode->get($ep->id);
+                    if ($episodeStat) {
+                        $map[$pid] = $episodeStat;
+                    }
+                }
+
+                $kfDone = collect($map);
+            }
+
+            // ✅ DEBUGGING: untuk memastikan mapping pasien → KF berjalan
+            Log::debug('Dinkes Pasien Nifas - Mapping KF per pasien', [
+                'total_rows'        => $allRows->count(),
+                'pasien_ids'        => $pasienIds,
+                'rs_episode_ids'    => $rsEpisodeIds,
+                'kf_done_perPasien' => $kfDone->toArray(),
+            ]);
         }
 
         // Konfigurasi jadwal KF (hari setelah tanggal_mulai_nifas)
@@ -75,7 +125,7 @@ class PasienNifasController extends Controller
             4 => 'empat',
         ];
 
-        // Hitung jadwal KF dan sisa waktu + prioritas (PASTI TERAPLIKASI)
+        // Hitung jadwal KF dan sisa waktu + prioritas
         $allRows = $allRows->map(function ($row) use ($kfDone, $dueDays, $today, $namaKf) {
             return $this->hitungKfDanPrioritas($row, $kfDone, $dueDays, $today, $namaKf);
         });
@@ -162,6 +212,7 @@ class PasienNifasController extends Controller
             'priority'            => $priority, // dipakai di Blade untuk label sort
         ]);
     }
+
 
     /**
      * Query dasar pasien nifas.
@@ -255,18 +306,59 @@ class PasienNifasController extends Controller
 
         $rows = $baseQuery->get();
 
-        // 2) Hitung progres KF + priority level, supaya urutan export
-        //    mengikuti sort yang sama dengan halaman index().
-        $nifasIds = $rows->pluck('nifas_id')->filter()->values()->all();
+        /**
+         * 2) Hitung progres KF per pasien (pakai episode RS terbaru),
+         *    sama persis dengan index()
+         */
+        $kfDone    = collect();
+        $pasienIds = $rows->pluck('pasien_id')->filter()->values()->all();
+        $rsEpisodeIds = [];
 
-        $kfDone = collect();
-        if (!empty($nifasIds)) {
-            $kfDone = KfKunjungan::query()
-                ->selectRaw('pasien_nifas_id, MAX(jenis_kf)::int as max_ke')
-                ->whereIn('pasien_nifas_id', $nifasIds)
-                ->groupBy('pasien_nifas_id')
-                ->get()
-                ->keyBy('pasien_nifas_id');
+        if (!empty($pasienIds)) {
+            $rsEpisodes = DB::table('pasien_nifas_rs')
+                ->select('id', 'pasien_id', 'tanggal_mulai_nifas', 'tanggal_melahirkan', 'created_at')
+                ->whereIn('pasien_id', $pasienIds)
+                ->orderByDesc('created_at')
+                ->get();
+
+            $rsByPasien = [];
+            foreach ($rsEpisodes as $ep) {
+                if (!isset($rsByPasien[$ep->pasien_id])) {
+                    $rsByPasien[$ep->pasien_id] = $ep;
+                }
+            }
+
+            foreach ($rsByPasien as $pid => $ep) {
+                if (!empty($ep->id)) {
+                    $rsEpisodeIds[] = $ep->id;
+                }
+            }
+
+            if (!empty($rsEpisodeIds)) {
+                $kfByEpisode = DB::table('kf_kunjungans')
+                    ->selectRaw('pasien_nifas_id, MAX(jenis_kf)::int as max_ke')
+                    ->whereIn('pasien_nifas_id', $rsEpisodeIds)
+                    ->groupBy('pasien_nifas_id')
+                    ->get()
+                    ->keyBy('pasien_nifas_id');
+
+                $map = [];
+                foreach ($rsByPasien as $pid => $ep) {
+                    $episodeStat = $kfByEpisode->get($ep->id);
+                    if ($episodeStat) {
+                        $map[$pid] = $episodeStat;
+                    }
+                }
+
+                $kfDone = collect($map);
+            }
+
+            // ✅ DEBUGGING: jejak singkat saat export
+            Log::debug('Dinkes Export Pasien Nifas - KF per pasien', [
+                'total_rows'     => $rows->count(),
+                'pasien_ids'     => $pasienIds,
+                'rs_episode_ids' => $rsEpisodeIds,
+            ]);
         }
 
         $dueDays = [
@@ -436,6 +528,7 @@ class PasienNifasController extends Controller
         ]);
     }
 
+
     /**
      * Helper: Hitung jadwal KF berikutnya, sisa waktu, teks, dan prioritas.
      * - Belum pernah KF → jadwal KF1 tetap dihitung.
@@ -443,15 +536,26 @@ class PasienNifasController extends Controller
      * - Telat → badge hitam, teks "Sisa -X Hari".
      * - JIKA SUDAH KF4 → dianggap selesai, tidak ada sisa waktu.
      */
+    /**
+     * Helper: Hitung jadwal KF berikutnya, sisa waktu, teks, dan prioritas.
+     * - Belum pernah KF → jadwal KF1 tetap dihitung.
+     * - Hari ini (0 hari) → dianggap masih sisa waktu (badge merah, bukan telat).
+     * - Telat → badge hitam, teks "Sisa -X Hari".
+     * - JIKA SUDAH KF4 → dianggap selesai, tidak ada sisa waktu.
+     *
+     * Catatan: $kfDone sekarang dikey berdasarkan pasien_id,
+     *          bukan lagi berdasarkan nifas_id.
+     */
     private function hitungKfDanPrioritas($row, $kfDone, array $dueDays, Carbon $today, array $namaKf)
     {
-        $nifasId = $row->nifas_id;
+        // ✅ gunakan pasien_id sebagai key
+        $pasienId = $row->pasien_id ?? null;
 
-        $hasKf = $nifasId && $kfDone->has($nifasId);
+        $hasKf = $pasienId && $kfDone->has($pasienId);
 
         if ($hasKf) {
-            $maxKe = (int) ($kfDone->get($nifasId)->max_ke ?? 0);
-            // batasi agar tidak lewat 4
+            $maxKe = (int) ($kfDone->get($pasienId)->max_ke ?? 0);
+            // Batasi agar tidak lewat 4
             $maxKe = max(0, min(4, $maxKe));
         } else {
             // Belum pernah KF sama sekali → mulai dari KF1
@@ -559,6 +663,7 @@ class PasienNifasController extends Controller
 
         return $row;
     }
+
 
     /**
      * Lepas status nifas pasien (bidan & RS) tanpa menghapus data pasien.

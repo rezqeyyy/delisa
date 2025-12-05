@@ -329,9 +329,7 @@
 
                                         {{-- Nama (link ke detail) --}}
                                         <td class="px-4 py-3">
-                                            <a href="{{ route('dinkes.pasien-nifas.show', $row->nifas_id) }}">
-                                                {{ $row->name }}
-                                            </a>
+                                            {{ $row->name }}
                                         </td>
 
                                         {{-- NIK --}}
