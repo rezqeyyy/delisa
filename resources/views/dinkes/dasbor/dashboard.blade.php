@@ -11,7 +11,7 @@
     {{-- Judul halaman yang tampil di tab browser --}}
     <title>DINKES – Dasbor</title>
     {{-- Memuat file CSS & JS via Vite (asset bundler Laravel) --}}
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/dinkes/dashboard-filters.js', 'resources/js/dinkes/kf-filters.js', 'resources/js/dinkes/donut-nifas-filters.js', 'resources/js/dinkes/pasien-preeklampsia-search.js', 'resources/js/dinkes/sidebar-toggle.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/dinkes/dashboard-filters.js', 'resources/js/dinkes/kf-filters.js', 'resources/js/dinkes/donut-nifas-filters.js', 'resources/js/dinkes/pasien-preeklampsia-search.js', 'resources/js/dinkes/sidebar-toggle.js', 'resources/js/dinkes/pasien-preeklampsia-delete-modal.js'])
 </head>
 
 {{-- Body utama halaman, dengan background abu dan font Poppins --}}
@@ -565,7 +565,7 @@
 
             {{-- TABEL: Data Pasien Pre-Eklampsia --}}
             <!-- Tabel: Data Pasien Pre-Eklampsia -->
-            <section class="bg-white rounded-2xl p-5 shadow-md">
+            <section id="peTableSection" class="bg-white rounded-2xl p-5 shadow-md" data-pe-table-section>
                 {{-- Header tabel: judul + search + filter + unduh --}}
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <div class="flex items-center gap-2">
@@ -629,42 +629,55 @@
                     <table class="w-full text-sm whitespace-nowrap">
                         <thead class="text-[#7C7C7C] border-b border-[#CAC7C7]">
                             <tr>
-                                <th class="py-2 text-left">No</th>
-                                <th class="text-left">Pasien</th>
-                                <th class="text-left hidden md:table-cell">NIK</th>
-                                <th class="text-left">Umur</th>
-                                <th class="text-left hidden sm:table-cell">Usia Kehamilan</th>
-                                <th class="text-left hidden lg:table-cell">Tanggal</th>
-                                <th class="text-left">Status</th>
-                                <th class="text-left">Resiko</th>
-                                <th class="text-left">Detail</th>
+                                <th class="px-3 py-2 text-left w-[60px]">No</th>
+                                <th class="px-3 py-2 text-left min-w-[220px]">Pasien</th>
+                                <th class="px-3 py-2 text-left hidden md:table-cell min-w-[140px]">NIK</th>
+                                <th class="px-3 py-2 text-left w-[100px]">Umur</th>
+                                <th class="px-3 py-2 text-left hidden sm:table-cell w-[140px]">Usia Kehamilan</th>
+                                <th class="px-3 py-2 text-left hidden lg:table-cell w-[120px]">Tanggal</th>
+                                <th class="px-3 py-2 text-left w-[110px]">Status</th>
+                                <th class="px-3 py-2 text-left w-[110px]">Resiko</th>
+                                <th class="px-3 py-2 text-center w-[140px]">Aksi</th>
                             </tr>
                         </thead>
+
                         <tbody class="divide-y divide-[#CAC7C7]">
                             {{-- Looping setiap baris pasien PE --}}
                             @forelse ($peList as $i => $row)
                                 <tr>
                                     {{-- nomor urut mengikuti halaman --}}
-                                    <td class="py-3 tabular-nums">
+                                    <td class="px-3 py-3 tabular-nums">
                                         {{ str_pad(($peList->firstItem() ?? 0) + $i, 2, '0', STR_PAD_LEFT) }}
                                     </td>
+
                                     {{-- Nama pasien --}}
-                                    <td class="max-w-[220px] truncate">{{ $row->nama ?? '-' }}</td>
-                                    {{-- NIK (masked bila tersedia) --}}
-                                    <td class="hidden md:table-cell">{{ $row->nik_masked ?? ($row->nik ?? '-') }}
+                                    <td class="px-3 max-w-[220px] truncate">
+                                        {{ $row->nama ?? '-' }}
                                     </td>
+
+                                    {{-- NIK (masked bila tersedia) --}}
+                                    <td class="px-3 hidden md:table-cell">
+                                        {{ $row->nik_masked ?? ($row->nik ?? '-') }}
+                                    </td>
+
                                     {{-- Umur (tahun) --}}
-                                    <td class="tabular-nums">{{ $row->umur ?? '-' }}</td>
+                                    <td class="px-3 tabular-nums">
+                                        {{ $row->umur ?? '-' }}
+                                    </td>
+
                                     {{-- Usia kehamilan (minggu) --}}
-                                    <td class="hidden sm:table-cell">
+                                    <td class="px-3 hidden sm:table-cell">
                                         {{ $row->usia_kehamilan ? $row->usia_kehamilan . ' Minggu' : '-' }}
                                     </td>
+
                                     {{-- Tanggal skrining --}}
-                                    <td class="hidden lg:table-cell">{{ $row->tanggal ?? '-' }}</td>
+                                    <td class="px-3 hidden lg:table-cell">
+                                        {{ $row->tanggal ?? '-' }}
+                                    </td>
+
                                     {{-- Status hadir / mangkir --}}
-                                    <td>
+                                    <td class="px-3">
                                         @php
-                                            // Tentukan warna badge status hadir
                                             $hadirClass =
                                                 $row->status_hadir ?? false
                                                     ? 'bg-[#39E93F33] text-[#39E93F]'
@@ -674,6 +687,7 @@
                                             {{ $row->status_hadir ?? false ? 'Hadir' : 'Mangkir' }}
                                         </span>
                                     </td>
+
                                     {{-- Badge kategori risiko (Normal/Sedang/Tinggi) --}}
                                     <td>
                                         @php
@@ -694,7 +708,6 @@
                                                     'label' => 'Tinggi',
                                                 ],
                                             ];
-                                            // Ambil mapping sesuai nilai resiko di row
                                             $rk = $mapRisk[$row->resiko ?? 'non-risk'];
                                         @endphp
                                         <span class="px-3 py-1 rounded-full"
@@ -702,10 +715,33 @@
                                             {{ $rk['label'] }}
                                         </span>
                                     </td>
-                                    {{-- Tombol menuju halaman detail pasien --}}
+
+                                    {{-- Aksi --}}
                                     <td>
-                                        <a href="{{ route('dinkes.pasien.show', $row->pasien_id) }}"
-                                            class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">View</a>
+                                        <div class="flex justify-center flex-wrap gap-2">
+                                            {{-- Tombol lihat detail pasien --}}
+                                            <a href="{{ route('dinkes.pasien.show', $row->pasien_id) }}"
+                                                class="border border-[#CAC7C7] rounded-md px-3 py-1 hover:bg-[#F5F5F5]">
+                                                View
+                                            </a>
+
+                                            {{-- Tombol hapus data skrining (dummy / tidak valid) --}}
+                                            <form
+                                                action="{{ route('dinkes.dashboard.pe-destroy', $row->skrining_id) }}"
+                                                method="POST" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+
+                                                <button type="button"
+                                                    class="pe-delete-btn border border-red-400 text-red-600 rounded-md px-3 py-1
+                               hover:bg-red-600 hover:text-white hover:border-red-600 hover:shadow-md
+                                transition-shadow duration-150"
+                                                    data-skrining-id="{{ $row->skrining_id }}"
+                                                    data-pasien-name="{{ $row->nama ?? '' }}">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -714,6 +750,7 @@
                                     <td colspan="9" class="py-6 text-center text-[#7C7C7C]">Belum ada data.</td>
                                 </tr>
                             @endforelse
+
                         </tbody>
                     </table>
                 </div>
@@ -937,6 +974,82 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Backdrop modal Delete --}}
+                <div id="peDeleteBackdrop" class="hidden fixed inset-0 bg-black/40 z-40"></div>
+
+                {{-- Modal konfirmasi Delete --}}
+                <div id="peDeleteModal" class="hidden fixed inset-0 z-50 p-4">
+                    <div class="grid place-items-center min-h-screen">
+                        <div
+                            class="bg-white w-full max-w-md rounded-2xl shadow-xl border border-red-200 overflow-hidden">
+
+                            {{-- Header --}}
+                            <div class="px-5 py-4 border-b border-red-100 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center">
+                                        {{-- Ikon warning --}}
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                            class="w-5 h-5 text-red-600" fill="none" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path d="M12 9v4" stroke-linecap="round" />
+                                            <path d="M12 17h.01" stroke-linecap="round" />
+                                            <path
+                                                d="M10.29 3.86 2.82 17a1.7 1.7 0 0 0 1.47 2.5h15.42A1.7 1.7 0 0 0 21.18 17l-7.47-13.14a1.7 1.7 0 0 0-2.94 0Z"
+                                                stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-[#B91C1C]">Hapus Data Skrining?</h3>
+                                        <p class="text-xs text-[#7C7C7C] mt-0.5">
+                                            Tindakan ini akan menghapus data skrining beserta riwayat terkait dari
+                                            sistem.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button type="button" data-pe-delete-cancel class="p-1 rounded hover:bg-[#F5F5F5]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5"
+                                        fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M6 6l12 12M18 6l-12 12" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {{-- Isi --}}
+                            <div class="px-5 py-4 space-y-2 text-sm text-[#4B4B4B]">
+                                <p>
+                                    Pastikan data yang akan dihapus benar-benar
+                                    <span class="font-semibold">dummy</span> atau
+                                    <span class="font-semibold">tidak valid</span>.
+                                </p>
+                                <p>
+                                    Pasien:
+                                    <span id="peDeletePasienName" class="font-semibold"></span><br>
+                                    ID Skrining:
+                                    <span id="peDeleteSkriningId" class="font-mono text-xs"></span>
+                                </p>
+                                <p class="text-xs text-[#9F1239] bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                                    Setelah dihapus, data tidak dapat dikembalikan.
+                                </p>
+                            </div>
+
+                            {{-- Footer tombol --}}
+                            <div
+                                class="px-5 py-3 border-t border-[#E5E5E5] bg-[#FFF7F7] flex items-center justify-end gap-2">
+                                <button type="button" data-pe-delete-cancel
+                                    class="border border-[#CAC7C7] rounded-md px-3 py-2 text-sm hover:bg-[#F5F5F5]">
+                                    Batal
+                                </button>
+                                <button type="button" data-pe-delete-confirm
+                                    class="bg-red-600 text-white rounded-md px-4 py-2 text-sm hover:bg-red-700 shadow-sm hover:shadow-md">
+                                    Ya, Hapus Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
 
             </section>
 

@@ -747,4 +747,29 @@ class DashboardController extends Controller
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
+
+    /**
+     * Hapus satu data skrining (baris di tabel PE) beserta relasinya.
+     * Dipakai untuk menghapus data dummy / tidak valid dari dashboard Dinkes.
+     */
+    public function destroyPe(Request $request, int $skriningId)
+    {
+        try {
+            DB::transaction(function () use ($skriningId) {
+                // Karena semua relasi ke skrinings.* sudah ON DELETE CASCADE,
+                // cukup hapus di tabel skrinings saja.
+                Skrining::whereKey($skriningId)->delete();
+            });
+
+            return redirect()
+                ->back()
+                ->with('success', 'Data skrining berhasil dihapus.');
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal menghapus data skrining.');
+        }
+    }
 }
