@@ -45,6 +45,9 @@ class SkriningController extends Controller
         $from = $request->input('from');
         $to = $request->input('to');
 
+
+
+
         $skrinings = Skrining::query()
             ->where('puskesmas_id', $puskesmasId)
             ->whereHas('puskesmas', function ($q) { $q->where('is_mandiri', true); })
@@ -67,6 +70,7 @@ class SkriningController extends Controller
             })
             ->when($from, fn($q3) => $q3->whereDate('created_at', '>=', $from))
             ->when($to, fn($q3) => $q3->whereDate('created_at', '<=', $to))
+
             ->with(['pasien.user', 'kondisiKesehatan', 'riwayatKehamilanGpa'])
             ->orderByDesc('created_at')
             ->paginate(10)
@@ -387,6 +391,7 @@ return view('bidan.skrining.show', compact(
             })
             ->when($from, fn($q3) => $q3->whereDate('created_at', '>=', $from))
             ->when($to, fn($q3) => $q3->whereDate('created_at', '<=', $to))
+
             ->with(['pasien.user'])
             ->orderByDesc('created_at')
             ->get()
@@ -473,6 +478,7 @@ return view('bidan.skrining.show', compact(
             })
             ->when($from, fn($q3) => $q3->whereDate('created_at', '>=', $from))
             ->when($to, fn($q3) => $q3->whereDate('created_at', '<=', $to))
+
             ->with(['pasien.user'])
             ->orderByDesc('created_at')
             ->get()

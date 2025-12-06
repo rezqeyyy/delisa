@@ -30,7 +30,7 @@
         - isLoading: status loading saat fetch
         - confirmView(): fungsi untuk konfirmasi view detail
     --}}
-    <div class="flex min-h-screen" x-data="{ openSidebar: false, modalOpen: false, targetUrl: null, postUrl: null, isLoading: false, confirmView(){ this.isLoading = true; fetch(this.postUrl, { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } }).finally(() => { window.location.href = this.targetUrl; }); } }">
+    <div class="flex min-h-screen" x-data="{ openSidebar: false, modalOpen: false, targetUrl: null, postUrl: null, isLoading: false, filterModalOpen: false, confirmView(){ this.isLoading = true; fetch(this.postUrl, { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } }).finally(() => { window.location.href = this.targetUrl; }); } }">
         
         {{-- Component sidebar bidan --}}
         <x-bidan.sidebar />
@@ -56,16 +56,8 @@
                         <div class="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto">
                             <form method="GET" action="{{ route('bidan.skrining') }}" class="flex flex-wrap items-center gap-2 w-full md:w-auto">
                                 <input type="text" name="q" value="{{ request('q','') }}" placeholder="Cari nama atau NIK..." class="border rounded-md px-3 py-1 text-sm w-full md:w-48" />
-                                @php $status = request('status'); @endphp
-                                <select name="status" class="border rounded-md px-3 py-1 text-sm w-full md:w-32">
-                                    <option value="" {{ $status === null || $status === '' ? 'selected' : '' }}>Semua</option>
-                                    <option value="normal" {{ $status === 'normal' ? 'selected' : '' }}>Normal</option>
-                                    <option value="risk" {{ $status === 'risk' ? 'selected' : '' }}>Beresiko</option>
-                                </select>
-                                <input type="date" name="from" value="{{ request('from') }}" class="border rounded-md px-3 py-1 text-sm w-full md:w-36" />
-                                <span class="text-[#7C7C7C] text-xs">s/d</span>
-                                <input type="date" name="to" value="{{ request('to') }}" class="border rounded-md px-3 py-1 text-sm w-full md:w-36" />
                                 <button type="submit" class="px-3 py-1 rounded-md border text-sm w-full md:w-auto">Cari</button>
+                                <button type="button" @click="filterModalOpen = true" class="px-3 py-1 rounded-md border text-sm w-full md:w-auto">Filter</button>
                             </form>
                             <a href="{{ route('bidan.export.excel', request()->query()) }}" class="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium w-full md:w-auto">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /><path d="M9 15h6" /><path d="M12 18V12" /></svg>
@@ -78,6 +70,52 @@
                         </div>
                     </div>
                     <br>
+                    <div x-show="filterModalOpen"
+                         x-transition:enter="ease-out duration-300"
+                         x-transition:enter-start="opacity-0"
+                         x-transition:enter-end="opacity-100"
+                         x-transition:leave="ease-in duration-200"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+                         style="display: none;">
+                        <div @click.away="filterModalOpen = false"
+                             class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"
+                             x-data="{ 
+                                statusNormal: {{ request('status')==='normal' ? 'true' : 'false' }}, 
+                                statusRisk: {{ request('status')==='risk' ? 'true' : 'false' }}, 
+                                fromDate: '{{ request('from') }}', 
+                                toDate: '{{ request('to') }}' 
+                             }">
+                            <h3 class="text-xl font-semibold text-[#1D1D1D]">Filter Data</h3>
+                            <form method="GET" action="{{ route('bidan.skrining') }}" class="mt-5 space-y-6">
+                                <input type="hidden" name="q" value="{{ request('q','') }}" />
+                                <input type="hidden" name="status" :value="statusRisk && !statusNormal ? 'risk' : (!statusRisk && statusNormal ? 'normal' : '')" />
+
+                                <div class="space-y-3">
+                                    <p class="text-sm font-medium text-[#1D1D1D]">Status Pasien</p>
+                                    <div class="flex items-center gap-6">
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" x-model="statusNormal" class="border rounded"> <span>Normal</span></label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" x-model="statusRisk" class="border rounded"> <span>Beresiko</span></label>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-3">
+                                    <p class="text-sm font-medium text-[#1D1D1D]">Periode</p>
+                                    <div class="flex items-center gap-3">
+                                        <input type="date" name="from" x-model="fromDate" placeholder="dd/mm/yyyy" class="border border-[#D9D9D9] rounded-lg px-3 py-2 text-sm w-full" />
+                                        <span class="text-[#7C7C7C] text-xs">s/d</span>
+                                        <input type="date" name="to" x-model="toDate" placeholder="dd/mm/yyyy" class="border border-[#D9D9D9] rounded-lg px-3 py-2 text-sm w-full" />
+                                    </div>
+                                </div>
+                                <div class="flex justify-end gap-3 pt-2">
+                                    <button type="button" @click="statusNormal=false; statusRisk=false; fromDate=''; toDate=''; window.location.href='{{ route('bidan.skrining') }}'" class="px-4 py-2 rounded-md bg-white border border-[#D9D9D9] text-[#1D1D1D] hover:bg-gray-50">Reset</button>
+                                    <button type="button" @click="filterModalOpen=false" class="px-4 py-2 rounded-md bg-white border border-[#D9D9D9] text-[#1D1D1D] hover:bg-gray-50">Batal</button>
+                                    <button type="submit" class="px-4 py-2 rounded-md bg-[#B9257F] hover:bg-[#a31f70] text-white">Terapkan Filter</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                     
                     {{-- Wrapper tabel dengan horizontal scroll untuk responsif --}}
                     <div class="overflow-x-auto">
