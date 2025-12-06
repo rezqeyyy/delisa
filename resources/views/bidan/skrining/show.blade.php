@@ -65,15 +65,15 @@
                 <div class="overflow-hidden rounded-xl border border-gray-200">
                     <div class="grid grid-cols-1 sm:grid-cols-3">
                         {{-- Header tabel dengan background pink --}}
-                        <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
-                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+                        <div class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">Informasi</div>
+                        <div class="sm:col-span-2 border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">Data</div>
 
                         {{-- Tanggal Pemeriksaan --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Tanggal Pemeriksaan</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->created_at)->format('d F Y') }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Tanggal Pemeriksaan</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ optional($skrining->created_at)->format('d F Y') }}</div>
 
-                        <div class="p-4 text-sm font-semibold">Tempat Pemeriksaan</div>
-                        <div class="sm:col-span-2 p-4 text-sm">
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Tempat Pemeriksaan</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">
                             @php($pkm = optional($skrining->puskesmas))
                             @if($pkm && (bool) $pkm->is_mandiri)
                                 <div class="font-medium">{{ $pkm->nama_puskesmas ?? '-' }}</div>
@@ -84,56 +84,56 @@
                         </div>
 
                         {{-- Nama Pasien dari relasi user --}}
-                        <div class="p-4 text-sm font-semibold">Nama</div>
-                        <div class="sm:col-span-2 p-4 text-sm">{{ optional(optional($skrining->pasien)->user)->name ?? '-' }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Nama</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ optional(optional($skrining->pasien)->user)->name ?? '-' }}</div>
 
                         {{-- NIK Pasien --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">NIK</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->pasien)->nik ?? '-' }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">NIK</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ optional($skrining->pasien)->nik ?? '-' }}</div>     
 
                         {{-- Data GPA (Gravida, Para, Abortus) --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kehamilan ke (G)</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->riwayatKehamilanGpa)->total_kehamilan ?? '-' }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Kehamilan ke (G)</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ optional($skrining->riwayatKehamilanGpa)->total_kehamilan ?? '-' }}</div>
 
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Jumlah Persalinan (P)</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->riwayatKehamilanGpa)->total_persalinan ?? '-' }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Jumlah Persalinan (P)</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ optional($skrining->riwayatKehamilanGpa)->total_persalinan ?? '-' }}</div>
 
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Jumlah Abortus (A)</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->riwayatKehamilanGpa)->total_abortus ?? '-' }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Jumlah Abortus (A)</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ optional($skrining->riwayatKehamilanGpa)->total_abortus ?? '-' }}</div>
 
                         {{-- Usia Kehamilan dalam minggu --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Usia Kehamilan</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->kondisiKesehatan)->usia_kehamilan ? optional($skrining->kondisiKesehatan)->usia_kehamilan . ' Minggu' : '-' }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Usia Kehamilan</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ optional($skrining->kondisiKesehatan)->usia_kehamilan ? optional($skrining->kondisiKesehatan)->usia_kehamilan . ' Minggu' : '-' }}</div>
 
                         {{-- Taksiran Persalinan (HPL) --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Taksiran Persalinan</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->kondisiKesehatan)->tanggal_perkiraan_persalinan ? \Carbon\Carbon::parse(optional($skrining->kondisiKesehatan)->tanggal_perkiraan_persalinan)->format('d F Y') : '-' }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Taksiran Persalinan</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ optional($skrining->kondisiKesehatan)->tanggal_perkiraan_persalinan ? \Carbon\Carbon::parse(optional($skrining->kondisiKesehatan)->tanggal_perkiraan_persalinan)->format('d F Y') : '-' }}</div>
 
                         {{-- 
                             IMT (Indeks Massa Tubuh)
                             Input readonly yang akan diisi otomatis oleh imt.js
                         --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Indeks Masa Tubuh (IMT)</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Indeks Masa Tubuh (IMT)</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">
                             <input id="imt_result" type="text" readonly class="w-full rounded-md border px-3 py-2 text-sm" value="{{ optional($skrining->kondisiKesehatan)->imt !== null ? number_format(optional($skrining->kondisiKesehatan)->imt, 2) : '' }}" placeholder="Akan terisi otomatis oleh sistem" />
                         </div>
 
                         {{-- Status IMT (Normal, Kurus, Gemuk, dll) --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Status IMT</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Status IMT</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">
                             <span id="imt_category" class="{{ optional($skrining->kondisiKesehatan)->status_imt ? '' : 'text-gray-400' }}">{{ optional($skrining->kondisiKesehatan)->status_imt ?? '-' }}</span>
                         </div>
 
                         {{-- Anjuran Kenaikan Berat Badan --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Anjuran Kenaikan BB</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->kondisiKesehatan)->anjuran_kenaikan_bb ?? '-' }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Anjuran Kenaikan BB</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ optional($skrining->kondisiKesehatan)->anjuran_kenaikan_bb ?? '-' }}</div>
 
                         {{-- 
                             Tekanan Darah (Systolic/Diastolic)
                             Format: SDP/DBP mmHg
                         --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Tensi/Tekanan Darah</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Tensi/Tekanan Darah</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">
                             @php($s = optional($skrining->kondisiKesehatan)->sdp)
                             @php($d = optional($skrining->kondisiKesehatan)->dbp)
                             @if($s && $d)
@@ -147,8 +147,8 @@
                             MAP (Mean Arterial Pressure)
                             Rumus: DBP + 1/3(SDP - DBP)
                         --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Mean Arterial Pressure (MAP)</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->kondisiKesehatan)->map !== null ? number_format(optional($skrining->kondisiKesehatan)->map, 2) . ' mmHg' : '-' }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Mean Arterial Pressure (MAP)</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ optional($skrining->kondisiKesehatan)->map !== null ? number_format(optional($skrining->kondisiKesehatan)->map, 2) . ' mmHg' : '-' }}</div>
                     </div>
                 </div>
             </div>
@@ -159,22 +159,22 @@
                 <div class="overflow-hidden rounded-xl border border-gray-200">
                     <div class="grid grid-cols-1 sm:grid-cols-3">
                         {{-- Header tabel --}}
-                        <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
-                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+                        <div class="border-b border-[#EFEFEF] p-4 text-l bg-pink-50 font-semibold">Informasi</div>
+                        <div class="sm:col-span-2 border-b border-[#EFEFEF] p-4 text-l bg-pink-50 font-semibold">Data</div>
 
                         {{-- Jumlah Risiko Sedang dan Tinggi --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Jumlah Resiko Sedang</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $skrining->jumlah_resiko_sedang ?? 0 }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Jumlah Resiko Sedang</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ $skrining->jumlah_resiko_sedang ?? 0 }}</div>
 
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Jumlah Resiko Tinggi</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $skrining->jumlah_resiko_tinggi ?? 0 }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Jumlah Resiko Tinggi</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ $skrining->jumlah_resiko_tinggi ?? 0 }}</div>
 
                         {{-- 
                             Pemicu Risiko Sedang
                             Tampilkan sebagai unordered list jika ada data
                         --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Pemicu Risiko Sedang</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Pemicu Risiko Sedang</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">
                             @if(!empty($sebabSedang))
                                 <ul class="list-disc pl-5 space-y-1">
                                     @foreach($sebabSedang as $s)
@@ -187,8 +187,8 @@
                         </div>
 
                         {{-- Pemicu Risiko Tinggi --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Pemicu Risiko Tinggi</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Pemicu Risiko Tinggi</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">
                             @if(!empty($sebabTinggi))
                                 <ul class="list-disc pl-5 space-y-1">
                                     @foreach($sebabTinggi as $s)
@@ -201,8 +201,8 @@
                         </div>
 
                         {{-- Riwayat Penyakit Pasien --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Riwayat Penyakit Pasien</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Riwayat Penyakit Pasien</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">
                             @if(!empty($riwayatPenyakitPasien))
                                 <ul class="list-disc pl-5 space-y-1">
                                     @foreach($riwayatPenyakitPasien as $item)
@@ -215,8 +215,8 @@
                         </div>
 
                         {{-- Riwayat Penyakit Keluarga --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Riwayat Penyakit Keluarga</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Riwayat Penyakit Keluarga</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">
                             @if(!empty($riwayatPenyakitKeluarga))
                                 <ul class="list-disc pl-5 space-y-1">
                                     @foreach($riwayatPenyakitKeluarga as $item)
@@ -229,8 +229,8 @@
                         </div>
 
                         {{-- Kesimpulan Skrining --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kesimpulan</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $skrining->kesimpulan ?? '-' }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Kesimpulan</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ $skrining->kesimpulan ?? '-' }}</div>
 
                         {{-- 
                             Rekomendasi berdasarkan kesimpulan
@@ -239,8 +239,8 @@
                             - "Normal/Aman" → jaga kesehatan
                             - "Waspada" → pantau berkala
                         --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Rekomendasi</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Rekomendasi</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">
                             @if(!empty($rujukanAccepted) && $rujukanAccepted)
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">Diterima RS</span>
@@ -261,8 +261,8 @@
                         </div>
 
                         {{-- Catatan (placeholder) --}}
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Catatan</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ 'Belum ada catatan.' }}</div>
+                        <div class="border-t border-[#EFEFEF] p-4 text-l font-semibold">Catatan</div>
+                        <div class="sm:col-span-2 border-t border-[#EFEFEF] p-4 text-l">{{ 'Belum ada catatan.' }}</div>
                     </div>
                 </div>
 

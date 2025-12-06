@@ -83,9 +83,6 @@
                 <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5 lg:row-span-2 flex flex-col">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-semibold text-lg text-[#1D1D1D]">Daerah Asal Pasien</h3>
-                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-                        </button>
                     </div>
                     <div class="flex flex-1 items-center justify-center text-center divide-x divide-[#E9E9E9]">
                         <div class="flex-1 px-4">
@@ -104,9 +101,6 @@
                 <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-semibold text-lg text-[#1D1D1D]">Resiko Preeklampsia</h3>
-                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-                        </button>
                     </div>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
@@ -124,9 +118,6 @@
                 <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-semibold text-lg text-[#1D1D1D]">Pasien Hadir</h3>
-                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-                        </button>
                     </div>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
@@ -144,9 +135,6 @@
                 <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-semibold text-lg text-[#1D1D1D]">Data Pasien Nifas</h3>
-                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-                        </button>
                     </div>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
@@ -164,9 +152,6 @@
                 <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan</h3>
-                        <button class="w-9 h-9 rounded-lg border border-[#E9E9E9] bg-white grid place-items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-                        </button>
                     </div>
                     <div class="flex items-center text-center divide-x-2 divide-[#E9E9E9]">
                         <div class="flex-1 px-4">

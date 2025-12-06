@@ -89,6 +89,15 @@
                         Masukan Email dan Password
                     </p>
 
+                    <!-- ===================================================
+                         Flash message "ok" (misalnya setelah daftar)
+                         =================================================== -->
+                    @if (session('ok'))
+                        <div class="mt-4 rounded-lg border border-green-300 bg-green-50 text-green-700 p-3 text-sm">
+                            {{ session('ok') }}
+                        </div>
+                    @endif
+
                     <!-- 
                         BLOK ERROR VALIDATION:
                         - $errors->any(): true jika ada error validasi dari backend

@@ -61,21 +61,28 @@
                                     </span>
                                 @endif
 
-                                <div class="leading-tight pr-1 text-left">
-                                    <p class="text-[13px] font-semibold text-[#1D1D1D]">
+                                {{-- Teks nama & email, disembunyikan di mobile (hidden sm:block) --}}
+                                <div class="leading-tight pr-1 text-left hidden sm:block">
+                                    {{-- Nama user, fallback ke 'Puskesmas' --}}
+                                    <p class="text-[13px] font-semibold text-[#1D1D1D] truncate max-w-[140px] sm:max-w-[200px]">
                                         {{ auth()->user()->name ?? 'Puskesmas' }}
                                     </p>
                                 </div>
-                                <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Down 2.svg') }}"
-                                    class="w-4 h-4 opacity-70" alt="More" />
+
+                                {{-- Ikon caret (panah bawah) untuk menandakan dropdown --}}
+                                <!-- caret disembunyikan di mobile -->
+                                <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Down 2.svg') }}" class="sm:block w-4 h-4 opacity-70" alt="More" />
+                                
                             </button>
 
                             {{-- Dropdown profil (muncul saat button profile diklik, di-handle oleh JS dropdown.js) --}}
-                            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
+                            <div id="profileMenu" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
                                 <div class="px-4 py-3 border-b border-[#F0F0F0]">
                                     <p class="text-sm font-medium text-[#1D1D1D]">
                                         {{ auth()->user()->name ?? 'Puskesmas' }}
                                     </p>
+                                    <p class="text-xs text-[#7C7C7C] truncate">
+                                    {{ auth()->user()->email ?? 'Puskesmas' }}</p>
                                 </div>
                                 {{-- Form logout.
                                      method="POST" ke route('logout') → akan memproses logout Laravel standar

@@ -82,9 +82,9 @@
                          method="POST"
                          action route('pasien.login.store') → AuthController
                          =================================================== -->
-                    <form action="{{ route('pasien.login.store') }}"
-                            method="POST"
-                            class="mt-8 space-y-5">
+                    <form action="{{ route('pasien.login.store') }}" method="POST" class="mt-8 space-y-5">
+
+                        @csrf  <!-- Token keamanan POST -->
 
                         @if ($errors->any())
                             <div class="mt-4 p-4 rounded-md bg-red-50 border border-red-200 text-red-700">
@@ -93,8 +93,6 @@
                                 @endforeach
                             </div>
                         @endif
-
-                        @csrf  <!-- Token keamanan POST -->
 
                         <!-- ========================
                              INPUT: NIK
