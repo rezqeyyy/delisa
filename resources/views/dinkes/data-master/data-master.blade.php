@@ -211,7 +211,7 @@
                 {{-- ========== --}}
                 {{-- 
                     Section tab untuk memilih jenis akun:
-                    - Bidan PKM
+                    - Bidan
                     - Rumah Sakit
                     - Puskesmas
                     class:
@@ -219,7 +219,7 @@
                     - mb-4 → jarak ke bawah.
                 --}}
                 <section class="flex flex-wrap items-center gap-2 sm:gap-3 mb-4">
-                    {{-- Tab: Bidan PKM --}}
+                    {{-- Tab: Bidan --}}
                     <a href="{{ route('dinkes.data-master', ['tab' => 'bidan', 'q' => $q ?? '']) }}"
                         {{-- 
                             class dm-tab → bisa digunakan JS untuk manipulasi tab jika perlu.

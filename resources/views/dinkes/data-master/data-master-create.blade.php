@@ -193,7 +193,7 @@
 
             {{-- 
                 Section ini menampilkan tab untuk berpindah jenis data master:
-                - Bidan PKM
+                - Bidan
                 - Rumah Sakit
                 - Puskesmas
                 class:
@@ -203,7 +203,7 @@
             --}}
             <section class="flex flex-wrap items-center gap-2 sm:gap-3">
                 {{-- 
-                    Tab "Bidan PKM".
+                    Tab "Bidan".
                     - href menuju route('dinkes.data-master', ['tab' => 'bidan']).
                     - class memakai ternary Blade:
                       Jika $tab === 'bidan' → tab aktif (bg pink + text putih).
@@ -211,7 +211,7 @@
                 --}}
                 <a href="{{ route('dinkes.data-master', ['tab' => 'bidan']) }}"
                     class="px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium {{ $tab === 'bidan' ? 'bg-[#B9257F] text-white' : 'bg-white border border-[#D9D9D9] text-[#4B4B4B]' }}">
-                    Bidan PKM
+                    Bidan
                 </a>
 
                 {{-- Tab "Rumah Sakit" dengan logika penentuan class yang sama. --}}
@@ -513,9 +513,9 @@
                     {{-- FORM: TAMBAH AKUN BIDAN (default/tab=bidan) --}}
                     {{-- ============================= --}}
                 @else
-                    {{-- Judul form tambah akun Bidan PKM. --}}
+                    {{-- Judul form tambah akun Bidan --}}
                     <h2 class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">
-                        Tambah Akun Bidan PKM
+                        Tambah Akun Bidan
                     </h2>
 
                     {{-- 
