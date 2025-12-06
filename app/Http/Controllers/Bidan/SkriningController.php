@@ -33,39 +33,61 @@ class SkriningController extends Controller
     | Return: View 'bidan.skrining.index' dengan data paginated
     |--------------------------------------------------------------------------
     */
-    public function index()
+    public function index(Request $request)
     {
-        // 1. Validasi Bidan Login
-        $bidan = Auth::user()->bidan; // Ambil data bidan dari user login
-        if (!$bidan) { // Jika bukan bidan
+        $bidan = Auth::user()->bidan;
+        if (!$bidan) {
             abort(403, 'Anda tidak memiliki akses sebagai Bidan.');
         }
-        
-        $puskesmasId = $bidan->puskesmas_id; // ID puskesmas untuk filter
-        
-        // 2. Ambil Data Skrining dengan Relasi
-        $skrinings = Skrining::where('puskesmas_id', $puskesmasId)
-                            ->whereHas('puskesmas', function ($q) { $q->where('is_mandiri', true); })
-                            ->with(['pasien.user', 'kondisiKesehatan', 'riwayatKehamilanGpa'])
-                            ->latest()
-                            ->get();
+        $puskesmasId = $bidan->puskesmas_id;
+        $q = trim((string) $request->input('q', ''));
+        $status = $request->input('status');
+        $from = $request->input('from');
+        $to = $request->input('to');
 
-        // 3. Filter hanya skrining yang sudah lengkap
-        $skrinings = $skrinings->filter(fn($s) => $this->isSkriningCompleteForSkrining($s))->values();
+        $skrinings = Skrining::query()
+            ->where('puskesmas_id', $puskesmasId)
+            ->whereHas('puskesmas', function ($q) { $q->where('is_mandiri', true); })
+            ->where('step_form', 6)
+            ->when($q !== '', function ($query) use ($q) {
+                return $query->where(function ($sub) use ($q) {
+                    $sub->whereHas('pasien', function ($q1) use ($q) {
+                        $q1->where('nik', 'like', '%' . $q . '%');
+                    })->orWhereHas('pasien.user', function ($q1) use ($q) {
+                        $q1->where('name', 'like', '%' . $q . '%');
+                    });
+                });
+            })
+            ->when(in_array($status, ['normal','risk']), function ($query) use ($status) {
+                $map = [
+                    'risk' => ['beresiko','berisiko','risiko tinggi','tinggi'],
+                    'normal' => ['aman','normal','tidak berisiko','waspada','menengah','sedang','risiko sedang'],
+                ];
+                $query->whereIn(DB::raw('LOWER(kesimpulan)'), $map[$status]);
+            })
+            ->when($from, fn($q3) => $q3->whereDate('created_at', '>=', $from))
+            ->when($to, fn($q3) => $q3->whereDate('created_at', '<=', $to))
+            ->with(['pasien.user', 'kondisiKesehatan', 'riwayatKehamilanGpa'])
+            ->orderByDesc('created_at')
+            ->paginate(10)
+            ->withQueryString();
 
-        // 4. Transform Data untuk Badge Kesimpulan
-        $skrinings->transform(function ($s) {
-            $label = strtolower(trim($s->kesimpulan ?? ''));
-            $isRisk = in_array($label, ['beresiko','berisiko','risiko tinggi','tinggi']);
-            $isWarn = in_array($label, ['waspada','menengah','sedang','risiko sedang']);
-            $display = $isRisk ? 'Beresiko' : ($isWarn ? 'Waspada' : ($label === 'aman' ? 'Aman' : ($s->kesimpulan ?? 'Normal')));
-            $variant = $isRisk ? 'risk' : ($isWarn ? 'warn' : 'safe');
-            $s->setAttribute('conclusion_display', $display);
-            $s->setAttribute('badge_variant', $variant);
-            return $s;
-        });
+        $skrinings->setCollection(
+            $skrinings->getCollection()->map(function ($s) {
+                $label = strtolower(trim($s->kesimpulan ?? ''));
+                $isRisk = in_array($label, ['beresiko','berisiko','risiko tinggi','tinggi']);
+                $display = $isRisk ? 'Beresiko' : 'Normal';
+                $variant = $isRisk ? 'risk' : 'normal';
+                $s->setAttribute('conclusion_display', $display);
+                $s->setAttribute('badge_variant', $variant);
+                return $s;
+            })
+        );
 
-        // 5. Kirim ke View
+        if ($skrinings->lastPage() >= 1 && $skrinings->currentPage() > $skrinings->lastPage()) {
+            return redirect($skrinings->url($skrinings->lastPage()));
+        }
+
         return view('bidan.skrining.index', compact('skrinings'));
     }
 
@@ -332,17 +354,41 @@ return view('bidan.skrining.show', compact(
     | Return: Stream response CSV dengan header yang sesuai
     |--------------------------------------------------------------------------
     */
-    public function exportExcel()
+    public function exportExcel(Request $request)
     {
         $bidan = Auth::user()->bidan;
         abort_unless($bidan, 403);
         $puskesmasId = $bidan->puskesmas_id;
         $facilityName = optional($bidan->puskesmas)->nama_puskesmas ?? 'Puskesmas';
+        $q = trim((string) $request->input('q', ''));
+        $status = $request->input('status');
+        $from = $request->input('from');
+        $to = $request->input('to');
 
-        $skrinings = Skrining::with(['pasien.user'])
+        $skrinings = Skrining::query()
             ->where('puskesmas_id', $puskesmasId)
-            ->whereHas('puskesmas', function ($q) { $q->where('is_mandiri', true); })
-            ->latest()
+            ->whereHas('puskesmas', function ($q2) { $q2->where('is_mandiri', true); })
+            ->where('step_form', 6)
+            ->when($q !== '', function ($query) use ($q) {
+                return $query->where(function ($sub) use ($q) {
+                    $sub->whereHas('pasien', function ($q1) use ($q) {
+                        $q1->where('nik', 'like', '%' . $q . '%');
+                    })->orWhereHas('pasien.user', function ($q1) use ($q) {
+                        $q1->where('name', 'like', '%' . $q . '%');
+                    });
+                });
+            })
+            ->when(in_array($status, ['normal','risk']), function ($query) use ($status) {
+                $map = [
+                    'risk' => ['beresiko','berisiko','risiko tinggi','tinggi'],
+                    'normal' => ['aman','normal','tidak berisiko','waspada','menengah','sedang','risiko sedang'],
+                ];
+                $query->whereIn(DB::raw('LOWER(kesimpulan)'), $map[$status]);
+            })
+            ->when($from, fn($q3) => $q3->whereDate('created_at', '>=', $from))
+            ->when($to, fn($q3) => $q3->whereDate('created_at', '<=', $to))
+            ->with(['pasien.user'])
+            ->orderByDesc('created_at')
             ->get()
             ->filter(fn($s) => $this->isSkriningCompleteForSkrining($s))
             ->values();
@@ -368,7 +414,7 @@ return view('bidan.skrining.show', compact(
                 $telp    = optional(optional($s->pasien)->user)->phone ?? '-';
                 $sedang  = (int)($s->jumlah_resiko_sedang ?? 0);
                 $tinggi  = (int)($s->jumlah_resiko_tinggi ?? 0);
-                $kesimpulan = ($tinggi >= 1 || $sedang >= 2) ? 'Berisiko preeklampsia' : 'Tidak berisiko preeklampsia';
+                $kesimpulan = ($tinggi >= 1 || $sedang >= 2) ? 'Beresiko' : 'Normal';
                 fputcsv($file, [
                     $index + 1,
                     $nama,
@@ -393,17 +439,42 @@ return view('bidan.skrining.show', compact(
     | Return: Download file PDF berisi daftar skrining
     |--------------------------------------------------------------------------
     */
-    public function exportPDF()
+    public function exportPDF(Request $request)
     {
         $bidan = Auth::user()->bidan;
         abort_unless($bidan, 403);
         $puskesmasId = $bidan->puskesmas_id;
         $facilityName = optional($bidan->puskesmas)->nama_puskesmas ?? 'Puskesmas';
 
-        $skrinings = Skrining::with(['pasien.user'])
+        $q = trim((string) $request->input('q', ''));
+        $status = $request->input('status');
+        $from = $request->input('from');
+        $to = $request->input('to');
+
+        $skrinings = Skrining::query()
             ->where('puskesmas_id', $puskesmasId)
-            ->whereHas('puskesmas', function ($q) { $q->where('is_mandiri', true); })
-            ->latest()
+            ->whereHas('puskesmas', function ($q2) { $q2->where('is_mandiri', true); })
+            ->where('step_form', 6)
+            ->when($q !== '', function ($query) use ($q) {
+                return $query->where(function ($sub) use ($q) {
+                    $sub->whereHas('pasien', function ($q1) use ($q) {
+                        $q1->where('nik', 'like', '%' . $q . '%');
+                    })->orWhereHas('pasien.user', function ($q1) use ($q) {
+                        $q1->where('name', 'like', '%' . $q . '%');
+                    });
+                });
+            })
+            ->when(in_array($status, ['normal','risk']), function ($query) use ($status) {
+                $map = [
+                    'risk' => ['beresiko','berisiko','risiko tinggi','tinggi'],
+                    'normal' => ['aman','normal','tidak berisiko','waspada','menengah','sedang','risiko sedang'],
+                ];
+                $query->whereIn(DB::raw('LOWER(kesimpulan)'), $map[$status]);
+            })
+            ->when($from, fn($q3) => $q3->whereDate('created_at', '>=', $from))
+            ->when($to, fn($q3) => $q3->whereDate('created_at', '<=', $to))
+            ->with(['pasien.user'])
+            ->orderByDesc('created_at')
             ->get()
             ->filter(fn($s) => $this->isSkriningCompleteForSkrining($s))
             ->values();
@@ -412,11 +483,11 @@ return view('bidan.skrining.show', compact(
             $sedang = (int)($s->jumlah_resiko_sedang ?? 0);
             $tinggi = (int)($s->jumlah_resiko_tinggi ?? 0);
             if ($tinggi >= 1 || $sedang >= 2) {
-                $s->kesimpulan  = 'Berisiko preeklampsia';
-                $s->badge_class = 'berisiko';
+                $s->kesimpulan  = 'Beresiko';
+                $s->badge_class = 'beresiko';
             } else {
-                $s->kesimpulan  = 'Tidak berisiko preeklampsia';
-                $s->badge_class = 'tidak-berisiko';
+                $s->kesimpulan  = 'Normal';
+                $s->badge_class = 'normal';
             }
             return $s;
         });

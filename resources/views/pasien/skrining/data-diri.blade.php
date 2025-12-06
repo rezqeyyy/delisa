@@ -246,10 +246,10 @@
                     </div>
                     <div x-cloak x-show="bayar === 'BPJS Kesehatan'">
                         <label class="block text-sm font-medium text-gray-700">Nomor Kartu JKN</label>
-                        <input name="no_jkn" type="text" required
+                        <input name="no_jkn" type="text" x-bind:required="bayar === 'BPJS Kesehatan'" inputmode="numeric" pattern="[0-9]{13}" minlength="13" maxlength="13"
                             class="mt-2 w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm"
                             value="{{ old('no_jkn', optional($pasien)->no_jkn) }}"
-                            placeholder="Masukkan nomor kartu JKN"
+                            placeholder="Masukkan 13 digit nomor kartu JKN"
                             x-bind:disabled="bayar !== 'BPJS Kesehatan'">
                     </div>
                 </div>

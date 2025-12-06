@@ -46,19 +46,32 @@
             <section class="space-y-4">
                 <div class="bg-white rounded-2xl border border-[#E9E9E9] p-2 sm:p-4">
                     {{-- Header section dengan icon dan deskripsi --}}
-                    <div class="flex items-start justify-between gap-4">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
                         <div class="flex items-start gap-3">
                             <div>
                                 <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Preeklampsia</h2>
                                 <p class="text-xs text-[#7C7C7C]">Daftar pasien skrining preeklampsia terbaru</p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <a href="{{ route('bidan.export.excel') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+                        <div class="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto">
+                            <form method="GET" action="{{ route('bidan.skrining') }}" class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                                <input type="text" name="q" value="{{ request('q','') }}" placeholder="Cari nama atau NIK..." class="border rounded-md px-3 py-1 text-sm w-full md:w-48" />
+                                @php $status = request('status'); @endphp
+                                <select name="status" class="border rounded-md px-3 py-1 text-sm w-full md:w-32">
+                                    <option value="" {{ $status === null || $status === '' ? 'selected' : '' }}>Semua</option>
+                                    <option value="normal" {{ $status === 'normal' ? 'selected' : '' }}>Normal</option>
+                                    <option value="risk" {{ $status === 'risk' ? 'selected' : '' }}>Beresiko</option>
+                                </select>
+                                <input type="date" name="from" value="{{ request('from') }}" class="border rounded-md px-3 py-1 text-sm w-full md:w-36" />
+                                <span class="text-[#7C7C7C] text-xs">s/d</span>
+                                <input type="date" name="to" value="{{ request('to') }}" class="border rounded-md px-3 py-1 text-sm w-full md:w-36" />
+                                <button type="submit" class="px-3 py-1 rounded-md border text-sm w-full md:w-auto">Cari</button>
+                            </form>
+                            <a href="{{ route('bidan.export.excel', request()->query()) }}" class="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium w-full md:w-auto">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /><path d="M9 15h6" /><path d="M12 18V12" /></svg>
                                 Download Excel
                             </a>
-                            <a href="{{ route('bidan.export.pdf') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
+                            <a href="{{ route('bidan.export.pdf', request()->query()) }}" class="inline-flex items-center gap-2 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium w-full md:w-auto">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /><path d="M9 15h6" /><path d="M12 18V12" /></svg>
                                 Download PDF
                             </a>
@@ -90,8 +103,8 @@
                                 --}}
                                 @forelse(($skrinings ?? []) as $skrining)
                                     <tr>
-                                        {{-- Nomor urut otomatis dari $loop->iteration --}}
-                                        <td class="px-3 py-3 font-medium tabular-nums">{{ $loop->iteration }}</td>
+                                        {{-- Nomor urut mengikuti halaman (offset berdasarkan firstItem) --}}
+                                        <td class="px-3 py-3 font-medium tabular-nums">{{ ($skrinings->firstItem() ?? 1) + $loop->index }}</td>
                                         
                                         {{-- 
                                             PHP block untuk mengolah data
@@ -122,8 +135,8 @@
                                             - normal (hijau): bg-[#39E93F]
                                         --}}
                                         <td class="px-3 py-3">
-                                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ ($skrining->badge_variant==='risk') ? 'bg-[#E20D0D] text-white' : (($skrining->badge_variant==='warn') ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">
-                                                {{ $skrining->conclusion_display ?? ($skrining->kesimpulan ?? 'Normal') }}
+                                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ ($skrining->badge_variant==='risk') ? 'bg-[#E20D0D] text-white' : 'bg-[#39E93F] text-white' }}">
+                                                {{ $skrining->conclusion_display ?? 'Normal' }}
                                             </span>
                                         </td>
                                         
@@ -145,6 +158,28 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+                    <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div class="text-xs text-[#7C7C7C]">
+                            Menampilkan 
+                            {{ $skrinings->firstItem() }}–{{ $skrinings->lastItem() }} 
+                            dari 
+                            {{ $skrinings->total() }} 
+                            data
+                        </div>
+                        <nav class="inline-flex items-center rounded-md border border-[#D9D9D9] overflow-hidden">
+                            <a href="{{ $skrinings->previousPageUrl() ?? '#' }}" class="px-3 py-1 text-sm text-[#1D1D1D] {{ $skrinings->onFirstPage() ? 'opacity-40 pointer-events-none' : 'hover:bg-gray-100' }}">Previous</a>
+                            @php
+                                $current = $skrinings->currentPage();
+                                $last    = $skrinings->lastPage();
+                                $start   = max(1, min($current - 1, $last - 2));
+                                $end     = min($last, $start + 2);
+                            @endphp
+                            @for ($page = $start; $page <= $end; $page++)
+                                <a href="{{ $skrinings->url($page) }}" class="px-3 py-1 text-sm border-l border-[#D9D9D9] {{ $page === $current ? 'bg-[#B9257F] text-white' : 'text-[#1D1D1D] hover:bg-gray-100' }}">{{ $page }}</a>
+                            @endfor
+                            <a href="{{ $skrinings->nextPageUrl() ?? '#' }}" class="px-3 py-1 text-sm border-l border-[#D9D9D9] text-[#1D1D1D] {{ $skrinings->hasMorePages() ? 'hover:bg-gray-100' : 'opacity-40 pointer-events-none' }}">Next</a>
+                        </nav>
                     </div>
                 </div>
             </section>

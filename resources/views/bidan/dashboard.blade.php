@@ -239,12 +239,8 @@
                         {{-- Tombol "Lihat Semua" → membuka halaman daftar Skrining Bidan
                              route('bidan.skrining') biasanya mengarah ke SkriningController@index. --}}
                         <a href="{{ route('bidan.skrining') }}"
-                            class="px-5 py-2 rounded-full border border-[#D9D9D9] bg-white text-[#1D1D1D] font-semibold flex items-center gap-2">
+                            class="px-3 py-1 rounded-full border border-[#D9D9D9] bg-white text-[#1D1D1D] font-semibold text-sm flex items-center gap-2">
                             <span>Lihat Semua</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 6l6 6-6 6" />
-                            </svg>
                         </a>
                     </div>
                 </div>

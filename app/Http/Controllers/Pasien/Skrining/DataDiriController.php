@@ -175,7 +175,7 @@ class DataDiriController extends Controller
             'pendidikan'           => ['required', 'string', 'max:150'],
             'pembiayaan_kesehatan' => ['required', 'string', 'max:100'],
             'golongan_darah'       => ['required', 'string', 'in:A,B,AB,O'],
-            'no_jkn'               => ['nullable', 'string', 'max:30', 'required_if:pembiayaan_kesehatan,BPJS Kesehatan'],
+            'no_jkn'               => ['nullable', 'required_if:pembiayaan_kesehatan,BPJS Kesehatan', 'digits:13'],
         ]);
 
         $user   = Auth::user();
