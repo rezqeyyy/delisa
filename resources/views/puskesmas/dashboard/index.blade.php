@@ -7,7 +7,8 @@
     
     @vite([
         'resources/css/app.css', 
-        'resources/js/app.js', 
+        'resources/js/app.js',
+        'resources/js/puskesmas/search.js',
         'resources/js/dropdown.js', 
         'resources/js/puskesmas/sidebar-toggle.js'
         ])
@@ -25,8 +26,11 @@
                         <span class="absolute inset-y-0 left-3 flex items-center">
                             <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60" alt="Search">
                         </span>
-                        <input type="text" placeholder="Search..."
-                            class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+                        <input type="text" placeholder="Search..." 
+                        id="dashboardSearch"
+                        data-search="true"
+                        data-target="#patientsTableBody"
+                        class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
                     </div>
                 </div>
 
@@ -204,7 +208,7 @@
                                     <th class="px-3 py-2">View Detail</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-[#E9E9E9]">
+                            <tbody class="divide-y divide-[#E9E9E9]" id="patientsTableBody">
                                 @forelse(($pePatients ?? []) as $p)
                                     <tr>
                                         <td class="px-3 py-3 font-medium tabular-nums">{{ $loop->iteration }}</td>

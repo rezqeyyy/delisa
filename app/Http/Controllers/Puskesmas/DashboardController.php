@@ -17,8 +17,6 @@ class DashboardController extends Controller
         // ========== HITUNG PASIEN DEPOK/NON DEPOK ==========
         $totalPasien = DB::table('pasiens')->count();
         
-        // Untuk PostgreSQL, gunakan nama kolom yang tepat
-        // Jika PKabupaten tidak ada, coba cek nama kolom sebenarnya
         $depokCount = DB::table('pasiens')
             ->where(function($query) {
                 $query->whereRaw('LOWER("PKabupaten") LIKE ?', ['%depok%'])
@@ -28,15 +26,7 @@ class DashboardController extends Controller
         
         $nonDepokCount = $totalPasien - $depokCount;
         
-        // Log untuk debugging
-        Log::info("Dashboard Debug: Total Pasien = {$totalPasien}, Depok = {$depokCount}, Non Depok = {$nonDepokCount}");
-        
-        // ========== DEBUG: CEK KOLOM YANG ADA ==========
-        // Uncomment baris ini untuk melihat kolom yang ada di tabel pasiens
-        // $columns = DB::getSchemaBuilder()->getColumnListing('pasiens');
-        // dd($columns); // Akan menampilkan semua kolom di tabel pasiens
-        
-        // ========== DATA PASIEN PRE-EKLAMPSIA (PAGINASI 5, FILTER KECAMATAN & SELESAI) ==========
+        // ========== DATA PASIEN PRE-EKLAMPSIA ==========
         $userId = Auth::id();
         $ps = DB::table('puskesmas')->select('id','kecamatan')->where('user_id', $userId)->first();
         $kecamatan = optional($ps)->kecamatan;
@@ -84,36 +74,102 @@ class DashboardController extends Controller
             ];
         });
 
-        // ========== DATA PASIEN NIFAS ==========
-        $totalNifasBidan = DB::table('pasien_nifas_bidan')->count();
-        $totalNifasRS = DB::table('pasien_nifas_rs')->count();
-        $totalNifas = $totalNifasBidan + $totalNifasRS;
-        $sudahKFI = 0;
+        // ========== DATA PASIEN NIFAS & KFI ==========
+        $totalNifas = DB::table('pasien_nifas_rs')->count();
+        
+        $pasienHadir = DB::table('pasien_nifas_rs')
+            ->whereNotNull('kf1_tanggal')
+            ->count();
+        
+        $pasienTidakHadir = DB::table('pasien_nifas_rs')
+            ->whereNull('kf1_tanggal')
+            ->count();
+        
+        $sudahKFI = DB::table('pasien_nifas_rs')
+            ->whereNotNull('kf1_tanggal')
+            ->whereNotNull('kf2_tanggal')
+            ->whereNotNull('kf3_tanggal')
+            ->whereNotNull('kf4_tanggal')
+            ->count();
 
-        // ========== STATISTIK LAINNYA ==========
-        $resikoNormal = DB::table('skrinings')->where('status_pre_eklampsia', 'Normal')->count();
-        $resikoPreeklampsia = DB::table('skrinings')->where('status_pre_eklampsia', '!=', 'Normal')->count();
+        // ========== RESIKO PRE-EKLAMPSIA ==========
+        $resikoNormal = DB::table('skrinings')
+            ->where('status_pre_eklampsia', 'Normal')
+            ->count();
 
+        $resikoPreeklampsia = DB::table('skrinings')
+            ->where('status_pre_eklampsia', 'Risiko Tinggi')
+            ->count();
+
+        // Fallback jika tidak ada data dengan status
+        if ($resikoNormal == 0 && $resikoPreeklampsia == 0) {
+            $resikoNormal = DB::table('skrinings')
+                ->where(function($query) {
+                    $query->where('kesimpulan', 'ILIKE', '%tidak%')
+                          ->orWhere('kesimpulan', 'ILIKE', '%normal%')
+                          ->orWhere('kesimpulan', 'ILIKE', '%aman%');
+                })
+                ->count();
+
+            $resikoPreeklampsia = DB::table('skrinings')
+                ->where(function($query) {
+                    $query->where('kesimpulan', 'ILIKE', '%berisiko%')
+                          ->orWhere('kesimpulan', 'ILIKE', '%risiko%')
+                          ->orWhere('kesimpulan', 'ILIKE', '%tinggi%');
+                })
+                ->count();
+        }
+
+        // ========== PEMANTAUAN ==========
+        $pemantauanSehat = $resikoNormal;
+        
+        // Total Dirujuk: dari skrinings.tindak_lanjut = true
+        $pemantauanDirujuk = DB::table('skrinings')
+            ->where('tindak_lanjut', true)
+            ->count();
+        
+        // Meninggal: Cek apakah ada di tabel lain atau sementara 0
+        // Karena tidak ada kolom meninggal di rujukan_nifas, kita cek tabel lain
+        $pemantauanMeninggal = 0;
+        
+        // OPTIONAL: Jika mau cek dari tabel kondisi_kesehatans atau riwayat_penyakit_nifas
+        // Uncomment jika ada data meninggal di tabel tersebut
+        /*
+        $pemantauanMeninggal = DB::table('kondisi_kesehatans')
+            ->where('status', 'meninggal')
+            ->orWhere('keterangan', 'ILIKE', '%meninggal%')
+            ->orWhere('kondisi', 'ILIKE', '%meninggal%')
+            ->count();
+        */
+
+        // ========== DATA UNTUK VIEW ==========
         $data = [
             'asalDepok' => $depokCount,
             'asalNonDepok' => $nonDepokCount,
             'resikoNormal' => $resikoNormal,
             'resikoPreeklampsia' => $resikoPreeklampsia,
-            'pasienHadir' => 0,
-            'pasienTidakHadir' => 0,
+            'pasienHadir' => $pasienHadir,
+            'pasienTidakHadir' => $pasienTidakHadir,
             'totalNifas' => $totalNifas,
             'sudahKFI' => $sudahKFI,
-            'pemantauanSehat' => DB::table('skrinings')
-                ->where(function($query) {
-                    $query->where('kesimpulan', 'like', '%aman%')
-                          ->orWhere('kesimpulan', 'like', '%tidak%')
-                          ->orWhere('kesimpulan', 'like', '%normal%');
-                })
-                ->count(),
-            'pemantauanDirujuk' => DB::table('skrinings')->where('tindak_lanjut', true)->count(),
-            'pemantauanMeninggal' => 0,
+            'pemantauanSehat' => $pemantauanSehat,
+            'pemantauanDirujuk' => $pemantauanDirujuk,
+            'pemantauanMeninggal' => $pemantauanMeninggal,
             'pePatients' => $pePatients
         ];
+
+        // Debug log
+        Log::info("Dashboard Data: ", [
+            'totalNifas' => $totalNifas,
+            'pasienHadir' => $pasienHadir,
+            'pasienTidakHadir' => $pasienTidakHadir,
+            'sudahKFI' => $sudahKFI,
+            'resikoNormal' => $resikoNormal,
+            'resikoPreeklampsia' => $resikoPreeklampsia,
+            'pemantauanSehat' => $pemantauanSehat,
+            'pemantauanDirujuk' => $pemantauanDirujuk,
+            'pemantauanMeninggal' => $pemantauanMeninggal,
+        ]);
 
         return view('puskesmas.dashboard.index', $data);
     }

@@ -85,20 +85,24 @@ class RujukanController extends Controller
     {
         $rsId = Auth::user()->rumahSakit->id ?? null;
 
-        // $id di sini juga dianggap skrining_id
         $rujukan = RujukanRs::where('skrining_id', $id)
             ->where('rs_id', $rsId)
             ->where('done_status', false)
             ->firstOrFail();
 
-        // Hapus resep obat yang terkait dengan rujukan ini (jika ada)
-        ResepObat::where('rujukan_rs_id', $rujukan->id)->delete();
+        // JANGAN HAPUS! UPDATE STATUS SAJA
+        $rujukan->update([
+            'done_status' => true, // true = sudah diproses (ditolak/disetujui)
+            'is_rujuk' => false,   // false = tidak dirujuk (ditolak)
+            // 'catatan_rujukan' => request('alasan_penolakan', 'Rujukan ditolak oleh RS'),
+            'updated_at' => now()
+        ]);
 
-        // Hapus rujukan
-        $rujukan->delete();
+        // Opsional: Hapus resep obat jika ada (tetap bisa dihapus)
+        ResepObat::where('rujukan_rs_id', $rujukan->id)->delete();
 
         return redirect()
             ->route('rs.penerimaan-rujukan.index')
-            ->with('success', 'Rujukan ditolak.');
+            ->with('success', 'Rujukan telah ditolak.');
     }
 }

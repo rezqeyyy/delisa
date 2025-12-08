@@ -22,7 +22,7 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
-        "sweetalert2": "^11.26.3",
+        "sweetalert2": "^11.26.4",
         "tom-select": "^2.4.3"
     }
 }

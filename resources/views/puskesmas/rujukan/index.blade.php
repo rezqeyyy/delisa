@@ -4,10 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Puskesmas — Rujukan</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    @vite([
+        'resources/css/app.css', 
+        'resources/js/app.js', 
+        'resources/js/dropdown.js', 
+        'resources/js/puskesmas/sidebar-toggle.js'
+    ])
+    
 </head>
-<body class="bg-[#FFF7FC] min-h-screen">
-    <div class="flex min-h-screen">
+<body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
+    <div class="flex min-h-screen" x-data="{ openSidebar: false }">
         <x-puskesmas.sidebar />
         
         <main class="flex-1 w-full xl:ml-[260px] p-6">
@@ -51,14 +58,30 @@
                                         </td>
                                         <td class="px-4 py-3 align-top">
                                             @php
-                                                $statusClass = match($rujukan->done_status) {
-                                                    true   => 'bg-green-100 text-green-800 border border-green-200',
-                                                    false  => 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-                                                    default => 'bg-gray-100 text-gray-800 border border-gray-200'
-                                                };
-                                                $statusText = $rujukan->done_status
-                                                    ? 'Selesai'
-                                                    : 'Menunggu Konfirmasi RS';
+                                                // LOGIC STATUS YANG BENAR:
+                                                // done_status = true/false
+                                                // is_rujuk = true/false
+                                                
+                                                $doneStatus = $rujukan->done_status ?? false;
+                                                $isRujuk = $rujukan->is_rujuk ?? true;
+                                                
+                                                if ($doneStatus == true && $isRujuk == true) {
+                                                    // Disetujui/Selesai
+                                                    $statusClass = 'bg-green-100 text-green-800 border border-green-200';
+                                                    $statusText = 'Selesai';
+                                                } elseif ($doneStatus == true && $isRujuk == false) {
+                                                    // Ditolak
+                                                    $statusClass = 'bg-red-100 text-red-800 border border-red-200';
+                                                    $statusText = 'Ditolak';
+                                                } elseif ($doneStatus == false && $isRujuk == true) {
+                                                    // Menunggu
+                                                    $statusClass = 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+                                                    $statusText = 'Menunggu Konfirmasi RS';
+                                                } else {
+                                                    // Status lain
+                                                    $statusClass = 'bg-gray-100 text-gray-800 border border-gray-200';
+                                                    $statusText = 'Status Tidak Diketahui';
+                                                }
                                             @endphp
                                             <span
                                                 class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[11px] font-semibold leading-tight text-center whitespace-normal break-words max-w-[160px] {{ $statusClass }}">

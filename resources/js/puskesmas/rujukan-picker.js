@@ -1,17 +1,42 @@
-import Swal from 'sweetalert2';
-
+// resources/js/puskesmas/rujukan-picker-fixed.js
 (function () {
+    console.log('=== RUJUKAN PICKER JS LOADED ===');
+    
     const btn = document.querySelector("#btnAjukanRujukan");
-    if (!btn) return;
-
+    if (!btn) {
+        console.error('❌ Tombol tidak ditemukan');
+        return;
+    }
+    
+    console.log('✅ Tombol ditemukan:', btn);
+    console.log('Tombol disabled?', btn.disabled);
+    
+    // Cek SweetAlert2
+    const Swal = window.Swal;
+    console.log('SweetAlert2 available?', !!Swal);
+    
     const submitUrl = btn.dataset?.submitUrl || "";
     const searchUrl = btn.dataset?.searchUrl || "";
     const csrfToken = btn.dataset?.csrf || "";
 
+    // Fungsi showPopup yang kompatibel
+    const showPopup = (opts) => {
+        try {
+            if (Swal && typeof Swal.fire === "function") {
+                return Swal.fire(opts);
+            }
+        } catch (e) {
+            console.warn('SweetAlert2 error:', e);
+        }
+        // Fallback ke alert biasa
+        alert(String(opts?.text || opts?.title || ""));
+        return Promise.resolve();
+    };
+
+    // Buat modal
     const modal = document.createElement("div");
     modal.id = "rujukanModal";
-    modal.className =
-        "fixed inset-0 z-[100] hidden items-center justify-center bg-black/40";
+    modal.className = "fixed inset-0 z-[100] hidden items-center justify-center bg-black/40";
     modal.innerHTML = `
       <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-lg">
         <div class="flex items-center justify-between mb-4">
@@ -19,7 +44,6 @@ import Swal from 'sweetalert2';
           <button type="button" id="closeRujukanModal" class="text-[#B9257F] hover:underline">Tutup</button>
         </div>
         
-        <!-- TAMBAHKAN TEXTAREA UNTUK CATATAN RUJUKAN -->
         <div class="mb-4">
           <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Catatan Rujukan (opsional)</label>
           <textarea id="catatanRujukan" placeholder="Opsional: jelaskan alasan rujukan dan kondisi pasien..." 
@@ -35,7 +59,6 @@ import Swal from 'sweetalert2';
         <div id="rsList" class="mt-3 max-h-64 overflow-y-auto border border-[#D9D9D9] rounded-xl"></div>
         
         <div class="mt-4 flex justify-end">
-          <!-- UBAH METHOD MENJADI AJAX & TAMBAH INPUT HIDDEN UNTUK CATATAN -->
           <form id="rujukForm">
             <input type="hidden" name="_token" value="${csrfToken}">
             <input type="hidden" name="rs_id" id="rsIdInput" value="">
@@ -48,7 +71,9 @@ import Swal from 'sweetalert2';
       </div>
     `;
     document.body.appendChild(modal);
+    console.log('✅ Modal dibuat');
 
+    // Elemen modal
     const btnClose = modal.querySelector("#closeRujukanModal");
     const input = modal.querySelector("#rsSearchInput");
     const list = modal.querySelector("#rsList");
@@ -56,26 +81,9 @@ import Swal from 'sweetalert2';
     const rsIdInput = modal.querySelector("#rsIdInput");
     const catatanTextarea = modal.querySelector("#catatanRujukan");
 
-    const showPopup = (opts) => {
-        // Pakai SweetAlert2 dari import; fallback ke alert biasa kalau error
-        try {
-            if (Swal && typeof Swal.fire === "function") {
-                return Swal.fire(opts);
-            }
-        } catch (e) {
-            // ignore
-        }
-        alert(String(opts?.text || ""));
-        return Promise.resolve();
-    };
-
+    // Fungsi helper
     function setSubmitEnabled(enabled) {
-        btnSubmit.classList.remove(
-            "bg-gray-400",
-            "hover:bg-gray-500",
-            "bg-[#B9257F]",
-            "hover:bg-[#a31f70]",
-        );
+        btnSubmit.classList.remove("bg-gray-400", "hover:bg-gray-500", "bg-[#B9257F]", "hover:bg-[#a31f70]");
         if (enabled) {
             btnSubmit.classList.add("bg-[#B9257F]", "hover:bg-[#a31f70]");
             btnSubmit.disabled = false;
@@ -86,11 +94,11 @@ import Swal from 'sweetalert2';
     }
 
     function validateForm() {
-        const hasRsSelected = Boolean(rsIdInput.value);
-        return hasRsSelected;
+        return Boolean(rsIdInput.value);
     }
 
     function openModal() {
+        console.log('🔄 Membuka modal rujukan');
         modal.classList.remove("hidden");
         modal.classList.add("flex");
         input.value = "";
@@ -114,62 +122,58 @@ import Swal from 'sweetalert2';
         try {
             const url = new URL(searchUrl, window.location.origin);
             url.searchParams.set("q", q || "");
+            console.log('🔍 Mencari RS dengan query:', q);
+            
             const res = await fetch(url.toString(), {
                 method: "GET",
                 credentials: "include",
             });
+            
             if (!res.ok) throw new Error("HTTP " + res.status);
+            
             const data = await res.json();
+            console.log('✅ Data RS diterima:', data);
             renderList(data);
         } catch (err) {
-            console.error("Error loadOptions RS:", err); // 🔍 DEBUG JS
-            list.innerHTML =
-                '<div class="p-3 text-sm text-red-600">Gagal memuat daftar rumah sakit.</div>';
+            console.error("❌ Error loadOptions RS:", err);
+            list.innerHTML = '<div class="p-3 text-sm text-red-600">Gagal memuat daftar rumah sakit.</div>';
         }
     }
 
     function renderList(items) {
         if (!items?.length) {
-            list.innerHTML =
-                '<div class="p-3 text-sm text-[#6B7280]">Tidak ada hasil.</div>';
+            list.innerHTML = '<div class="p-3 text-sm text-[#6B7280]">Tidak ada hasil.</div>';
             return;
         }
-        list.innerHTML = items
-            .map((item) => {
-                const title = item.nama || "-";
-                const subtitle = [
-                    "Lokasi:",
-                    item.alamat || "-",
-                    "Kec:",
-                    item.kecamatan || "-",
-                    "Kel:",
-                    item.kelurahan || "-",
-                ].join(" ");
-                return `
-              <button type="button" data-id="${item.id}"
-                      class="w-full text-left px-4 py-2 hover:bg-[#F9E5F1] border-b last:border-b-0">
-                  <div class="font-medium text-[#1D1D1D]">${title}</div>
-                  <div class="text-xs text-[#6B7280]">${subtitle}</div>
-              </button>
-          `;
-            })
-            .join("");
+        
+        list.innerHTML = items.map((item) => {
+            const title = item.nama || "-";
+            const subtitle = [
+                "Lokasi:",
+                item.alamat || "-",
+                "Kec:",
+                item.kecamatan || "-",
+                "Kel:",
+                item.kelurahan || "-",
+            ].join(" ");
+            return `
+                <button type="button" data-id="${item.id}"
+                        class="w-full text-left px-4 py-2 hover:bg-[#F9E5F1] border-b last:border-b-0">
+                    <div class="font-medium text-[#1D1D1D]">${title}</div>
+                    <div class="text-xs text-[#6B7280]">${subtitle}</div>
+                </button>
+            `;
+        }).join("");
 
+        // Tambah event listener ke setiap item
         list.querySelectorAll("button[data-id]").forEach((it) => {
             it.addEventListener("click", () => {
                 list.querySelectorAll("button[data-id]").forEach((el) => {
-                    el.classList.remove(
-                        "bg-[#F9E5F1]",
-                        "border",
-                        "border-[#B9257F]/40",
-                    );
+                    el.classList.remove("bg-[#F9E5F1]", "border", "border-[#B9257F]/40");
                 });
-                it.classList.add(
-                    "bg-[#F9E5F1]",
-                    "border",
-                    "border-[#B9257F]/40",
-                );
+                it.classList.add("bg-[#F9E5F1]", "border", "border-[#B9257F]/40");
                 rsIdInput.value = it.getAttribute("data-id") || "";
+                console.log('✅ RS dipilih:', rsIdInput.value);
                 setSubmitEnabled(validateForm());
             });
         });
@@ -193,6 +197,8 @@ import Swal from 'sweetalert2';
             _token: csrfToken,
         };
 
+        console.log('📤 Mengirim rujukan:', submitData);
+
         try {
             btnSubmit.disabled = true;
             btnSubmit.textContent = "Mengirim...";
@@ -207,6 +213,7 @@ import Swal from 'sweetalert2';
             });
 
             const result = await response.json();
+            console.log('📥 Response:', result);
 
             if (result.success) {
                 showPopup({
@@ -230,6 +237,7 @@ import Swal from 'sweetalert2';
                 btnSubmit.textContent = "Kirim Permintaan Rujukan";
             }
         } catch (error) {
+            console.error('❌ Fetch error:', error);
             showPopup({
                 icon: "error",
                 title: "Error",
@@ -242,9 +250,16 @@ import Swal from 'sweetalert2';
     }
 
     // EVENT LISTENERS
+    console.log('🔗 Menambahkan event listener ke tombol...');
     btn.addEventListener("click", (e) => {
         e.preventDefault();
-        if (btn.disabled) return;
+        console.log('🎯 Tombol diklik!');
+        
+        if (btn.disabled) {
+            console.log('❌ Tombol disabled, tidak bisa diklik');
+            return;
+        }
+        
         openModal();
     });
 
@@ -256,8 +271,9 @@ import Swal from 'sweetalert2';
     });
 
     document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && !modal.classList.contains("hidden"))
+        if (e.key === "Escape" && !modal.classList.contains("hidden")) {
             closeModal();
+        }
     });
 
     catatanTextarea.addEventListener("input", () => {
@@ -267,6 +283,10 @@ import Swal from 'sweetalert2';
     let typingTimer = null;
     input.addEventListener("input", () => {
         clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => loadOptions(input.value.trim()), 250);
+        typingTimer = setTimeout(() => {
+            loadOptions(input.value.trim());
+        }, 250);
     });
+
+    console.log('✅ Rujukan picker siap digunakan');
 })();

@@ -5,7 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>Puskesmas – Edit Profil</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/puskesmas/sidebar-toggle.js'])
+    @vite([
+        'resources/css/app.css', 
+        'resources/js/app.js', 
+        'resources/js/dropdown.js',
+        'resources/js/puskesmas/sidebar-toggle.js',
+        'resources/js/puskesmas/form-search.js'])
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
@@ -21,8 +26,10 @@
                         <span class="absolute inset-y-0 left-3 flex items-center">
                             <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60" alt="Search">
                         </span>
-                        <input type="text" placeholder="Search..."
-                            class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+                        <input type="text" placeholder="Search..." 
+                        id="dashboardSearch" {{-- ID penting untuk JS --}}
+                        data-form-search="true" {{-- Attribute khusus untuk form pages --}}
+                        class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
                     </div>
                 </div>
 
