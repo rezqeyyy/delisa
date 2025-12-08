@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +17,7 @@
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
         <x-puskesmas.sidebar />
-        
+
         <main class="flex-1 w-full xl:ml-[260px] p-6">
             <!-- Header -->
             <div class="mb-6">
@@ -26,7 +27,7 @@
 
             <!-- Table Rujukan -->
             <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
-                @if($rujukans->count() > 0)
+                @if ($rujukans->count() > 0)
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="text-[#7C7C7C] bg-gray-50">
@@ -41,7 +42,7 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#E9E9E9]">
-                                @foreach($rujukans as $index => $rujukan)
+                                @foreach ($rujukans as $index => $rujukan)
                                     <tr>
                                         <td class="px-4 py-3 align-top">{{ $index + 1 }}</td>
                                         <td class="px-4 py-3 font-medium align-top">
@@ -89,8 +90,8 @@
                                             </span>
                                         </td>
                                         <td class="px-4 py-3 align-top">
-                                            <a href="{{ route('puskesmas.rujukan.show', $rujukan->id) }}" 
-                                               class="px-4 py-2 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-sm hover:bg-gray-50 transition-colors">
+                                            <a href="{{ route('puskesmas.rujukan.show', $rujukan->id) }}"
+                                                class="px-4 py-2 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-sm hover:bg-gray-50 transition-colors">
                                                 Lihat Detail
                                             </a>
                                         </td>
@@ -102,18 +103,21 @@
                 @else
                     <div class="text-center py-12">
                         <div class="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
                             </svg>
                         </div>
                         <h3 class="text-lg font-medium text-gray-900 mb-2">Belum ada data rujukan</h3>
-                        <p class="text-gray-500 mb-4">Data rujukan akan muncul di sini setelah Anda mengajukan rujukan</p>
-                        <a href="{{ route('puskesmas.skrining') }}" 
-                           class="inline-flex items-center px-4 py-2 bg-[#B9257F] text-white rounded-lg hover:bg-[#a31f70] transition-colors">
+                        <p class="text-gray-500 mb-4">Data rujukan akan muncul di sini setelah Anda mengajukan rujukan
+                        </p>
+                        <a href="{{ route('puskesmas.skrining') }}"
+                            class="inline-flex items-center px-4 py-2 bg-[#B9257F] text-white rounded-lg hover:bg-[#a31f70] transition-colors">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M12 4v16m8-8H4"></path>
+                                    d="M12 4v16m8-8H4"></path>
                             </svg>
                             Ajukan Rujukan Baru
                         </a>
@@ -123,4 +127,5 @@
         </main>
     </div>
 </body>
+
 </html>

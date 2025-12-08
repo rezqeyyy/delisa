@@ -11,7 +11,7 @@
     class="fixed top-0 left-0 z-50 h-screen w-[260px] bg-white shadow-lg
            flex flex-col
            transform transition-transform duration-200
-           -translate-x-full">
+           -translate-x-full lg:translate-x-0">
 
     <div class="shrink-0">
         <div class="flex items-center justify-between gap-3 p-6 border-b border-[#CAC7C7]">
@@ -19,7 +19,9 @@
                 <img src="{{ asset('images/logo_fulltext.png') }}" alt="DeLISA" class="w-42 h-auto object-contain">
             </a>
 
-            <button id="sidebarCloseBtn" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-transparent hover:bg-black/5 transition outline-none focus:outline-none ring-0 shadow-none border-0" aria-label="Tutup menu">
+            <button id="sidebarCloseBtn"
+                class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-transparent hover:bg-black/5 transition outline-none focus:outline-none ring-0 shadow-none border-0 lg:hidden"
+                aria-label="Tutup menu">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#1D1D1D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M15 18l-6-6 6-6" />
                 </svg>
@@ -44,9 +46,7 @@
                     <img src="{{ asset('icons/Iconly/Regular/Light/Document.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Rujukan">
                     <span>Rujukan</span>
                 </a>
-                <!-- MENU LAPORAN DIHAPUS DARI SINI -->
 
-                <!-- ✅ PERBAIKAN: TAG <a> YANG BENAR -->
                 <a href="{{ route('puskesmas.pasien-nifas.index') }}" class="{{ $is('puskesmas.pasien-nifas*') ? $active : $idle }}">
                     <img src="{{ asset('icons/Iconly/Regular/Light/2 User.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Pasien Nifas">
                     <span>Pasien Nifas</span>
@@ -74,7 +74,7 @@
 </aside>
 
 <button id="sidebarOpenBtn"
-    class="fixed z-40 left-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-20 rounded-r-xl bg-white border border-[#E5E5E5] shadow focus:outline-none focus:ring-2 focus:ring-black/10"
+    class="fixed z-40 left-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-20 rounded-r-xl bg-white border border-[#E5E5E5] shadow focus:outline-none focus:ring-2 focus:ring-black/10 lg:hidden"
     aria-controls="sidebar" aria-label="Buka menu">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
