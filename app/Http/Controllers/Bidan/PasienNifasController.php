@@ -68,17 +68,21 @@ class PasienNifasController extends Controller
         // 3. Ambil Status KF (Kunjungan Nifas) Terakhir berbasis episode RS
         $pasienIds = $pasienNifas->getCollection()->pluck('pasien_id')->all();
         $rsEpisodes = DB::table('pasien_nifas_rs')
-            ->select('id','pasien_id','tanggal_mulai_nifas','tanggal_melahirkan','created_at')
+            ->select('id', 'pasien_id', 'tanggal_mulai_nifas', 'tanggal_melahirkan', 'created_at')
             ->whereIn('pasien_id', $pasienIds)
             ->orderByDesc('created_at')
             ->get();
         $rsByPasien = [];
         foreach ($rsEpisodes as $ep) {
-            if (!isset($rsByPasien[$ep->pasien_id])) { $rsByPasien[$ep->pasien_id] = $ep; }
+            if (!isset($rsByPasien[$ep->pasien_id])) {
+                $rsByPasien[$ep->pasien_id] = $ep;
+            }
         }
         $rsEpisodeIds = [];
         foreach ($rsByPasien as $pid => $ep) {
-            if (!empty($ep->id)) { $rsEpisodeIds[] = $ep->id; }
+            if (!empty($ep->id)) {
+                $rsEpisodeIds[] = $ep->id;
+            }
         }
         $kfDone = DB::table('kf_kunjungans')
             ->selectRaw('pasien_nifas_id as rs_episode_id, MAX(jenis_kf)::int as max_ke')
@@ -96,13 +100,13 @@ class PasienNifasController extends Controller
 
         // 4. Define Jadwal KF (Kunjungan Nifas)
         // KF1: 6–48 jam (~2 hari), KF2: 3–7 hari, KF3: 8–28 hari, KF4: 29–42 hari
-        $dueDays = [1=>2, 2=>7, 3=>28, 4=>42];
-        
+        $dueDays = [1 => 2, 2 => 7, 3 => 28, 4 => 42];
+
         $today = Carbon::today(); // Tanggal hari ini
         $now = Carbon::now();
 
         // 5. Transform Data untuk Hitung Peringatan
-        $windowsDays = [2=>['start'=>3,'end'=>7], 3=>['start'=>8,'end'=>28], 4=>['start'=>29,'end'=>42]];
+        $windowsDays = [2 => ['start' => 3, 'end' => 7], 3 => ['start' => 8, 'end' => 28], 4 => ['start' => 29, 'end' => 42]];
         $pasienNifas->getCollection()->transform(function ($row) use ($kfDone, $windowsDays, $today, $now, $rsIdByPasien, $rsBaseDates) {
             $rsId = $rsIdByPasien[$row->pasien_id] ?? null;
             $maxKe = $rsId ? (optional($kfDone->get($rsId))->max_ke ?? 0) : 0;
@@ -127,7 +131,8 @@ class PasienNifasController extends Controller
             $base = Carbon::parse($baseDateStr);
             if ($nextKe === 1) {
                 $hours = $base->diffInHours($now);
-                $startH = 6; $endH = 48;
+                $startH = 6;
+                $endH = 48;
                 if ($hours > $endH) {
                     $label = 'Telat menuju KF1';
                     $state = 'late';
@@ -137,7 +142,7 @@ class PasienNifasController extends Controller
                     $state = 'window';
                     $cls = 'bg-[#FFC400] text-[#1D1D1D]';
                 } else {
-                    $label = 'J-'.max(0, $startH - $hours).' menuju KF1';
+                    $label = 'J-' . max(0, $startH - $hours) . ' menuju KF1';
                     $state = 'early';
                     $cls = 'bg-[#6c757d] text-white';
                 }
@@ -146,15 +151,15 @@ class PasienNifasController extends Controller
                 $startDays = $windowsDays[$nextKe]['start'] ?? 0;
                 $endDays = $windowsDays[$nextKe]['end'] ?? 42;
                 if ($days > $endDays) {
-                    $label = 'Telat menuju KF'.$nextKe;
+                    $label = 'Telat menuju KF' . $nextKe;
                     $state = 'late';
                     $cls = 'bg-[#FF3B30] text-white';
                 } elseif ($days >= $startDays) {
-                    $label = 'Dalam periode KF'.$nextKe;
+                    $label = 'Dalam periode KF' . $nextKe;
                     $state = 'window';
                     $cls = 'bg-[#FFC400] text-[#1D1D1D]';
                 } else {
-                    $label = 'H-'.max(0, $startDays - $days).' menuju KF'.$nextKe;
+                    $label = 'H-' . max(0, $startDays - $days) . ' menuju KF' . $nextKe;
                     $state = 'early';
                     $cls = 'bg-[#6c757d] text-white';
                 }
@@ -209,7 +214,9 @@ class PasienNifasController extends Controller
         }
         try {
             $pasien = Pasien::where('nik', $nik)
-                ->with(['user', 'skrinings' => function ($q) { $q->orderBy('created_at', 'desc')->limit(1); }])
+                ->with(['user', 'skrinings' => function ($q) {
+                    $q->orderBy('created_at', 'desc')->limit(1);
+                }])
                 ->first();
             if ($pasien) {
                 $status = $this->getStatusRisikoFromSkrining($pasien);
@@ -259,8 +266,8 @@ class PasienNifasController extends Controller
         $rs = $skrining->jumlah_resiko_sedang ?? 0;
         $kes = strtolower(trim($skrining->kesimpulan ?? ''));
         $pe  = strtolower(trim($skrining->status_pre_eklampsia ?? ''));
-        $high = $rt > 0 || in_array($kes, ['beresiko','berisiko','risiko tinggi','tinggi']) || in_array($pe, ['beresiko','berisiko','risiko tinggi','tinggi']);
-        $mid  = $rs > 0 || in_array($kes, ['waspada','menengah','sedang','risiko sedang']) || in_array($pe, ['waspada','menengah','sedang','risiko sedang']);
+        $high = $rt > 0 || in_array($kes, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']) || in_array($pe, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']);
+        $mid  = $rs > 0 || in_array($kes, ['waspada', 'menengah', 'sedang', 'risiko sedang']) || in_array($pe, ['waspada', 'menengah', 'sedang', 'risiko sedang']);
         if ($high) return ['label' => 'Beresiko', 'type' => 'beresiko'];
         if ($mid)  return ['label' => 'Waspada', 'type' => 'waspada'];
         return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
@@ -312,12 +319,12 @@ class PasienNifasController extends Controller
 
             // 3. Cek Apakah Pasien Sudah Terdaftar (by NIK)
             $existingPasien = Pasien::with('user') // Eager load relasi user
-                                    ->where('nik', $validated['nik']) // Cari by NIK
-                                    ->first(); // Ambil 1 data pertama
-            
+                ->where('nik', $validated['nik']) // Cari by NIK
+                ->first(); // Ambil 1 data pertama
+
             if ($existingPasien) {
                 // Jika pasien sudah ada, UPDATE data yang berubah
-                
+
                 // Update data user (no telp)
                 if ($existingPasien->user) {
                     // Jika relasi user ada, update via relasi
@@ -349,7 +356,7 @@ class PasienNifasController extends Controller
                 $pasien = $existingPasien; // Set variable $pasien ke existing pasien
             } else {
                 // Jika pasien belum ada, BUAT data baru (User + Pasien)
-                
+
                 // 3a. Ambil Role "pasien"
                 $role = DB::table('roles')->where('nama_role', 'pasien')->first();
                 if (!$role) {
@@ -358,7 +365,7 @@ class PasienNifasController extends Controller
 
                 // 3b. Generate Email Unik
                 $baseEmail = $validated['nik'] . '@pasien.delisa.id'; // Email default dari NIK
-                
+
                 // Cek apakah email sudah ada
                 $email = User::where('email', $baseEmail)->exists()
                     ? ($validated['nik'] . '.' . time() . '@pasien.delisa.id') // Jika ada, tambah timestamp
@@ -411,17 +418,16 @@ class PasienNifasController extends Controller
             ]);
 
             DB::commit();
-            
+
             return redirect()->route('bidan.pasien-nifas')
                 ->with('success', 'Data pasien nifas berhasil ditambahkan');
-                
         } catch (\Exception $e) {
             // Jika ada error, ROLLBACK semua perubahan
             DB::rollBack();
-            
+
             // Log error ke file log
             Log::error('Bidan Store Pasien Nifas: ' . $e->getMessage());
-            
+
             // Redirect kembali dengan input lama dan pesan error
             return back()->withInput()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
@@ -493,23 +499,42 @@ class PasienNifasController extends Controller
         $episode = \App\Models\PasienNifasRs::where('pasien_id', $pasienNifas->pasien_id)
             ->orderByDesc('created_at')
             ->first();
+
         $kfDoneByJenis = collect();
+        $deathKe = null;
+
         if ($episode) {
+            // Riwayat KF per jenis (untuk status & tanggal terakhir)
             $rows = \App\Models\KfKunjungan::where('pasien_nifas_id', $episode->id)
                 ->select('jenis_kf', DB::raw('MAX(tanggal_kunjungan) as last_date'))
                 ->groupBy('jenis_kf')
                 ->get();
             $kfDoneByJenis = $rows->keyBy('jenis_kf');
+
+            // Cari KF pertama yang berkesimpulan Meninggal/Wafat
+            $deathKe = \App\Models\KfKunjungan::query()
+                ->where('pasien_nifas_id', $episode->id)
+                ->where(function ($q) {
+                    $q->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'meninggal'")
+                        ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
+                })
+                ->min('jenis_kf'); // bisa null jika belum ada yang wafat
         }
 
-        return view('bidan.pasien-nifas.show', compact('pasienNifas', 'anakPasien', 'kfDoneByJenis', 'firstAnakId'));
+        return view('bidan.pasien-nifas.show', compact(
+            'pasienNifas',
+            'anakPasien',
+            'kfDoneByJenis',
+            'firstAnakId',
+            'deathKe'
+        ));
     }
 
     public function formKfAnak($id, $anakId, $jenisKf)
     {
         $bidan = Auth::user()->bidan;
         abort_unless($bidan, 403);
-        if (!in_array((int)$jenisKf, [1,2,3,4], true)) abort(404);
+        if (!in_array((int)$jenisKf, [1, 2, 3, 4], true)) abort(404);
 
         $pasienNifas = PasienNifasBidan::with(['pasien.user'])->findOrFail($id);
         $anakList = AnakPasien::where('nifas_bidan_id', $id)->get();
@@ -529,6 +554,29 @@ class PasienNifasController extends Controller
                 ->first();
         }
 
+        if ($episode) {
+            // STOP: jika sudah ada KF dengan kesimpulan Meninggal/Wafat,
+            // maka KF sesudahnya tidak boleh dicatat lagi.
+            $deathKe = \App\Models\KfKunjungan::query()
+                ->where('pasien_nifas_id', $episode->id)
+                ->where(function ($q) {
+                    $q->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'meninggal'")
+                        ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
+                })
+                ->selectRaw('MIN((jenis_kf)::int) as death_ke')
+                ->value('death_ke');
+
+            if (!is_null($deathKe) && (int) $jenisKf > (int) $deathKe) {
+                return redirect()
+                    ->route('bidan.pasien-nifas.detail', $id)
+                    ->with(
+                        'error',
+                        "KF{$jenisKf} tidak dapat dicatat karena pada KF{$deathKe} ibu/bayi sudah tercatat meninggal/wafat."
+                    );
+            }
+        }
+
+
         return view('bidan.pasien-nifas.kf-form', compact('pasienNifas', 'jenisKf', 'anakList', 'selectedAnakId', 'existingKf'));
     }
 
@@ -536,7 +584,7 @@ class PasienNifasController extends Controller
     {
         $bidan = Auth::user()->bidan;
         abort_unless($bidan, 403);
-        if (!in_array((int)$jenisKf, [1,2,3,4], true)) abort(404);
+        if (!in_array((int)$jenisKf, [1, 2, 3, 4], true)) abort(404);
 
         $pasienNifas = PasienNifasBidan::findOrFail($id);
         $anak = AnakPasien::where('id', $anakId)->where('nifas_bidan_id', $pasienNifas->id)->firstOrFail();
@@ -552,13 +600,17 @@ class PasienNifasController extends Controller
         ]);
 
         $mapRaw = $request->input('map', null);
-        if (is_string($mapRaw)) { $mapRaw = str_replace(',', '.', $mapRaw); }
+        if (is_string($mapRaw)) {
+            $mapRaw = str_replace(',', '.', $mapRaw);
+        }
         $map = null;
         if (isset($data['sbp'], $data['dbp']) && is_numeric($data['sbp']) && is_numeric($data['dbp'])) {
             $map = round(((float)$data['sbp'] + (2 * (float)$data['dbp'])) / 3, 2);
         } elseif ($mapRaw !== null && is_numeric($mapRaw)) {
             $map = round((float)$mapRaw, 2);
-        } else { $map = null; }
+        } else {
+            $map = null;
+        }
         $mapInt = $map !== null ? (int) round($map) : null;
 
         $episode = \App\Models\PasienNifasRs::where('pasien_id', $pasienNifas->pasien_id)
@@ -576,9 +628,32 @@ class PasienNifasController extends Controller
                 Log::warning('KF Bidan: tidak ada RS terdaftar, skip simpan ke kf_kunjungans', ['pasien_id' => $pasienNifas->pasien_id]);
             }
         }
+
+        if ($episode) {
+            // STOP: jika sudah ada KF dengan kesimpulan Meninggal/Wafat,
+            // maka KF sesudahnya tidak boleh disimpan.
+            $deathKe = \App\Models\KfKunjungan::query()
+                ->where('pasien_nifas_id', $episode->id)
+                ->where(function ($q) {
+                    $q->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'meninggal'")
+                        ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
+                })
+                ->selectRaw('MIN((jenis_kf)::int) as death_ke')
+                ->value('death_ke');
+
+            if (!is_null($deathKe) && (int) $jenisKf > (int) $deathKe) {
+                return redirect()
+                    ->route('bidan.pasien-nifas.detail', $id)
+                    ->with(
+                        'error',
+                        "KF{$jenisKf} tidak dapat disimpan karena pada KF{$deathKe} ibu/bayi sudah tercatat meninggal/wafat."
+                    );
+            }
+        }
+
         if ($episode) {
             $kk = \App\Models\KfKunjungan::updateOrCreate(
-                [ 'pasien_nifas_id' => $episode->id, 'jenis_kf' => (int)$jenisKf ],
+                ['pasien_nifas_id' => $episode->id, 'jenis_kf' => (int)$jenisKf],
                 [
                     'tanggal_kunjungan' => Carbon::parse($data['tanggal_kunjungan']),
                     'sbp' => $data['sbp'] ?? null,
@@ -597,9 +672,8 @@ class PasienNifasController extends Controller
             ]);
         }
 
-        return redirect()->route('bidan.pasien-nifas.detail', $id)->with('success', 'KF'.$jenisKf.' berhasil disimpan');
+        return redirect()->route('bidan.pasien-nifas.detail', $id)->with('success', 'KF' . $jenisKf . ' berhasil disimpan');
     }
-
 }
 
 /*

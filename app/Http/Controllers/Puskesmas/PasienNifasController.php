@@ -25,7 +25,7 @@ class PasienNifasController extends Controller
             ->paginate(10);
 
         $totalPasienNifas = PasienNifasRs::count();
-        
+
         // Hitung statistik KFI (Kunjungan Fisik Ibu)
         $sudahKFI = PasienNifasRs::whereNotNull('kf1_tanggal')->count();
         $belumKFI = $totalPasienNifas - $sudahKFI;
@@ -41,13 +41,26 @@ class PasienNifasController extends Controller
     /**
      * Tampilkan detail pasien nifas
      */
+    /**
+     * Tampilkan detail pasien nifas
+     */
     public function show($id)
     {
         $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs', 'anakPasien'])
             ->findOrFail($id);
 
-        return view('puskesmas.pasien-nifas.show', compact('pasienNifas'));
+        // Cari KF pertama yang berkesimpulan Meninggal/Wafat
+        $deathKe = KfKunjungan::query()
+            ->where('pasien_nifas_id', $id)
+            ->where(function ($q) {
+                $q->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'meninggal'")
+                    ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
+            })
+            ->min('jenis_kf'); // bisa null jika belum ada yang wafat
+
+        return view('puskesmas.pasien-nifas.show', compact('pasienNifas', 'deathKe'));
     }
+
 
     /**
      * Form untuk mencatat KF
@@ -55,39 +68,60 @@ class PasienNifasController extends Controller
     public function formCatatKf($id, $jenisKf)
     {
         $pasienNifas = PasienNifasRs::with(['pasien.user'])->findOrFail($id);
-        
+
         // Validasi input jenis KF
         if (!in_array($jenisKf, [1, 2, 3, 4])) {
             abort(404, 'Jenis KF tidak valid');
         }
-        
+
+        // STOP: jika sudah ada KF dengan kesimpulan Meninggal/Wafat,
+        // maka KF sesudahnya tidak boleh dicatat lagi.
+        $deathKe = KfKunjungan::query()
+            ->where('pasien_nifas_id', $id)
+            ->where(function ($q) {
+                $q->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'meninggal'")
+                    ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
+            })
+            ->selectRaw('MIN((jenis_kf)::int) as death_ke')
+            ->value('death_ke');
+
+        if (!is_null($deathKe) && (int) $jenisKf > (int) $deathKe) {
+            return redirect()
+                ->route('puskesmas.pasien-nifas.show', $id)
+                ->with(
+                    'error',
+                    "KF{$jenisKf} tidak dapat dicatat karena pada KF{$deathKe} pasien sudah tercatat meninggal/wafat."
+                );
+        }
+
+
         // 1. Cek apakah sudah selesai
         if ($pasienNifas->isKfSelesai($jenisKf)) {
             return redirect()
                 ->route('puskesmas.pasien-nifas.show', $id)
                 ->with('error', "KF{$jenisKf} sudah selesai dicatat!");
         }
-        
+
         // 2. Cek status
         $status = $pasienNifas->getKfStatus($jenisKf);
-        
+
         // Untuk KF terlambat, tetap tampilkan form dengan warning
         if ($status == 'terlambat') {
             session()->flash('warning', "Periode normal KF{$jenisKf} sudah lewat. Anda tetap dapat mencatatnya sebagai kunjungan terlambat.");
         }
-        
+
         // Untuk KF belum mulai, tetap block
         if ($status == 'belum_mulai') {
             $mulai = $pasienNifas->getKfMulai($jenisKf);
-            $pesan = $mulai 
+            $pesan = $mulai
                 ? "Belum waktunya untuk KF{$jenisKf}. Dapat dilakukan mulai " . $mulai->format('d/m/Y H:i')
                 : "Belum dapat melakukan KF{$jenisKf}";
-            
+
             return redirect()
                 ->route('puskesmas.pasien-nifas.show', $id)
                 ->with('error', $pesan);
         }
-        
+
         return view('puskesmas.pasien-nifas.form-kf', compact('pasienNifas', 'jenisKf'));
     }
 
@@ -123,12 +157,35 @@ class PasienNifasController extends Controller
         }
 
         $pasienNifas = PasienNifasRs::findOrFail($id);
-        
+
         // Validasi jenis KF
         if (!in_array($jenisKf, [1, 2, 3, 4])) {
             abort(404, 'Jenis KF tidak valid');
         }
-        
+
+        // STOP: jika sudah ada KF dengan kesimpulan Meninggal/Wafat,
+        // maka KF sesudahnya tidak boleh disimpan.
+        $deathKe = KfKunjungan::query()
+            ->where('pasien_nifas_id', $id)
+            ->where(function ($q) {
+                $q->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'meninggal'")
+                    ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
+            })
+            ->selectRaw('MIN((jenis_kf)::int) as death_ke')
+            ->value('death_ke');
+
+        if (!is_null($deathKe) && (int) $jenisKf > (int) $deathKe) {
+            return redirect()
+                ->route('puskesmas.pasien-nifas.show', $id)
+                ->with(
+                    'error',
+                    "KF{$jenisKf} tidak dapat disimpan karena pada KF{$deathKe} pasien sudah tercatat meninggal/wafat."
+                );
+        }
+
+        // Cek apakah sudah selesai (sistem baru atau lama)
+
+
         // Cek apakah sudah selesai (sistem baru atau lama)
         if ($pasienNifas->isKfSelesai($jenisKf)) {
             return redirect()
@@ -167,7 +224,7 @@ class PasienNifasController extends Controller
             // ========== UPDATE FOREIGN KEY DI TABEL LAMA ==========
             $pasienNifas->update([
                 "kf{$jenisKf}_id" => $kfKunjungan->id,
-                
+
                 // ========== TETAP UPDATE KOLOM LAMA UNTUK KOMPATIBILITAS ==========
                 "kf{$jenisKf}_tanggal" => Carbon::parse($request->tanggal_kunjungan),
                 "kf{$jenisKf}_catatan" => $request->catatan,
@@ -178,7 +235,7 @@ class PasienNifasController extends Controller
             // Tentukan pesan berdasarkan status
             $status = $pasienNifas->getKfStatus($jenisKf);
             $pesan = "KF{$jenisKf} berhasil dicatat!";
-            
+
             if ($status == 'terlambat') {
                 $pesan .= " (Catatan: dilakukan di luar periode normal)";
             }
@@ -189,10 +246,9 @@ class PasienNifasController extends Controller
             return redirect()
                 ->route('puskesmas.pasien-nifas.show', $id)
                 ->with('success', $pesan);
-                
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             // Log error untuk debugging
             Log::error('Gagal menyimpan KF (sistem baru): ' . $e->getMessage(), [
                 'id' => $id,
@@ -200,7 +256,7 @@ class PasienNifasController extends Controller
                 'request' => $request->all(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return redirect()->back()
                 ->with('error', 'Gagal menyimpan data KF. Error: ' . $e->getMessage())
                 ->withInput();
@@ -212,16 +268,16 @@ class PasienNifasController extends Controller
         try {
             // 1. Ambil data pasien nifas
             $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs'])->findOrFail($id);
-            
+
             // 2. Cek apakah KF ini sudah dicatat di tabel baru (KfKunjungan)
             $kfKunjungan = KfKunjungan::where('pasien_nifas_id', $id)
                 ->where('jenis_kf', $jenisKf)
                 ->first();
-            
+
             if (!$kfKunjungan) {
                 return back()->with('error', "KF{$jenisKf} belum dicatat untuk pasien ini");
             }
-            
+
             // 3. Siapkan data untuk PDF
             $data = [
                 'pasienNifas' => $pasienNifas,
@@ -230,24 +286,23 @@ class PasienNifasController extends Controller
                 'tanggal_cetak' => now()->format('d/m/Y H:i'),
                 'title' => "Laporan KF{$jenisKf} - " . ($pasienNifas->pasien->user->name ?? 'N/A'),
             ];
-            
+
             // 4. Generate PDF
             $pdf = Pdf::loadView('puskesmas.pdf.kf-single', $data);
-            
+
             // 5. Nama file PDF
-            $fileName = "KF{$jenisKf}_" . 
-                       str_replace(' ', '_', $pasienNifas->pasien->user->name ?? 'pasien') . "_" . 
-                       now()->format('Ymd_His') . '.pdf';
-            
+            $fileName = "KF{$jenisKf}_" .
+                str_replace(' ', '_', $pasienNifas->pasien->user->name ?? 'pasien') . "_" .
+                now()->format('Ymd_His') . '.pdf';
+
             // 6. Download PDF
             return $pdf->download($fileName);
-            
         } catch (\Exception $e) {
             Log::error('Error generating KF PDF: ' . $e->getMessage());
             return back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
         }
     }
-    
+
     /**
      * Download PDF untuk semua KF
      */
@@ -256,16 +311,16 @@ class PasienNifasController extends Controller
         try {
             // 1. Ambil data pasien nifas
             $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs'])->findOrFail($id);
-            
+
             // 2. Ambil semua KF dari tabel baru (KfKunjungan)
             $kfKunjungan = KfKunjungan::where('pasien_nifas_id', $id)
                 ->orderBy('jenis_kf')
                 ->get();
-            
+
             if ($kfKunjungan->isEmpty()) {
                 return back()->with('error', 'Belum ada KF yang dicatat untuk pasien ini');
             }
-            
+
             // 3. Siapkan data untuk PDF
             $data = [
                 'pasienNifas' => $pasienNifas,
@@ -273,18 +328,17 @@ class PasienNifasController extends Controller
                 'tanggal_cetak' => now()->format('d/m/Y H:i'),
                 'title' => "Laporan Semua KF - " . ($pasienNifas->pasien->user->name ?? 'N/A'),
             ];
-            
+
             // 4. Generate PDF
             $pdf = Pdf::loadView('puskesmas.pdf.kf-all', $data);
-            
+
             // 5. Nama file PDF
-            $fileName = "Semua_KF_" . 
-                       str_replace(' ', '_', $pasienNifas->pasien->user->name ?? 'pasien') . "_" . 
-                       now()->format('Ymd_His') . '.pdf';
-            
+            $fileName = "Semua_KF_" .
+                str_replace(' ', '_', $pasienNifas->pasien->user->name ?? 'pasien') . "_" .
+                now()->format('Ymd_His') . '.pdf';
+
             // 6. Download PDF
             return $pdf->download($fileName);
-            
         } catch (\Exception $e) {
             Log::error('Error generating All KF PDF: ' . $e->getMessage());
             return back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
