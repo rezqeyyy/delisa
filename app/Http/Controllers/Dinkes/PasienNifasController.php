@@ -88,17 +88,29 @@ class PasienNifasController extends Controller
                     ->get()
                     ->keyBy('pasien_nifas_id');
 
+                // Deteksi episode nifas yang punya kesimpulan Meninggal/Wafat
+                $deathEpisodeIds = DB::table('kf_kunjungans as kk')
+                    ->whereIn('kk.pasien_nifas_id', $rsEpisodeIds)
+                    ->whereRaw("LOWER(COALESCE(kk.kesimpulan_pantauan,'')) IN ('meninggal','wafat')")
+                    ->distinct()
+                    ->pluck('kk.pasien_nifas_id')
+                    ->toArray();
+
                 // Remap: pasien_id => info KF episode RS terbarunya
                 $map = [];
                 foreach ($rsByPasien as $pid => $ep) {
                     $episodeStat = $kfByEpisode->get($ep->id);
                     if ($episodeStat) {
-                        $map[$pid] = $episodeStat;
+                        $map[$pid] = (object) [
+                            'max_ke'       => $episodeStat->max_ke,
+                            'is_meninggal' => in_array($ep->id, $deathEpisodeIds, true),
+                        ];
                     }
                 }
 
                 $kfDone = collect($map);
             }
+
 
             // ✅ DEBUGGING: untuk memastikan mapping pasien → KF berjalan
             Log::debug('Dinkes Pasien Nifas - Mapping KF per pasien', [
@@ -243,6 +255,8 @@ class PasienNifasController extends Controller
             ->leftJoin(DB::raw($latestSkriningSql), 'ls.pasien_id', '=', 'p.id')
             // puskesmas asal skrining
             ->leftJoin('puskesmas as pk', 'pk.id', '=', 'ls.puskesmas_id')
+            // ❗ Hanya pasien yang berdomisili di Depok (sesuai PKabupaten)
+            ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'")
             ->selectRaw(<<<'SQL'
                 p.id as pasien_id,
                 u.name,
@@ -287,6 +301,7 @@ class PasienNifasController extends Controller
         // Order dasar
         return $query->orderBy('u.name');
     }
+
 
     /**
      * Export Excel (menghormati filter q + puskesmas_id + sort).
@@ -342,16 +357,27 @@ class PasienNifasController extends Controller
                     ->get()
                     ->keyBy('pasien_nifas_id');
 
+                $deathEpisodeIds = DB::table('kf_kunjungans as kk')
+                    ->whereIn('kk.pasien_nifas_id', $rsEpisodeIds)
+                    ->whereRaw("LOWER(COALESCE(kk.kesimpulan_pantauan,'')) IN ('meninggal','wafat')")
+                    ->distinct()
+                    ->pluck('kk.pasien_nifas_id')
+                    ->toArray();
+
                 $map = [];
                 foreach ($rsByPasien as $pid => $ep) {
                     $episodeStat = $kfByEpisode->get($ep->id);
                     if ($episodeStat) {
-                        $map[$pid] = $episodeStat;
+                        $map[$pid] = (object) [
+                            'max_ke'       => $episodeStat->max_ke,
+                            'is_meninggal' => in_array($ep->id, $deathEpisodeIds, true),
+                        ];
                     }
                 }
 
                 $kfDone = collect($map);
             }
+
 
             // ✅ DEBUGGING: jejak singkat saat export
             Log::debug('Dinkes Export Pasien Nifas - KF per pasien', [
@@ -553,8 +579,10 @@ class PasienNifasController extends Controller
 
         $hasKf = $pasienId && $kfDone->has($pasienId);
 
+        $info = $hasKf ? $kfDone->get($pasienId) : null;
+
         if ($hasKf) {
-            $maxKe = (int) ($kfDone->get($pasienId)->max_ke ?? 0);
+            $maxKe = (int) ($info->max_ke ?? 0);
             // Batasi agar tidak lewat 4
             $maxKe = max(0, min(4, $maxKe));
         } else {
@@ -562,8 +590,28 @@ class PasienNifasController extends Controller
             $maxKe = 0;
         }
 
+        $isMeninggal = $info && !empty($info->is_meninggal);
+
+        // Simpan flag ke row untuk dipakai di Blade
+        $row->is_meninggal = $isMeninggal ? true : false;
+
         // KF maksimal yang sudah dilakukan (dipakai di Blade)
         $row->max_kf_done = $maxKe;
+
+        // === JIKA PASIEN MENINGGAL → pemantauan selesai, tidak ada sisa waktu ===
+        if ($isMeninggal) {
+            $row->next_kf_ke      = null;
+            $row->jadwal_kf_date  = null;
+            $row->hari_sisa       = null;
+
+            $row->sisa_waktu_label = 'Pasien Meninggal';
+            // badge gelap sebagai penanda khusus
+            $row->badge_class     = 'bg-[#111827] text-white';
+            // Taruh di level paling rendah (tidak ikut antrian prioritas intervensi)
+            $row->priority_level  = 5;
+
+            return $row;
+        }
 
         // === JIKA SUDAH KF4 → SEMUA KUNJUNGAN SELESAI ===
         if ($maxKe >= 4) {
@@ -663,6 +711,7 @@ class PasienNifasController extends Controller
 
         return $row;
     }
+
 
 
     /**

@@ -223,7 +223,7 @@
                                     <img src="{{ asset('icons/Iconly/Regular/Light/3 User.svg') }}"
                                         class="sm:block w-3.5 h-3.5" alt="">
                                 </span>
-                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Data Pasien Nifas</h3>
+                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Data Pasien Nifas Depok</h3>
                             </div>
                         </div>
 

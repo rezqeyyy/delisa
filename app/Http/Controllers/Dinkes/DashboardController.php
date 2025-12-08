@@ -22,6 +22,8 @@ use App\Models\KfKunjungan;
 // HTTP & DB
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 
 // Tanggal
 use Carbon\Carbon;
@@ -98,19 +100,23 @@ class DashboardController extends Controller
         $non   = $asalNonDepok;
 
         // ===================== 2. KUNJUNGAN NIFAS PER BULAN =====================
-        // Dihitung per PASIEN nifas, hanya yang punya data di kf_kunjungans
+        // Dihitung per PASIEN nifas warga Depok yang punya kunjungan KF
+        // (bukan jumlah baris KF mentah)
 
         $kfPerBulan = KfKunjungan::query()
+            ->join('pasien_nifas_rs as pnr', 'pnr.id', '=', 'kf_kunjungans.pasien_nifas_id')
+            ->join('pasiens as p', 'p.id', '=', 'pnr.pasien_id')
             ->selectRaw('
-        EXTRACT(MONTH FROM tanggal_kunjungan)::int AS bulan,
-        COUNT(*)::int AS total
-    ')
-            ->whereYear('tanggal_kunjungan', $selectedYear)
+                EXTRACT(MONTH FROM kf_kunjungans.tanggal_kunjungan)::int AS bulan,
+                COUNT(DISTINCT p.id)::int AS total
+            ')
+            ->whereYear('kf_kunjungans.tanggal_kunjungan', $selectedYear)
+            ->whereRaw('COALESCE(p."PKabupaten", \'\') ILIKE \'%Depok%\'')
             ->groupBy('bulan')
             ->orderBy('bulan')
             ->get();
 
-        // isi 12 slot bulan
+        // isi 12 slot bulan (1–12), default 0
         $seriesBulanan = array_fill(1, 12, 0);
 
         foreach ($kfPerBulan as $row) {
@@ -118,6 +124,7 @@ class DashboardController extends Controller
         }
 
         $seriesBulanan = array_values($seriesBulanan);
+
 
 
         // ===================== 3. RISIKO PRE-EKLAMPSIA (LATEST ONLY) =====================
@@ -137,20 +144,44 @@ class DashboardController extends Controller
 
         // ===================== 4. DATA NIFAS (TOTAL & SUDAH KFI) =====================
 
+        // Gabungkan semua episode nifas (bidan + RS)
         $unionNifas = PasienNifasBidan::select('pasien_id')
             ->union(
                 PasienNifasRs::select('pasien_id')
             );
 
-        $totalNifas = DB::query()
+        // Ambil daftar pasien_id nifas yang berdomisili di Depok saja
+        $pasienNifasDepokIds = DB::query()
             ->fromSub($unionNifas, 't')
+            ->join('pasiens as p', 'p.id', '=', 't.pasien_id')
+            ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'")
             ->distinct()
-            ->count('pasien_id');
+            ->pluck('t.pasien_id')
+            ->toArray();
 
-        // Sudah KFI = pasien nifas yang punya minimal 1 kunjungan di tabel kf_kunjungans
-        $sudahKFI = KfKunjungan::query()
-            ->distinct('pasien_nifas_id')
-            ->count('pasien_nifas_id');
+        $totalNifas = count($pasienNifasDepokIds);
+
+        // Sudah KFI = episode nifas RS yang punya minimal 1 KF
+        // dan PASIEN-nya warga Depok
+        $sudahKFI = 0;
+
+        if (!empty($pasienNifasDepokIds)) {
+            $sudahKFI = KfKunjungan::query()
+                ->join('pasien_nifas_rs as pnr', 'pnr.id', '=', 'kf_kunjungans.pasien_nifas_id')
+                ->join('pasiens as p', 'p.id', '=', 'pnr.pasien_id')
+                ->whereIn('pnr.pasien_id', $pasienNifasDepokIds)
+                ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'")
+                ->distinct('kf_kunjungans.pasien_nifas_id')
+                ->count('kf_kunjungans.pasien_nifas_id');
+        }
+
+        // Debug singkat supaya bisa dipantau di log
+        Log::debug('Dashboard Dinkes - Statistik Nifas (Depok saja)', [
+            'total_nifas_depok' => $totalNifas,
+            'sudah_kfi_depok'   => $sudahKFI,
+            'pasien_ids_depok'  => $pasienNifasDepokIds,
+        ]);
+
 
         // ===================== 5. HADIR / MANGKIR (LATEST SKRINING) =====================
 
@@ -193,20 +224,25 @@ class DashboardController extends Controller
             ) AS lkf
         SQL;
 
-        $pemantauanSehat = DB::query()
+        // Hanya hitung pemantauan untuk pasien nifas RS yang PASIEN-nya warga Depok
+        $basePemantauanQuery = DB::query()
             ->from(DB::raw($latestKfSql))
+            ->join('pasien_nifas_rs as pnr', 'pnr.id', '=', 'lkf.pasien_nifas_id')
+            ->join('pasiens as p', 'p.id', '=', 'pnr.pasien_id')
+            ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'");
+
+        $pemantauanSehat = (clone $basePemantauanQuery)
             ->where('kesimpulan_pantauan', 'Sehat')
             ->count();
 
-        $pemantauanDirujuk = DB::query()
-            ->from(DB::raw($latestKfSql))
+        $pemantauanDirujuk = (clone $basePemantauanQuery)
             ->where('kesimpulan_pantauan', 'Dirujuk')
             ->count();
 
-        $pemantauanMeninggal = DB::query()
-            ->from(DB::raw($latestKfSql))
+        $pemantauanMeninggal = (clone $basePemantauanQuery)
             ->where('kesimpulan_pantauan', 'Meninggal')
             ->count();
+
 
         $sehat     = $pemantauanSehat;
         $dirujuk   = $pemantauanDirujuk;

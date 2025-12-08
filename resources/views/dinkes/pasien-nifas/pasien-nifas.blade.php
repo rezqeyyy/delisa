@@ -260,6 +260,13 @@
                                         <span class="block text-[11px] leading-snug text-[#4B5563]">
                                             {{ $row->jadwal_kf_text }}
                                         </span>
+
+                                        @if (!empty($row->is_meninggal))
+                                            <span class="block text-[11px] leading-snug font-semibold text-red-600">
+                                                Pasien ini telah meninggal — pemantauan KF dihentikan.
+                                            </span>
+                                        @endif
+
                                     </div>
 
 
@@ -387,6 +394,13 @@
                                                 <span class="text-[11px] leading-snug text-[#4B5563]">
                                                     {{ $row->jadwal_kf_text }}
                                                 </span>
+
+                                                @if (!empty($row->is_meninggal))
+                                                    <span class="text-[11px] font-semibold leading-snug text-red-600">
+                                                        Pasien ini telah meninggal — pemantauan KF dihentikan.
+                                                    </span>
+                                                @endif
+
                                             </div>
                                         </td>
 

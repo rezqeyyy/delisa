@@ -136,58 +136,74 @@ class PasienController extends Controller
             $rawKf = KfKunjungan::query()
                 ->from('kf_kunjungans as kk')
                 ->whereIn('kk.pasien_nifas_id', $episodeNifasRsIds)
-                // urutkan sehingga created_at terbaru berada di bawah group jenis_kf yang sama
                 ->orderBy('kk.created_at', 'desc')
                 ->get();
 
-            // 3) Susun status per KF1..KF4 (ambil catatan terbaru per jenis_kf)
-            $byKe = [];
+            // Cek KF terbaru: jika kesimpulan = Meninggal/Wafat → jangan kirim ringkasan KF ke view
+            $latestKf = $rawKf->first();
 
-            foreach ($rawKf as $row) {
-                // contoh isi: 'KF1', 'kf 2', '2', dll → ambil digit pertamanya
-                $jenis = strtolower(trim($row->jenis_kf));
-                $ke    = null;
+            $isMeninggal = $latestKf
+                && in_array(
+                    strtolower(trim((string) $latestKf->kesimpulan_pantauan)),
+                    ['meninggal', 'wafat'],
+                    true
+                );
 
-                if (preg_match('/(\d+)/', $jenis, $m)) {
-                    $ke = (int) $m[1];
+            if ($isMeninggal) {
+                // Pasien sudah meninggal → ringkasan KF dikosongkan (tidak dikirim ke Blade)
+                $kfSummary  = collect();
+                $kfPantauan = collect();
+            } else {
+                // 3) Susun status per KF1..KF4 (ambil catatan terbaru per jenis_kf)
+                $byKe = [];
+
+                foreach ($rawKf as $row) {
+                    // contoh isi: 'KF1', 'kf 2', '2', dll → ambil digit pertamanya
+                    $jenis = strtolower(trim($row->jenis_kf));
+                    $ke    = null;
+
+                    if (preg_match('/(\d+)/', $jenis, $m)) {
+                        $ke = (int) $m[1];
+                    }
+
+                    if ($ke === null || $ke < 1 || $ke > 4) {
+                        continue;
+                    }
+
+                    // Jika belum pernah di-set, gunakan record ini sebagai "latest" untuk KF tersebut
+                    if (! array_key_exists($ke, $byKe)) {
+                        $byKe[$ke] = (object) [
+                            'ke'         => $ke,
+                            'done'       => true,
+                            'kesimpulan' => $row->kesimpulan_pantauan, // bisa 'Sehat', 'Dirujuk', 'Meninggal', dst
+                        ];
+                    }
                 }
 
-                if ($ke === null || $ke < 1 || $ke > 4) {
-                    continue;
+                // Pastikan KF1–KF4 selalu ada (kalau belum pernah dilakukan → done = false)
+                $kfSummary = collect();
+                foreach ([1, 2, 3, 4] as $ke) {
+                    if (! isset($byKe[$ke])) {
+                        $kfSummary->push((object) [
+                            'ke'         => $ke,
+                            'done'       => false,
+                            'kesimpulan' => null,
+                        ]);
+                    } else {
+                        $kfSummary->push($byKe[$ke]);
+                    }
                 }
 
-                // Jika belum pernah di-set, gunakan record ini sebagai "latest" untuk KF tersebut
-                if (! array_key_exists($ke, $byKe)) {
-                    $byKe[$ke] = (object) [
-                        'ke'         => $ke,
-                        'done'       => true,
-                        'kesimpulan' => $row->kesimpulan_pantauan, // bisa 'Sehat', 'Dirujuk', 'Meninggal', dst
-                    ];
-                }
+                // 4) Ringkasan kesimpulan pantauan (masih dihitung kalau nanti mau dipakai tempat lain)
+                $kfPantauan = KfKunjungan::query()
+                    ->from('kf_kunjungans as kk')
+                    ->whereIn('kk.pasien_nifas_id', $episodeNifasRsIds)
+                    ->selectRaw('kk.kesimpulan_pantauan, COUNT(*)::int as total')
+                    ->groupBy('kk.kesimpulan_pantauan')
+                    ->pluck('total', 'kesimpulan_pantauan');
             }
-
-            // Pastikan KF1–KF4 selalu ada (kalau belum pernah dilakukan → done = false)
-            $kfSummary = collect();
-            foreach ([1, 2, 3, 4] as $ke) {
-                if (! isset($byKe[$ke])) {
-                    $kfSummary->push((object) [
-                        'ke'         => $ke,
-                        'done'       => false,
-                        'kesimpulan' => null,
-                    ]);
-                } else {
-                    $kfSummary->push($byKe[$ke]);
-                }
-            }
-
-            // 4) Ringkasan kesimpulan pantauan (masih dihitung kalau nanti mau dipakai tempat lain)
-            $kfPantauan = KfKunjungan::query()
-                ->from('kf_kunjungans as kk')
-                ->whereIn('kk.pasien_nifas_id', $episodeNifasRsIds)
-                ->selectRaw('kk.kesimpulan_pantauan, COUNT(*)::int as total')
-                ->groupBy('kk.kesimpulan_pantauan')
-                ->pluck('total', 'kesimpulan_pantauan');
         }
+
 
 
         // ===================== Rujukan RS + ringkasan tindakan dokter =====================
