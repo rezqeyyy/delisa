@@ -306,6 +306,7 @@ class PasienNifasController extends Controller
                     'password' => bcrypt('password'),
                     'role_id'  => $roleId->id,
                     'phone'    => $validated['no_telepon'],
+                    'status'   => true,
                 ]);
 
                 $pasienData = [
