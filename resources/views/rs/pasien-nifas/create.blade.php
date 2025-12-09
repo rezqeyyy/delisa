@@ -176,6 +176,41 @@
                         @enderror
                     </div>
 
+                    {{-- BAGIAN YANG DITAMBAHKAN: Letakkan setelah field No Telepon dan sebelum wilayah --}}
+
+                    {{-- Baris: Status Risiko (Hidden by default, muncul jika pasien belum punya skrining) --}}
+                    <div id="statusRisikoWrapper" class="">
+                        <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                            Status Risiko Pre-Eklampsia <span class="text-pink-600">*</span>
+                        </label>
+                        
+                        <select
+                            name="status_risiko_manual"
+                            id="status_risiko_manual"
+                            class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors">
+                            <option value="">Pilih Status Risiko</option>
+                            <option value="normal" {{ old('status_risiko_manual') == 'normal' ? 'selected' : '' }}>
+                                Tidak Berisiko
+                            </option>
+                            <option value="beresiko" {{ old('status_risiko_manual') == 'beresiko' ? 'selected' : '' }}>
+                                Beresiko
+                            </option>
+                        </select>
+                        
+                        <p class="text-[10px] text-[#7C7C7C] mt-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M12 16v-4" />
+                                <path d="M12 8h.01" />
+                            </svg>
+                            Pasien ini belum memiliki data skrining. Pilih status risiko secara manual.
+                        </p>
+                        
+                        @error('status_risiko_manual')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     {{-- Baris 3 & 4: Wilayah (Provinsi → Kota/Kabupaten → Kecamatan → Kelurahan) --}}
                     <div id="wilayah-wrapper"
                          data-url-provinces="{{ route('wilayah.provinces') }}"

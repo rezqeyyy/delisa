@@ -1,127 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <meta charset="utf-8">
-    <title>Data Pasien Nifas</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Pasien Nifas - DeLISA</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            margin: 20px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 10px;
+            color: #1D1D1D;
+            background: #fff;
+        }
+
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #e91e8c;
+            margin-bottom: 20px;
             padding-bottom: 15px;
+            border-bottom: 3px solid #E91E8C;
         }
+
         .header h1 {
-            color: #e91e8c;
-            margin: 0 0 5px 0;
-            font-size: 24px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #E91E8C;
+            margin-bottom: 5px;
         }
-        .header p {
-            margin: 5px 0;
+
+        .header .subtitle {
+            font-size: 12px;
             color: #666;
+            margin-bottom: 3px;
         }
+
+        .header .date {
+            font-size: 11px;
+            color: #999;
+            font-weight: bold;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 15px;
         }
-        th {
-            background-color: #e91e8c;
+
+        thead {
+            background-color: #E91E8C;
             color: white;
-            padding: 10px;
+        }
+
+        thead th {
+            padding: 10px 8px;
             text-align: left;
-            font-size: 11px;
-        }
-        td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #ddd;
-            font-size: 11px;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .badge {
-            padding: 4px 12px;
-            border-radius: 12px;
             font-size: 10px;
             font-weight: bold;
+            border: 1px solid #E91E8C;
         }
-        .badge-success {
-            background-color: #d4edda;
-            color: #28a745;
+
+        tbody tr {
+            border-bottom: 1px solid #f0f0f0;
         }
-        .badge-danger {
-            background-color: #f8d7da;
-            color: #dc3545;
+
+        tbody tr:nth-child(even) {
+            background-color: #fef8fc;
         }
-        .badge-warning {
-            background-color: #fff3cd;
-            color: #ffc107;
+
+        tbody td {
+            padding: 8px;
+            font-size: 9px;
+            border: 1px solid #e5e5e5;
+            vertical-align: middle;
         }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 8px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .status-normal {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status-beresiko {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
         .footer {
             margin-top: 30px;
-            text-align: right;
-            font-size: 11px;
-            color: #666;
+            text-align: center;
+            font-size: 9px;
+            color: #999;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>DeLISA</h1>
-        <p>Deteksi Dini Pre Eklampsia</p>
-        <p><strong>Data Pasien Nifas</strong></p>
-        <p>Tanggal: {{ date('d/m/Y') }}</p>
+        <div class="subtitle">Deteksi Dini Pre Eklampsia</div>
+        <div class="subtitle" style="font-weight: bold;">Data Pasien Nifas</div>
+        <div class="date">Tanggal: {{ date('d/m/Y') }}</div>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>No</th>
-                <th>ID Pasien</th>
-                <th>Nama Pasien</th>
-                <th>Tanggal</th>
-                <th>Alamat</th>
-                <th>No Telp</th>
-                <th>Penanganan</th>
+                <th style="width: 18%;">NIK Pasien</th>
+                <th style="width: 20%;">Nama Pasien</th>
+                <th style="width: 13%;">Tanggal Mulai Nifas</th>
+                <th style="width: 22%;">Alamat</th>
+                <th style="width: 13%;">No Telp</th>
+                <th style="width: 14%;">Status Risiko</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($pasienNifas as $index => $pasien)
-            <tr>
-                <td>{{ $index + 1 }}</td>
-                <td>{{ $pasien->id }}</td>
-                <td>{{ $pasien->pasien->nik ?? 'Asep Dadang' }}</td>
-                <td>{{ \Carbon\Carbon::parse($pasien->tanggal_mulai_nifas)->format('d/m/Y') }}</td>
-                <td>{{ $pasien->rs->PProvinsi ?? 'Beji' }}</td>
-                <td>{{ $pasien->pasien->no_jkn ?? '0000000000' }}</td>
-                <td>
-                    @if($pasien->status_kunjungan == 'Aman')
-                        <span class="badge badge-success">Aman</span>
-                    @elseif($pasien->status_kunjungan == 'Beresiko')
-                        <span class="badge badge-danger">Telat</span>
-                    @elseif($pasien->status_kunjungan == 'Menengah')
-                        <span class="badge badge-warning">Waspada</span>
-                    @else
-                        <span class="badge badge-success">Aman</span>
-                    @endif
-                </td>
-            </tr>
+            @forelse($pasienNifas as $pn)
+                @php
+                    $pas = optional($pn)->pasien;
+                    $usr = optional($pas)->user;
+                    $statusDisplay = $pn->status_display ?? 'Tidak Berisiko';
+                    $statusType = $pn->status_type ?? 'normal';
+                @endphp
+                <tr>
+                    <td>{{ $pas->nik ?? '-' }}</td>
+                    <td>{{ $usr->name ?? '-' }}</td>
+                    <td class="text-center">
+                        {{ $pn->tanggal_mulai_nifas ? \Carbon\Carbon::parse($pn->tanggal_mulai_nifas)->format('d/m/Y') : '-' }}
+                    </td>
+                    <td>{{ $pas->PKecamatan ?? $pas->PWilayah ?? '-' }}</td>
+                    <td class="text-center">{{ $usr->phone ?? '-' }}</td>
+                    <td class="text-center">
+                        @if($statusType === 'beresiko')
+                            <span class="status-badge status-beresiko">Beresiko</span>
+                        @else
+                            <span class="status-badge status-normal">Tidak Berisiko</span>
+                        @endif
+                    </td>
+                </tr>
             @empty
-            <tr>
-                <td colspan="7" style="text-align: center; padding: 20px;">Tidak ada data</td>
-            </tr>
+                <tr>
+                    <td colspan="6" class="text-center" style="padding: 20px;">Tidak ada data pasien nifas</td>
+                </tr>
             @endforelse
         </tbody>
     </table>
 
     <div class="footer">
-        <p>Total: {{ $pasienNifas->count() }} pasien</p>
-        <p>Dicetak pada: {{ date('d/m/Y H:i:s') }}</p>
+        © {{ date('Y') }} Dinas Kesehatan Kota Depok — DeLISA
     </div>
 </body>
 </html>
