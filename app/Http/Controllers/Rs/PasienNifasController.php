@@ -62,13 +62,15 @@ class PasienNifasController extends Controller
 
         if ($skrining) {
             // Gunakan kolom KESIMPULAN
-            $kesimpulan = strtolower($skrining->kesimpulan ?? '');
+            $kesimpulan = strtolower(trim($skrining->kesimpulan ?? ''));
             
-            // Cek berdasarkan kesimpulan
-            if (str_contains($kesimpulan, 'beresiko') || str_contains($kesimpulan, 'berisiko')) {
+            // 🔥 FIX: Cek "tidak beresiko" dulu sebelum cek "beresiko"
+            if (str_contains($kesimpulan, 'tidak beresiko') || str_contains($kesimpulan, 'tidak berisiko')) {
+                return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
+            } elseif (str_contains($kesimpulan, 'beresiko') || str_contains($kesimpulan, 'berisiko')) {
                 return ['label' => 'Beresiko', 'type' => 'beresiko'];
             } else {
-                // Default: Tidak beresiko
+                // Default jika kesimpulan tidak sesuai format
                 return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
             }
         }
