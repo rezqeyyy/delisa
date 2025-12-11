@@ -66,6 +66,7 @@ class DashboardController extends Controller
                        puskesmas_id,
                        status_pre_eklampsia,
                        checked_status,
+                       jumlah_resiko_sedang,
                        jumlah_resiko_tinggi,
                        created_at
                 FROM skrinings
@@ -389,6 +390,9 @@ class DashboardController extends Controller
                 ls.checked_status AS status_hadir,
 
                 -- jumlah risiko tinggi
+                ls.jumlah_resiko_sedang,
+
+                -- jumlah risiko tinggi
                 ls.jumlah_resiko_tinggi,
 
                 -- kategori resiko gabungan (beresiko/non-risk)
@@ -592,6 +596,7 @@ class DashboardController extends Controller
                        puskesmas_id,
                        status_pre_eklampsia,
                        checked_status,
+                       jumlah_resiko_sedang,
                        jumlah_resiko_tinggi,
                        created_at
                 FROM skrinings
@@ -614,7 +619,7 @@ class DashboardController extends Controller
 
         // ========== 1. Judul ==========
 
-        // Merge sel A1 sampai M1 untuk judul besar
+        // Merge sel A1 sampai L1 untuk judul besar
         $sheet->mergeCells('A1:M1');
         // Set teks judul
         $sheet->setCellValue('A1', 'Laporan Data Pasien Keseluruhan');
@@ -648,7 +653,9 @@ class DashboardController extends Controller
             'I' => 'Kecamatan',
             'J' => 'Kabupaten',
             'K' => 'Provinsi',
-            'L' => 'Jumlah Resiko Tinggi',
+            'L' => 'Jumlah Resiko Sedang',
+            'M' => 'Jumlah Resiko Tinggi',
+
         ];
 
         // Isi teks header di row 3
@@ -657,7 +664,7 @@ class DashboardController extends Controller
         }
 
         // Range header (A3:M3)
-        $headerRange = 'A' . $headerRow . ':L' . $headerRow;
+        $headerRange = 'A' . $headerRow . ':M' . $headerRow;
 
         // Style header: bold + tulisan berwarna putih
         $sheet->getStyle($headerRange)->getFont()
@@ -686,6 +693,7 @@ class DashboardController extends Controller
         $sheet->getColumnDimension('K')->setWidth(18);
         $sheet->getColumnDimension('L')->setWidth(20);
         $sheet->getColumnDimension('M')->setWidth(20);
+
 
         // Pastikan kolom NIK & Nomor HP diperlakukan sebagai text (bukan angka)
         $sheet->getStyle('C')->getNumberFormat()->setFormatCode('@');
@@ -728,7 +736,8 @@ class DashboardController extends Controller
             $sheet->setCellValue('I' . $rowIndex, $row->kecamatan);
             $sheet->setCellValue('J' . $rowIndex, $row->kabupaten);
             $sheet->setCellValue('K' . $rowIndex, $row->provinsi);
-            $sheet->setCellValue('L' . $rowIndex, $row->jumlah_resiko_tinggi ?? 0);
+            $sheet->setCellValue('L' . $rowIndex, $row->jumlah_resiko_sedang ?? 0);
+            $sheet->setCellValue('M' . $rowIndex, $row->jumlah_resiko_tinggi ?? 0);
 
             // Naikkan index baris untuk data berikutnya
             $rowIndex++;
