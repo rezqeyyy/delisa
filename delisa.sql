@@ -207,6 +207,9 @@ CREATE TABLE IF NOT EXISTS public.pasien_nifas_rs
     kf1_id bigint,
     kf2_id bigint,
     kf3_id bigint,
+    kf4_tanggal timestamp(0) without time zone,
+    kf4_catatan text COLLATE pg_catalog."default",
+    kf4_id bigint,
     CONSTRAINT pasien_nifas_rs_pkey PRIMARY KEY (id)
 );
 
@@ -371,6 +374,7 @@ CREATE TABLE IF NOT EXISTS public.rumah_sakits
     kelurahan character varying(255) COLLATE pg_catalog."default" NOT NULL,
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
+    telepon character varying(255) COLLATE pg_catalog."default",
     CONSTRAINT rumah_sakits_pkey PRIMARY KEY (id)
 );
 

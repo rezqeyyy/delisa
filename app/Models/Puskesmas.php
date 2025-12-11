@@ -7,9 +7,23 @@ use Illuminate\Database\Eloquent\Model;
 class Puskesmas extends Model
 {
     protected $table = 'puskesmas';
-    protected $fillable = ['nama_puskesmas','lokasi','kecamatan'];
-    public function bidans() { return $this->hasMany(Bidan::class); }
-
-    // Catatan: tabel puskesmas TIDAK punya kolom user_id.
-    // Akun PIC puskesmas tetap disimpan di tabel users dengan role 'puskesmas'.
+    
+    // TAMBAHKAN 'user_id' ke sini
+    protected $fillable = [
+        'nama_puskesmas',
+        'lokasi',
+        'kecamatan',
+        'user_id',  // ← TAMBAHKAN INI
+        'is_mandiri'
+    ];
+    
+    public function bidans() { 
+        return $this->hasMany(Bidan::class); 
+    }
+    
+    // ===== TAMBAHKAN INI =====
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }
