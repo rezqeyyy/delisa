@@ -351,10 +351,8 @@
                         <select name="status_perkawinan" id="status_perkawinan"
                                 class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm shadow-sm focus:border-[#E91E8C]/30">
                             <option value="">Pilih Status</option>
-                            <option value="Belum Kawin" {{ old('status_perkawinan') == 'Belum Kawin' ? 'selected' : '' }}>Belum Kawin</option>
-                            <option value="Kawin" {{ old('status_perkawinan') == 'Kawin' ? 'selected' : '' }}>Kawin</option>
-                            <option value="Cerai Hidup" {{ old('status_perkawinan') == 'Cerai Hidup' ? 'selected' : '' }}>Cerai Hidup</option>
-                            <option value="Cerai Mati" {{ old('status_perkawinan') == 'Cerai Mati' ? 'selected' : '' }}>Cerai Mati</option>
+                            <option value="Belum Menikah" {{ old('status_perkawinan') == 'Belum Menikah' ? 'selected' : '' }}>Belum Menikah</option>
+                            <option value="Menikah" {{ old('status_perkawinan') == 'Menikah' ? 'selected' : '' }}>Menikah</option>
                         </select>
                         @error('status_perkawinan')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -424,10 +422,9 @@
                             <select name="pembiayaan_kesehatan" id="pembiayaan_kesehatan"
                                     class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm">
                                 <option value="">Pilih Pembiayaan</option>
-                                <option value="UMUM" {{ old('pembiayaan_kesehatan') == 'UMUM' ? 'selected' : '' }}>UMUM</option>
-                                <option value="BPJS" {{ old('pembiayaan_kesehatan') == 'BPJS' ? 'selected' : '' }}>BPJS</option>
-                                <option value="INTERNASIONAL" {{ old('pembiayaan_kesehatan') == 'INTERNASIONAL' ? 'selected' : '' }}>INTERNASIONAL</option>
-                                <option value="LAINNYA" {{ old('pembiayaan_kesehatan') == 'LAINNYA' ? 'selected' : '' }}>LAINNYA</option>
+                                <option value="Pribadi" {{ old('pembiayaan_kesehatan') == 'Pribadi' ? 'selected' : '' }}>Pribadi</option>
+                                <option value="BPJS Kesehatan (JKN)" {{ old('pembiayaan_kesehatan') == 'BPJS Kesehatan (JKN)' ? 'selected' : '' }}>BPJS Kesehatan (JKN)</option>
+                                <option value="Asuransi Lainnya" {{ old('pembiayaan_kesehatan') == 'Asuransi Lainnya' ? 'selected' : '' }}>Asuransi Lainnya</option>
                             </select>
                             @error('pembiayaan_kesehatan')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>

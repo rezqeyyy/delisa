@@ -64,28 +64,96 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('pendidikan').value = pasien.pendidikan || '';
                 document.getElementById('no_jkn').value = pasien.no_jkn || '';
 
-                // Fill select fields
-                if (pasien.status_perkawinan) {
-                    document.getElementById('status_perkawinan').value = pasien.status_perkawinan;
-                }
-                if (pasien.pembiayaan_kesehatan) {
-                    document.getElementById('pembiayaan_kesehatan').value = pasien.pembiayaan_kesehatan;
-                }
-                if (pasien.golongan_darah) {
-                    document.getElementById('golongan_darah').value = pasien.golongan_darah;
+                // Isi select: status perkawinan, pembiayaan kesehatan, golongan darah
+                function setSelectByValueOrText(selId, val) {
+                    const sel = document.getElementById(selId);
+                    if (!sel) {
+                        console.warn(`Select element ${selId} not found`);
+                        return;
+                    }
+                    const v = String(val || '').trim();
+                    if (!v) return;
+                    
+                    const opts = Array.from(sel.options);
+                    
+                    // Coba cari berdasarkan value
+                    let opt = opts.find(o => String(o.value).trim().toLowerCase() === v.toLowerCase());
+                    
+                    // Jika tidak ketemu, cari berdasarkan text
+                    if (!opt) {
+                        opt = opts.find(o => o.textContent.trim().toLowerCase() === v.toLowerCase());
+                    }
+                    
+                    if (opt) {
+                        sel.value = opt.value;
+                        console.log(`✅ Set ${selId} to: ${opt.value}`);
+                    } else {
+                        console.warn(`⚠️ Option not found for ${selId} with value: ${v}`);
+                    }
                 }
 
-                // Trigger wilayah auto-fill (jika ada wilayah.js)
-                const wilayahWrapper = document.getElementById('wilayah-wrapper');
-                if (wilayahWrapper) {
-                    wilayahWrapper.dataset.prov = pasien.provinsi || '';
-                    wilayahWrapper.dataset.kab = pasien.kota || '';
-                    wilayahWrapper.dataset.kec = pasien.kecamatan || '';
-                    wilayahWrapper.dataset.kel = pasien.kelurahan || '';
+                function mapStatusPerkawinan(v) {
+                    const s = String(v || '').toLowerCase().trim();
+                    if (!s) return '';
                     
-                    // Trigger event untuk reload wilayah
-                    const event = new CustomEvent('wilayah-reload');
-                    wilayahWrapper.dispatchEvent(event);
+                    // Mapping ke value yang ada di dropdown
+                    if (s.includes('kawin') && !s.includes('belum') && !s.includes('tidak')) return 'Menikah';
+                    if (s.includes('menikah') && !s.includes('belum') && !s.includes('tidak')) return 'Menikah';
+                    if (s === 'married') return 'Menikah';
+                    if (s.includes('belum')) return 'Belum Menikah';
+                    if (s.includes('single')) return 'Belum Menikah';
+                    if (s.includes('tidak kawin')) return 'Belum Menikah';
+                    if (s.includes('tidak menikah')) return 'Belum Menikah';
+                    if (s.includes('cerai')) return 'Belum Menikah';
+                    
+                    return '';
+                }
+
+                function mapPembiayaan(v) {
+                    const s = String(v || '').toLowerCase().trim();
+                    if (!s) return '';
+                    if (s.includes('bpjs') || s.includes('jkn')) return 'BPJS Kesehatan (JKN)';
+                    if (s.includes('umum') || s.includes('pribadi') || s.includes('tunai') || s.includes('cash')) return 'Pribadi';
+                    if (s.includes('asuransi') || s.includes('insurance')) return 'Asuransi Lainnya';
+                    return 'Asuransi Lainnya';
+                }
+
+                function mapGolongan(v) {
+                    const s = String(v || '').toUpperCase().trim();
+                    return ['A','B','AB','O'].includes(s) ? s : '';
+                }
+
+                // Auto-fill status perkawinan berdasarkan usia dari NIK jika tidak ada di database
+                let statusPerkawinan = pasien.status_perkawinan;
+                if (!statusPerkawinan || !String(statusPerkawinan).trim()) {
+                    const umur = hitungUmurDariNIK(nik);
+                    if (umur !== null) {
+                        // Asumsi: umur >= 20 tahun kemungkinan besar sudah menikah (bisa disesuaikan)
+                        statusPerkawinan = umur >= 20 ? 'Menikah' : 'Belum Menikah';
+                        console.log(`📊 Status perkawinan diprediksi dari umur: ${umur} tahun → ${statusPerkawinan}`);
+                    }
+                }
+
+                setSelectByValueOrText('status_perkawinan', mapStatusPerkawinan(statusPerkawinan));
+                setSelectByValueOrText('pembiayaan_kesehatan', mapPembiayaan(pasien.pembiayaan_kesehatan));
+                setSelectByValueOrText('golongan_darah', mapGolongan(pasien.golongan_darah));
+
+                // Auto-fill dropdown wilayah seperti implementasi di Bidan
+                if (window.WilayahCascade) {
+                    window.WilayahCascade.setByNames({
+                        prov: pasien.provinsi || '',
+                        kab:  pasien.kota || '',
+                        kec:  pasien.kecamatan || '',
+                        kel:  pasien.kelurahan || ''
+                    });
+                } else {
+                    const wilayahWrapper = document.getElementById('wilayah-wrapper');
+                    if (wilayahWrapper) {
+                        wilayahWrapper.setAttribute('data-prov', pasien.provinsi || '');
+                        wilayahWrapper.setAttribute('data-kab',  pasien.kota || '');
+                        wilayahWrapper.setAttribute('data-kec',  pasien.kecamatan || '');
+                        wilayahWrapper.setAttribute('data-kel',  pasien.kelurahan || '');
+                    }
                 }
 
                 // ============================================
@@ -135,6 +203,44 @@ document.addEventListener('DOMContentLoaded', function () {
             btnCekNik.innerHTML = originalHTML;
         }
     });
+
+    /**
+     * Hitung umur dari NIK (digit 7-12 adalah tanggal lahir DDMMYY)
+     * Untuk perempuan, tanggal +40
+     */
+    function hitungUmurDariNIK(nik) {
+        if (!nik || nik.length !== 16) return null;
+        
+        try {
+            let tanggal = parseInt(nik.substring(6, 8));
+            const bulan = parseInt(nik.substring(8, 10));
+            let tahun = parseInt(nik.substring(10, 12));
+            
+            // Jika tanggal > 31, berarti perempuan (tanggal + 40)
+            if (tanggal > 31) {
+                tanggal -= 40;
+            }
+            
+            // Konversi tahun 2 digit ke 4 digit
+            // Asumsi: 00-25 = 2000-2025, 26-99 = 1926-1999
+            tahun += (tahun <= 25) ? 2000 : 1900;
+            
+            // Hitung umur
+            const tanggalLahir = new Date(tahun, bulan - 1, tanggal);
+            const today = new Date();
+            let umur = today.getFullYear() - tanggalLahir.getFullYear();
+            const monthDiff = today.getMonth() - tanggalLahir.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < tanggalLahir.getDate())) {
+                umur--;
+            }
+            
+            return umur;
+        } catch (error) {
+            console.error('Error menghitung umur dari NIK:', error);
+            return null;
+        }
+    }
 
     /**
      * Show alert notification
