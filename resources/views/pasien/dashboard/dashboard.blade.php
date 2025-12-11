@@ -144,9 +144,11 @@
                         lg:border-spacing-x-[24px] lg:border-spacing-y-[10px]">
                         <thead>
                             <tr>
-                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Nama Pasien</th>
-                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Tanggal Pengisian</th>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">No</th>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">NIK</th>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Tanggal Skrining</th>
                                 <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Alamat</th>
+                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">No Telp</th>
                                 <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Kesimpulan</th>
                                 <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">View Detail</th>
                             </tr>
@@ -155,9 +157,11 @@
                         <tbody>
                         @forelse ($skrinings as $skrining)
                             @php
-                                $nama     = optional(optional($skrining->pasien)->user)->name ?? '-';
                                 $tanggal  = \Carbon\Carbon::parse($skrining->created_at)->format('d/m/Y');
+                                $nik      = optional($skrining->pasien)->nik ?? '-';
                                 $alamat   = optional(optional($skrining->pasien)->user)->address ?? '-';
+                                $alamatDisplay = $skrining->pasien->PKecamatan ?? $alamat;
+                                $phone    = optional(optional($skrining->pasien)->user)->phone ?? '-';
                                 $resikoSedang = (int)($skrining->jumlah_resiko_sedang ?? 0);
                                 $resikoTinggi = (int)($skrining->jumlah_resiko_tinggi ?? 0);
                                 $kesimpulanRaw = $skrining->conclusion_display ?? ($skrining->kesimpulan ?? '');
@@ -168,13 +172,12 @@
                                 $viewUrl = route('pasien.skrining.show', $skrining->id);
                                 @endphp
                                 <tr class="align-middle">
-                                    <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap">
-                                        <div class="inline-flex items-center gap-3">
-                                            <span class="font-medium text-[#1D1D1D]">{{ $nama }}</span>
-                                        </div>
-                                    </td>
+
+                                    <td class="px-3 py-3 md:px-6 md:py-4 tabular-nums">{{ $loop->iteration }}</td>
+                                    <td class="px-3 py-3 md:px-6 md:py-4 tabular-nums">{{ $nik }}</td>
                                     <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $tanggal }}</td>
-                                    <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $alamat }}</td>
+                                    <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $alamatDisplay }}</td>
+                                    <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $phone }}</td>
                                     <td class="px-3 py-3 md:px-6 md:py-4">
                                         <span class="inline-flex items-center rounded-full px-4 h-8 text-sm font-semibold leading-none whitespace-nowrap {{ $cls }}">
                                             {{ $conclusion }}
@@ -204,7 +207,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="px-4 py-8 text-center text-[#7C7C7C]">
+                                    <td colspan="7" class="px-4 py-8 text-center text-[#7C7C7C]">
                                         Belum ada data skrining.
                                     </td>
                                 </tr>
@@ -213,11 +216,21 @@
                     </table>
                 </div>
 
-                @if(isset($skrinings) && method_exists($skrinings, 'hasPages') && $skrinings->hasPages())
-                    <div class="mt-4">
-                        {{ $skrinings->links() }}
+                <div class="mt-4 flex items-center justify-between">
+                    <div class="text-sm text-[#7C7C7C]">
+                        @php
+                            $first = $skrinings->firstItem() ?? 0;
+                            $last  = $skrinings->lastItem() ?? $skrinings->count();
+                            $total = $skrinings->total() ?? $skrinings->count();
+                        @endphp
+                        Menampilkan {{ $first }}–{{ $last }} dari {{ $total }} data
                     </div>
-                @endif
+                    @if(isset($skrinings) && method_exists($skrinings, 'hasPages') && $skrinings->hasPages())
+                        <div>
+                            {{ $skrinings->links() }}
+                        </div>
+                    @endif
+                </div>
             </section>
 
             <!-- Ringkasan Total Skrining & Resiko Preeklamsia -->           

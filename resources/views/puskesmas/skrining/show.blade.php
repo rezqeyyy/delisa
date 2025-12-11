@@ -76,6 +76,9 @@
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">NIK</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->pasien)->nik ?? '-' }}</div>
 
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Golongan Darah</div>
+                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->pasien)->golongan_darah ?? '-' }}</div>
+
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kehamilan ke (G)</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->riwayatKehamilanGpa)->total_kehamilan ?? '-' }}</div>
 

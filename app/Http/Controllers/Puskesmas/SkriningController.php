@@ -120,10 +120,18 @@ class SkriningController extends Controller
         // Catatan: Jika data puskesmas tidak ditemukan, kembalikan error 404.
         abort_unless($ps, 404);
 
-        // Catatan: Ambil kecamatan pasien untuk validasi akses.
-        $kecPasien = optional($skrining->pasien)->PKecamatan;
-        // Catatan: Cek apakah skrining milik puskesmas ini atau pasien dari kecamatan yang sama.
-        $allowed = (($skrining->puskesmas_id === $ps->id) || ($kecPasien === $ps->kecamatan));
+        // Catatan: Ambil kecamatan pasien & faskes (puskesmas/bidan) untuk validasi akses.
+        $kecPasienRaw = optional($skrining->pasien)->PKecamatan;
+        $kecPasien    = mb_strtolower(trim((string) $kecPasienRaw));
+        $kecPuskesmas = mb_strtolower(trim((string) optional($ps)->kecamatan));
+        $kecFaskesRaw = optional($skrining->puskesmas)->kecamatan;
+        $kecFaskes    = mb_strtolower(trim((string) $kecFaskesRaw));
+        // Catatan: Cek apakah skrining milik puskesmas ini atau berada di kecamatan yang sama (pasien ATAU faskes tempat skrining).
+        $allowed = (
+            ($skrining->puskesmas_id === $ps->id)
+            || ($kecPasien !== '' && $kecPuskesmas !== '' && $kecPasien === $kecPuskesmas)
+            || ($kecFaskes !== '' && $kecPuskesmas !== '' && $kecFaskes === $kecPuskesmas)
+        );
         // Catatan: Jika tidak diizinkan, kembalikan error 403 (Forbidden).
         abort_unless($allowed, 403);
         // Catatan: Jika skrining belum lengkap, kembalikan error 404.
@@ -436,10 +444,18 @@ class SkriningController extends Controller
         // Catatan: Jika data puskesmas tidak ditemukan, kembalikan error 404.
         abort_unless($ps, 404);
 
-        // Catatan: Ambil kecamatan pasien untuk validasi akses.
-        $kecPasien = optional($skrining->pasien)->PKecamatan;
-        // Catatan: Cek apakah skrining milik puskesmas ini atau pasien dari kecamatan yang sama.
-        $allowed = (($skrining->puskesmas_id === $ps->id) || ($kecPasien === $ps->kecamatan));
+        // Catatan: Ambil kecamatan pasien & faskes (puskesmas/bidan) untuk validasi akses.
+        $kecPasienRaw = optional($skrining->pasien)->PKecamatan;
+        $kecPasien    = mb_strtolower(trim((string) $kecPasienRaw));
+        $kecPuskesmas = mb_strtolower(trim((string) optional($ps)->kecamatan));
+        $kecFaskesRaw = optional($skrining->puskesmas)->kecamatan;
+        $kecFaskes    = mb_strtolower(trim((string) $kecFaskesRaw));
+        // Catatan: Cek apakah skrining milik puskesmas ini atau berada di kecamatan yang sama (pasien ATAU faskes tempat skrining).
+        $allowed = (
+            ($skrining->puskesmas_id === $ps->id)
+            || ($kecPasien !== '' && $kecPuskesmas !== '' && $kecPasien === $kecPuskesmas)
+            || ($kecFaskes !== '' && $kecPuskesmas !== '' && $kecFaskes === $kecPuskesmas)
+        );
         // Catatan: Jika tidak diizinkan, kembalikan error 403 (Forbidden).
         abort_unless($allowed, 403);
 
