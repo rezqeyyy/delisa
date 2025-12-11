@@ -389,14 +389,15 @@ class DashboardController extends Controller
                 -- status hadir (checked_status)
                 ls.checked_status AS status_hadir,
 
-                -- jumlah risiko sedang dan tinggi
+                -- jumlah risiko tinggi
                 ls.jumlah_resiko_sedang,
+
+                -- jumlah risiko tinggi
                 ls.jumlah_resiko_tinggi,
 
-                -- kategori resiko gabungan (tinggi/sedang/non-risk)
+                -- kategori resiko gabungan (beresiko/non-risk)
                 CASE
                     WHEN ls.jumlah_resiko_tinggi > 0 THEN 'tinggi'
-                    WHEN ls.jumlah_resiko_sedang > 0 THEN 'sedang'
                     ELSE 'non-risk'
                 END AS resiko
             ");
@@ -423,18 +424,13 @@ class DashboardController extends Controller
             $peQuery->whereRaw('ls.created_at::date <= ?', [$to]);
         }
 
-        // ---- Filter resiko berbasis jumlah_resiko_tinggi / jumlah_resiko_sedang
+        // ---- Filter resiko berbasis jumlah_resiko_tinggi
         if ($resiko === 'tinggi') {
             // Any risiko tinggi > 0
             $peQuery->whereRaw('COALESCE(ls.jumlah_resiko_tinggi,0) > 0');
-        } elseif ($resiko === 'sedang') {
-            // Tidak ada risiko tinggi, tapi ada risiko sedang
-            $peQuery->whereRaw('COALESCE(ls.jumlah_resiko_tinggi,0) = 0')
-                ->whereRaw('COALESCE(ls.jumlah_resiko_sedang,0) > 0');
         } elseif ($resiko === 'non-risk') {
-            // Tidak ada risiko sedang maupun tinggi
-            $peQuery->whereRaw('COALESCE(ls.jumlah_resiko_tinggi,0) = 0')
-                ->whereRaw('COALESCE(ls.jumlah_resiko_sedang,0) = 0');
+            // Tidak ada risiko 
+            $peQuery->whereRaw('COALESCE(ls.jumlah_resiko_tinggi,0) = 0');
         }
 
         // ---- Filter status hadir (hadir/mangkir)
@@ -623,7 +619,7 @@ class DashboardController extends Controller
 
         // ========== 1. Judul ==========
 
-        // Merge sel A1 sampai M1 untuk judul besar
+        // Merge sel A1 sampai L1 untuk judul besar
         $sheet->mergeCells('A1:M1');
         // Set teks judul
         $sheet->setCellValue('A1', 'Laporan Data Pasien Keseluruhan');
@@ -659,6 +655,7 @@ class DashboardController extends Controller
             'K' => 'Provinsi',
             'L' => 'Jumlah Resiko Sedang',
             'M' => 'Jumlah Resiko Tinggi',
+
         ];
 
         // Isi teks header di row 3
@@ -696,6 +693,7 @@ class DashboardController extends Controller
         $sheet->getColumnDimension('K')->setWidth(18);
         $sheet->getColumnDimension('L')->setWidth(20);
         $sheet->getColumnDimension('M')->setWidth(20);
+
 
         // Pastikan kolom NIK & Nomor HP diperlakukan sebagai text (bukan angka)
         $sheet->getStyle('C')->getNumberFormat()->setFormatCode('@');
