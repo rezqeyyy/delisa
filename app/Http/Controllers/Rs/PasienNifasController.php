@@ -258,6 +258,15 @@ class PasienNifasController extends Controller
                     ]);
                 }
 
+                // Mapping status_perkawinan ke boolean (true=Menikah, false=Belum Menikah)
+                $spRaw = $validated['status_perkawinan'] ?? null;
+                $spLower = is_string($spRaw) ? strtolower(trim($spRaw)) : '';
+                $statusPerkawinanBool = is_null($spRaw) ? null : (
+                    strpos($spLower, 'menikah') !== false ||
+                    strpos($spLower, 'kawin') !== false ||
+                    $spLower === 'married'
+                );
+
                 // Update data wilayah pasien + alamat
                 $updateData = [
                     'PProvinsi'  => $validated['provinsi'],
@@ -266,7 +275,7 @@ class PasienNifasController extends Controller
                     'PWilayah'   => $validated['kelurahan'],
                     'tempat_lahir' => $validated['tempat_lahir'] ?? null,
                     'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
-                    'status_perkawinan' => $validated['status_perkawinan'] ?? null,
+                    'status_perkawinan' => $statusPerkawinanBool,
                     'rt' => $validated['rt'] ?? null,
                     'rw' => $validated['rw'] ?? null,
                     'kode_pos' => $validated['kode_pos'] ?? null,
@@ -309,6 +318,15 @@ class PasienNifasController extends Controller
                     'status'   => true,
                 ]);
 
+                // Mapping status_perkawinan ke boolean (true=Menikah, false=Belum Menikah)
+                $spRaw = $validated['status_perkawinan'] ?? null;
+                $spLower = is_string($spRaw) ? strtolower(trim($spRaw)) : '';
+                $statusPerkawinanBool = is_null($spRaw) ? null : (
+                    strpos($spLower, 'menikah') !== false ||
+                    strpos($spLower, 'kawin') !== false ||
+                    $spLower === 'married'
+                );
+
                 $pasienData = [
                     'user_id'    => $user->id,
                     'nik'        => $validated['nik'],
@@ -318,7 +336,7 @@ class PasienNifasController extends Controller
                     'PWilayah'   => $validated['kelurahan'],
                     'tempat_lahir' => $validated['tempat_lahir'] ?? null,
                     'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
-                    'status_perkawinan' => $validated['status_perkawinan'] ?? null,
+                    'status_perkawinan' => $statusPerkawinanBool,
                     'rt' => $validated['rt'] ?? null,
                     'rw' => $validated['rw'] ?? null,
                     'kode_pos' => $validated['kode_pos'] ?? null,
