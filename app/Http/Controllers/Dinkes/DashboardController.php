@@ -66,7 +66,6 @@ class DashboardController extends Controller
                        puskesmas_id,
                        status_pre_eklampsia,
                        checked_status,
-                       jumlah_resiko_sedang,
                        jumlah_resiko_tinggi,
                        created_at
                 FROM skrinings
@@ -389,14 +388,12 @@ class DashboardController extends Controller
                 -- status hadir (checked_status)
                 ls.checked_status AS status_hadir,
 
-                -- jumlah risiko sedang dan tinggi
-                ls.jumlah_resiko_sedang,
+                -- jumlah risiko tinggi
                 ls.jumlah_resiko_tinggi,
 
-                -- kategori resiko gabungan (tinggi/sedang/non-risk)
+                -- kategori resiko gabungan (beresiko/non-risk)
                 CASE
                     WHEN ls.jumlah_resiko_tinggi > 0 THEN 'tinggi'
-                    WHEN ls.jumlah_resiko_sedang > 0 THEN 'sedang'
                     ELSE 'non-risk'
                 END AS resiko
             ");
@@ -423,18 +420,13 @@ class DashboardController extends Controller
             $peQuery->whereRaw('ls.created_at::date <= ?', [$to]);
         }
 
-        // ---- Filter resiko berbasis jumlah_resiko_tinggi / jumlah_resiko_sedang
+        // ---- Filter resiko berbasis jumlah_resiko_tinggi
         if ($resiko === 'tinggi') {
             // Any risiko tinggi > 0
             $peQuery->whereRaw('COALESCE(ls.jumlah_resiko_tinggi,0) > 0');
-        } elseif ($resiko === 'sedang') {
-            // Tidak ada risiko tinggi, tapi ada risiko sedang
-            $peQuery->whereRaw('COALESCE(ls.jumlah_resiko_tinggi,0) = 0')
-                ->whereRaw('COALESCE(ls.jumlah_resiko_sedang,0) > 0');
         } elseif ($resiko === 'non-risk') {
-            // Tidak ada risiko sedang maupun tinggi
-            $peQuery->whereRaw('COALESCE(ls.jumlah_resiko_tinggi,0) = 0')
-                ->whereRaw('COALESCE(ls.jumlah_resiko_sedang,0) = 0');
+            // Tidak ada risiko 
+            $peQuery->whereRaw('COALESCE(ls.jumlah_resiko_tinggi,0) = 0');
         }
 
         // ---- Filter status hadir (hadir/mangkir)
@@ -600,7 +592,6 @@ class DashboardController extends Controller
                        puskesmas_id,
                        status_pre_eklampsia,
                        checked_status,
-                       jumlah_resiko_sedang,
                        jumlah_resiko_tinggi,
                        created_at
                 FROM skrinings
@@ -657,8 +648,7 @@ class DashboardController extends Controller
             'I' => 'Kecamatan',
             'J' => 'Kabupaten',
             'K' => 'Provinsi',
-            'L' => 'Jumlah Resiko Sedang',
-            'M' => 'Jumlah Resiko Tinggi',
+            'L' => 'Jumlah Resiko Tinggi',
         ];
 
         // Isi teks header di row 3
@@ -667,7 +657,7 @@ class DashboardController extends Controller
         }
 
         // Range header (A3:M3)
-        $headerRange = 'A' . $headerRow . ':M' . $headerRow;
+        $headerRange = 'A' . $headerRow . ':L' . $headerRow;
 
         // Style header: bold + tulisan berwarna putih
         $sheet->getStyle($headerRange)->getFont()
@@ -738,8 +728,7 @@ class DashboardController extends Controller
             $sheet->setCellValue('I' . $rowIndex, $row->kecamatan);
             $sheet->setCellValue('J' . $rowIndex, $row->kabupaten);
             $sheet->setCellValue('K' . $rowIndex, $row->provinsi);
-            $sheet->setCellValue('L' . $rowIndex, $row->jumlah_resiko_sedang ?? 0);
-            $sheet->setCellValue('M' . $rowIndex, $row->jumlah_resiko_tinggi ?? 0);
+            $sheet->setCellValue('L' . $rowIndex, $row->jumlah_resiko_tinggi ?? 0);
 
             // Naikkan index baris untuk data berikutnya
             $rowIndex++;

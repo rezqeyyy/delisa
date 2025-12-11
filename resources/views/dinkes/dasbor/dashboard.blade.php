@@ -697,15 +697,10 @@
                                                     'tx' => '#39E93F',
                                                     'label' => 'Normal',
                                                 ],
-                                                'sedang' => [
-                                                    'bg' => '#E2D30D33',
-                                                    'tx' => '#E2D30D',
-                                                    'label' => 'Sedang',
-                                                ],
                                                 'tinggi' => [
                                                     'bg' => '#E20D0D33',
                                                     'tx' => '#E20D0D',
-                                                    'label' => 'Tinggi',
+                                                    'label' => 'Beresiko',
                                                 ],
                                             ];
                                             $rk = $mapRisk[$row->resiko ?? 'non-risk'];
@@ -825,10 +820,9 @@
                                 <div>
                                     <label class="block text-xs text-[#7C7C7C] mb-1">Resiko</label>
                                     <select name="resiko" class="w-full border rounded-md px-3 py-2 text-sm">
-                                        <option value="">Semua Resiko</option>
+                                        <option value="">Tampilkan Semua</option>
                                         <option value="non-risk" @selected(request('resiko') === 'non-risk')>Normal</option>
-                                        <option value="sedang" @selected(request('resiko') === 'sedang')>Sedang</option>
-                                        <option value="tinggi" @selected(request('resiko') === 'tinggi')>Tinggi</option>
+                                        <option value="tinggi" @selected(request('resiko') === 'tinggi')>Beresiko</option>
                                     </select>
                                 </div>
 
