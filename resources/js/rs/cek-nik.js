@@ -67,20 +67,45 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Isi select: status perkawinan, pembiayaan kesehatan, golongan darah
                 function setSelectByValueOrText(selId, val) {
                     const sel = document.getElementById(selId);
-                    if (!sel) return;
+                    if (!sel) {
+                        console.warn(`Select element ${selId} not found`);
+                        return;
+                    }
                     const v = String(val || '').trim();
                     if (!v) return;
+                    
                     const opts = Array.from(sel.options);
+                    
+                    // Coba cari berdasarkan value
                     let opt = opts.find(o => String(o.value).trim().toLowerCase() === v.toLowerCase());
-                    if (!opt) opt = opts.find(o => o.textContent.trim().toLowerCase() === v.toLowerCase());
-                    if (opt) sel.value = opt.value;
+                    
+                    // Jika tidak ketemu, cari berdasarkan text
+                    if (!opt) {
+                        opt = opts.find(o => o.textContent.trim().toLowerCase() === v.toLowerCase());
+                    }
+                    
+                    if (opt) {
+                        sel.value = opt.value;
+                        console.log(`✅ Set ${selId} to: ${opt.value}`);
+                    } else {
+                        console.warn(`⚠️ Option not found for ${selId} with value: ${v}`);
+                    }
                 }
 
                 function mapStatusPerkawinan(v) {
                     const s = String(v || '').toLowerCase().trim();
                     if (!s) return '';
-                    if (s.includes('kawin') || s.includes('menikah') || s === 'married') return 'Menikah';
-                    if (s.includes('belum') || s.includes('single') || s.includes('tidak kawin') || s.includes('tidak menikah') || s.includes('cerai')) return 'Belum Menikah';
+                    
+                    // Mapping ke value yang ada di dropdown
+                    if (s.includes('kawin') && !s.includes('belum') && !s.includes('tidak')) return 'Menikah';
+                    if (s.includes('menikah') && !s.includes('belum') && !s.includes('tidak')) return 'Menikah';
+                    if (s === 'married') return 'Menikah';
+                    if (s.includes('belum')) return 'Belum Menikah';
+                    if (s.includes('single')) return 'Belum Menikah';
+                    if (s.includes('tidak kawin')) return 'Belum Menikah';
+                    if (s.includes('tidak menikah')) return 'Belum Menikah';
+                    if (s.includes('cerai')) return 'Belum Menikah';
+                    
                     return '';
                 }
 
@@ -98,7 +123,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     return ['A','B','AB','O'].includes(s) ? s : '';
                 }
 
-                setSelectByValueOrText('status_perkawinan', mapStatusPerkawinan(pasien.status_perkawinan));
+                // Auto-fill status perkawinan berdasarkan usia dari NIK jika tidak ada di database
+                let statusPerkawinan = pasien.status_perkawinan;
+                if (!statusPerkawinan || !String(statusPerkawinan).trim()) {
+                    const umur = hitungUmurDariNIK(nik);
+                    if (umur !== null) {
+                        // Asumsi: umur >= 20 tahun kemungkinan besar sudah menikah (bisa disesuaikan)
+                        statusPerkawinan = umur >= 20 ? 'Menikah' : 'Belum Menikah';
+                        console.log(`📊 Status perkawinan diprediksi dari umur: ${umur} tahun → ${statusPerkawinan}`);
+                    }
+                }
+
+                setSelectByValueOrText('status_perkawinan', mapStatusPerkawinan(statusPerkawinan));
                 setSelectByValueOrText('pembiayaan_kesehatan', mapPembiayaan(pasien.pembiayaan_kesehatan));
                 setSelectByValueOrText('golongan_darah', mapGolongan(pasien.golongan_darah));
 
@@ -167,6 +203,44 @@ document.addEventListener('DOMContentLoaded', function () {
             btnCekNik.innerHTML = originalHTML;
         }
     });
+
+    /**
+     * Hitung umur dari NIK (digit 7-12 adalah tanggal lahir DDMMYY)
+     * Untuk perempuan, tanggal +40
+     */
+    function hitungUmurDariNIK(nik) {
+        if (!nik || nik.length !== 16) return null;
+        
+        try {
+            let tanggal = parseInt(nik.substring(6, 8));
+            const bulan = parseInt(nik.substring(8, 10));
+            let tahun = parseInt(nik.substring(10, 12));
+            
+            // Jika tanggal > 31, berarti perempuan (tanggal + 40)
+            if (tanggal > 31) {
+                tanggal -= 40;
+            }
+            
+            // Konversi tahun 2 digit ke 4 digit
+            // Asumsi: 00-25 = 2000-2025, 26-99 = 1926-1999
+            tahun += (tahun <= 25) ? 2000 : 1900;
+            
+            // Hitung umur
+            const tanggalLahir = new Date(tahun, bulan - 1, tanggal);
+            const today = new Date();
+            let umur = today.getFullYear() - tanggalLahir.getFullYear();
+            const monthDiff = today.getMonth() - tanggalLahir.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < tanggalLahir.getDate())) {
+                umur--;
+            }
+            
+            return umur;
+        } catch (error) {
+            console.error('Error menghitung umur dari NIK:', error);
+            return null;
+        }
+    }
 
     /**
      * Show alert notification
