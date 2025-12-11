@@ -64,28 +64,60 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('pendidikan').value = pasien.pendidikan || '';
                 document.getElementById('no_jkn').value = pasien.no_jkn || '';
 
-                // Fill select fields
-                if (pasien.status_perkawinan) {
-                    document.getElementById('status_perkawinan').value = pasien.status_perkawinan;
-                }
-                if (pasien.pembiayaan_kesehatan) {
-                    document.getElementById('pembiayaan_kesehatan').value = pasien.pembiayaan_kesehatan;
-                }
-                if (pasien.golongan_darah) {
-                    document.getElementById('golongan_darah').value = pasien.golongan_darah;
+                // Isi select: status perkawinan, pembiayaan kesehatan, golongan darah
+                function setSelectByValueOrText(selId, val) {
+                    const sel = document.getElementById(selId);
+                    if (!sel) return;
+                    const v = String(val || '').trim();
+                    if (!v) return;
+                    const opts = Array.from(sel.options);
+                    let opt = opts.find(o => String(o.value).trim().toLowerCase() === v.toLowerCase());
+                    if (!opt) opt = opts.find(o => o.textContent.trim().toLowerCase() === v.toLowerCase());
+                    if (opt) sel.value = opt.value;
                 }
 
-                // Trigger wilayah auto-fill (jika ada wilayah.js)
-                const wilayahWrapper = document.getElementById('wilayah-wrapper');
-                if (wilayahWrapper) {
-                    wilayahWrapper.dataset.prov = pasien.provinsi || '';
-                    wilayahWrapper.dataset.kab = pasien.kota || '';
-                    wilayahWrapper.dataset.kec = pasien.kecamatan || '';
-                    wilayahWrapper.dataset.kel = pasien.kelurahan || '';
-                    
-                    // Trigger event untuk reload wilayah
-                    const event = new CustomEvent('wilayah-reload');
-                    wilayahWrapper.dispatchEvent(event);
+                function mapStatusPerkawinan(v) {
+                    const s = String(v || '').toLowerCase().trim();
+                    if (!s) return '';
+                    if (s.includes('kawin') || s.includes('menikah') || s === 'married') return 'Menikah';
+                    if (s.includes('belum') || s.includes('single') || s.includes('tidak kawin') || s.includes('tidak menikah') || s.includes('cerai')) return 'Belum Menikah';
+                    return '';
+                }
+
+                function mapPembiayaan(v) {
+                    const s = String(v || '').toLowerCase().trim();
+                    if (!s) return '';
+                    if (s.includes('bpjs') || s.includes('jkn')) return 'BPJS Kesehatan (JKN)';
+                    if (s.includes('umum') || s.includes('pribadi') || s.includes('tunai') || s.includes('cash')) return 'Pribadi';
+                    if (s.includes('asuransi') || s.includes('insurance')) return 'Asuransi Lainnya';
+                    return 'Asuransi Lainnya';
+                }
+
+                function mapGolongan(v) {
+                    const s = String(v || '').toUpperCase().trim();
+                    return ['A','B','AB','O'].includes(s) ? s : '';
+                }
+
+                setSelectByValueOrText('status_perkawinan', mapStatusPerkawinan(pasien.status_perkawinan));
+                setSelectByValueOrText('pembiayaan_kesehatan', mapPembiayaan(pasien.pembiayaan_kesehatan));
+                setSelectByValueOrText('golongan_darah', mapGolongan(pasien.golongan_darah));
+
+                // Auto-fill dropdown wilayah seperti implementasi di Bidan
+                if (window.WilayahCascade) {
+                    window.WilayahCascade.setByNames({
+                        prov: pasien.provinsi || '',
+                        kab:  pasien.kota || '',
+                        kec:  pasien.kecamatan || '',
+                        kel:  pasien.kelurahan || ''
+                    });
+                } else {
+                    const wilayahWrapper = document.getElementById('wilayah-wrapper');
+                    if (wilayahWrapper) {
+                        wilayahWrapper.setAttribute('data-prov', pasien.provinsi || '');
+                        wilayahWrapper.setAttribute('data-kab',  pasien.kota || '');
+                        wilayahWrapper.setAttribute('data-kec',  pasien.kecamatan || '');
+                        wilayahWrapper.setAttribute('data-kel',  pasien.kelurahan || '');
+                    }
                 }
 
                 // ============================================
