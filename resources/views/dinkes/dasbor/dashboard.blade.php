@@ -253,7 +253,7 @@
                                     <img src="{{ asset('icons/Iconly/Sharp/Outline/Activity.svg') }}"
                                         class="sm:block w-3.5 h-3.5" alt="">
                                 </span>
-                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan</h3>
+                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan Kunjungan Nifas</h3>
                             </div>
                         </div>
 
@@ -285,7 +285,7 @@
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Location.svg') }}" class="sm:block w-3.5 h-3.5"
                             alt="">
                     </span>
-                    <h2 class="font-semibold">Kunjungan Nifas per Bulan</h2>
+                    <h2 class="font-semibold">Grafik Kunjungan Nifas per Bulan</h2>
 
                     {{-- Badge tahun aktif --}}
                     <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-[#F5F5F5] text-[#4B4B4B]">
