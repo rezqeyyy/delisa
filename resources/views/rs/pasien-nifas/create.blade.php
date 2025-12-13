@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Tambah Pasien Nifas - DELISA</title>
     
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js', 'resources/js/rs/wilayah.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js', 'resources/js/rs/wilayah.js', 'resources/js/rs/cek-nik.js'])
 
 </head>
 
@@ -488,7 +488,6 @@
         </main>
     </div>
 
-    @vite(['resources/js/rs/cek-nik.js'])
     {{-- gunakan wilayah.js yg sudah ada untuk meng-handle kedua wrapper:
         - wilayah-wrapper (domisili)
         - wilayah-pelayanan-wrapper (pelayanan)
