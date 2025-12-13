@@ -3,6 +3,90 @@
 BEGIN;
 
 
+ALTER TABLE IF EXISTS public.anak_pasien DROP CONSTRAINT IF EXISTS anak_pasien_nifas_bidan_id_foreign;
+
+ALTER TABLE IF EXISTS public.anak_pasien DROP CONSTRAINT IF EXISTS anak_pasien_nifas_id_foreign;
+
+ALTER TABLE IF EXISTS public.anak_pasien DROP CONSTRAINT IF EXISTS anak_pasien_puskesmas_id_foreign;
+
+ALTER TABLE IF EXISTS public.bidans DROP CONSTRAINT IF EXISTS bidans_puskesmas_id_foreign;
+
+ALTER TABLE IF EXISTS public.bidans DROP CONSTRAINT IF EXISTS bidans_user_id_foreign;
+
+ALTER TABLE IF EXISTS public.jawaban_kuisioners DROP CONSTRAINT IF EXISTS jawaban_kuisioners_kuisioner_id_foreign;
+
+ALTER TABLE IF EXISTS public.jawaban_kuisioners DROP CONSTRAINT IF EXISTS jawaban_kuisioners_skrining_id_foreign;
+
+ALTER TABLE IF EXISTS public.kf DROP CONSTRAINT IF EXISTS "Anak";
+
+ALTER TABLE IF EXISTS public.kf DROP CONSTRAINT IF EXISTS "Nifas";
+
+ALTER TABLE IF EXISTS public.kf_kunjungans DROP CONSTRAINT IF EXISTS kf_kunjungans_pasien_nifas_id_foreign;
+
+ALTER TABLE IF EXISTS public.kondisi_kesehatans DROP CONSTRAINT IF EXISTS kondisi_kesehatans_skrining_id_foreign;
+
+ALTER TABLE IF EXISTS public.pasien_nifas_bidan DROP CONSTRAINT IF EXISTS bidan;
+
+ALTER TABLE IF EXISTS public.pasien_nifas_bidan DROP CONSTRAINT IF EXISTS pasien;
+
+ALTER TABLE IF EXISTS public.pasien_nifas_rs DROP CONSTRAINT IF EXISTS pasien_nifas_rs_kf1_id_foreign;
+
+ALTER TABLE IF EXISTS public.pasien_nifas_rs DROP CONSTRAINT IF EXISTS pasien_nifas_rs_kf2_id_foreign;
+
+ALTER TABLE IF EXISTS public.pasien_nifas_rs DROP CONSTRAINT IF EXISTS pasien_nifas_rs_kf3_id_foreign;
+
+ALTER TABLE IF EXISTS public.pasien_nifas_rs DROP CONSTRAINT IF EXISTS pasien_nifas_rs_pasien_id_foreign;
+
+ALTER TABLE IF EXISTS public.pasien_nifas_rs DROP CONSTRAINT IF EXISTS pasien_nifas_rs_puskesmas_id_foreign;
+
+ALTER TABLE IF EXISTS public.pasien_nifas_rs DROP CONSTRAINT IF EXISTS pasien_nifas_rs_rs_id_foreign;
+
+ALTER TABLE IF EXISTS public.pasiens DROP CONSTRAINT IF EXISTS pasiens_user_id_foreign;
+
+ALTER TABLE IF EXISTS public.resep_obats DROP CONSTRAINT IF EXISTS resep_obats_riwayat_rujukan_id_foreign;
+
+ALTER TABLE IF EXISTS public.resep_obats DROP CONSTRAINT IF EXISTS resep_obats_rujukan_rs_id_foreign;
+
+ALTER TABLE IF EXISTS public.riwayat_kehamilan_gpas DROP CONSTRAINT IF EXISTS riwayat_kehamilan_gpas_pasien_id_foreign;
+
+ALTER TABLE IF EXISTS public.riwayat_kehamilan_gpas DROP CONSTRAINT IF EXISTS riwayat_kehamilan_gpas_skrining_id_foreign;
+
+ALTER TABLE IF EXISTS public.riwayat_kehamilans DROP CONSTRAINT IF EXISTS riwayat_kehamilans_pasien_id_foreign;
+
+ALTER TABLE IF EXISTS public.riwayat_kehamilans DROP CONSTRAINT IF EXISTS riwayat_kehamilans_skrining_id_foreign;
+
+ALTER TABLE IF EXISTS public.riwayat_penyakit_nifas DROP CONSTRAINT IF EXISTS riwayat_penyakit_nifas_anak_pasien_id_foreign;
+
+ALTER TABLE IF EXISTS public.riwayat_penyakit_nifas DROP CONSTRAINT IF EXISTS riwayat_penyakit_nifas_nifas_id_foreign;
+
+ALTER TABLE IF EXISTS public.riwayat_rujukans DROP CONSTRAINT IF EXISTS riwayat_rujukans_rujukan_id_foreign;
+
+ALTER TABLE IF EXISTS public.riwayat_rujukans DROP CONSTRAINT IF EXISTS riwayat_rujukans_skrining_id_foreign;
+
+ALTER TABLE IF EXISTS public.rujukan_nifas DROP CONSTRAINT IF EXISTS "KF and Rujukan";
+
+ALTER TABLE IF EXISTS public.rujukan_nifas DROP CONSTRAINT IF EXISTS rs_id;
+
+ALTER TABLE IF EXISTS public.rujukan_rs DROP CONSTRAINT IF EXISTS rujukan_rs_pasien_id_foreign;
+
+ALTER TABLE IF EXISTS public.rujukan_rs DROP CONSTRAINT IF EXISTS rujukan_rs_rs_id_foreign;
+
+ALTER TABLE IF EXISTS public.rujukan_rs DROP CONSTRAINT IF EXISTS rujukan_rs_skrining_id_foreign;
+
+ALTER TABLE IF EXISTS public.rumah_sakits DROP CONSTRAINT IF EXISTS rumah_sakits_user_id_foreign;
+
+ALTER TABLE IF EXISTS public.skrinings DROP CONSTRAINT IF EXISTS skrinings_pasien_id_foreign;
+
+ALTER TABLE IF EXISTS public.skrinings DROP CONSTRAINT IF EXISTS skrinings_puskesmas_id_foreign;
+
+ALTER TABLE IF EXISTS public.users DROP CONSTRAINT IF EXISTS users_role_id_foreign;
+
+ALTER TABLE IF EXISTS public.wilayah_kerja DROP CONSTRAINT IF EXISTS wilayah_kerja_puskesmas_id_foreign;
+
+
+
+DROP TABLE IF EXISTS public.anak_pasien;
+
 CREATE TABLE IF NOT EXISTS public.anak_pasien
 (
     id bigserial NOT NULL,
@@ -17,15 +101,19 @@ CREATE TABLE IF NOT EXISTS public.anak_pasien
     memiliki_buku_kia boolean NOT NULL DEFAULT false,
     buku_kia_bayi_kecil boolean NOT NULL DEFAULT false,
     imd boolean NOT NULL DEFAULT false,
-    nifas_id bigint NOT NULL,
+    nifas_id bigint,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     riwayat_penyakit json,
     keterangan_masalah_lain text COLLATE pg_catalog."default",
     kondisi_ibu character varying(255) COLLATE pg_catalog."default",
     catatan_kondisi_ibu text COLLATE pg_catalog."default",
+    nifas_bidan_id bigint,
+    puskesmas_id bigint,
     CONSTRAINT anak_pasien_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.bidans;
 
 CREATE TABLE IF NOT EXISTS public.bidans
 (
@@ -38,6 +126,8 @@ CREATE TABLE IF NOT EXISTS public.bidans
     CONSTRAINT bidans_pkey PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS public.cache;
+
 CREATE TABLE IF NOT EXISTS public.cache
 (
     key character varying(255) COLLATE pg_catalog."default" NOT NULL,
@@ -46,6 +136,8 @@ CREATE TABLE IF NOT EXISTS public.cache
     CONSTRAINT cache_pkey PRIMARY KEY (key)
 );
 
+DROP TABLE IF EXISTS public.cache_locks;
+
 CREATE TABLE IF NOT EXISTS public.cache_locks
 (
     key character varying(255) COLLATE pg_catalog."default" NOT NULL,
@@ -53,6 +145,8 @@ CREATE TABLE IF NOT EXISTS public.cache_locks
     expiration integer NOT NULL,
     CONSTRAINT cache_locks_pkey PRIMARY KEY (key)
 );
+
+DROP TABLE IF EXISTS public.failed_jobs;
 
 CREATE TABLE IF NOT EXISTS public.failed_jobs
 (
@@ -66,6 +160,8 @@ CREATE TABLE IF NOT EXISTS public.failed_jobs
     CONSTRAINT failed_jobs_pkey PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS public.forgot_password_users;
+
 CREATE TABLE IF NOT EXISTS public.forgot_password_users
 (
     id bigserial NOT NULL,
@@ -76,6 +172,8 @@ CREATE TABLE IF NOT EXISTS public.forgot_password_users
     updated_at timestamp without time zone,
     CONSTRAINT forgot_password_users_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.jawaban_kuisioners;
 
 CREATE TABLE IF NOT EXISTS public.jawaban_kuisioners
 (
@@ -88,6 +186,8 @@ CREATE TABLE IF NOT EXISTS public.jawaban_kuisioners
     updated_at timestamp without time zone,
     CONSTRAINT jawaban_kuisioners_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.job_batches;
 
 CREATE TABLE IF NOT EXISTS public.job_batches
 (
@@ -104,6 +204,8 @@ CREATE TABLE IF NOT EXISTS public.job_batches
     CONSTRAINT job_batches_pkey PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS public.jobs;
+
 CREATE TABLE IF NOT EXISTS public.jobs
 (
     id bigserial NOT NULL,
@@ -115,6 +217,8 @@ CREATE TABLE IF NOT EXISTS public.jobs
     created_at integer NOT NULL,
     CONSTRAINT jobs_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.kf;
 
 CREATE TABLE IF NOT EXISTS public.kf
 (
@@ -133,6 +237,8 @@ CREATE TABLE IF NOT EXISTS public.kf
     created_at timestamp without time zone,
     CONSTRAINT kf_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.kf_kunjungans;
 
 CREATE TABLE IF NOT EXISTS public.kf_kunjungans
 (
@@ -162,6 +268,8 @@ COMMENT ON COLUMN public.kf_kunjungans.dbp
 COMMENT ON COLUMN public.kf_kunjungans.map
     IS 'Mean Arterial Pressure (mmHg)';
 
+DROP TABLE IF EXISTS public.kondisi_kesehatans;
+
 CREATE TABLE IF NOT EXISTS public.kondisi_kesehatans
 (
     id bigserial NOT NULL,
@@ -184,6 +292,8 @@ CREATE TABLE IF NOT EXISTS public.kondisi_kesehatans
     CONSTRAINT kondisi_kesehatans_pkey PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS public.kuisioner_pasiens;
+
 CREATE TABLE IF NOT EXISTS public.kuisioner_pasiens
 (
     id bigserial NOT NULL,
@@ -195,6 +305,8 @@ CREATE TABLE IF NOT EXISTS public.kuisioner_pasiens
     CONSTRAINT kuisioner_pasiens_pkey PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS public.migrations;
+
 CREATE TABLE IF NOT EXISTS public.migrations
 (
     id serial NOT NULL,
@@ -202,6 +314,8 @@ CREATE TABLE IF NOT EXISTS public.migrations
     batch integer NOT NULL,
     CONSTRAINT migrations_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.pasien_nifas_bidan;
 
 CREATE TABLE IF NOT EXISTS public.pasien_nifas_bidan
 (
@@ -213,6 +327,8 @@ CREATE TABLE IF NOT EXISTS public.pasien_nifas_bidan
     updated_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pasien_nifas_bidan_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.pasien_nifas_rs;
 
 CREATE TABLE IF NOT EXISTS public.pasien_nifas_rs
 (
@@ -232,8 +348,14 @@ CREATE TABLE IF NOT EXISTS public.pasien_nifas_rs
     kf1_id bigint,
     kf2_id bigint,
     kf3_id bigint,
+    kf4_tanggal timestamp(0) without time zone,
+    kf4_catatan text COLLATE pg_catalog."default",
+    kf4_id bigint,
+    puskesmas_id bigint,
     CONSTRAINT pasien_nifas_rs_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.pasiens;
 
 CREATE TABLE IF NOT EXISTS public.pasiens
 (
@@ -262,6 +384,8 @@ CREATE TABLE IF NOT EXISTS public.pasiens
     CONSTRAINT pasiens_pkey PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS public.password_reset_tokens;
+
 CREATE TABLE IF NOT EXISTS public.password_reset_tokens
 (
     id bigserial NOT NULL,
@@ -270,6 +394,8 @@ CREATE TABLE IF NOT EXISTS public.password_reset_tokens
     created_at timestamp without time zone,
     CONSTRAINT password_reset_tokens_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.personal_access_tokens;
 
 CREATE TABLE IF NOT EXISTS public.personal_access_tokens
 (
@@ -286,6 +412,8 @@ CREATE TABLE IF NOT EXISTS public.personal_access_tokens
     CONSTRAINT personal_access_tokens_pkey PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS public.puskesmas;
+
 CREATE TABLE IF NOT EXISTS public.puskesmas
 (
     id bigserial NOT NULL,
@@ -298,6 +426,8 @@ CREATE TABLE IF NOT EXISTS public.puskesmas
     user_id bigint,
     CONSTRAINT puskesmas_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.resep_obats;
 
 CREATE TABLE IF NOT EXISTS public.resep_obats
 (
@@ -312,6 +442,8 @@ CREATE TABLE IF NOT EXISTS public.resep_obats
     CONSTRAINT resep_obats_pkey PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS public.riwayat_kehamilan_gpas;
+
 CREATE TABLE IF NOT EXISTS public.riwayat_kehamilan_gpas
 (
     id bigserial NOT NULL,
@@ -324,6 +456,8 @@ CREATE TABLE IF NOT EXISTS public.riwayat_kehamilan_gpas
     updated_at timestamp without time zone,
     CONSTRAINT riwayat_kehamilan_gpas_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.riwayat_kehamilans;
 
 CREATE TABLE IF NOT EXISTS public.riwayat_kehamilans
 (
@@ -343,6 +477,8 @@ CREATE TABLE IF NOT EXISTS public.riwayat_kehamilans
     CONSTRAINT riwayat_kehamilans_pkey PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS public.riwayat_penyakit_nifas;
+
 CREATE TABLE IF NOT EXISTS public.riwayat_penyakit_nifas
 (
     id bigserial NOT NULL,
@@ -354,6 +490,8 @@ CREATE TABLE IF NOT EXISTS public.riwayat_penyakit_nifas
     anak_pasien_id bigint NOT NULL,
     CONSTRAINT riwayat_penyakit_nifas_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.riwayat_rujukans;
 
 CREATE TABLE IF NOT EXISTS public.riwayat_rujukans
 (
@@ -371,6 +509,8 @@ CREATE TABLE IF NOT EXISTS public.riwayat_rujukans
     CONSTRAINT riwayat_rujukans_pkey PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS public.roles;
+
 CREATE TABLE IF NOT EXISTS public.roles
 (
     id bigserial NOT NULL,
@@ -379,6 +519,8 @@ CREATE TABLE IF NOT EXISTS public.roles
     updated_at timestamp without time zone,
     CONSTRAINT roles_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.rujukan_nifas;
 
 CREATE TABLE IF NOT EXISTS public.rujukan_nifas
 (
@@ -391,6 +533,8 @@ CREATE TABLE IF NOT EXISTS public.rujukan_nifas
     updated_at timestamp without time zone,
     CONSTRAINT rujukan_nifas_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.rujukan_rs;
 
 CREATE TABLE IF NOT EXISTS public.rujukan_rs
 (
@@ -410,6 +554,8 @@ CREATE TABLE IF NOT EXISTS public.rujukan_rs
     CONSTRAINT rujukan_rs_pkey PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS public.rumah_sakits;
+
 CREATE TABLE IF NOT EXISTS public.rumah_sakits
 (
     id bigserial NOT NULL,
@@ -420,8 +566,11 @@ CREATE TABLE IF NOT EXISTS public.rumah_sakits
     kelurahan character varying(255) COLLATE pg_catalog."default" NOT NULL,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
+    telepon character varying(255) COLLATE pg_catalog."default",
     CONSTRAINT rumah_sakits_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.sessions;
 
 CREATE TABLE IF NOT EXISTS public.sessions
 (
@@ -433,6 +582,8 @@ CREATE TABLE IF NOT EXISTS public.sessions
     last_activity integer NOT NULL,
     CONSTRAINT sessions_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.skrinings;
 
 CREATE TABLE IF NOT EXISTS public.skrinings
 (
@@ -450,6 +601,8 @@ CREATE TABLE IF NOT EXISTS public.skrinings
     updated_at timestamp without time zone,
     CONSTRAINT skrinings_pkey PRIMARY KEY (id)
 );
+
+DROP TABLE IF EXISTS public.users;
 
 CREATE TABLE IF NOT EXISTS public.users
 (
@@ -469,6 +622,8 @@ CREATE TABLE IF NOT EXISTS public.users
     CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS public.wilayah_kerja;
+
 CREATE TABLE IF NOT EXISTS public.wilayah_kerja
 (
     id bigserial NOT NULL,
@@ -480,10 +635,24 @@ CREATE TABLE IF NOT EXISTS public.wilayah_kerja
 );
 
 ALTER TABLE IF EXISTS public.anak_pasien
+    ADD CONSTRAINT anak_pasien_nifas_bidan_id_foreign FOREIGN KEY (nifas_bidan_id)
+    REFERENCES public.pasien_nifas_bidan (id) MATCH SIMPLE
+    ON UPDATE CASCADE
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.anak_pasien
     ADD CONSTRAINT anak_pasien_nifas_id_foreign FOREIGN KEY (nifas_id)
     REFERENCES public.pasien_nifas_rs (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.anak_pasien
+    ADD CONSTRAINT anak_pasien_puskesmas_id_foreign FOREIGN KEY (puskesmas_id)
+    REFERENCES public.puskesmas (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE SET NULL;
 
 
 ALTER TABLE IF EXISTS public.bidans
@@ -582,6 +751,13 @@ ALTER TABLE IF EXISTS public.pasien_nifas_rs
     REFERENCES public.pasiens (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.pasien_nifas_rs
+    ADD CONSTRAINT pasien_nifas_rs_puskesmas_id_foreign FOREIGN KEY (puskesmas_id)
+    REFERENCES public.puskesmas (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE SET NULL;
 
 
 ALTER TABLE IF EXISTS public.pasien_nifas_rs
