@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
 
 class PasienNifasRs extends Model
 {
@@ -36,12 +37,11 @@ class PasienNifasRs extends Model
         'kf3_catatan',
         'kf3_id',
 
-        // KF4 (baru)
+        // KF4
         'kf4_tanggal',
         'kf4_catatan',
         'kf4_id',
     ];
-
 
     // TAMBAH INI: Casting untuk tanggal
     protected $casts = [
@@ -53,6 +53,29 @@ class PasienNifasRs extends Model
         'kf4_tanggal' => 'datetime',
     ];
 
+    // ========== SCOPES UNTUK FILTER WILAYAH ==========
+    
+    /**
+     * Scope untuk filter berdasarkan kecamatan puskesmas
+     */
+    public function scopeFilterByKecamatan($query, $kecamatan)
+    {
+        return $query->whereHas('pasien', function($q) use ($kecamatan) {
+            $q->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]);
+        });
+    }
+
+    /**
+     * Scope untuk filter berdasarkan ID puskesmas
+     */
+    public function scopeFilterByPuskesmas($query, $puskesmasId)
+    {
+        // Jika diperlukan di masa depan
+        return $query;
+    }
+
+    // ========== RELASI DASAR ==========
+
     /**
      * Relasi ke tabel pasiens
      */
@@ -62,8 +85,7 @@ class PasienNifasRs extends Model
     }
 
     /**
-     * Relasi pendek "rs" yang dipakai di controller:
-     * PasienNifasRs::with(['pasien.user', 'rs', 'anakPasien'])
+     * Relasi ke rumah sakit
      */
     public function rs()
     {
@@ -71,27 +93,17 @@ class PasienNifasRs extends Model
     }
 
     /**
-     * Alias yang lebih deskriptif (opsional, bisa kamu pakai nanti di tempat lain)
-     */
-    public function rumahSakit()
-    {
-        return $this->rs();
-    }
-
-    /**
-     * Relasi ke tabel anak_pasiens (satu nifas punya banyak anak)
+     * Relasi ke anak pasien
      */
     public function anakPasien()
     {
         return $this->hasMany(AnakPasien::class, 'nifas_id');
     }
 
-    /**
-     * ========== RELATIONSHIPS KE SISTEM KF BARU ==========
-     */
+    // ========== RELASI KE SISTEM KF BARU ==========
 
     /**
-     * Relationship dengan semua KF Kunjungan (sistem baru)
+     * Relationship dengan semua KF Kunjungan
      */
     public function kfKunjungans(): HasMany
     {
@@ -99,7 +111,7 @@ class PasienNifasRs extends Model
     }
 
     /**
-     * Relationship untuk KF 1 (sistem baru)
+     * Relationship untuk KF 1
      */
     public function kfKunjungan1(): HasOne
     {
@@ -108,7 +120,7 @@ class PasienNifasRs extends Model
     }
 
     /**
-     * Relationship untuk KF 2 (sistem baru)
+     * Relationship untuk KF 2
      */
     public function kfKunjungan2(): HasOne
     {
@@ -117,7 +129,7 @@ class PasienNifasRs extends Model
     }
 
     /**
-     * Relationship untuk KF 3 (sistem baru)
+     * Relationship untuk KF 3
      */
     public function kfKunjungan3(): HasOne
     {
@@ -125,6 +137,9 @@ class PasienNifasRs extends Model
             ->where('jenis_kf', 3);
     }
 
+    /**
+     * Relationship untuk KF 4
+     */
     public function kfKunjungan4(): HasOne
     {
         return $this->hasOne(KfKunjungan::class, 'pasien_nifas_id')
@@ -132,7 +147,7 @@ class PasienNifasRs extends Model
     }
 
     /**
-     * Foreign key relationships (untuk integrasi dengan kolom kf1_id, kf2_id, kf3_id)
+     * Foreign key relationships
      */
     public function kf1()
     {
@@ -154,10 +169,10 @@ class PasienNifasRs extends Model
         return $this->belongsTo(KfKunjungan::class, 'kf4_id');
     }
 
-
+    // ========== ACCESSORS ==========
 
     /**
-     * Accessor untuk cek apakah sudah ada KF1 (sistem baru)
+     * Accessor untuk cek apakah sudah ada KF1
      */
     public function getHasKf1KunjunganAttribute(): bool
     {
@@ -165,7 +180,7 @@ class PasienNifasRs extends Model
     }
 
     /**
-     * Accessor untuk cek apakah sudah ada KF2 (sistem baru)
+     * Accessor untuk cek apakah sudah ada KF2
      */
     public function getHasKf2KunjunganAttribute(): bool
     {
@@ -173,7 +188,7 @@ class PasienNifasRs extends Model
     }
 
     /**
-     * Accessor untuk cek apakah sudah ada KF3 (sistem baru)
+     * Accessor untuk cek apakah sudah ada KF3
      */
     public function getHasKf3KunjunganAttribute(): bool
     {
@@ -181,7 +196,7 @@ class PasienNifasRs extends Model
     }
 
     /**
-     * Accessor untuk cek apakah sudah ada KF4 (sistem baru)
+     * Accessor untuk cek apakah sudah ada KF4
      */
     public function getHasKf4KunjunganAttribute(): bool
     {
@@ -189,7 +204,7 @@ class PasienNifasRs extends Model
     }
 
     /**
-     * Accessor untuk mendapatkan data KF berdasarkan jenis (sistem baru)
+     * Accessor untuk mendapatkan semua data KF
      */
     public function getKfKunjunganAttribute(): array
     {
@@ -201,26 +216,27 @@ class PasienNifasRs extends Model
         ];
     }
 
-    /**
-     * ========== METHOD KF KOMPATIBILITAS LAMA & BARU ==========
-     */
+    // ========== METHOD UTILITAS ==========
 
     /**
      * Cek apakah KF sudah selesai (KOMPATIBILITAS SISTEM LAMA & BARU)
+     * DIPAKAI DI CONTROLLER: $pasienNifas->isKfSelesai($jenisKf)
      */
     public function isKfSelesai($jenisKf)
     {
-        // Cek sistem baru dulu
-        switch ($jenisKf) {
-            case 1:
-                return $this->has_kf1_kunjungan || !empty($this->{"kf{$jenisKf}_tanggal"});
-            case 2:
-                return $this->has_kf2_kunjungan || !empty($this->{"kf{$jenisKf}_tanggal"});
-            case 3:
-                return $this->has_kf3_kunjungan || !empty($this->{"kf{$jenisKf}_tanggal"});
-            default:
-                return !empty($this->{"kf{$jenisKf}_tanggal"});
+        // Cek sistem baru dulu (tabel kf_kunjungans)
+        $existsInNewSystem = DB::table('kf_kunjungans')
+            ->where('pasien_nifas_id', $this->id)
+            ->where('jenis_kf', $jenisKf)
+            ->exists();
+        
+        if ($existsInNewSystem) {
+            return true;
         }
+        
+        // Fallback: cek kolom lama
+        $tanggalField = "kf{$jenisKf}_tanggal";
+        return !empty($this->$tanggalField);
     }
 
     /**
@@ -228,7 +244,9 @@ class PasienNifasRs extends Model
      */
     public function getKfDeadline($jenisKf)
     {
-        if (!$this->tanggal_melahirkan) return null;
+        if (!$this->tanggal_melahirkan) {
+            return null;
+        }
 
         $tanggalMelahirkan = Carbon::parse($this->tanggal_melahirkan);
 
@@ -240,7 +258,7 @@ class PasienNifasRs extends Model
             case 3:
                 return $tanggalMelahirkan->copy()->addDays(28); // Hari ke-8 - ke-28
             case 4:
-                return $tanggalMelahirkan->copy()->addDays(42); // TAMBAHKAN: KF4 biasanya hari ke-29-42
+                return $tanggalMelahirkan->copy()->addDays(42); // Hari ke-29-42
             default:
                 return null;
         }
@@ -248,6 +266,7 @@ class PasienNifasRs extends Model
 
     /**
      * Cek status KF (belum, dalam periode, terlambat, selesai)
+     * DIPAKAI DI CONTROLLER: $pasienNifas->getKfStatus($jenisKf)
      */
     public function getKfStatus($jenisKf)
     {
@@ -259,18 +278,25 @@ class PasienNifasRs extends Model
         $now = Carbon::now();
         $deadline = $this->getKfDeadline($jenisKf);
 
-        if (!$deadline) return 'tidak_ada_data';
+        if (!$deadline) {
+            return 'tidak_ada_data';
+        }
+
+        // Hitung mulai periode
+        $mulai = $this->getKfMulai($jenisKf);
+
+        // Jika belum mulai
+        if ($mulai && $now->lessThan($mulai)) {
+            return 'belum_mulai';
+        }
 
         // Jika sudah lewat deadline
         if ($now->greaterThan($deadline)) {
             return 'terlambat';
         }
 
-        // Hitung mulai periode
-        $mulai = $this->getKfMulai($jenisKf);
-
         // Jika sudah masuk periode
-        if ($now->greaterThanOrEqualTo($mulai)) {
+        if ($mulai && $now->greaterThanOrEqualTo($mulai)) {
             return 'dalam_periode';
         }
 
@@ -279,10 +305,13 @@ class PasienNifasRs extends Model
 
     /**
      * Hitung mulai periode KF
+     * DIPAKAI DI CONTROLLER: $pasienNifas->getKfMulai($jenisKf)
      */
     public function getKfMulai($jenisKf)
     {
-        if (!$this->tanggal_melahirkan) return null;
+        if (!$this->tanggal_melahirkan) {
+            return null;
+        }
 
         $tanggalMelahirkan = Carbon::parse($this->tanggal_melahirkan);
 
@@ -301,27 +330,23 @@ class PasienNifasRs extends Model
     }
 
     /**
-     * Cek apakah KF bisa dilakukan (KOMPATIBILITAS SISTEM LAMA & BARU)
+     * Cek apakah KF bisa dilakukan
      */
     public function canDoKf($jenisKf)
     {
         // KF1 selalu bisa
-        if ($jenisKf == 1) return true;
-
-        // Untuk KF2 dan KF3, cek sistem baru atau lama
-        if ($jenisKf == 2) {
-            return $this->has_kf1_kunjungan || $this->isKfSelesai(1);
+        if ($jenisKf == 1) {
+            return true;
         }
 
-        if ($jenisKf == 3) {
-            return $this->has_kf2_kunjungan || $this->isKfSelesai(2);
+        // Untuk KF2,3,4 cek KF sebelumnya sudah selesai
+        for ($i = 1; $i < $jenisKf; $i++) {
+            if (!$this->isKfSelesai($i)) {
+                return false;
+            }
         }
 
-        if ($jenisKf == 4) { // TAMBAHKAN
-            return $this->has_kf3_kunjungan || $this->isKfSelesai(3);
-        }
-
-        return false;
+        return true;
     }
 
     /**
@@ -363,6 +388,78 @@ class PasienNifasRs extends Model
                 return '○';
             default:
                 return '?';
+        }
+    }
+
+    /**
+     * Get data KF untuk chart/statistik
+     */
+    public function getKfStatistics()
+    {
+        $stats = [
+            'total' => 0,
+            'selesai' => 0,
+            'belum' => 0,
+            'terlambat' => 0,
+        ];
+
+        for ($i = 1; $i <= 4; $i++) {
+            $stats['total']++;
+            $status = $this->getKfStatus($i);
+            
+            if ($status === 'selesai') {
+                $stats['selesai']++;
+            } elseif ($status === 'terlambat') {
+                $stats['terlambat']++;
+            } else {
+                $stats['belum']++;
+            }
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Cek apakah pasien sudah meninggal berdasarkan kesimpulan KF
+     */
+    public function isMeninggal()
+    {
+        return DB::table('kf_kunjungans')
+            ->where('pasien_nifas_id', $this->id)
+            ->where(function ($q) {
+                $q->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'meninggal'")
+                  ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
+            })
+            ->exists();
+    }
+
+    /**
+     * Get KF kematian pertama
+     */
+    public function getDeathKf()
+    {
+        return DB::table('kf_kunjungans')
+            ->where('pasien_nifas_id', $this->id)
+            ->where(function ($q) {
+                $q->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'meninggal'")
+                  ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
+            })
+            ->min('jenis_kf');
+    }
+
+    /**
+     * Format tanggal untuk display
+     */
+    public function getFormattedDate($field)
+    {
+        if (empty($this->$field)) {
+            return '-';
+        }
+        
+        try {
+            return Carbon::parse($this->$field)->format('d/m/Y');
+        } catch (\Exception $e) {
+            return $this->$field;
         }
     }
 }

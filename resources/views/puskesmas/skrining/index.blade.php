@@ -38,29 +38,63 @@
                                 <p class="text-xs text-[#7C7C7C]">Daftar pasien skrining preeklampsia terbaru</p>
                             </div>
                         </div>
-                        
-                        <!-- Tombol Download Excel dan PDF -->
-                        <div class="flex items-center gap-2">
-                            <a href="{{ route('puskesmas.export.excel') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                                    <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
-                                    <path d="M9 15h6" />
-                                    <path d="M12 18V12" />
-                                </svg>
-                                Download Excel
-                            </a>
-                            <a href="{{ route('puskesmas.export.pdf') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                                    <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
-                                    <path d="M9 15h6" />
-                                    <path d="M12 18V12" />
-                                </svg>
-                                Download PDF
-                            </a>
-                        </div>
-                    </div>
+                        <div class="flex flex-wrap items-center gap-3">
+
+    <!-- SEARCH -->
+    <form method="GET"
+          action="{{ route('puskesmas.skrining.index') }}"
+          class="flex items-center bg-[#F5F5F5] border border-[#E5E5E5]
+                 rounded-full px-4 h-10 w-64
+                 focus-within:ring-2 focus-within:ring-pink-400 transition">
+
+        <svg xmlns="http://www.w3.org/2000/svg"
+             class="w-4 h-4 text-gray-400 mr-2"
+             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="m21 21-4.35-4.35M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0Z"/>
+        </svg>
+
+        <input
+            type="text"
+            name="search"
+            value="{{ request('search') }}"
+            placeholder="Cari Nama / NIK / No Telp"
+            class="bg-transparent outline-none text-sm w-full text-gray-700 placeholder-gray-400"
+        />
+    </form>
+
+    <!-- DOWNLOAD EXCEL -->
+    <a href="{{ route('puskesmas.skrining.export.excel') }}"
+       class="inline-flex items-center gap-2 px-4 h-10
+              bg-green-600 text-white rounded-full
+              hover:bg-green-700 transition text-sm font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
+            <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
+            <path d="M9 15h6"/>
+            <path d="M12 18V12"/>
+        </svg>
+        Download Excel
+    </a>
+
+    <!-- DOWNLOAD PDF -->
+    <a href="{{ route('puskesmas.skrining.export.pdf') }}"
+       class="inline-flex items-center gap-2 px-4 h-10
+              bg-red-600 text-white rounded-full
+              hover:bg-red-700 transition text-sm font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
+            <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
+            <path d="M9 15h6"/>
+            <path d="M12 18V12"/>
+        </svg>
+        Download PDF
+    </a>
+
+</div>
+                    </div>  
                     <br>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">

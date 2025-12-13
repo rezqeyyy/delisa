@@ -5,6 +5,9 @@
     $active = 'group flex items-center gap-3 w-full px-6 py-3 bg-[#B9257F] text-white font-medium rounded-xl transition';
     $idle = 'group flex items-center gap-3 w-full px-6 py-3 hover:text-white hover:font-medium hover:bg-[#B9257F] rounded-xl transition';
     $is = fn($pattern) => request()->route() && request()->routeIs($pattern);
+    
+    // Ambil user ID saat ini untuk profile
+    $currentUserId = auth()->id();
 @endphp
 
 <aside id="sidebar" aria-label="Navigasi Puskesmas"
@@ -37,7 +40,7 @@
                     <span>Dashboard</span>
                 </a>
 
-                <a href="{{ route('puskesmas.skrining') }}" class="{{ $is('puskesmas.skrining*') ? $active : $idle }}">
+                <a href="{{ route('puskesmas.skrining.index') }}" class="{{ $is('puskesmas.skrining*') ? $active : $idle }}">
                     <img src="{{ asset('icons/Group 36805.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Skrining">
                     <span>Skrining</span>
                 </a>
@@ -56,7 +59,9 @@
             <div class="space-y-2 pt-2">
                 <p class="px-6 text-[13px] leading-[46px] font-medium text-black/50 tracking-[0.15em] uppercase">ACCOUNT</p>
 
-                <a href="{{ route('puskesmas.profile.edit') }}" class="{{ $is('puskesmas.profile*') ? $active : $idle }}">
+                <!-- PERBAIKAN DI SINI: tambahkan parameter user ID -->
+                <a href="{{ route('puskesmas.profile.edit', $currentUserId) }}" 
+                   class="{{ $is('puskesmas.profile*') ? $active : $idle }}">
                     <img src="{{ asset('icons/Iconly/Regular/Outline/Setting.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Pengaturan">
                     <span>Pengaturan</span>
                 </a>

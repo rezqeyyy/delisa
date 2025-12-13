@@ -165,82 +165,81 @@ class RujukanController extends Controller
      * Sekarang: hanya menampilkan SATU baris per pasien (unique per pasien_id),
      * dan data rujukan yang dipakai adalah rujukan TERBARU pasien tersebut.
      */
-    public function index()
-    {
-        try {
-            // -------------------------------------------------
-            // 1. BASE QUERY: ambil semua rujukan BERISIKO
-            //    - Hanya rujukan yang memang diajukan (is_rujuk = 1)
-            //    - Hanya skrining yang memenuhi kriteria berisiko:
-            //      jumlah_resiko_tinggi >= 1 ATAU jumlah_resiko_sedang >= 2
-            // -------------------------------------------------
-            $baseQuery = DB::table('rujukan_rs')
-                ->join('skrinings', 'rujukan_rs.skrining_id', '=', 'skrinings.id')
-                ->where('rujukan_rs.is_rujuk', 1)
-                ->where(function ($q) {
-                    $q->where('skrinings.jumlah_resiko_tinggi', '>=', 1)
-                        ->orWhere('skrinings.jumlah_resiko_sedang', '>=', 2);
+    public function index(Request $request)
+{
+    try {
+        // ===============================
+        // 0. Ambil parameter search
+        // ===============================
+        $search = trim($request->get('search'));
+
+        // ===============================
+        // 1. BASE QUERY
+        // - Rujukan aktif
+        // - Skrining berisiko
+        // - Sudah JOIN pasien, user, RS (untuk search)
+        // ===============================
+        $baseQuery = DB::table('rujukan_rs')
+            ->join('skrinings', 'rujukan_rs.skrining_id', '=', 'skrinings.id')
+            ->join('pasiens', 'rujukan_rs.pasien_id', '=', 'pasiens.id')
+            ->join('users', 'pasiens.user_id', '=', 'users.id')
+            ->join('rumah_sakits', 'rujukan_rs.rs_id', '=', 'rumah_sakits.id')
+            ->where('rujukan_rs.is_rujuk', 1)
+            ->where(function ($q) {
+                $q->where('skrinings.jumlah_resiko_tinggi', '>=', 1)
+                  ->orWhere('skrinings.jumlah_resiko_sedang', '>=', 2);
+            })
+            // ===============================
+            // 2. SEARCH (opsional)
+            // ===============================
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($w) use ($search) {
+                    $w->whereRaw('LOWER(users.name) LIKE ?', ['%' . strtolower($search) . '%'])
+                      ->orWhere('pasiens.nik', 'ILIKE', "%{$search}%")
+                      ->orWhereRaw('LOWER(rumah_sakits.nama) LIKE ?', ['%' . strtolower($search) . '%']);
                 });
+            });
 
-            // -------------------------------------------------
-            // 2. DAPATKAN ID RUJUKAN TERBARU PER PASIEN
-            //    - Group by pasien_id
-            //    - Ambil MAX(rujukan_rs.id) -> rujukan terbaru pasien tsb
-            // -------------------------------------------------
-            $latestRujukanIds = $baseQuery
-                ->select(DB::raw('MAX(rujukan_rs.id) as id'))
-                ->groupBy('rujukan_rs.pasien_id')
-                ->pluck('id');   // hasil: koleksi [id1, id2, id3, ...]
+        // ===============================
+        // 3. Ambil ID rujukan TERBARU per pasien
+        // ===============================
+        $latestRujukanIds = $baseQuery
+            ->select(DB::raw('MAX(rujukan_rs.id) as id'))
+            ->groupBy('rujukan_rs.pasien_id')
+            ->pluck('id');
 
-            // Kalau tidak ada rujukan sama sekali
-            if ($latestRujukanIds->isEmpty()) {
-                $rujukans = collect();
-            } else {
-                // -------------------------------------------------
-                // 3. AMBIL DETAIL RUJUKAN BERDASARKAN ID TERBARU TADI
-                //    - Hanya rujukan dengan id yang masuk list MAX(id)
-                //    - Urutkan dari yang paling baru dibuat
-                // -------------------------------------------------
-                $rujukans = DB::table('rujukan_rs')
-                    ->whereIn('id', $latestRujukanIds)
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                // -------------------------------------------------
-                // 4. LENGKAPI DENGAN NAMA PASIEN, NIK, NAMA RS
-                // -------------------------------------------------
-                foreach ($rujukans as $rujukan) {
-                    // Ambil nama & NIK pasien
-                    $pasien = DB::table('pasiens')
-                        ->join('users', 'pasiens.user_id', '=', 'users.id')
-                        ->where('pasiens.id', $rujukan->pasien_id)
-                        ->select('users.name as nama_pasien', 'pasiens.nik')
-                        ->first();
-
-                    $rujukan->nama_pasien = $pasien->nama_pasien ?? 'Tidak diketahui';
-                    $rujukan->nik         = $pasien->nik ?? '-';
-
-                    // Ambil nama RS tujuan
-                    $rs = DB::table('rumah_sakits')
-                        ->where('id', $rujukan->rs_id)
-                        ->select('nama as nama_rs')
-                        ->first();
-
-                    $rujukan->nama_rs = $rs->nama_rs ?? 'Tidak diketahui';
-                }
-            }
-
-            return view('puskesmas.rujukan.index', compact('rujukans'));
-        } catch (\Exception $e) {
-            Log::error('ERROR Puskesmas.RujukanController@index: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return back()->with('error', 'Gagal memuat data rujukan: ' . $e->getMessage());
+        // ===============================
+        // 4. Ambil data final rujukan
+        // ===============================
+        if ($latestRujukanIds->isEmpty()) {
+            $rujukans = collect();
+        } else {
+            $rujukans = DB::table('rujukan_rs')
+                ->join('pasiens', 'rujukan_rs.pasien_id', '=', 'pasiens.id')
+                ->join('users', 'pasiens.user_id', '=', 'users.id')
+                ->join('rumah_sakits', 'rujukan_rs.rs_id', '=', 'rumah_sakits.id')
+                ->whereIn('rujukan_rs.id', $latestRujukanIds)
+                ->orderBy('rujukan_rs.created_at', 'desc')
+                ->select(
+                    'rujukan_rs.*',
+                    'users.name as nama_pasien',
+                    'pasiens.nik',
+                    'rumah_sakits.nama as nama_rs'
+                )
+                ->get();
         }
+
+        return view('puskesmas.rujukan.index', compact('rujukans'));
+
+    } catch (\Exception $e) {
+        Log::error('ERROR Puskesmas.RujukanController@index', [
+            'message' => $e->getMessage(),
+            'trace'   => $e->getTraceAsString(),
+        ]);
+
+        return back()->with('error', 'Gagal memuat data rujukan');
     }
-
-
+}
     /**
      * Tampilkan detail rujukan - DEBUG VERSION
      */

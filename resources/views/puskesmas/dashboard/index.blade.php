@@ -35,7 +35,7 @@
                 </div>
 
                 <div class="flex items-center gap-3 flex-none justify-end">
-                    <a href="{{ route('puskesmas.profile.edit') }}" class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
+                    <a href="{{ route('puskesmas.profile.edit', auth()->id()) }}" class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
                         <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90" alt="Setting">
                     </a>
 
@@ -187,7 +187,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <a href="{{ route('puskesmas.skrining') }}" class="px-5 py-2 rounded-full border border-[#D9D9D9] bg-white text-[#1D1D1D] font-semibold flex items-center gap-2">
+                            <a href="{{ route('puskesmas.skrining.index') }}" class="px-5 py-2 rounded-full border border-[#D9D9D9] bg-white text-[#1D1D1D] font-semibold flex items-center gap-2">
                                 View All
                                 <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}" class="w-4 h-4 opacity-80" alt="Arrow" />
                             </a>

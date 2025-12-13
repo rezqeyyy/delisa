@@ -29,6 +29,41 @@
             <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
                 @if ($rujukans->count() > 0)
                     <div class="overflow-x-auto">
+                        <!-- Search Bar -->
+                        <form method="GET" action="{{ route('puskesmas.rujukan.index') }}" class="mb-4">
+                            <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+                                <div class="relative w-full sm:max-w-md">
+                                    <input
+                                        type="text"
+                                        name="search"
+                                        value="{{ request('search') }}"
+                                        placeholder="Cari nama pasien / NIK / rumah sakit..."
+                                        class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-[#B9257F] focus:border-[#B9257F]"
+                                    >
+                                    <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                    </svg>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    class="inline-flex items-center px-4 py-2 bg-[#B9257F] text-white text-sm rounded-lg hover:bg-[#a31f70] transition"
+                                >
+                                    Cari
+                                </button>
+
+                                @if(request()->has('search'))
+                                    <a
+                                        href="{{ route('puskesmas.rujukan.index') }}"
+                                        class="text-sm text-gray-500 hover:underline"
+                                    >
+                                        Reset
+                                    </a>
+                                @endif
+                            </div>
+                        </form>
                         <table class="w-full text-sm">
                             <thead class="text-[#7C7C7C] bg-gray-50">
                                 <tr>
@@ -113,7 +148,7 @@
                         <h3 class="text-lg font-medium text-gray-900 mb-2">Belum ada data rujukan</h3>
                         <p class="text-gray-500 mb-4">Data rujukan akan muncul di sini setelah Anda mengajukan rujukan
                         </p>
-                        <a href="{{ route('puskesmas.skrining') }}"
+                        <a href="{{ route('puskesmas.skrining.index') }}"
                             class="inline-flex items-center px-4 py-2 bg-[#B9257F] text-white rounded-lg hover:bg-[#a31f70] transition-colors">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

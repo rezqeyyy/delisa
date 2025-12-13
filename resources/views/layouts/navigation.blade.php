@@ -36,7 +36,7 @@
 
                     {{-- Menu khusus role Puskesmas --}}
                     @if($role === 'puskesmas')
-                        <x-nav-link :href="route('puskesmas.skrining')" :active="request()->routeIs('puskesmas.skrining*')">
+                        <x-nav-link :href="route('puskesmas.skrining.index')" :active="request()->routeIs('puskesmas.skrining*')">
                             {{ __('Skrining') }}
                         </x-nav-link>
                         <x-nav-link :href="route('puskesmas.laporan')" :active="request()->routeIs('puskesmas.laporan*')">
@@ -102,7 +102,7 @@
             </x-responsive-nav-link>
 
             @if($role === 'puskesmas')
-                <x-responsive-nav-link :href="route('puskesmas.skrining')" :active="request()->routeIs('puskesmas.skrining*')">
+                <x-responsive-nav-link :href="route('puskesmas.skrining.index')" :active="request()->routeIs('puskesmas.skrining*')">
                     {{ __('Skrining') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('puskesmas.laporan')" :active="request()->routeIs('puskesmas.laporan*')">
