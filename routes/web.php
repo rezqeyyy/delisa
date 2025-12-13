@@ -294,6 +294,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/pasien-nifas/{id}', [RsPasienNifasController::class, 'show'])->name('pasien-nifas.show');
             Route::get('/pasien-nifas/{id}/download-pdf', [RsPasienNifasController::class, 'downloadSinglePDF'])->name('pasien-nifas.download-single-pdf');
             Route::get('/pasien-nifas/{id}/detail', [RsPasienNifasController::class, 'detail'])->name('pasien-nifas.detail');
+            Route::get('/pasien-nifas/search-puskesmas', [App\Http\Controllers\Rs\PasienNifasController::class, 'searchPuskesmas'])->name('pasien-nifas.search-puskesmas');
 
 
             Route::post('/pasien-nifas/cek-nik', [RsPasienNifasController::class, 'cekNik'])->name('pasien-nifas.cek-nik');

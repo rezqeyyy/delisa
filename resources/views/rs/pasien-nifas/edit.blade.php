@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -6,7 +7,6 @@
     <title>Tambah Data Nifas - DELISA</title>
     
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js'])
-
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
@@ -73,8 +73,7 @@
             @if(session('success'))
                 <div class="flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs sm:text-sm text-emerald-800">
                     <span class="mt-0.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
                             <path d="M9 12l2 2 4-4" />
                         </svg>
@@ -86,8 +85,7 @@
             @if(session('error'))
                 <div class="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs sm:text-sm text-red-800">
                     <span class="mt-0.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10" />
                             <path d="M12 8v5" />
                             <path d="M12 16h.01" />
@@ -130,8 +128,7 @@
                         </div>
                         <a href="{{ route('rs.pasien-nifas.detail', $pasienNifas->id) }}"
                            class="inline-flex items-center gap-2 rounded-full border border-[#D9D9D9] bg-white px-4 py-1.5 text-xs font-semibold text-[#1D1D1D] hover:bg-[#F8F8F8]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
-                                 fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10" />
                                 <circle cx="12" cy="12" r="3" />
                                 <path d="M12 2v2" />
@@ -177,21 +174,11 @@
                                         };
                                     @endphp
                                     <tr>
-                                        <td class="px-3 py-2 font-medium text-[#1D1D1D]">
-                                            {{ $anak->anak_ke }}
-                                        </td>
-                                        <td class="px-3 py-2">
-                                            {{ $anak->nama_anak }}
-                                        </td>
-                                        <td class="px-3 py-2">
-                                            {{ $anak->jenis_kelamin }}
-                                        </td>
-                                        <td class="px-3 py-2">
-                                            {{ \Carbon\Carbon::parse($anak->tanggal_lahir)->format('d/m/Y') }}
-                                        </td>
-                                        <td class="px-3 py-2">
-                                            {{ $anak->berat_lahir_anak }} kg
-                                        </td>
+                                        <td class="px-3 py-2 font-medium text-[#1D1D1D]">{{ $anak->anak_ke }}</td>
+                                        <td class="px-3 py-2">{{ $anak->nama_anak }}</td>
+                                        <td class="px-3 py-2">{{ $anak->jenis_kelamin }}</td>
+                                        <td class="px-3 py-2">{{ \Carbon\Carbon::parse($anak->tanggal_lahir)->format('d/m/Y') }}</td>
+                                        <td class="px-3 py-2">{{ $anak->berat_lahir_anak }} kg</td>
                                         @if($isBeresiko)
                                             <td class="px-3 py-2">
                                                 <span class="inline-flex items-center rounded-full px-2 py-1 text-[10px] font-semibold {{ $kondisiIbuClass }}">
@@ -227,6 +214,42 @@
                 <form action="{{ route('rs.pasien-nifas.store-anak', $pasienNifas->id) }}"
                       method="POST" id="formAnakPasien" class="space-y-4">
                     @csrf
+
+                    {{-- ⭐ DROPDOWN PUSKESMAS BIASA (TANPA SEARCH) --}}
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-semibold text-[#666666] mb-1">
+                            Pilih Puskesmas Tujuan <span class="text-pink-600">*</span>
+                        </label>
+                        
+                        <select
+                            name="puskesmas_id"
+                            class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30"
+                            required>
+                            <option value="">-- Pilih Puskesmas --</option>
+                            @foreach($puskesmasList as $puskesmas)
+                                <option 
+                                    value="{{ $puskesmas->id }}" 
+                                    {{ old('puskesmas_id') == $puskesmas->id ? 'selected' : '' }}>
+                                    {{ $puskesmas->nama_puskesmas }}
+                                    
+                                        - 
+                                        @if($puskesmas->kecamatan)
+                                            Kec. {{ $puskesmas->kecamatan }}
+                                        @endif
+                                   
+                                  
+                                </option>
+                            @endforeach
+                        </select>
+                        
+                        @error('puskesmas_id')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                        
+                        <p class="text-[10px] text-[#7C7C7C] mt-1">
+                            Pilih puskesmas yang akan menangani pasien nifas ini
+                        </p>
+                    </div>
 
                     {{-- Baris 1: Anak ke & Tanggal lahir --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -267,12 +290,8 @@
                                 class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30"
                                 required>
                                 <option value="">Pilih Jenis Kelamin</option>
-                                <option value="Laki-laki" {{ old('jenis_kelamin') == 'Laki-laki' ? 'selected' : '' }}>
-                                    Laki-laki
-                                </option>
-                                <option value="Perempuan" {{ old('jenis_kelamin') == 'Perempuan' ? 'selected' : '' }}>
-                                    Perempuan
-                                </option>
+                                <option value="Laki-laki" {{ old('jenis_kelamin') == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                                <option value="Perempuan" {{ old('jenis_kelamin') == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
                             </select>
                         </div>
 
@@ -402,6 +421,7 @@
                             @endforeach
                         </div>
                     </div>
+
 
                     {{-- Keterangan masalah lain --}}
                     <div class="space-y-2">
