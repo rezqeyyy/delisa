@@ -230,14 +230,6 @@ class DashboardController extends Controller
                             ->orWhereRaw("LOWER(TRIM(kesimpulan)) IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')")
                             ->orWhereRaw("LOWER(TRIM(status_pre_eklampsia)) IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')");
                     });
-                } elseif ($risikoFilter === 'Waspada') {
-                    $q->where(function ($subQ) {
-                        $subQ->where('jumlah_resiko_sedang', '>', 0)
-                            ->orWhereRaw("LOWER(TRIM(kesimpulan)) IN ('waspada', 'menengah', 'sedang', 'risiko sedang')")
-                            ->orWhereRaw("LOWER(TRIM(status_pre_eklampsia)) IN ('waspada', 'menengah', 'sedang', 'risiko sedang')");
-                    })->where('jumlah_resiko_tinggi', '<=', 0)
-                        ->whereRaw("LOWER(TRIM(COALESCE(kesimpulan, ''))) NOT IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')")
-                        ->whereRaw("LOWER(TRIM(COALESCE(status_pre_eklampsia, ''))) NOT IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')");
                 } elseif ($risikoFilter === 'Tidak Berisiko') {
                     $q->where(function ($subQ) {
                         $subQ->where('jumlah_resiko_tinggi', '<=', 0)

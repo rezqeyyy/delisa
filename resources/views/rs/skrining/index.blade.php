@@ -106,7 +106,6 @@
                                         class="w-full px-4 py-2 border border-[#E9E9E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300">
                                         <option value="">Semua Status</option>
                                         <option value="Beresiko" {{ request('risiko') === 'Beresiko' ? 'selected' : '' }}>Beresiko</option>
-                                        <option value="Waspada" {{ request('risiko') === 'Waspada' ? 'selected' : '' }}>Waspada</option>
                                         <option value="Tidak Berisiko" {{ request('risiko') === 'Tidak Berisiko' ? 'selected' : '' }}>Tidak Berisiko</option>
                                     </select>
                                 </div>

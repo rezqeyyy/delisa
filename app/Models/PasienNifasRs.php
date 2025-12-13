@@ -18,6 +18,7 @@ class PasienNifasRs extends Model
     protected $fillable = [
         'rs_id',
         'pasien_id',
+        'puskesmas_id', 
         'tanggal_mulai_nifas',
         'tanggal_melahirkan',
 

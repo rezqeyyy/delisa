@@ -19,15 +19,23 @@ class PasienNifasController extends Controller
      */
     public function index()
     {
-        // Menggunakan Eloquent untuk akses method KF
+        $user = auth()->user();
+
+        // Ambil puskesmas berdasarkan user login
+        $puskesmas = \App\Models\Puskesmas::where('user_id', $user->id)->firstOrFail();
+
+        // Ambil pasien nifas khusus puskesmas ini
         $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs'])
+            ->where('puskesmas_id', $puskesmas->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        $totalPasienNifas = PasienNifasRs::count();
+        $totalPasienNifas = PasienNifasRs::where('puskesmas_id', $puskesmas->id)->count();
 
-        // Hitung statistik KFI (Kunjungan Fisik Ibu)
-        $sudahKFI = PasienNifasRs::whereNotNull('kf1_tanggal')->count();
+        $sudahKFI = PasienNifasRs::where('puskesmas_id', $puskesmas->id)
+            ->whereNotNull('kf1_tanggal')
+            ->count();
+
         $belumKFI = $totalPasienNifas - $sudahKFI;
 
         return view('puskesmas.pasien-nifas.index', compact(
@@ -37,6 +45,7 @@ class PasienNifasController extends Controller
             'belumKFI'
         ));
     }
+
 
     /**
      * Tampilkan detail pasien nifas

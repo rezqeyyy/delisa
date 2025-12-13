@@ -18,13 +18,36 @@ use Illuminate\Support\Facades\Schema;
 class PasienNifasController extends Controller
 {
     /**
-     * Display list of pasien nifas
+     * Display list of pasien nifas with filters
      */
-    public function index()
+    public function index(Request $request)
     {
-        $pasienNifas = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs']);
+
+        // Filter berdasarkan NIK
+        if ($request->filled('nik')) {
+            $query->whereHas('pasien', function($q) use ($request) {
+                $q->where('nik', 'like', '%' . $request->nik . '%');
+            });
+        }
+
+        // Filter berdasarkan Nama
+        if ($request->filled('nama')) {
+            $query->whereHas('pasien.user', function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->nama . '%');
+            });
+        }
+
+        // Filter berdasarkan Tanggal Mulai Nifas
+        if ($request->filled('tanggal_dari')) {
+            $query->where('tanggal_mulai_nifas', '>=', $request->tanggal_dari);
+        }
+
+        if ($request->filled('tanggal_sampai')) {
+            $query->where('tanggal_mulai_nifas', '<=', $request->tanggal_sampai);
+        }
+
+        $pasienNifas = $query->orderBy('created_at', 'desc')->paginate(10);
 
         // Transform data untuk menambahkan status_display
         $pasienNifas->getCollection()->transform(function ($pn) {
@@ -34,6 +57,9 @@ class PasienNifasController extends Controller
 
             return $pn;
         });
+
+        // Append query params ke pagination links
+        $pasienNifas->appends($request->except('page'));
 
         return view('rs.pasien-nifas.index', compact('pasienNifas'));
     }
@@ -217,6 +243,13 @@ class PasienNifasController extends Controller
      */
     public function store(Request $request)
     {
+        $statusPerkawinan = match($request->status_perkawinan) {
+            'menikah' => true,
+            'belum'   => false,
+            null      => null,
+            default   => null,
+        };
+
         $validated = $request->validate([
             'nama_pasien' => 'required|string|max:255',
             'nik'         => 'required|digits:16',
@@ -268,7 +301,7 @@ class PasienNifasController extends Controller
                     'PWilayah'   => $validated['kelurahan'],
                     'tempat_lahir' => $validated['tempat_lahir'] ?? null,
                     'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
-                    'status_perkawinan' => $validated['status_perkawinan'] ?? null,
+                    'status_perkawinan' => $statusPerkawinan,
                     'rt' => $validated['rt'] ?? null,
                     'rw' => $validated['rw'] ?? null,
                     'kode_pos' => $validated['kode_pos'] ?? null,
@@ -320,7 +353,7 @@ class PasienNifasController extends Controller
                     'PWilayah'   => $validated['kelurahan'],
                     'tempat_lahir' => $validated['tempat_lahir'] ?? null,
                     'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
-                    'status_perkawinan' => $validated['status_perkawinan'] ?? null,
+                    'status_perkawinan' => $statusPerkawinan,
                     'rt' => $validated['rt'] ?? null,
                     'rw' => $validated['rw'] ?? null,
                     'kode_pos' => $validated['kode_pos'] ?? null,
@@ -473,8 +506,10 @@ class PasienNifasController extends Controller
         throw new \RuntimeException('Data Rumah Sakit untuk user ini tidak ditemukan.');
     }
 
+
     /**
      * Display form tambah data anak
+     * ⭐ UPDATED: Tambah query puskesmas untuk dropdown
      */
     public function show($id)
     {
@@ -485,7 +520,22 @@ class PasienNifasController extends Controller
         $pasienNifas->status_display = $statusRisiko['label'];
         $pasienNifas->status_type = $statusRisiko['type'];
 
-        return view('rs.pasien-nifas.edit', compact('pasienNifas'));
+        // ⭐ TAMBAHAN: Ambil list puskesmas yang punya akun untuk dropdown
+        $puskesmasList = DB::table('puskesmas')
+            ->join('users', 'puskesmas.user_id', '=', 'users.id')
+            ->whereNotNull('puskesmas.user_id')
+            ->where('users.status', true)
+            ->select(
+                'puskesmas.id',
+                'puskesmas.nama_puskesmas',
+                'puskesmas.kecamatan'
+               
+                
+            )
+            ->orderBy('puskesmas.nama_puskesmas')
+            ->get();
+
+        return view('rs.pasien-nifas.edit', compact('pasienNifas', 'puskesmasList'));
     }
 
     /**
@@ -501,6 +551,7 @@ class PasienNifasController extends Controller
 
         // Validasi dasar
         $rules = [
+            'puskesmas_id'               => 'required|exists:puskesmas,id',
             'anak_ke'                    => 'required|integer|min:1',
             'tanggal_lahir'              => 'required|date',
             'jenis_kelamin'              => 'required|in:Laki-laki,Perempuan',
@@ -528,8 +579,12 @@ class PasienNifasController extends Controller
         $validated = $request->validate($rules);
 
         try {
+            $pasienNifas->update([
+            'puskesmas_id' => $validated['puskesmas_id']
+        ]);
             AnakPasien::create([
                 'nifas_id'                  => $pasienNifas->id,
+                'puskesmas_id'              => $validated['puskesmas_id'],
                 'anak_ke'                   => $validated['anak_ke'],
                 'tanggal_lahir'             => $validated['tanggal_lahir'],
                 'jenis_kelamin'             => $validated['jenis_kelamin'],

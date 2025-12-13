@@ -344,20 +344,18 @@
                     </div>
 
                     {{-- Status Perkawinan --}}
-                    <div>
-                        <label class="block text-[11px] font-semibold text-[#666666] mb-1">
-                            Status Perkawinan
-                        </label>
-                        <select name="status_perkawinan" id="status_perkawinan"
-                                class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm shadow-sm focus:border-[#E91E8C]/30">
-                            <option value="">Pilih Status</option>
-                            <option value="Belum Menikah" {{ old('status_perkawinan') == 'Belum Menikah' ? 'selected' : '' }}>Belum Menikah</option>
-                            <option value="Menikah" {{ old('status_perkawinan') == 'Menikah' ? 'selected' : '' }}>Menikah</option>
-                        </select>
-                        @error('status_perkawinan')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    <select
+                        name="status_perkawinan"
+                        id="status_perkawinan"
+                        class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2
+                            text-xs sm:text-sm text-[#1D1D1D] shadow-sm 
+                            focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30 transition-colors"
+                    >
+                        <option value="">Pilih Status</option>
+                        <option value="0" {{ old('status_perkawinan') == '0' ? 'selected' : '' }}>Belum Menikah</option>
+                        <option value="1" {{ old('status_perkawinan') == '1' ? 'selected' : '' }}>Menikah</option>
+                    </select>
+
 
                     {{-- RT / RW / Kode Pos --}}
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">

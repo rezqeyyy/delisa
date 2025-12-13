@@ -15,7 +15,7 @@
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
-    <div class="flex min-h-screen" x-data="{ openSidebar: false }">
+    <div class="flex min-h-screen" x-data="{ openSidebar: false, showFilter: false }">
         
         <x-rs.sidebar />
 
@@ -76,6 +76,15 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
+                            <button @click="showFilter = true"
+                                class="px-5 py-2 rounded-full border border-[#E9E9E9] bg-white font-semibold flex items-center gap-2 hover:bg-gray-50 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4"
+                                    fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M6 12h12M10 18h4" />
+                                </svg>
+                                Filter
+                            </button>
+
                             <a href="{{ route('rs.pasien-nifas.create') }}" 
                                class="px-5 py-2 rounded-full bg-[#FF5BAE] text-white font-semibold hover:bg-[#E91E8C] transition-colors">
                                 + Tambah Pasien
@@ -88,7 +97,114 @@
                         </div>
                     </div>
 
+                    <!-- Filter Modal -->
+                    <div x-show="showFilter" 
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0"
+                         x-transition:enter-end="opacity-100"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+                         @click.self="showFilter = false">
+                        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                             @click.stop>
+                            <div class="sticky top-0 bg-white border-b border-[#E9E9E9] px-6 py-4 flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-[#1D1D1D]">Filter Data Pasien Nifas</h3>
+                                <button @click="showFilter = false" class="text-[#7C7C7C] hover:text-[#1D1D1D]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
 
+                            <form action="{{ route('rs.pasien-nifas.index') }}" method="GET" class="p-6 space-y-4">
+                                <!-- NIK -->
+                                <div>
+                                    <label class="block text-sm font-medium text-[#1D1D1D] mb-2">NIK Pasien</label>
+                                    <input type="text" name="nik" value="{{ request('nik') }}"
+                                        placeholder="Masukkan NIK"
+                                        class="w-full px-4 py-2 border border-[#E9E9E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300">
+                                </div>
+
+                                <!-- Nama -->
+                                <div>
+                                    <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Nama Pasien</label>
+                                    <input type="text" name="nama" value="{{ request('nama') }}"
+                                        placeholder="Masukkan nama pasien"
+                                        class="w-full px-4 py-2 border border-[#E9E9E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300">
+                                </div>
+
+                                <!-- Tanggal Mulai Nifas -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Tanggal Mulai Nifas Dari</label>
+                                        <input type="date" name="tanggal_dari" value="{{ request('tanggal_dari') }}"
+                                            class="w-full px-4 py-2 border border-[#E9E9E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Tanggal Mulai Nifas Sampai</label>
+                                        <input type="date" name="tanggal_sampai" value="{{ request('tanggal_sampai') }}"
+                                            class="w-full px-4 py-2 border border-[#E9E9E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300">
+                                    </div>
+                                </div>
+
+                                <!-- Buttons -->
+                                <div class="flex items-center gap-3 pt-4">
+                                    <button type="submit"
+                                        class="flex-1 px-6 py-2.5 bg-pink-500 text-white rounded-full font-semibold hover:bg-pink-600 transition">
+                                        Terapkan Filter
+                                    </button>
+                                    <a href="{{ route('rs.pasien-nifas.index') }}"
+                                        class="flex-1 px-6 py-2.5 bg-gray-100 text-[#1D1D1D] rounded-full font-semibold hover:bg-gray-200 transition text-center">
+                                        Reset Filter
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Active Filters Display -->
+                    @if(request()->hasAny(['nik', 'nama', 'tanggal_dari', 'tanggal_sampai', 'kecamatan', 'risiko']))
+                        <div class="mt-4 flex flex-wrap items-center gap-2">
+                            <span class="text-sm text-[#7C7C7C]">Filter aktif:</span>
+                            @if(request('nik'))
+                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
+                                    NIK: {{ request('nik') }}
+                                    <a href="{{ route('rs.pasien-nifas.index', array_merge(request()->except('nik'))) }}" class="hover:text-pink-900">×</a>
+                                </span>
+                            @endif
+                            @if(request('nama'))
+                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
+                                    Nama: {{ request('nama') }}
+                                    <a href="{{ route('rs.pasien-nifas.index', array_merge(request()->except('nama'))) }}" class="hover:text-pink-900">×</a>
+                                </span>
+                            @endif
+                            @if(request('tanggal_dari') || request('tanggal_sampai'))
+                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
+                                    Tanggal: {{ request('tanggal_dari') ?? '...' }} s/d {{ request('tanggal_sampai') ?? '...' }}
+                                    <a href="{{ route('rs.pasien-nifas.index', array_merge(request()->except(['tanggal_dari', 'tanggal_sampai']))) }}" class="hover:text-pink-900">×</a>
+                                </span>
+                            @endif
+                            @if(request('kecamatan'))
+                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
+                                    Kecamatan: {{ request('kecamatan') }}
+                                    <a href="{{ route('rs.pasien-nifas.index', array_merge(request()->except('kecamatan'))) }}" class="hover:text-pink-900">×</a>
+                                </span>
+                            @endif
+                            @if(request('risiko'))
+                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
+                                    Risiko: {{ request('risiko') }}
+                                    <a href="{{ route('rs.pasien-nifas.index', array_merge(request()->except('risiko'))) }}" class="hover:text-pink-900">×</a>
+                                </span>
+                            @endif
+                            <a href="{{ route('rs.pasien-nifas.index') }}" class="text-xs text-pink-600 hover:text-pink-800 font-semibold">
+                                Hapus semua filter
+                            </a>
+                        </div>
+                    @endif
+
+                    <br>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="text-[#7C7C7C] bg-[#FAFAFA]">
@@ -162,18 +278,28 @@
                                 @empty
                                     <tr>
                                         <td colspan="8" class="px-3 py-6 text-center text-[#7C7C7C]">
-                                            <div class="flex flex-col items-center gap-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-[#D9D9D9]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                                    <circle cx="9" cy="7" r="4" />
-                                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                                </svg>
-                                                <p>Belum ada data pasien nifas di RS ini.</p>
-                                                <a href="{{ route('rs.pasien-nifas.create') }}" class="text-[#E91E8C] hover:underline">
-                                                    + Tambah Pasien Baru
-                                                </a>
-                                            </div>
+                                            @if(request()->hasAny(['nik', 'nama', 'tanggal_dari', 'tanggal_sampai', 'kecamatan', 'risiko']))
+                                                <div class="flex flex-col items-center gap-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-[#D9D9D9]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                                        <circle cx="11" cy="11" r="8" />
+                                                        <path d="M21 21l-4.35-4.35" />
+                                                    </svg>
+                                                    <p>Tidak ada data yang sesuai dengan filter yang dipilih.</p>
+                                                </div>
+                                            @else
+                                                <div class="flex flex-col items-center gap-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-[#D9D9D9]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                                        <circle cx="9" cy="7" r="4" />
+                                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                                    </svg>
+                                                    <p>Belum ada data pasien nifas di RS ini.</p>
+                                                    <a href="{{ route('rs.pasien-nifas.create') }}" class="text-[#E91E8C] hover:underline">
+                                                        + Tambah Pasien Baru
+                                                    </a>
+                                                </div>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforelse
