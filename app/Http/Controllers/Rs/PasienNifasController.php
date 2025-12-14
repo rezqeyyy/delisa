@@ -26,14 +26,14 @@ class PasienNifasController extends Controller
 
         // Filter berdasarkan NIK
         if ($request->filled('nik')) {
-            $query->whereHas('pasien', function($q) use ($request) {
+            $query->whereHas('pasien', function ($q) use ($request) {
                 $q->where('nik', 'like', '%' . $request->nik . '%');
             });
         }
 
         // Filter berdasarkan Nama
         if ($request->filled('nama')) {
-            $query->whereHas('pasien.user', function($q) use ($request) {
+            $query->whereHas('pasien.user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->nama . '%');
             });
         }
@@ -78,8 +78,9 @@ class PasienNifasController extends Controller
     private function getStatusRisikoFromSkrining($pasien, $pasienNifas = null)
     {
         if (!$pasien) {
-            return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
+            return ['label' => 'Belum ada data skrining / Tidak Diketahui', 'type' => 'unknown'];
         }
+
 
         // PRIORITAS 1: Cek data skrining
         $skrining = Skrining::where('pasien_id', $pasien->id)
@@ -90,14 +91,19 @@ class PasienNifasController extends Controller
             // Gunakan kolom KESIMPULAN
             $kesimpulan = strtolower(trim($skrining->kesimpulan ?? ''));
 
-            // 🔥 FIX: Cek "tidak beresiko" dulu sebelum cek "beresiko"
             if (str_contains($kesimpulan, 'tidak beresiko') || str_contains($kesimpulan, 'tidak berisiko')) {
                 return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
             } elseif (str_contains($kesimpulan, 'beresiko') || str_contains($kesimpulan, 'berisiko')) {
                 return ['label' => 'Beresiko', 'type' => 'beresiko'];
+            } elseif (
+                str_contains($kesimpulan, 'unknown') ||
+                str_contains($kesimpulan, 'tidak diketahui') ||
+                str_contains($kesimpulan, 'belum ada data')
+            ) {
+                return ['label' => 'Belum ada data skrining / Tidak Diketahui', 'type' => 'unknown'];
             } else {
-                // Default jika kesimpulan tidak sesuai format
-                return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
+                // kalau format kesimpulan skrining aneh/tidak dikenali
+                return ['label' => 'Belum ada data skrining / Tidak Diketahui', 'type' => 'unknown'];
             }
         }
 
@@ -107,17 +113,18 @@ class PasienNifasController extends Controller
 
             $labelMap = [
                 'beresiko' => 'Beresiko',
-                'normal' => 'Tidak Berisiko'
+                'normal'   => 'Tidak Berisiko',
+                'unknown'  => 'Belum ada data skrining / Tidak Diketahui',
             ];
 
             return [
-                'label' => $labelMap[$statusManual] ?? 'Tidak Berisiko',
-                'type' => $statusManual
+                'label' => $labelMap[$statusManual] ?? 'Belum ada data skrining / Tidak Diketahui',
+                'type'  => $statusManual
             ];
         }
 
         // PRIORITAS 3: Default
-        return ['label' => 'Tidak Berisiko', 'type' => 'normal'];
+        return ['label' => 'Belum ada data skrining / Tidak Diketahui', 'type' => 'unknown'];
     }
 
     /**
@@ -243,7 +250,7 @@ class PasienNifasController extends Controller
      */
     public function store(Request $request)
     {
-        $statusPerkawinan = match($request->status_perkawinan) {
+        $statusPerkawinan = match ($request->status_perkawinan) {
             'menikah' => true,
             'belum'   => false,
             null      => null,
@@ -261,7 +268,7 @@ class PasienNifasController extends Controller
             'domisili'    => 'required|string',
 
             // Status risiko manual - hanya beresiko atau normal (tanpa waspada)
-            'status_risiko_manual' => 'nullable|in:beresiko,normal',
+            'status_risiko_manual' => 'nullable|in:beresiko,normal,unknown',
 
             // Field tambahan
             'tempat_lahir' => 'nullable|string|max:100',
@@ -404,11 +411,15 @@ class PasienNifasController extends Controller
             if (!$hasSkrining && !empty($request->input('status_risiko_manual'))) {
                 $statusManual = $request->input('status_risiko_manual');
 
-                // Mapping status ke kesimpulan
-                $kesimpulan = ($statusManual === 'beresiko') ? 'Beresiko' : 'Tidak beresiko';
+                $kesimpulan = match ($statusManual) {
+                    'beresiko' => 'Beresiko',
+                    'normal'   => 'Tidak beresiko',
+                    'unknown'  => 'Tidak Diketahui',
+                    default    => 'Tidak Diketahui',
+                };
 
-                // Isi jumlah risiko tinggi hanya jika beresiko
                 $jumlahResikoTinggi = ($statusManual === 'beresiko') ? 1 : 0;
+
 
                 // Ambil puskesmas ID (wajib diisi)
                 $puskesmasId = DB::table('puskesmas')->orderBy('id')->value('id');
@@ -529,8 +540,8 @@ class PasienNifasController extends Controller
                 'puskesmas.id',
                 'puskesmas.nama_puskesmas',
                 'puskesmas.kecamatan'
-               
-                
+
+
             )
             ->orderBy('puskesmas.nama_puskesmas')
             ->get();
@@ -580,8 +591,8 @@ class PasienNifasController extends Controller
 
         try {
             $pasienNifas->update([
-            'puskesmas_id' => $validated['puskesmas_id']
-        ]);
+                'puskesmas_id' => $validated['puskesmas_id']
+            ]);
             AnakPasien::create([
                 'nifas_id'                  => $pasienNifas->id,
                 'puskesmas_id'              => $validated['puskesmas_id'],
@@ -617,46 +628,46 @@ class PasienNifasController extends Controller
     /**
      * Display detail readonly pasien nifas dan data anak
      */
-   public function detail($id)
-{
-    $pasienNifas = PasienNifasRs::with([
-        'pasien.user',
-        'pasien.skrinings',
-        'rs',
-        'anakPasien'
-    ])->findOrFail($id);
+    public function detail($id)
+    {
+        $pasienNifas = PasienNifasRs::with([
+            'pasien.user',
+            'pasien.skrinings',
+            'rs',
+            'anakPasien'
+        ])->findOrFail($id);
 
-    $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien, $pasienNifas);
-    $pasienNifas->status_display = $statusRisiko['label'];
-    $pasienNifas->status_type = $statusRisiko['type'];
+        $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien, $pasienNifas);
+        $pasienNifas->status_display = $statusRisiko['label'];
+        $pasienNifas->status_type = $statusRisiko['type'];
 
-    $anakPasien = $pasienNifas->anakPasien->first();
+        $anakPasien = $pasienNifas->anakPasien->first();
 
-    // =========================
-    // ⭐ TAMBAHAN: Ambil info puskesmas tujuan per-anak (berdasarkan anak_pasien.puskesmas_id)
-    // =========================
-    $puskesmasTujuanById = collect();
+        // =========================
+        // ⭐ TAMBAHAN: Ambil info puskesmas tujuan per-anak (berdasarkan anak_pasien.puskesmas_id)
+        // =========================
+        $puskesmasTujuanById = collect();
 
-    $puskesmasIds = $pasienNifas->anakPasien
-        ->pluck('puskesmas_id')
-        ->filter()
-        ->unique()
-        ->values();
+        $puskesmasIds = $pasienNifas->anakPasien
+            ->pluck('puskesmas_id')
+            ->filter()
+            ->unique()
+            ->values();
 
-    if ($puskesmasIds->isNotEmpty()) {
-        $puskesmasTujuanById = DB::table('puskesmas')
-            ->whereIn('id', $puskesmasIds)
-            ->select('id', 'nama_puskesmas', 'kecamatan', 'lokasi')
-            ->get()
-            ->keyBy('id');
+        if ($puskesmasIds->isNotEmpty()) {
+            $puskesmasTujuanById = DB::table('puskesmas')
+                ->whereIn('id', $puskesmasIds)
+                ->select('id', 'nama_puskesmas', 'kecamatan', 'lokasi')
+                ->get()
+                ->keyBy('id');
+        }
+
+        return view('rs.pasien-nifas.show', compact(
+            'pasienNifas',
+            'anakPasien',
+            'puskesmasTujuanById'
+        ));
     }
-
-    return view('rs.pasien-nifas.show', compact(
-        'pasienNifas',
-        'anakPasien',
-        'puskesmasTujuanById'
-    ));
-}
 
 
     /**

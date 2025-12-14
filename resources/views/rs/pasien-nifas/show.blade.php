@@ -18,13 +18,13 @@
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
 
             @php
-                $statusType = $pasienNifas->status_type ?? 'normal';
-                $statusDisplay = $pasienNifas->status_display ?? 'Tidak Berisiko';
+                $statusType = $pasienNifas->status_type ?? 'unknown';
+                $statusDisplay = $pasienNifas->status_display ?? 'Belum ada data skrining / Tidak Diketahui';
                 $isBeresiko = $statusType === 'beresiko' || $statusType === 'waspada';
-
                 $badgeClass = match ($statusType) {
                     'beresiko' => 'bg-red-100 text-red-700 border-red-200',
                     'waspada' => 'bg-amber-100 text-amber-700 border-amber-200',
+                    'unknown' => 'bg-gray-100 text-gray-700 border-gray-200',
                     default => 'bg-emerald-100 text-emerald-700 border-emerald-200',
                 };
 
@@ -71,6 +71,7 @@
                     {{-- Badge Status Risiko --}}
                     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border {{ $badgeClass }}">
                         @if ($statusType === 'beresiko')
+                            {{-- ICON: Beresiko --}}
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2">
                                 <path
@@ -79,19 +80,30 @@
                                 <line x1="12" y1="17" x2="12.01" y2="17" />
                             </svg>
                         @elseif($statusType === 'waspada')
+                            {{-- ICON: Waspada --}}
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10" />
                                 <path d="M12 8v4" />
                                 <path d="M12 16h.01" />
                             </svg>
+                        @elseif($statusType === 'unknown')
+                            {{-- ICON: Unknown / Belum ada data skrining --}}
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M9.09 9a3 3 0 0 1 5.82 1c0 2-3 2-3 4" />
+                                <circle cx="12" cy="17" r="0.75" fill="currentColor" stroke="none" />
+                            </svg>
                         @else
+                            {{-- ICON: Tidak Beresiko --}}
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2">
                                 <path d="M9 12l2 2 4-4" />
                                 <circle cx="12" cy="12" r="10" />
                             </svg>
                         @endif
+
                         <span class="text-xs font-semibold">{{ $statusDisplay }}</span>
                     </div>
 
@@ -415,7 +427,7 @@
                                                 {{ $anak->usia_kehamilan_saat_lahir }} minggu</p>
                                         </div>
                                     </div>
-                                    
+
                                     {{-- ⭐ Puskesmas Tujuan --}}
                                     <div class="p-4 pt-0">
                                         <div class="rounded-2xl border border-[#F0F0F0] bg-white px-4 py-3">
