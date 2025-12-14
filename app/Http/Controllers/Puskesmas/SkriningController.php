@@ -73,28 +73,28 @@ class SkriningController extends Controller
           });
     });
 
-    $skrinings = $query->latest()->get();
+    $skrinings = $query->latest()->paginate(10);
 
-    // ✅ Filter hanya yang benar-benar lengkap
-    $skrinings = $skrinings->filter(fn ($s) =>
-        $this->isSkriningCompleteForSkrining($s)
-    )->values();
+    $skrinings->setCollection(
+        $skrinings->getCollection()->filter(fn ($s) => $this->isSkriningCompleteForSkrining($s))->values()
+    );
 
-    // 🎨 Transform kesimpulan
-    $skrinings->transform(function ($s) {
+    $skrinings->getCollection()->transform(function ($s) {
         $resikoSedang = (int) $s->jumlah_resiko_sedang;
         $resikoTinggi = (int) $s->jumlah_resiko_tinggi;
 
         if ($resikoTinggi >= 1 || $resikoSedang >= 2) {
-            $s->conclusion_display = 'Berisiko preeklampsia';
+            $s->conclusion_display = 'Berisiko';
             $s->badge_class = 'bg-red-600 text-white';
         } else {
-            $s->conclusion_display = 'Tidak berisiko preeklampsia';
+            $s->conclusion_display = 'Normal';
             $s->badge_class = 'bg-green-500 text-white';
         }
 
         return $s;
     });
+
+    $skrinings->appends($request->except('page'));
 
     return view('puskesmas.skrining.index', compact('skrinings'));
 }

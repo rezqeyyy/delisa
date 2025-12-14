@@ -103,9 +103,9 @@
                                     <th class="px-3 py-2">No</th>
                                     <th class="px-3 py-2">Nama Pasien</th>
                                     <th class="px-3 py-2">NIK</th>
+                                    <th class="px-3 py-2">No Telp</th>
                                     <th class="px-3 py-2">Tanggal Pengisian</th>
                                     <th class="px-3 py-2">Alamat</th>
-                                    <th class="px-3 py-2">No Telp</th>
                                     <th class="px-3 py-2">Kesimpulan</th>
                                     <th class="px-3 py-2">View Detail</th>
                                 </tr>
@@ -113,21 +113,21 @@
                             <tbody class="divide-y divide-[#E9E9E9]">
                                 @forelse(($skrinings ?? []) as $skrining)
                                     <tr>
-                                        <td class="px-3 py-3 font-medium tabular-nums">{{ $loop->iteration }}</td>
+                                        <td class="px-3 py-3 font-medium tabular-nums">{{ ($skrinings->firstItem() ?? 1) + $loop->index }}</td>
                                         @php
                                             $nama = optional(optional($skrining->pasien)->user)->name ?? '-';
                                             $nik = optional($skrining->pasien)->nik ?? '-';
+                                            $telp = optional(optional($skrining->pasien)->user)->phone ?? '-';
                                             $tanggal = \Carbon\Carbon::parse($skrining->created_at)->format('d/m/Y');
                                             $alamat = optional(optional($skrining->pasien)->user)->address ?? '-';
-                                            $telp = optional(optional($skrining->pasien)->user)->phone ?? '-';
                                             $conclusion = $skrining->conclusion_display ?? ($skrining->kesimpulan ?? 'Normal');
                                             $cls = $skrining->badge_class ?? 'bg-[#2EDB58] text-white';
                                         @endphp
                                         <td class="px-3 py-3">{{ $nama }}</td>
                                         <td class="px-3 py-3 tabular-nums">{{ $nik }}</td>
+                                        <td class="px-3 py-3">{{ $telp }}</td>
                                         <td class="px-3 py-3">{{ $tanggal }}</td>
                                         <td class="px-3 py-3">{{ $alamat }}</td>
-                                        <td class="px-3 py-3">{{ $telp }}</td>
                                         <td class="px-3 py-3">
                                             <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $cls }}">
                                                 {{ $conclusion }}
@@ -145,6 +145,12 @@
                             </tbody>
                         </table>
                     </div>
+                    @if($skrinings instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                        <div class="mt-4 flex items-center justify-between">
+                            <p class="text-xs text-[#7C7C7C]">Menampilkan {{ $skrinings->count() }} dari {{ $skrinings->total() }} data</p>
+                            <div class="text-sm">{{ $skrinings->appends(request()->except('page'))->links() }}</div>
+                        </div>
+                    @endif
                 </div>
             </section>
 

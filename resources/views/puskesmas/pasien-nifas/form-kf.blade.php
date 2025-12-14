@@ -20,6 +20,7 @@
 
     <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8">
 
+<<<<<<< Updated upstream
         <!-- Back Button -->
         <div class="mb-6">
             <a href="{{ route('puskesmas.pasien-nifas.show', ['type' => 'rs', 'id' => $pasienNifas->id]) }}"
@@ -27,6 +28,15 @@
                 ← Kembali ke Detail Pasien
             </a>
         </div>
+=======
+            <!-- Back Button -->
+            <div class="mb-6">
+                <a href="{{ route('puskesmas.pasien-nifas.show', ['type' => $type, 'id' => $pasienNifas->id]) }}"
+                    class="inline-flex items-center text-sm text-[#B9257F] hover:text-[#9D1B6A]">
+                    ← Kembali ke Detail Pasien
+                </a>
+            </div>
+>>>>>>> Stashed changes
 
         <div class="max-w-2xl mx-auto">
             <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
@@ -46,11 +56,17 @@
                 <h1 class="text-2xl font-bold text-[#1D1D1D] mb-2">Catat KF{{ $jenisKf }}</h1>
                 <p class="text-[#7C7C7C] mb-6">Untuk: {{ $pasienNifas->pasien?->user?->name ?? 'N/A' }}</p>
 
+<<<<<<< Updated upstream
                 <form action="{{ route('puskesmas.pasien-nifas.catat-kf', ['type' => 'rs', 'id' => $pasienNifas->id, 'jenisKf' => $jenisKf]) }}"
                       method="POST">
                     @csrf
                     
                     <input type="hidden" name="jenis_kf" value="{{ $jenisKf }}">
+=======
+                    <form
+                        action="{{ route('puskesmas.pasien-nifas.catat-kf', ['type' => $type, 'id' => $pasienNifas->id, 'jenisKf' => $jenisKf]) }}"                        method="POST">
+                        @csrf
+>>>>>>> Stashed changes
 
                     <!-- Tanggal Kunjungan -->
                     <div class="mb-6">
@@ -162,6 +178,7 @@
                         @enderror
                     </div>
 
+<<<<<<< Updated upstream
                     <!-- Catatan -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Catatan Tambahan</label>
@@ -178,11 +195,21 @@
                             Batal
                         </a>
                         <button type="submit"
+=======
+                        <!-- Tombol -->
+                        <div class="flex gap-3">
+                            <a href="{{ route('puskesmas.pasien-nifas.show', ['type' => $type, 'id' => $pasienNifas->id]) }}"
+                                class="px-6 py-3 border border-[#E9E9E9] text-[#7C7C7C] rounded-xl hover:bg-gray-50 transition-colors">
+                                Batal
+                            </a>
+                            <button type="submit"
+>>>>>>> Stashed changes
                                 class="px-6 py-3 bg-[#B9257F] text-white rounded-xl hover:bg-[#9D1B6A] transition-colors">
                             Simpan KF{{ $jenisKf }}
                         </button>
                     </div>
 
+<<<<<<< Updated upstream
                 </form>
             </div>
         </div>
@@ -190,4 +217,6 @@
     </main>
 </div>
 </body>
+=======
+>>>>>>> Stashed changes
 </html>

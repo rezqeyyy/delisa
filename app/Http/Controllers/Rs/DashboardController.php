@@ -242,7 +242,7 @@ class DashboardController extends Controller
         }
 
         $pePatients = $peQuery->orderByDesc('created_at')
-            ->limit(50)
+            ->limit(5)
             ->get()
             ->map(function (RujukanRs $rujukan) {
                 $skr = $rujukan->skrining;

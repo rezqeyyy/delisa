@@ -21,9 +21,18 @@ class DashboardController extends Controller
         $puskesmas = $user->puskesmas; // Gunakan relasi Eloquent
 
         if (!$puskesmas) {
-            Log::error("User {$user->id} tidak memiliki relasi puskesmas");
-            $kecamatan = null;
+            $bidan = $user->bidan ?? null;
+            if ($bidan && $bidan->puskesmas_id) {
+                $puskesmasId = $bidan->puskesmas_id;
+                $kecamatan = DB::table('puskesmas')->where('id', $puskesmasId)->value('kecamatan');
+                Log::info("Fallback Bidan → Puskesmas ID: {$puskesmasId}, Kecamatan: " . ($kecamatan ?? 'NULL'));
+            } else {
+                Log::error("User {$user->id} tidak memiliki relasi puskesmas");
+                $puskesmasId = null;
+                $kecamatan = null;
+            }
         } else {
+            $puskesmasId = $puskesmas->id;
             $kecamatan = $puskesmas->kecamatan;
             Log::info("Kecamatan dari relasi puskesmas: {$kecamatan}");
         }
@@ -126,74 +135,30 @@ class DashboardController extends Controller
 
         // ========== DATA PASIEN NIFAS & KFI ==========
         // PERUBAHAN 3: Untuk data nifas, cari dari skrining terakhir pasien
-        $totalNifas = DB::table('pasien_nifas_rs')
-            ->join('pasiens', 'pasien_nifas_rs.pasien_id', '=', 'pasiens.id')
-            ->join('skrinings', function($join) {
-                $join->on('skrinings.pasien_id', '=', 'pasiens.id')
-                     ->whereRaw('skrinings.id = (
-                         SELECT MAX(id) FROM skrinings 
-                         WHERE pasien_id = pasiens.id
-                         AND puskesmas_id IS NOT NULL
-                     )');
-            })
-            ->join('puskesmas', 'puskesmas.id', '=', 'skrinings.puskesmas_id')
-            ->when($kecamatan, function ($q) use ($kecamatan) {
-                $q->where('puskesmas.kecamatan', $kecamatan);
-            })
+        $totalNifas = DB::table('pasien_nifas_rs as pnr')
+            ->where('pnr.puskesmas_id', $puskesmasId)
             ->count();
         
-        $pasienHadir = DB::table('pasien_nifas_rs')
-            ->join('pasiens', 'pasien_nifas_rs.pasien_id', '=', 'pasiens.id')
-            ->join('skrinings', function($join) {
-                $join->on('skrinings.pasien_id', '=', 'pasiens.id')
-                     ->whereRaw('skrinings.id = (
-                         SELECT MAX(id) FROM skrinings 
-                         WHERE pasien_id = pasiens.id
-                         AND puskesmas_id IS NOT NULL
-                     )');
-            })
-            ->join('puskesmas', 'puskesmas.id', '=', 'skrinings.puskesmas_id')
-            ->whereNotNull('kf1_tanggal')
-            ->when($kecamatan, function ($q) use ($kecamatan) {
-                $q->where('puskesmas.kecamatan', $kecamatan);
-            })
-            ->count();
+        $pasienHadir = DB::table('pasien_nifas_rs as pnr')
+            ->where('pnr.puskesmas_id', $puskesmasId)
+            ->leftJoin('kf_kunjungans as kk', 'kk.pasien_nifas_id', '=', 'pnr.id')
+            ->whereNotNull('kk.id')
+            ->distinct('pnr.id')
+            ->count('pnr.id');
         
-        $pasienTidakHadir = DB::table('pasien_nifas_rs')
-            ->join('pasiens', 'pasien_nifas_rs.pasien_id', '=', 'pasiens.id')
-            ->join('skrinings', function($join) {
-                $join->on('skrinings.pasien_id', '=', 'pasiens.id')
-                     ->whereRaw('skrinings.id = (
-                         SELECT MAX(id) FROM skrinings 
-                         WHERE pasien_id = pasiens.id
-                         AND puskesmas_id IS NOT NULL
-                     )');
-            })
-            ->join('puskesmas', 'puskesmas.id', '=', 'skrinings.puskesmas_id')
-            ->whereNull('kf1_tanggal')
-            ->when($kecamatan, function ($q) use ($kecamatan) {
-                $q->where('puskesmas.kecamatan', $kecamatan);
-            })
-            ->count();
+        $pasienTidakHadir = DB::table('pasien_nifas_rs as pnr')
+            ->where('pnr.puskesmas_id', $puskesmasId)
+            ->leftJoin('kf_kunjungans as kk', 'kk.pasien_nifas_id', '=', 'pnr.id')
+            ->whereNull('kk.id')
+            ->distinct('pnr.id')
+            ->count('pnr.id');
         
-        $sudahKFI = DB::table('pasien_nifas_rs')
-            ->join('pasiens', 'pasien_nifas_rs.pasien_id', '=', 'pasiens.id')
-            ->join('skrinings', function($join) {
-                $join->on('skrinings.pasien_id', '=', 'pasiens.id')
-                     ->whereRaw('skrinings.id = (
-                         SELECT MAX(id) FROM skrinings 
-                         WHERE pasien_id = pasiens.id
-                         AND puskesmas_id IS NOT NULL
-                     )');
-            })
-            ->join('puskesmas', 'puskesmas.id', '=', 'skrinings.puskesmas_id')
+        $sudahKFI = DB::table('pasien_nifas_rs as pnr')
+            ->where('pnr.puskesmas_id', $puskesmasId)
             ->whereNotNull('kf1_tanggal')
             ->whereNotNull('kf2_tanggal')
             ->whereNotNull('kf3_tanggal')
             ->whereNotNull('kf4_tanggal')
-            ->when($kecamatan, function ($q) use ($kecamatan) {
-                $q->where('puskesmas.kecamatan', $kecamatan);
-            })
             ->count();
         
         Log::info("Data Nifas - Total: {$totalNifas}, Hadir: {$pasienHadir}, Tidak Hadir: {$pasienTidakHadir}, Sudah KFI: {$sudahKFI}");

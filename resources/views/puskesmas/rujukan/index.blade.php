@@ -30,14 +30,14 @@
                 @if ($rujukans->count() > 0)
                     <div class="overflow-x-auto">
                         <!-- Search Bar -->
-                        <form method="GET" action="{{ route('puskesmas.rujukan.index') }}" class="mb-4">
-                            <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+                        <form method="GET" action="{{ route('puskesmas.rujukan.index') }}" class="mb-4 flex justify-end">
+                            <div class="flex flex-col sm:flex-row gap-3 sm:items-center w-full sm:w-auto">
                                 <div class="relative w-full sm:max-w-md">
                                     <input
                                         type="text"
                                         name="search"
                                         value="{{ request('search') }}"
-                                        placeholder="Cari nama pasien / NIK / rumah sakit..."
+                                        placeholder="Nama/NIK/RS"
                                         class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-[#B9257F] focus:border-[#B9257F]"
                                     >
                                     <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -65,7 +65,7 @@
                             </div>
                         </form>
                         <table class="w-full text-sm">
-                            <thead class="text-[#7C7C7C] bg-gray-50">
+                            <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
                                 <tr>
                                     <th class="px-4 py-3 text-left">No</th>
                                     <th class="px-4 py-3 text-left">Nama Pasien</th>
@@ -79,7 +79,7 @@
                             <tbody class="divide-y divide-[#E9E9E9]">
                                 @foreach ($rujukans as $index => $rujukan)
                                     <tr>
-                                        <td class="px-4 py-3 align-top">{{ $index + 1 }}</td>
+                                        <td class="px-4 py-3 align-top">{{ ($rujukans instanceof \Illuminate\Pagination\LengthAwarePaginator ? ($rujukans->firstItem() ?? 1) + $index : $index + 1) }}</td>
                                         <td class="px-4 py-3 font-medium align-top">
                                             {{ $rujukan->nama_pasien }}
                                         </td>
@@ -135,6 +135,12 @@
                             </tbody>
                         </table>
                     </div>
+                    @if($rujukans instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                        <div class="mt-4 flex items-center justify-between">
+                            <p class="text-xs text-[#7C7C7C]">Menampilkan {{ $rujukans->count() }} dari {{ $rujukans->total() }} data</p>
+                            <div class="text-sm">{{ $rujukans->appends(request()->except('page'))->links() }}</div>
+                        </div>
+                    @endif
                 @else
                     <div class="text-center py-12">
                         <div class="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">

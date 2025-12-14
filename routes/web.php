@@ -119,7 +119,8 @@ Route::middleware(['auth'])->group(function () {
         
         // ========== DASHBOARD & PROFILE ==========
         Route::get('dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
-        Route::resource('profile', \App\Http\Controllers\Puskesmas\ProfileController::class)->only(['edit', 'update']);
+        Route::get('profile/edit', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('profile', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'update'])->name('profile.update');
         Route::delete('profile/photo', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
         
         // ========== SKRINING ==========
@@ -168,7 +169,8 @@ Route::middleware(['auth'])->group(function () {
         
         // ========== DASHBOARD & PROFILE ==========
         Route::get('dashboard', [PuskesmasDashboardController::class, 'index'])->name('dashboard');
-        Route::resource('profile', \App\Http\Controllers\Puskesmas\ProfileController::class)->only(['edit', 'update']);
+        Route::get('profile/edit', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('profile', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'update'])->name('profile.update');
         Route::delete('profile/photo', [\App\Http\Controllers\Puskesmas\ProfileController::class, 'destroyPhoto'])->name('profile.photo.destroy');
         
         // ========== SKRINING ==========

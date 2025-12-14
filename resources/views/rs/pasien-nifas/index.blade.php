@@ -207,14 +207,15 @@
                     <br>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
-                            <thead class="text-[#7C7C7C] bg-[#FAFAFA]">
+                            <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
                                 <tr class="text-left">
-                                    <th class="px-3 py-2">NIK Pasien</th>
+                                    <th class="px-3 py-2">No</th>
                                     <th class="px-3 py-2">Nama Pasien</th>
+                                    <th class="px-3 py-2">NIK Pasien</th>
+                                    <th class="px-3 py-2">No Telp</th>
                                     <th class="px-3 py-2">Tanggal Mulai Nifas</th>
                                     <th class="px-3 py-2">Alamat</th>
-                                    <th class="px-3 py-2">No Telp</th>
-                                    <th class="px-3 py-2">Status Risiko</th>
+                                    <th class="px-3 py-2">Kesimpulan</th>
                                     <th class="px-3 py-2">Aksi</th>
                                 </tr>
                             </thead>
@@ -223,43 +224,28 @@
                                     @php
                                         $pas = optional($pn)->pasien;
                                         $usr = optional($pas)->user;
-                                        $statusDisplay = $pn->status_display ?? 'Tidak Berisiko';
                                         $statusType = $pn->status_type ?? 'normal';
-                                        
-                                        // Tentukan warna berdasarkan status
+                                        $statusLabel = match($statusType) {
+                                            'beresiko' => 'Beresiko',
+                                            'waspada' => 'Waspada',
+                                            default => 'Normal',
+                                        };
                                         $statusClass = match($statusType) {
                                             'beresiko' => 'bg-[#E20D0D] text-white',
                                             'waspada' => 'bg-[#FFC400] text-[#1D1D1D]',
-                                            default => 'bg-[#39E93F] text-white'
+                                            default => 'bg-[#39E93F] text-white',
                                         };
                                     @endphp
                                     <tr class="hover:bg-[#FFF7FC]/50">
-                                        <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $pas->nik ?? '-' }}</td>
+                                        <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $loop->iteration }}</td>
                                         <td class="px-3 py-3">{{ $usr->name ?? '-' }}</td>
+                                        <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $pas->nik ?? '-' }}</td>
+                                        <td class="px-3 py-3">{{ $usr->phone ?? '-' }}</td>
                                         <td class="px-3 py-3">{{ optional($pn->tanggal_mulai_nifas)->format('d/m/Y') ?? '-' }}</td>
                                         <td class="px-3 py-3">{{ $pas->PKecamatan ?? $pas->PWilayah ?? '-' }}</td>
-                                        <td class="px-3 py-3">{{ $usr->phone ?? '-' }}</td>
                                         <td class="px-3 py-3">
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $statusClass }}">
-                                                @if($statusType === 'beresiko')
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                                                        <line x1="12" y1="9" x2="12" y2="13" />
-                                                        <line x1="12" y1="17" x2="12.01" y2="17" />
-                                                    </svg>
-                                                @elseif($statusType === 'waspada')
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                        <circle cx="12" cy="12" r="10" />
-                                                        <path d="M12 8v4" />
-                                                        <path d="M12 16h.01" />
-                                                    </svg>
-                                                @else
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                        <path d="M9 12l2 2 4-4" />
-                                                        <circle cx="12" cy="12" r="10" />
-                                                    </svg>
-                                                @endif
-                                                {{ $statusDisplay }}
+                                                {{ $statusLabel }}
                                             </span>
                                         </td>
                                         <td class="px-3 py-3">

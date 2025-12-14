@@ -570,10 +570,10 @@ class PasienNifasController extends Controller
         // Tambahkan validasi kondisi ibu jika pasien beresiko
         if ($isBeresiko) {
             $rules['kondisi_ibu'] = 'required|in:aman,perlu_tindak_lanjut';
-            $rules['catatan_kondisi_ibu'] = 'required|string';
+            $rules['catatan_kondisi_ibu'] = 'nullable|string|required_if:kondisi_ibu,perlu_tindak_lanjut';
         } else {
             $rules['kondisi_ibu'] = 'nullable|in:aman,perlu_tindak_lanjut';
-            $rules['catatan_kondisi_ibu'] = 'nullable|string';
+            $rules['catatan_kondisi_ibu'] = 'nullable|string|required_if:kondisi_ibu,perlu_tindak_lanjut';
         }
 
         $validated = $request->validate($rules);

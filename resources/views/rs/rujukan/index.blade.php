@@ -28,14 +28,15 @@
                 <br>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
-                        <thead class="text-[#7C7C7C]">
+                        <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
                         <tr class="text-left">
-                            <th class="px-3 py-2">NIK Pasien</th>
+                            <th class="px-3 py-2">No</th>
                             <th class="px-3 py-2">Nama Pasien</th>
+                            <th class="px-3 py-2">NIK Pasien</th>
+                            <th class="px-3 py-2">No Telp</th>
                             <th class="px-3 py-2">Tanggal Skrining</th>
                             <th class="px-3 py-2">Alamat</th>
-                            <th class="px-3 py-2">No Telp</th>
-                            <th class="px-3 py-2">Resiko</th>
+                            <th class="px-3 py-2">Kesimpulan</th>
                             <th class="px-3 py-2">Aksi</th>
                         </tr>
                         </thead>
@@ -49,11 +50,12 @@
                             @php($isWarn = ($skr->jumlah_resiko_sedang ?? 0) > 0 || in_array($raw, ['waspada','menengah','sedang','risiko sedang']))
                             @php($display = $isHigh ? 'Beresiko' : ($isWarn ? 'Waspada' : 'Aman'))
                             <tr>
-                                <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $pas->nik ?? '-' }}</td>
+                                <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $loop->iteration }}</td>
                                 <td class="px-3 py-3">{{ $usr->name ?? '-' }}</td>
+                                <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $pas->nik ?? '-' }}</td>
+                                <td class="px-3 py-3">{{ $usr->phone ?? $pas->no_telepon ?? '-' }}</td>
                                 <td class="px-3 py-3">{{ optional($skr->created_at)->format('d/m/Y') ?? '-' }}</td>
                                 <td class="px-3 py-3">{{ $pas->PKecamatan ?? $pas->PWilayah ?? '-' }}</td>
-                                <td class="px-3 py-3">{{ $usr->phone ?? $pas->no_telepon ?? '-' }}</td>
                                 <td class="px-3 py-3">
                                     <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $isHigh ? 'bg-[#E20D0D] text-white' : ($isWarn ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">
                                         {{ $display }}
@@ -78,7 +80,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada rujukan dari Puskesmas untuk RS ini.</td>
+                                <td colspan="9" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada rujukan dari Puskesmas untuk RS ini.</td>
                             </tr>
                         @endforelse
                         </tbody>

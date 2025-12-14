@@ -235,6 +235,10 @@
                                 </svg>
                                 Filter
                             </button>
+                            <a href="{{ route('rs.skrining.index') }}"
+                                class="px-5 py-2 rounded-full border border-[#E9E9E9] bg-white font-semibold flex items-center gap-2 hover:bg-gray-50 transition">
+                                Lihat Semua
+                            </a>
                         </div>
                     </div>
 
@@ -355,13 +359,14 @@
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
-                            <thead class="text-[#7C7C7C]">
+                            <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
                                 <tr class="text-left">
-                                    <th class="px-3 py-2">NIK Pasien</th>
+                                    <th class="px-3 py-2">No</th>
                                     <th class="px-3 py-2">Nama Pasien</th>
+                                    <th class="px-3 py-2">NIK Pasien</th>
+                                    <th class="px-3 py-2">No Telp</th>
                                     <th class="px-3 py-2">Tanggal</th>
                                     <th class="px-3 py-2">Alamat</th>
-                                    <th class="px-3 py-2">No Telp</th>
                                     <th class="px-3 py-2">Kesimpulan</th>
                                     <th class="px-3 py-2">Aksi</th>
                                 </tr>
@@ -370,11 +375,15 @@
                                 @forelse(($pePatients ?? []) as $p)
                                     <tr>
 
+                                        <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $loop->iteration }}</td>
+                                        <td class="px-3 py-3">
+                                            {{ $p->nama ?? '-' }}
+                                        </td>
                                         <td class="px-3 py-3 font-medium text-[#1D1D1D]">
                                             {{ $p->nik ?? '-' }}
                                         </td>
                                         <td class="px-3 py-3">
-                                            {{ $p->nama ?? '-' }}
+                                            {{ $p->telp ?? '-' }}
                                         </td>
                                         <td class="px-3 py-3">
                                             {{ $p->tanggal ?? '-' }}
@@ -383,13 +392,10 @@
                                             {{ $p->alamat ?? '-' }}
                                         </td>
                                         <td class="px-3 py-3">
-                                            {{ $p->telp ?? '-' }}
-                                        </td>
-                                        <td class="px-3 py-3">
                                             @php($label = strtolower(trim($p->kesimpulan ?? '')))
                                             @php($isRisk = in_array($label, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']))
                                             @php($isWarn = in_array($label, ['waspada', 'menengah', 'sedang', 'risiko sedang']))
-                                            @php($display = $isRisk ? 'Beresiko' : ($isWarn ? 'Waspada' : 'Tidak Berisiko'))
+                                            @php($display = $isRisk ? 'Beresiko' : ($isWarn ? 'Waspada' : 'Normal'))
                                             <span
                                                 class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $isRisk ? 'bg-[#E20D0D] text-white' : ($isWarn ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">
                                                 {{ $display }}

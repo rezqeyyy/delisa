@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -218,7 +217,7 @@
                     {{-- ⭐ DROPDOWN PUSKESMAS BIASA (TANPA SEARCH) --}}
                     <div class="space-y-2">
                         <label class="block text-[11px] font-semibold text-[#666666] mb-1">
-                            Pilih Puskesmas Tujuan <span class="text-pink-600">*</span>
+                            Pilih fasilitas Tujuan <span class="text-pink-600">*</span>
                         </label>
                         
                         <select
@@ -437,7 +436,7 @@
 
                     {{-- ===================== FORM KONDISI IBU (HANYA UNTUK PASIEN BERESIKO) ===================== --}}
                     @if($isBeresiko)
-                        <div class="border-t border-[#F0F0F0] pt-4 mt-4">
+                        <div x-data="{ kondisiIbu: '{{ old('kondisi_ibu') }}' }" class="border-t border-[#F0F0F0] pt-4 mt-4">
                             <div class="flex items-center gap-2 mb-4">
                                 <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -466,6 +465,7 @@
                                             type="radio"
                                             name="kondisi_ibu"
                                             value="aman"
+                                            x-model="kondisiIbu"
                                             class="mt-1 h-4 w-4 border-gray-300 text-emerald-600 focus:ring-emerald-500"
                                             {{ old('kondisi_ibu') == 'aman' ? 'checked' : '' }}
                                             required>
@@ -489,6 +489,7 @@
                                             type="radio"
                                             name="kondisi_ibu"
                                             value="perlu_tindak_lanjut"
+                                            x-model="kondisiIbu"
                                             class="mt-1 h-4 w-4 border-gray-300 text-red-600 focus:ring-red-500"
                                             {{ old('kondisi_ibu') == 'perlu_tindak_lanjut' ? 'checked' : '' }}
                                             required>
@@ -510,7 +511,7 @@
                             </div>
 
                             {{-- Catatan Kondisi Ibu --}}
-                            <div class="mt-4 space-y-2">
+                            <div id="catatanKondisiIbu" class="mt-4 space-y-2" x-show="kondisiIbu === 'perlu_tindak_lanjut'" style="display:none;">
                                 <label class="block text-[11px] font-semibold text-[#666666]">
                                     Catatan Kondisi Ibu <span class="text-pink-600">*</span>
                                 </label>
@@ -518,8 +519,7 @@
                                     name="catatan_kondisi_ibu"
                                     rows="4"
                                     class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30"
-                                    placeholder="Jelaskan kondisi ibu saat melahirkan, komplikasi yang terjadi, penanganan yang dilakukan, dan rekomendasi tindak lanjut..."
-                                    required>{{ old('catatan_kondisi_ibu') }}</textarea>
+                                    placeholder="Jelaskan kondisi ibu saat melahirkan, komplikasi yang terjadi, penanganan yang dilakukan, dan rekomendasi tindak lanjut..." :required="kondisiIbu === 'perlu_tindak_lanjut'">{{ old('catatan_kondisi_ibu') }}</textarea>
                                 <p class="text-[10px] text-[#7C7C7C]">
                                     Catatan ini akan ditampilkan di halaman detail untuk memudahkan pemantauan kondisi ibu
                                 </p>
@@ -556,5 +556,6 @@
             </footer>
         </main>
     </div>
+
 </body>
 </html>

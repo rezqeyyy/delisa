@@ -226,7 +226,9 @@ class RujukanController extends Controller
                     'pasiens.nik',
                     'rumah_sakits.nama as nama_rs'
                 )
-                ->get();
+                ->paginate(10);
+
+            $rujukans->appends($request->except('page'));
         }
 
         return view('puskesmas.rujukan.index', compact('rujukans'));

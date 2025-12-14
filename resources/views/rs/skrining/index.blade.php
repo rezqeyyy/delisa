@@ -68,20 +68,21 @@
                                 </button>
                             </div>
 
-                            <form action="{{ route('rs.skrining.index') }}" method="GET" class="p-6 space-y-4">
-                                <!-- NIK -->
-                                <div>
-                                    <label class="block text-sm font-medium text-[#1D1D1D] mb-2">NIK Pasien</label>
-                                    <input type="text" name="nik" value="{{ request('nik') }}"
-                                        placeholder="Masukkan NIK"
-                                        class="w-full px-4 py-2 border border-[#E9E9E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300">
-                                </div>
+                            <form action="{{ route('rs.skrining.index') }}" method="GET" class="p-6 space-y-4">                                
 
                                 <!-- Nama -->
                                 <div>
                                     <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Nama Pasien</label>
                                     <input type="text" name="nama" value="{{ request('nama') }}"
                                         placeholder="Masukkan nama pasien"
+                                        class="w-full px-4 py-2 border border-[#E9E9E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300">
+                                </div>
+
+                                <!-- NIK -->
+                                <div>
+                                    <label class="block text-sm font-medium text-[#1D1D1D] mb-2">NIK Pasien</label>
+                                    <input type="text" name="nik" value="{{ request('nik') }}"
+                                        placeholder="Masukkan NIK"
                                         class="w-full px-4 py-2 border border-[#E9E9E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300">
                                 </div>
 
@@ -162,15 +163,16 @@
                     <br>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
-                            <thead class="text-[#7C7C7C]">
-                                <tr class="text-left">
-                                    <th class="px-3 py-2">NIK Pasien</th>
-                                    <th class="px-3 py-2">Nama Pasien</th>
-                                    <th class="px-3 py-2">Kedatangan</th>
-                                    <th class="px-3 py-2">Alamat</th>
-                                    <th class="px-3 py-2">No Telp</th>
-                                    <th class="px-3 py-2">Resiko</th>
-                                    <th class="px-3 py-2">Aksi</th>
+                            <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
+                                <tr class="text-left">                                    
+                                    <th class="px-4 py-3 text-left">No</th>
+                                    <th class="px-4 py-3 text-left">Nama Pasien</th>
+                                    <th class="px-4 py-3 text-left">NIK Pasien</th>
+                                    <th class="px-4 py-3 text-left">No Telp</th>
+                                    <th class="px-4 py-3 text-left">Kedatangan</th>
+                                    <th class="px-4 py-3 text-left">Alamat</th>
+                                    <th class="px-4 py-3 text-left">Resiko</th>
+                                    <th class="px-4 py-3 text-left">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#E9E9E9]">
@@ -182,12 +184,13 @@
                                     @php($isHigh = $kesimpulan === 'Beresiko')
                                     @php($isWarn = $kesimpulan === 'Waspada')
                                     <tr>
-                                        <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $pas->nik ?? '-' }}</td>
+                                        <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $loop->iteration }}</td>
                                         <td class="px-3 py-3">{{ $usr->name ?? '-' }}</td>
+                                        <td class="px-3 py-3 font-medium text-[#1D1D1D]">{{ $pas->nik ?? '-' }}</td>
+                                        <td class="px-3 py-3">{{ $usr->phone ?? ($pas->no_telepon ?? '-') }}</td>
                                         <td class="px-3 py-3">{{ optional($skr->created_at)->format('d/m/Y') ?? '-' }}
                                         </td>
                                         <td class="px-3 py-3">{{ $pas->PKecamatan ?? ($pas->PWilayah ?? '-') }}</td>
-                                        <td class="px-3 py-3">{{ $usr->phone ?? ($pas->no_telepon ?? '-') }}</td>
                                         <td class="px-3 py-3">
                                             <span
                                                 class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $isHigh ? 'bg-[#E20D0D] text-white' : ($isWarn ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">
