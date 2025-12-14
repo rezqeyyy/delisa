@@ -181,7 +181,7 @@
                     {{-- Baris: Status Risiko (Hidden by default, muncul jika pasien belum punya skrining) --}}
                     <div id="statusRisikoWrapper" class="">
                         <label class="block text-[11px] font-semibold text-[#666666] mb-1">
-                            Status Risiko Pre-Eklampsia <span class="text-pink-600">*</span>
+                            Status Risiko Pre-Eklampsia
                         </label>
                         
                         <select
@@ -196,15 +196,6 @@
                                 Beresiko
                             </option>
                         </select>
-                        
-                        <p class="text-[10px] text-[#7C7C7C] mt-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10" />
-                                <path d="M12 16v-4" />
-                                <path d="M12 8h.01" />
-                            </svg>
-                            Pasien ini belum memiliki data skrining. Pilih status risiko secara manual.
-                        </p>
                         
                         @error('status_risiko_manual')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>

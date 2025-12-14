@@ -617,23 +617,47 @@ class PasienNifasController extends Controller
     /**
      * Display detail readonly pasien nifas dan data anak
      */
-    public function detail($id)
-    {
-        $pasienNifas = PasienNifasRs::with([
-            'pasien.user',
-            'pasien.skrinings',
-            'rs',
-            'anakPasien'
-        ])->findOrFail($id);
+   public function detail($id)
+{
+    $pasienNifas = PasienNifasRs::with([
+        'pasien.user',
+        'pasien.skrinings',
+        'rs',
+        'anakPasien'
+    ])->findOrFail($id);
 
-        $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien, $pasienNifas);
-        $pasienNifas->status_display = $statusRisiko['label'];
-        $pasienNifas->status_type = $statusRisiko['type'];
+    $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien, $pasienNifas);
+    $pasienNifas->status_display = $statusRisiko['label'];
+    $pasienNifas->status_type = $statusRisiko['type'];
 
-        $anakPasien = $pasienNifas->anakPasien->first();
+    $anakPasien = $pasienNifas->anakPasien->first();
 
-        return view('rs.pasien-nifas.show', compact('pasienNifas', 'anakPasien'));
+    // =========================
+    // ⭐ TAMBAHAN: Ambil info puskesmas tujuan per-anak (berdasarkan anak_pasien.puskesmas_id)
+    // =========================
+    $puskesmasTujuanById = collect();
+
+    $puskesmasIds = $pasienNifas->anakPasien
+        ->pluck('puskesmas_id')
+        ->filter()
+        ->unique()
+        ->values();
+
+    if ($puskesmasIds->isNotEmpty()) {
+        $puskesmasTujuanById = DB::table('puskesmas')
+            ->whereIn('id', $puskesmasIds)
+            ->select('id', 'nama_puskesmas', 'kecamatan', 'lokasi')
+            ->get()
+            ->keyBy('id');
     }
+
+    return view('rs.pasien-nifas.show', compact(
+        'pasienNifas',
+        'anakPasien',
+        'puskesmasTujuanById'
+    ));
+}
+
 
     /**
      * Download PDF single pasien nifas

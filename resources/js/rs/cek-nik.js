@@ -165,14 +165,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     // Jika pasien TIDAK punya skrining, TAMPILKAN dropdown manual
                     statusRisikoWrapper.classList.remove('hidden');
-                    statusRisikoSelect.setAttribute('required', 'required');
-                    
+                                        
                     // Hide card status
                     if (statusRisikoCard) {
                         statusRisikoCard.classList.add('hidden');
                     }
                     
-                    showAlert('info', 'Pasien belum memiliki data skrining. Silakan pilih status risiko secara manual.');
+                    showAlert('info', 'Pasien belum memiliki data skrining. Silakan pilih status risiko secara manual jika sudah pernah skrining sebelumnya.');
                 }
 
             } else {

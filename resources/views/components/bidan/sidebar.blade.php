@@ -45,11 +45,11 @@
                     <img src="{{ asset('icons/Group 36805.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Skrining">
                     <span>Skrining</span>
                 </a>
-
+{{-- 
                 <a href="{{ route('bidan.pasien-nifas') }}" class="{{ $is('bidan.pasien-nifas*') ? $active : $idle }}">
                     <img src="{{ asset('icons/Iconly/Regular/Light/2 User.svg') }}" class="w-4 h-4 transition group-hover:brightness-0 group-hover:invert" alt="Pasien Nifas">
                     <span>Pasien Nifas</span>
-                </a>
+                </a> --}}
             </div>
 
             <div class="space-y-2 pt-2">

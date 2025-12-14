@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class AnakPasien extends Model
 {
     protected $table = 'anak_pasien';
-    
+
     protected $fillable = [
         'nifas_id',
+        'puskesmas_id',              // <-- PENTING: pastikan ada ini
         'nifas_bidan_id',
         'anak_ke',
         'tanggal_lahir',
@@ -27,7 +28,7 @@ class AnakPasien extends Model
         'kondisi_ibu',
         'catatan_kondisi_ibu',
     ];
-    
+
     protected $casts = [
         'tanggal_lahir' => 'date',
         'riwayat_penyakit' => 'array',

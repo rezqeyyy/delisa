@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Pasien Nifas - DELISA</title>
-    
+
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dropdown.js', 'resources/js/rs/sidebar-toggle.js'])
 
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
-        
+
         <x-rs.sidebar />
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
@@ -20,11 +21,11 @@
                 $statusType = $pasienNifas->status_type ?? 'normal';
                 $statusDisplay = $pasienNifas->status_display ?? 'Tidak Berisiko';
                 $isBeresiko = $statusType === 'beresiko' || $statusType === 'waspada';
-                
-                $badgeClass = match($statusType) {
+
+                $badgeClass = match ($statusType) {
                     'beresiko' => 'bg-red-100 text-red-700 border-red-200',
                     'waspada' => 'bg-amber-100 text-amber-700 border-amber-200',
-                    default => 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                    default => 'bg-emerald-100 text-emerald-700 border-emerald-200',
                 };
 
                 $anakPertama = $pasienNifas->anakPasien->first();
@@ -43,7 +44,9 @@
 
                 // Hitung kondisi ibu
                 $kondisiAman = $pasienNifas->anakPasien->where('kondisi_ibu', 'aman')->count();
-                $kondisiPerluTindakLanjut = $pasienNifas->anakPasien->where('kondisi_ibu', 'perlu_tindak_lanjut')->count();
+                $kondisiPerluTindakLanjut = $pasienNifas->anakPasien
+                    ->where('kondisi_ibu', 'perlu_tindak_lanjut')
+                    ->count();
             @endphp
 
             {{-- HEADER ATAS --}}
@@ -62,25 +65,29 @@
                             Ringkasan nifas ibu, riwayat persalinan, dan kondisi bayi
                         </p>
                     </div>
-                </div>                
+                </div>
 
                 <div class="flex items-center gap-2">
                     {{-- Badge Status Risiko --}}
                     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border {{ $badgeClass }}">
-                        @if($statusType === 'beresiko')
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                        @if ($statusType === 'beresiko')
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                                 <line x1="12" y1="9" x2="12" y2="13" />
                                 <line x1="12" y1="17" x2="12.01" y2="17" />
                             </svg>
                         @elseif($statusType === 'waspada')
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10" />
                                 <path d="M12 8v4" />
                                 <path d="M12 16h.01" />
                             </svg>
                         @else
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <path d="M9 12l2 2 4-4" />
                                 <circle cx="12" cy="12" r="10" />
                             </svg>
@@ -89,9 +96,9 @@
                     </div>
 
                     <a href="{{ route('rs.pasien-nifas.show', $pasienNifas->id) }}"
-                       class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#C2185B]">
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#C2185B]">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2">
+                            stroke="currentColor" stroke-width="2">
                             <path d="M12 5v14" />
                             <path d="M5 12h14" />
                         </svg>
@@ -102,10 +109,11 @@
 
             {{-- ALERT SUKSES --}}
             @if (session('success'))
-                <div class="alert flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs sm:text-sm text-emerald-800">
+                <div
+                    class="alert flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs sm:text-sm text-emerald-800">
                     <span class="mt-0.5">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2">
+                            stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10" />
                             <path d="m9 12 2 2 4-4" />
                         </svg>
@@ -126,7 +134,8 @@
 
                 <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
                     {{-- Header bar --}}
-                    <div class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
+                    <div
+                        class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
                         <div class="px-4 sm:px-6 py-3 border-r border-[#F0F0F0]">
                             Informasi
                         </div>
@@ -177,7 +186,8 @@
                                 Status Risiko Pre-Eklampsia
                             </div>
                             <div class="px-4 sm:px-6 py-3">
-                                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold {{ $badgeClass }}">
+                                <span
+                                    class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold {{ $badgeClass }}">
                                     {{ $statusDisplay }}
                                 </span>
                             </div>
@@ -235,7 +245,8 @@
 
                 <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
                     {{-- Header bar --}}
-                    <div class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
+                    <div
+                        class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
                         <div class="px-4 sm:px-6 py-3 border-r border-[#F0F0F0]">
                             Informasi
                         </div>
@@ -286,7 +297,7 @@
                         </div>
 
                         {{-- Kondisi Ibu (Hanya untuk Beresiko) --}}
-                        @if($isBeresiko)
+                        @if ($isBeresiko)
                             <div class="grid grid-cols-2 bg-red-50/50">
                                 <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
                                     Kondisi Ibu - Aman
@@ -311,30 +322,35 @@
             {{-- =========================
                  3. DETAIL SETIAP ANAK
                ========================== --}}
-            @if($pasienNifas->anakPasien->count() > 0)
+            @if ($pasienNifas->anakPasien->count() > 0)
                 <section class="space-y-4">
                     <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">
                         Detail Data Anak
                     </h2>
 
-                    @foreach($pasienNifas->anakPasien as $index => $anak)
+                    @foreach ($pasienNifas->anakPasien as $index => $anak)
                         @php
-                            $kondisiIbuClass = match($anak->kondisi_ibu) {
+                            $kondisiIbuClass = match ($anak->kondisi_ibu) {
                                 'aman' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
                                 'perlu_tindak_lanjut' => 'bg-red-100 text-red-700 border-red-200',
-                                default => 'bg-gray-100 text-gray-500 border-gray-200'
+                                default => 'bg-gray-100 text-gray-500 border-gray-200',
                             };
-                            $kondisiIbuLabel = match($anak->kondisi_ibu) {
+                            $kondisiIbuLabel = match ($anak->kondisi_ibu) {
                                 'aman' => 'Aman',
                                 'perlu_tindak_lanjut' => 'Perlu Tindak Lanjut',
-                                default => 'Belum Diisi'
+                                default => 'Belum Diisi',
                             };
+
+                            // ⭐ TAMBAHAN
+                            $puskesmasTujuan = $puskesmasTujuanById[$anak->puskesmas_id] ?? null;
                         @endphp
+
 
                         <div class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-[#E91E8C]/10 flex items-center justify-center">
+                                    <div
+                                        class="w-10 h-10 rounded-full bg-[#E91E8C]/10 flex items-center justify-center">
                                         <span class="text-sm font-bold text-[#E91E8C]">{{ $anak->anak_ke }}</span>
                                     </div>
                                     <div>
@@ -342,22 +358,29 @@
                                             {{ $anak->nama_anak ?? 'Anak ke-' . $anak->anak_ke }}
                                         </h3>
                                         <p class="text-xs text-[#7C7C7C]">
-                                            {{ $anak->jenis_kelamin }} • Lahir {{ \Carbon\Carbon::parse($anak->tanggal_lahir)->translatedFormat('d F Y') }}
+                                            {{ $anak->jenis_kelamin }} • Lahir
+                                            {{ \Carbon\Carbon::parse($anak->tanggal_lahir)->translatedFormat('d F Y') }}
                                         </p>
                                     </div>
                                 </div>
 
                                 {{-- Badge Kondisi Ibu (Hanya untuk Beresiko) --}}
-                                @if($isBeresiko && $anak->kondisi_ibu)
-                                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border {{ $kondisiIbuClass }}">
-                                        @if($anak->kondisi_ibu === 'aman')
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                @if ($isBeresiko && $anak->kondisi_ibu)
+                                    <div
+                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border {{ $kondisiIbuClass }}">
+                                        @if ($anak->kondisi_ibu === 'aman')
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2">
                                                 <path d="M9 12l2 2 4-4" />
                                                 <circle cx="12" cy="12" r="10" />
                                             </svg>
                                         @else
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2">
+                                                <path
+                                                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                                                 <line x1="12" y1="9" x2="12" y2="13" />
                                                 <line x1="12" y1="17" x2="12.01" y2="17" />
                                             </svg>
@@ -373,32 +396,66 @@
                                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4">
                                         <div>
                                             <p class="text-[10px] text-[#7C7C7C] mb-1">Berat Lahir</p>
-                                            <p class="font-semibold text-[#1D1D1D]">{{ $anak->berat_lahir_anak }} kg</p>
+                                            <p class="font-semibold text-[#1D1D1D]">{{ $anak->berat_lahir_anak }} kg
+                                            </p>
                                         </div>
                                         <div>
                                             <p class="text-[10px] text-[#7C7C7C] mb-1">Panjang Lahir</p>
-                                            <p class="font-semibold text-[#1D1D1D]">{{ $anak->panjang_lahir_anak }} cm</p>
+                                            <p class="font-semibold text-[#1D1D1D]">{{ $anak->panjang_lahir_anak }} cm
+                                            </p>
                                         </div>
                                         <div>
                                             <p class="text-[10px] text-[#7C7C7C] mb-1">Lingkar Kepala</p>
-                                            <p class="font-semibold text-[#1D1D1D]">{{ $anak->lingkar_kepala_anak }} cm</p>
+                                            <p class="font-semibold text-[#1D1D1D]">{{ $anak->lingkar_kepala_anak }}
+                                                cm</p>
                                         </div>
                                         <div>
                                             <p class="text-[10px] text-[#7C7C7C] mb-1">Usia Kehamilan</p>
-                                            <p class="font-semibold text-[#1D1D1D]">{{ $anak->usia_kehamilan_saat_lahir }} minggu</p>
+                                            <p class="font-semibold text-[#1D1D1D]">
+                                                {{ $anak->usia_kehamilan_saat_lahir }} minggu</p>
                                         </div>
                                     </div>
+                                    
+                                    {{-- ⭐ Puskesmas Tujuan --}}
+                                    <div class="p-4 pt-0">
+                                        <div class="rounded-2xl border border-[#F0F0F0] bg-white px-4 py-3">
+                                            <p class="text-[10px] text-[#7C7C7C] mb-1">Puskesmas Tujuan</p>
+
+                                            @if ($puskesmasTujuan)
+                                                <p class="font-semibold text-[#1D1D1D] leading-relaxed">
+                                                    {{ $puskesmasTujuan->nama_puskesmas ?? '-' }}
+                                                    @if (!empty($puskesmasTujuan->kecamatan))
+                                                        <span class="font-normal text-[#7C7C7C]">• Kec.
+                                                            {{ $puskesmasTujuan->kecamatan }}</span>
+                                                    @endif
+                                                </p>
+
+                                                @if (!empty($puskesmasTujuan->lokasi))
+                                                    <p class="text-[11px] text-[#7C7C7C] mt-1 leading-relaxed">
+                                                        {{ $puskesmasTujuan->lokasi }}
+                                                    </p>
+                                                @endif
+                                            @else
+                                                <p class="font-semibold text-[#1D1D1D]">-</p>
+                                            @endif
+                                        </div>
+                                    </div>
+
 
                                     {{-- Info Tambahan --}}
                                     <div class="grid grid-cols-3 gap-4 p-4 bg-[#FAFAFA]">
                                         <div class="flex items-center gap-2">
-                                            @if($anak->memiliki_buku_kia)
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            @if ($anak->memiliki_buku_kia)
+                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                    class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M9 12l2 2 4-4" />
                                                     <circle cx="12" cy="12" r="10" />
                                                 </svg>
                                             @else
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2">
                                                     <circle cx="12" cy="12" r="10" />
                                                     <path d="M15 9l-6 6" />
                                                     <path d="M9 9l6 6" />
@@ -407,13 +464,17 @@
                                             <span class="text-xs">Buku KIA</span>
                                         </div>
                                         <div class="flex items-center gap-2">
-                                            @if($anak->buku_kia_bayi_kecil)
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            @if ($anak->buku_kia_bayi_kecil)
+                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                    class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M9 12l2 2 4-4" />
                                                     <circle cx="12" cy="12" r="10" />
                                                 </svg>
                                             @else
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2">
                                                     <circle cx="12" cy="12" r="10" />
                                                     <path d="M15 9l-6 6" />
                                                     <path d="M9 9l6 6" />
@@ -422,13 +483,17 @@
                                             <span class="text-xs">Buku KIA Bayi Kecil</span>
                                         </div>
                                         <div class="flex items-center gap-2">
-                                            @if($anak->imd)
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            @if ($anak->imd)
+                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                    class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M9 12l2 2 4-4" />
                                                     <circle cx="12" cy="12" r="10" />
                                                 </svg>
                                             @else
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2">
                                                     <circle cx="12" cy="12" r="10" />
                                                     <path d="M15 9l-6 6" />
                                                     <path d="M9 9l6 6" />
@@ -439,12 +504,14 @@
                                     </div>
 
                                     {{-- Riwayat Penyakit --}}
-                                    @if($anak->riwayat_penyakit && count($anak->riwayat_penyakit) > 0)
+                                    @if ($anak->riwayat_penyakit && count($anak->riwayat_penyakit) > 0)
                                         <div class="p-4">
-                                            <p class="text-[10px] text-[#7C7C7C] mb-2">Riwayat Penyakit/Komplikasi Ibu</p>
+                                            <p class="text-[10px] text-[#7C7C7C] mb-2">Riwayat Penyakit/Komplikasi Ibu
+                                            </p>
                                             <div class="flex flex-wrap gap-2">
-                                                @foreach($anak->riwayat_penyakit as $penyakit)
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium">
+                                                @foreach ($anak->riwayat_penyakit as $penyakit)
+                                                    <span
+                                                        class="inline-flex items-center px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium">
                                                         {{ $penyakit }}
                                                     </span>
                                                 @endforeach
@@ -453,7 +520,7 @@
                                     @endif
 
                                     {{-- Keterangan Masalah Lain --}}
-                                    @if($anak->keterangan_masalah_lain)
+                                    @if ($anak->keterangan_masalah_lain)
                                         <div class="p-4 bg-gray-50">
                                             <p class="text-[10px] text-[#7C7C7C] mb-1">Keterangan Masalah Lain</p>
                                             <p class="text-xs text-[#1D1D1D]">{{ $anak->keterangan_masalah_lain }}</p>
@@ -461,31 +528,43 @@
                                     @endif
 
                                     {{-- ===================== KONDISI IBU (HANYA UNTUK BERESIKO) ===================== --}}
-                                    @if($isBeresiko && $anak->kondisi_ibu)
-                                        <div class="p-4 {{ $anak->kondisi_ibu === 'perlu_tindak_lanjut' ? 'bg-red-50' : 'bg-emerald-50' }}">
+                                    @if ($isBeresiko && $anak->kondisi_ibu)
+                                        <div
+                                            class="p-4 {{ $anak->kondisi_ibu === 'perlu_tindak_lanjut' ? 'bg-red-50' : 'bg-emerald-50' }}">
                                             <div class="flex items-start gap-3">
-                                                @if($anak->kondisi_ibu === 'aman')
-                                                    <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                @if ($anak->kondisi_ibu === 'aman')
+                                                    <div
+                                                        class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                            class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24"
+                                                            fill="none" stroke="currentColor" stroke-width="2">
                                                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
                                                             <path d="M9 12l2 2 4-4" />
                                                         </svg>
                                                     </div>
                                                 @else
-                                                    <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                                                            <line x1="12" y1="9" x2="12" y2="13" />
-                                                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                                                    <div
+                                                        class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                            class="w-4 h-4 text-red-600" viewBox="0 0 24 24"
+                                                            fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path
+                                                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                                            <line x1="12" y1="9" x2="12"
+                                                                y2="13" />
+                                                            <line x1="12" y1="17" x2="12.01"
+                                                                y2="17" />
                                                         </svg>
                                                     </div>
                                                 @endif
                                                 <div class="flex-1">
-                                                    <h4 class="text-xs font-semibold {{ $anak->kondisi_ibu === 'perlu_tindak_lanjut' ? 'text-red-800' : 'text-emerald-800' }} mb-1">
+                                                    <h4
+                                                        class="text-xs font-semibold {{ $anak->kondisi_ibu === 'perlu_tindak_lanjut' ? 'text-red-800' : 'text-emerald-800' }} mb-1">
                                                         Kondisi Ibu Saat Melahirkan: {{ $kondisiIbuLabel }}
                                                     </h4>
-                                                    @if($anak->catatan_kondisi_ibu)
-                                                        <p class="text-xs {{ $anak->kondisi_ibu === 'perlu_tindak_lanjut' ? 'text-red-700' : 'text-emerald-700' }} leading-relaxed">
+                                                    @if ($anak->catatan_kondisi_ibu)
+                                                        <p
+                                                            class="text-xs {{ $anak->kondisi_ibu === 'perlu_tindak_lanjut' ? 'text-red-700' : 'text-emerald-700' }} leading-relaxed">
                                                             {{ $anak->catatan_kondisi_ibu }}
                                                         </p>
                                                     @endif
@@ -503,7 +582,7 @@
             {{-- TOMBOL AKSI BAWAH --}}
             <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
                 <a href="{{ route('rs.pasien-nifas.index') }}"
-                class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] w-full sm:w-auto">
+                    class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] w-full sm:w-auto">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2">
                         <path d="M15 18l-6-6 6-6" />
@@ -513,7 +592,7 @@
 
                 @if ($pasienNifas->anakPasien->count() > 0)
                     <a href="{{ route('rs.pasien-nifas.download-single-pdf', $pasienNifas->id) }}"
-                    class="inline-flex items-center justify-center gap-2 rounded-full bg-[#DC2626] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#B91C1C] w-full sm:w-auto">
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-[#DC2626] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#B91C1C] w-full sm:w-auto">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -534,7 +613,7 @@
 
     <script>
         // Auto-hide alert sukses setelah 5 detik
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
                 setTimeout(() => {
@@ -546,4 +625,5 @@
         });
     </script>
 </body>
+
 </html>

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Puskesmas;
 
 use App\Http\Controllers\Controller;
 use App\Models\PasienNifasRs;
-use App\Models\PasienNifasBidan;
 use App\Models\KfKunjungan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,111 +22,126 @@ class PasienNifasController extends Controller
     public function index(Request $request)
     {
         $userId = Auth::id();
-        
+
         // Dapatkan data puskesmas user
         $puskesmas = DB::table('puskesmas')
             ->select('id', 'kecamatan', 'nama_puskesmas')
             ->where('user_id', $userId)
             ->first();
-        
+
         if (!$puskesmas) {
             return view('puskesmas.pasien-nifas.index', [
                 'dataRs' => collect(),
-                'dataBidan' => collect(),
                 'totalPasienNifas' => 0,
                 'sudahKFI' => 0,
                 'belumKFI' => 0,
                 'kecamatanPuskesmas' => null,
                 'namaPuskesmas' => null,
-                'type' => $request->get('type', 'all')
+                'type' => 'rs',
+                'search' => trim($request->get('search')),
+                'tanggalMulai' => $request->get('tanggal_mulai'),
+                'tanggalSelesai' => $request->get('tanggal_selesai'),
             ]);
         }
-        
+
         $kecamatanPuskesmas = $puskesmas->kecamatan;
         $namaPuskesmas = $puskesmas->nama_puskesmas;
-        $type = $request->get('type', 'all');
-        $search = trim($request->get('search'));
+        $puskesmasId = (int) $puskesmas->id;
+
+        // Karena BIDAN tidak dipakai lagi, type dibatasi hanya: rs
+        $type = $request->get('type', 'rs');
+        if (!in_array($type, ['rs', 'all'], true)) {
+            $type = 'rs';
+        }
+
+        $search = trim((string) $request->get('search'));
         $tanggalMulai = $request->get('tanggal_mulai');
         $tanggalSelesai = $request->get('tanggal_selesai');
 
-        
-        // DATA DARI RS
-        $dataRs = collect();
-        if ($type === 'all' || $type === 'rs') {
-            $dataRs = PasienNifasRs::with(['pasien.user', 'rs'])
-                ->whereHas('pasien', function ($query) use (
-                    $kecamatanPuskesmas,
-                    $search,
-                    $tanggalMulai,
-                    $tanggalSelesai
-                ) {
+        // ======================
+        // DATA DARI RS (yang ditugaskan ke puskesmas ini)
+        // ======================
+        $queryRs = PasienNifasRs::with(['pasien.user', 'rs', 'anakPasien'])
+            ->where('puskesmas_id', $puskesmasId);
 
-                    // Filter kecamatan (WAJIB)
-                    $query->whereRaw(
-                        'LOWER("pasiens"."PKecamatan") = LOWER(?)',
-                        [$kecamatanPuskesmas]
-                    );
-
-                    // 🔍 SEARCH NAMA PASIEN (case-insensitive)
-                    if ($search) {
-                        $query->whereHas('user', function ($q) use ($search) {
-                            $q->whereRaw(
-                                'LOWER(name) LIKE ?',
-                                ['%' . strtolower($search) . '%']
-                            );
-                        });
-                    }
-
-                    // 📅 FILTER TANGGAL MULAI NIFAS
-                    if ($tanggalMulai) {
-                        $query->whereDate('tanggal_mulai_nifas', '>=', $tanggalMulai);
-                    }
-
-                    if ($tanggalSelesai) {
-                        $query->whereDate('tanggal_mulai_nifas', '<=', $tanggalSelesai);
-                    }
-                })
-                ->orderBy('created_at', 'desc')
-                ->paginate(10)
-                ->withQueryString();
+        // 🔍 Search nama pasien
+        if ($search) {
+            $queryRs->whereHas('pasien.user', function ($q) use ($search) {
+                $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
+            });
         }
-        
-        // DATA DARI BIDAN
-        $dataBidan = collect();
-        if ($type === 'all' || $type === 'bidan') {
-            $dataBidan = PasienNifasBidan::with(['pasien.user', 'bidan'])
-                ->whereHas('pasien', function($query) use ($kecamatanPuskesmas) {
-                    $query->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatanPuskesmas]);
-                })
-                ->orderBy('created_at', 'desc')
-                ->get();
+
+        // 📅 Filter tanggal mulai nifas
+        if ($tanggalMulai) {
+            $queryRs->whereDate('tanggal_mulai_nifas', '>=', $tanggalMulai);
         }
-        
-        // Hitung statistik untuk SEMUA data
-        $totalPasienNifas = ($dataRs instanceof \Illuminate\Pagination\LengthAwarePaginator ? $dataRs->total() : $dataRs->count()) 
-                          + $dataBidan->count();
-        
-        $sudahKFI = $dataRs->filter(function($item) {
-            return $item->isKfSelesai(1);
-        })->count();
-        
-        $sudahKFI += $dataBidan->filter(function($item) {
-            return $item->isKfSelesai(1);
-        })->count();
-        
-        $belumKFI = $totalPasienNifas - $sudahKFI;
-        
+        if ($tanggalSelesai) {
+            $queryRs->whereDate('tanggal_mulai_nifas', '<=', $tanggalSelesai);
+        }
+
+        $dataRs = $queryRs
+            ->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        // ✅ Set tanggal_melahirkan dari tanggal lahir anak (tanpa ubah DB)
+        $dataRs->getCollection()->transform(function ($item) {
+            $tglMelahirkan = $this->deriveTanggalMelahirkanFromAnak($item);
+
+            // timpa property runtime supaya view tetap pakai $pasienNifas->tanggal_melahirkan
+            $item->tanggal_melahirkan = $tglMelahirkan ? $tglMelahirkan->toDateString() : null;
+
+            return $item;
+        });
+
+
+        // Hitung statistik (hanya RS)
+        $totalPasienNifas = $dataRs->total();
+
+        // Sudah KF1 (hanya dari item halaman ini)
+        $sudahKFI = collect($dataRs->items())
+            ->filter(fn($item) => $item->isKfSelesai(1))
+            ->count();
+
+        $belumKFI = max(0, $totalPasienNifas - $sudahKFI);
+
         return view('puskesmas.pasien-nifas.index', [
             'dataRs' => $dataRs,
-            'dataBidan' => $dataBidan,
             'totalPasienNifas' => $totalPasienNifas,
             'sudahKFI' => $sudahKFI,
             'belumKFI' => $belumKFI,
             'kecamatanPuskesmas' => $kecamatanPuskesmas,
             'namaPuskesmas' => $namaPuskesmas,
-            'type' => $type
+            'type' => $type,
+            'search' => $search,
+            'tanggalMulai' => $tanggalMulai,
+            'tanggalSelesai' => $tanggalSelesai,
         ]);
     }
+
+    /**
+     * Ambil tanggal melahirkan dari data anak (anak_pasien.tanggal_lahir).
+     * Jika lebih dari satu anak, ambil yang paling awal (min).
+     */
+    private function deriveTanggalMelahirkanFromAnak($pasienNifas): ?Carbon
+    {
+        if (!$pasienNifas) return null;
+
+        // pastikan relasi anakPasien sudah diload
+        if (!isset($pasienNifas->anakPasien)) {
+            return null;
+        }
+
+        $tgl = $pasienNifas->anakPasien
+            ->pluck('tanggal_lahir')
+            ->filter()
+            ->min();
+
+        return $tgl ? Carbon::parse($tgl) : null;
+    }
+
+
+
 
     /**
      * Tampilkan detail pasien nifas (universal untuk RS dan Bidan)
@@ -135,47 +149,51 @@ class PasienNifasController extends Controller
     public function show($type, $id)
     {
         $userId = Auth::id();
-        
+
         // Dapatkan data puskesmas user
         $puskesmas = DB::table('puskesmas')
             ->select('id', 'kecamatan')
             ->where('user_id', $userId)
             ->first();
-        
+
         abort_unless($puskesmas, 404, 'Puskesmas tidak ditemukan');
-        
-        // Pilih model berdasarkan type
-        if ($type === 'rs') {
-            $data = PasienNifasRs::with(['pasien.user', 'rs', 'anakPasien'])
-                ->findOrFail($id);
-            $modelClass = PasienNifasRs::class;
-        } else {
-            $data = PasienNifasBidan::with(['pasien.user', 'bidan', 'anakPasien'])
-                ->findOrFail($id);
-            $modelClass = PasienNifasBidan::class;
-        }
-        
+
+        // Batasi hanya RS
+        abort_unless($type === 'rs', 404, 'Tipe data nifas tidak valid');
+
+        $data = PasienNifasRs::with(['pasien.user', 'rs', 'anakPasien'])
+            ->findOrFail($id);
+
+        // ✅ Tanggal melahirkan diambil dari tanggal lahir anak
+        $tglMelahirkan = $this->deriveTanggalMelahirkanFromAnak($data);
+        $data->tanggal_melahirkan = $tglMelahirkan ? $tglMelahirkan->toDateString() : null;
+
+
         // Validasi akses: cek apakah pasien dari kecamatan yang sama
         $kecamatanPasien = optional($data->pasien)->PKecamatan;
-        $allowed = ($kecamatanPasien === $puskesmas->kecamatan);
-        
+        // Validasi akses: WAJIB puskesmas_id sama (ini inti logika terbaru)
+        $allowed = ((int) $data->puskesmas_id === (int) $puskesmas->id);
         abort_unless($allowed, 403, 'Anda tidak memiliki akses ke data pasien ini.');
-        
-        // Ambil semua data KF untuk pasien ini (menggunakan polymorphic)
-        $kfKunjungans = KfKunjungan::where('nifasable_id', $id)
-            ->where('nifasable_type', $modelClass)
+
+
+        // Ambil semua data KF untuk pasien ini
+        $kfKunjungans = KfKunjungan::where('pasien_nifas_id', $id)
             ->orderBy('jenis_kf')
             ->get();
-        
+
+
         // Cek KF meninggal
         $deathKe = $kfKunjungans
-            ->filter(function($kf) {
+            ->filter(function ($kf) {
                 return $kf->is_meninggal;
             })
             ->min('jenis_kf');
-        
+
         return view('puskesmas.pasien-nifas.show', compact(
-            'data', 'deathKe', 'kfKunjungans', 'type'
+            'data',
+            'deathKe',
+            'kfKunjungans',
+            'type'
         ));
     }
 
@@ -186,42 +204,43 @@ class PasienNifasController extends Controller
     public function formCatatKf($type, $id, $jenisKf)
     {
         $userId = Auth::id();
-        
+
         // Dapatkan data puskesmas user
         $puskesmas = DB::table('puskesmas')
             ->select('id', 'kecamatan')
             ->where('user_id', $userId)
             ->first();
-        
+
         abort_unless($puskesmas, 404, 'Puskesmas tidak ditemukan');
-        
-        // Pilih model berdasarkan type
-        if ($type === 'rs') {
-            $data = PasienNifasRs::with(['pasien.user'])->findOrFail($id);
-            $modelClass = PasienNifasRs::class;
-        } else {
-            $data = PasienNifasBidan::with(['pasien.user'])->findOrFail($id);
-            $modelClass = PasienNifasBidan::class;
-        }
-        
+
+        // Batasi hanya RS
+        abort_unless($type === 'rs', 404, 'Tipe data nifas tidak valid');
+
+        $data = PasienNifasRs::with(['pasien.user', 'anakPasien'])->findOrFail($id);
+
+        // ✅ Tanggal melahirkan diambil dari tanggal lahir anak
+        $tglMelahirkan = $this->deriveTanggalMelahirkanFromAnak($data);
+        $data->tanggal_melahirkan = $tglMelahirkan ? $tglMelahirkan->toDateString() : null;
+
         // Validasi akses
         $kecamatanPasien = optional($data->pasien)->PKecamatan;
-        $allowed = ($kecamatanPasien === $puskesmas->kecamatan);
+        $allowed = ((int) $data->puskesmas_id === (int) $puskesmas->id);
         abort_unless($allowed, 403, 'Anda tidak memiliki akses ke data pasien ini.');
+
 
         // Validasi jenis KF
         if (!in_array($jenisKf, [1, 2, 3, 4])) {
             abort(404, 'Jenis KF tidak valid');
         }
 
-        // Cek apakah sudah ada KF dengan kesimpulan Meninggal/Wafat (menggunakan polymorphic)
-        $deathKe = KfKunjungan::where('nifasable_id', $id)
-            ->where('nifasable_type', $modelClass)
+        // Cek apakah sudah ada KF dengan kesimpulan Meninggal/Wafat
+        $deathKe = KfKunjungan::where('pasien_nifas_id', $id)
             ->where(function ($q) {
                 $q->where('kesimpulan_pantauan', 'Meninggal')
-                  ->orWhere('kesimpulan_pantauan', 'Wafat');
+                    ->orWhere('kesimpulan_pantauan', 'Wafat');
             })
             ->min('jenis_kf');
+
 
         if (!is_null($deathKe) && (int) $jenisKf > (int) $deathKe) {
             return redirect()
@@ -259,7 +278,8 @@ class PasienNifasController extends Controller
                 ->with('error', $pesan);
         }
 
-        return view('puskesmas.pasien-nifas.form-kf', compact('data', 'jenisKf', 'type'));
+        $pasienNifas = $data;
+        return view('puskesmas.pasien-nifas.form-kf', compact('pasienNifas', 'jenisKf', 'type'));
     }
 
     /**
@@ -298,48 +318,44 @@ class PasienNifasController extends Controller
             ->select('id', 'kecamatan')
             ->where('user_id', $userId)
             ->first();
-        
+
         abort_unless($puskesmas, 404, 'Puskesmas tidak ditemukan');
-        
-        // Pilih model berdasarkan type
-        if ($type === 'rs') {
-            $data = PasienNifasRs::findOrFail($id);
-            $modelClass = PasienNifasRs::class;
-        } else {
-            $data = PasienNifasBidan::findOrFail($id);
-            $modelClass = PasienNifasBidan::class;
-        }
-        
-        $kecamatanPasien = optional($data->pasien)->PKecamatan;
-        abort_unless($kecamatanPasien === $puskesmas->kecamatan, 403, 'Anda tidak memiliki akses ke data pasien ini.');
-        
+
+        // Batasi hanya RS
+        abort_unless($type === 'rs', 404, 'Tipe data nifas tidak valid');
+
+        $data = PasienNifasRs::with('anakPasien')->findOrFail($id);
+
+        // ✅ Tanggal melahirkan diambil dari tanggal lahir anak
+        $tglMelahirkan = $this->deriveTanggalMelahirkanFromAnak($data);
+        $data->tanggal_melahirkan = $tglMelahirkan ? $tglMelahirkan->toDateString() : null;
+        abort_unless(((int) $data->puskesmas_id === (int) $puskesmas->id), 403, 'Anda tidak memiliki akses ke data pasien ini.');
+
         // Validasi jenis KF
         if (!in_array($jenisKf, [1, 2, 3, 4])) {
             abort(404, 'Jenis KF tidak valid');
         }
-        
+
         // Cek apakah sudah selesai
         if ($data->isKfSelesai($jenisKf)) {
             return redirect()
                 ->route('puskesmas.pasien-nifas.show', ['type' => $type, 'id' => $id])
                 ->with('error', "KF{$jenisKf} sudah selesai dicatat!");
         }
-        
+
         try {
             DB::beginTransaction();
-            
+
             // Normalisasi MAP
             $mapValue = null;
             if ($request->filled('map')) {
                 $rawMap = str_replace(',', '.', $request->map);
                 $mapValue = (int) round((float) $rawMap);
             }
-            
-            // Simpan ke KF Kunjungan (menggunakan polymorphic)
+
             $kfKunjungan = KfKunjungan::updateOrCreate(
                 [
-                    'nifasable_id' => $id,
-                    'nifasable_type' => $modelClass,
+                    'pasien_nifas_id' => $id,
                     'jenis_kf' => $jenisKf,
                 ],
                 [
@@ -353,34 +369,34 @@ class PasienNifasController extends Controller
                     'catatan' => $request->catatan,
                 ]
             );
-            
+
+
             // Update foreign key di tabel nifas
             $data->update([
                 "kf{$jenisKf}_id" => $kfKunjungan->id,
                 "kf{$jenisKf}_tanggal" => Carbon::parse($request->tanggal_kunjungan),
                 "kf{$jenisKf}_catatan" => $request->catatan,
             ]);
-            
+
             DB::commit();
-            
+
             // Pesan sukses
             $status = $data->getKfStatus($jenisKf);
             $pesan = "KF{$jenisKf} berhasil dicatat!";
-            
+
             if ($status == 'terlambat') {
                 $pesan .= " (Catatan: dilakukan di luar periode normal)";
             }
-            
+
             $pesan .= " Kesimpulan: " . $request->kesimpulan_pantauan;
-            
+
             return redirect()
                 ->route('puskesmas.pasien-nifas.show', ['type' => $type, 'id' => $id])
                 ->with('success', $pesan);
-                
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Gagal menyimpan KF: ' . $e->getMessage());
-            
+
             return redirect()->back()
                 ->with('error', 'Gagal menyimpan data KF: ' . $e->getMessage())
                 ->withInput();
@@ -398,27 +414,25 @@ class PasienNifasController extends Controller
                 ->select('id', 'kecamatan')
                 ->where('user_id', $userId)
                 ->first();
-            
-            abort_unless($puskesmas, 404, 'Puskesmas tidak ditemukan');
-            
-            // Pilih model berdasarkan type
-            if ($type === 'rs') {
-                $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs'])->findOrFail($id);
-                $modelClass = PasienNifasRs::class;
-            } else {
-                $pasienNifas = PasienNifasBidan::with(['pasien.user', 'bidan'])->findOrFail($id);
-                $modelClass = PasienNifasBidan::class;
-            }
-            
-            // Validasi akses
-            $kecamatanPasien = optional($pasienNifas->pasien)->PKecamatan;
-            abort_unless($kecamatanPasien === $puskesmas->kecamatan, 403, 'Anda tidak memiliki akses ke data pasien ini.');
 
-            // Cek KF (menggunakan polymorphic)
-            $kfKunjungan = KfKunjungan::where('nifasable_id', $id)
-                ->where('nifasable_type', $modelClass)
+            abort_unless($puskesmas, 404, 'Puskesmas tidak ditemukan');
+
+            // Batasi hanya RS
+            abort_unless($type === 'rs', 404, 'Tipe data nifas tidak valid');
+
+            $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs'])->findOrFail($id);
+            $pasienNifas->loadMissing('anakPasien');
+            $tglMelahirkan = $this->deriveTanggalMelahirkanFromAnak($pasienNifas);
+            $pasienNifas->tanggal_melahirkan = $tglMelahirkan ? $tglMelahirkan->toDateString() : null;
+
+
+            // Validasi akses
+            abort_unless(((int) $pasienNifas->puskesmas_id === (int) $puskesmas->id), 403, 'Anda tidak memiliki akses ke data pasien ini.');
+
+            $kfKunjungan = KfKunjungan::where('pasien_nifas_id', $id)
                 ->where('jenis_kf', $jenisKf)
                 ->first();
+
 
             if (!$kfKunjungan) {
                 return back()->with('error', "KF{$jenisKf} belum dicatat untuk pasien ini");
@@ -435,7 +449,13 @@ class PasienNifasController extends Controller
             ];
 
             // Generate PDF
-            $pdf = Pdf::loadView('puskesmas.pdf.kf-single', $data);
+            $pdf = Pdf::loadView('puskesmas.pdf.kf-all', [
+                'pasienNifas'   => $pasienNifas,
+                'kfKunjungan'   => collect([$kfKunjungan]), // 👈 jadikan collection
+                'type'          => $type,
+                'tanggal_cetak' => now()->format('d/m/Y H:i'),
+                'title'         => "Laporan KF{$jenisKf} - " . ($pasienNifas->pasien->user->name ?? 'N/A'),
+            ]);
 
             // Nama file PDF
             $fileName = "KF{$jenisKf}_" .
@@ -461,27 +481,25 @@ class PasienNifasController extends Controller
                 ->select('id', 'kecamatan')
                 ->where('user_id', $userId)
                 ->first();
-            
-            abort_unless($puskesmas, 404, 'Puskesmas tidak ditemukan');
-            
-            // Pilih model berdasarkan type
-            if ($type === 'rs') {
-                $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs'])->findOrFail($id);
-                $modelClass = PasienNifasRs::class;
-            } else {
-                $pasienNifas = PasienNifasBidan::with(['pasien.user', 'bidan'])->findOrFail($id);
-                $modelClass = PasienNifasBidan::class;
-            }
-            
-            // Validasi akses
-            $kecamatanPasien = optional($pasienNifas->pasien)->PKecamatan;
-            abort_unless($kecamatanPasien === $puskesmas->kecamatan, 403, 'Anda tidak memiliki akses ke data pasien ini.');
 
-            // Ambil semua KF (menggunakan polymorphic)
-            $kfKunjungan = KfKunjungan::where('nifasable_id', $id)
-                ->where('nifasable_type', $modelClass)
+            abort_unless($puskesmas, 404, 'Puskesmas tidak ditemukan');
+
+            // Batasi hanya RS
+            abort_unless($type === 'rs', 404, 'Tipe data nifas tidak valid');
+
+            $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs'])->findOrFail($id);
+            $pasienNifas->loadMissing('anakPasien');
+            $tglMelahirkan = $this->deriveTanggalMelahirkanFromAnak($pasienNifas);
+            $pasienNifas->tanggal_melahirkan = $tglMelahirkan ? $tglMelahirkan->toDateString() : null;
+
+
+            // Validasi akses
+            abort_unless(((int) $pasienNifas->puskesmas_id === (int) $puskesmas->id), 403, 'Anda tidak memiliki akses ke data pasien ini.');
+
+            $kfKunjungan = KfKunjungan::where('pasien_nifas_id', $id)
                 ->orderBy('jenis_kf')
                 ->get();
+
 
             if ($kfKunjungan->isEmpty()) {
                 return back()->with('error', 'Belum ada KF yang dicatat untuk pasien ini');
@@ -513,7 +531,7 @@ class PasienNifasController extends Controller
     }
 
     // ========== LEGACY METHODS (UNTUK ROUTE LAMA) ==========
-    
+
     /**
      * Legacy method untuk show RS (tanpa parameter type)
      */
