@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Skrining;
 use App\Models\RumahSakit;
 use App\Models\RujukanRs;
-use App\Http\Controllers\Pasien\skrining\Concerns\SkriningHelpers;
+use App\Http\Controllers\Pasien\Skrining\Concerns\SkriningHelpers;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -316,6 +316,11 @@ class SkriningController extends Controller
             ->where('is_rujuk', 1)
             ->where('done_status', 0)
             ->exists();
+
+        // 🔧 FIX ERROR: definisikan variabel sebelum dikirim ke view
+        $kecamatan_pasien = $kecPasienRaw ?? null;
+        $kecamatan_puskesmas = $ps->kecamatan ?? null;
+
 
         // Catatan: Kirim data ke view untuk ditampilkan.
         return view('puskesmas.skrining.show', compact(

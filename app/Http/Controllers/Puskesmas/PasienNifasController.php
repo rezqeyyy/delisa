@@ -22,7 +22,6 @@ class PasienNifasController extends Controller
      */
     public function index(Request $request)
     {
-<<<<<<< HEAD
         $userId = Auth::id();
         
         // Dapatkan data puskesmas user
@@ -56,41 +55,41 @@ class PasienNifasController extends Controller
         $dataRs = collect();
         if ($type === 'all' || $type === 'rs') {
             $dataRs = PasienNifasRs::with(['pasien.user', 'rs'])
-    ->whereHas('pasien', function ($query) use (
-        $kecamatanPuskesmas,
-        $search,
-        $tanggalMulai,
-        $tanggalSelesai
-    ) {
+                ->whereHas('pasien', function ($query) use (
+                    $kecamatanPuskesmas,
+                    $search,
+                    $tanggalMulai,
+                    $tanggalSelesai
+                ) {
 
-        // Filter kecamatan (WAJIB)
-        $query->whereRaw(
-            'LOWER("pasiens"."PKecamatan") = LOWER(?)',
-            [$kecamatanPuskesmas]
-        );
+                    // Filter kecamatan (WAJIB)
+                    $query->whereRaw(
+                        'LOWER("pasiens"."PKecamatan") = LOWER(?)',
+                        [$kecamatanPuskesmas]
+                    );
 
-        // 🔍 SEARCH NAMA PASIEN (case-insensitive)
-        if ($search) {
-            $query->whereHas('user', function ($q) use ($search) {
-                $q->whereRaw(
-                    'LOWER(name) LIKE ?',
-                    ['%' . strtolower($search) . '%']
-                );
-            });
-        }
+                    // 🔍 SEARCH NAMA PASIEN (case-insensitive)
+                    if ($search) {
+                        $query->whereHas('user', function ($q) use ($search) {
+                            $q->whereRaw(
+                                'LOWER(name) LIKE ?',
+                                ['%' . strtolower($search) . '%']
+                            );
+                        });
+                    }
 
-        // 📅 FILTER TANGGAL MULAI NIFAS
-        if ($tanggalMulai) {
-            $query->whereDate('tanggal_mulai_nifas', '>=', $tanggalMulai);
-        }
+                    // 📅 FILTER TANGGAL MULAI NIFAS
+                    if ($tanggalMulai) {
+                        $query->whereDate('tanggal_mulai_nifas', '>=', $tanggalMulai);
+                    }
 
-        if ($tanggalSelesai) {
-            $query->whereDate('tanggal_mulai_nifas', '<=', $tanggalSelesai);
-        }
-    })
-    ->orderBy('created_at', 'desc')
-    ->paginate(10)
-    ->withQueryString();
+                    if ($tanggalSelesai) {
+                        $query->whereDate('tanggal_mulai_nifas', '<=', $tanggalSelesai);
+                    }
+                })
+                ->orderBy('created_at', 'desc')
+                ->paginate(10)
+                ->withQueryString();
         }
         
         // DATA DARI BIDAN
@@ -116,25 +115,6 @@ class PasienNifasController extends Controller
             return $item->isKfSelesai(1);
         })->count();
         
-=======
-        $user = auth()->user();
-
-        // Ambil puskesmas berdasarkan user login
-        $puskesmas = \App\Models\Puskesmas::where('user_id', $user->id)->firstOrFail();
-
-        // Ambil pasien nifas khusus puskesmas ini
-        $pasienNifas = PasienNifasRs::with(['pasien.user', 'rs'])
-            ->where('puskesmas_id', $puskesmas->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-        $totalPasienNifas = PasienNifasRs::where('puskesmas_id', $puskesmas->id)->count();
-
-        $sudahKFI = PasienNifasRs::where('puskesmas_id', $puskesmas->id)
-            ->whereNotNull('kf1_tanggal')
-            ->count();
-
->>>>>>> 72ac643d7029ead3126130a02ef0ce6e6b22025a
         $belumKFI = $totalPasienNifas - $sudahKFI;
         
         return view('puskesmas.pasien-nifas.index', [

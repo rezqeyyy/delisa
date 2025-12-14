@@ -35,7 +35,7 @@
             @endif
             
             <div class="mb-6 flex items-center">
-                <a href="{{ route('puskesmas.skrining') }}" class="text-gray-600 hover:text-gray-900">
+                <a href="{{ route('puskesmas.skrining.index') }}" class="text-gray-600 hover:text-gray-900">
                     <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -256,7 +256,7 @@
 
                     {{-- Tombol aksi di pojok kanan bawah --}}
                     <div class="flex flex-wrap items-center justify-end gap-3">
-                        <a href="{{ route('puskesmas.skrining') }}"
+                        <a href="{{ route('puskesmas.skrining.index') }}"
                            class="rounded-lg bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
                             Kembali
                         </a>
@@ -278,7 +278,7 @@
                         @if($isBerisiko)
                             <button id="btnAjukanRujukan"
                                     data-submit-url="{{ route('puskesmas.skrining.rujuk', $skrining->id) }}"
-                                    data-search-url="{{ route('puskesmas.rs.search') }}"
+                                    data-search-url="{{ route('puskesmas.rujukan.rs.search') }}"
                                     data-csrf="{{ csrf_token() }}"
                                     type="button"
                                     class="rounded-lg bg-[#B9257F] px-6 py-3 text-sm font-medium text-white hover:bg-[#a31f70] {{ $hasReferral ? 'cursor-not-allowed opacity-60' : '' }}"
