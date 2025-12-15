@@ -32,7 +32,14 @@ class AnakPasienController extends Controller
     {
         $bidan = Auth::user()->bidan;
         if (!$bidan) abort(403);
-        $row = PasienNifasBidan::findOrFail($id);
+        $row = PasienNifasBidan::find($id);
+        if (!$row) {
+            $rs = \App\Models\PasienNifasRs::find($id);
+            if ($rs) {
+                $row = PasienNifasBidan::where('pasien_id', $rs->pasien_id)->orderByDesc('created_at')->first();
+            }
+        }
+        if (!$row) abort(404);
         return view('bidan.pasien-nifas.anak-create', ['nifasId' => $row->id, 'rowId' => $row->id, 'anak' => null]);
     }
 

@@ -22,7 +22,9 @@ class PasienNifasController extends Controller
      */
     public function index(Request $request)
     {
-        $query = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs']);
+        $rsId = $this->getRsId();
+        $query = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs'])
+            ->where('rs_id', $rsId);
 
         // Filter berdasarkan NIK
         if ($request->filled('nik')) {
@@ -524,7 +526,9 @@ class PasienNifasController extends Controller
      */
     public function show($id)
     {
+        $rsId = $this->getRsId();
         $pasienNifas = PasienNifasRs::with(['pasien.user', 'pasien.skrinings', 'rs', 'anakPasien'])
+            ->where('rs_id', $rsId)
             ->findOrFail($id);
 
         $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien, $pasienNifas);
@@ -554,7 +558,10 @@ class PasienNifasController extends Controller
      */
     public function storeAnakPasien(Request $request, $id)
     {
-        $pasienNifas = PasienNifasRs::with('pasien')->findOrFail($id);
+        $rsId = $this->getRsId();
+        $pasienNifas = PasienNifasRs::with('pasien')
+            ->where('rs_id', $rsId)
+            ->findOrFail($id);
 
         // Cek apakah pasien beresiko
         $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien, $pasienNifas);
@@ -630,12 +637,13 @@ class PasienNifasController extends Controller
      */
     public function detail($id)
     {
+        $rsId = $this->getRsId();
         $pasienNifas = PasienNifasRs::with([
             'pasien.user',
             'pasien.skrinings',
             'rs',
             'anakPasien'
-        ])->findOrFail($id);
+        ])->where('rs_id', $rsId)->findOrFail($id);
 
         $statusRisiko = $this->getStatusRisikoFromSkrining($pasienNifas->pasien, $pasienNifas);
         $pasienNifas->status_display = $statusRisiko['label'];

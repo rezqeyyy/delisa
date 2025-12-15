@@ -48,6 +48,27 @@ class PasienNifasController extends Controller
 
         $puskesmasId = $bidan->puskesmas_id;
 
+        $rsCandidates = DB::table('pasien_nifas_rs')
+            ->leftJoin('anak_pasien', 'anak_pasien.nifas_id', '=', 'pasien_nifas_rs.id')
+            ->where(function ($q) use ($puskesmasId) {
+                $q->where('pasien_nifas_rs.puskesmas_id', $puskesmasId)
+                  ->orWhere('anak_pasien.puskesmas_id', $puskesmasId);
+            })
+            ->select('pasien_nifas_rs.pasien_id', 'pasien_nifas_rs.tanggal_mulai_nifas')
+            ->get();
+        foreach ($rsCandidates as $rs) {
+            $exists = PasienNifasBidan::where('bidan_id', $puskesmasId)
+                ->where('pasien_id', $rs->pasien_id)
+                ->exists();
+            if (!$exists) {
+                PasienNifasBidan::create([
+                    'bidan_id'            => $puskesmasId,
+                    'pasien_id'           => $rs->pasien_id,
+                    'tanggal_mulai_nifas' => $rs->tanggal_mulai_nifas ?? now(),
+                ]);
+            }
+        }
+
         // 2. Ambil Semua Episode Nifas milik puskesmas bidan ini (tanpa deduplikasi per pasien)
         $pasienNifas = DB::table('pasien_nifas_bidan')
             ->join('pasiens', 'pasien_nifas_bidan.pasien_id', '=', 'pasiens.id')
@@ -76,6 +97,18 @@ class PasienNifasController extends Controller
             ->whereIn('pasien_id', $pasienIds)
             ->orderByDesc('created_at')
             ->get();
+        $rsNames = DB::table('pasien_nifas_rs as pnr')
+            ->join('rumah_sakits as rs', 'rs.id', '=', 'pnr.rs_id')
+            ->select('pnr.pasien_id', 'pnr.id as episode_id', 'rs.nama')
+            ->whereIn('pnr.pasien_id', $pasienIds)
+            ->orderByDesc('pnr.created_at')
+            ->get();
+        $rsNameByPasien = [];
+        foreach ($rsNames as $r) {
+            if (!isset($rsNameByPasien[$r->pasien_id])) {
+                $rsNameByPasien[$r->pasien_id] = $r->nama;
+            }
+        }
         $rsByPasien = [];
         foreach ($rsEpisodes as $ep) {
             if (!isset($rsByPasien[$ep->pasien_id])) {
@@ -94,6 +127,12 @@ class PasienNifasController extends Controller
             ->groupBy('pasien_nifas_id')
             ->get()
             ->keyBy('rs_episode_id');
+        $firstAnakByRsEpisode = DB::table('anak_pasien')
+            ->whereIn('nifas_id', $rsEpisodeIds)
+            ->selectRaw('nifas_id, MIN(id) as first_id')
+            ->groupBy('nifas_id')
+            ->get()
+            ->keyBy('nifas_id');
         $rsIdByPasien = [];
         $rsBaseDates = [];
         foreach ($rsByPasien as $pid => $ep) {
@@ -111,8 +150,10 @@ class PasienNifasController extends Controller
 
         // 5. Transform Data untuk Hitung Peringatan
         $windowsDays = [2 => ['start' => 3, 'end' => 7], 3 => ['start' => 8, 'end' => 28], 4 => ['start' => 29, 'end' => 42]];
-        $pasienNifas->getCollection()->transform(function ($row) use ($kfDone, $windowsDays, $today, $now, $rsIdByPasien, $rsBaseDates) {
+        $pasienNifas->getCollection()->transform(function ($row) use ($kfDone, $windowsDays, $today, $now, $rsIdByPasien, $rsBaseDates, $firstAnakByRsEpisode, $rsNameByPasien) {
             $rsId = $rsIdByPasien[$row->pasien_id] ?? null;
+            $row->asal_data_label = isset($rsNameByPasien[$row->pasien_id]) ? ('RS: ' . $rsNameByPasien[$row->pasien_id]) : 'Bidan';
+            $row->first_anak_id = $rsId ? (optional($firstAnakByRsEpisode->get($rsId))->first_id ?? null) : null;
             $maxKe = $rsId ? (optional($kfDone->get($rsId))->max_ke ?? 0) : 0;
             if ($maxKe >= 4) {
                 $row->peringat_label = 'Selesai semua';
@@ -618,6 +659,10 @@ class PasienNifasController extends Controller
         $episode = \App\Models\PasienNifasRs::where('pasien_id', $pasienNifas->pasien_id)
             ->orderByDesc('created_at')
             ->first();
+        if ($anakPasien->isEmpty() && $episode) {
+            $anakPasien = AnakPasien::where('nifas_id', $episode->id)->get();
+            $firstAnakId = optional($anakPasien->first())->id;
+        }
 
         $kfDoneByJenis = collect();
         $deathKe = null;
@@ -677,6 +722,14 @@ class PasienNifasController extends Controller
 
         $pasienNifas = PasienNifasBidan::with(['pasien.user'])->findOrFail($id);
         $anakList = AnakPasien::where('nifas_bidan_id', $id)->get();
+        if ($anakList->isEmpty()) {
+            $episode = \App\Models\PasienNifasRs::where('pasien_id', $pasienNifas->pasien_id)
+                ->orderByDesc('created_at')
+                ->first();
+            if ($episode) {
+                $anakList = AnakPasien::where('nifas_id', $episode->id)->get();
+            }
+        }
         $selectedAnakId = (int) $anakId;
         $status = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
         $pasienNifas->status_display = $status['label'];
@@ -726,7 +779,14 @@ class PasienNifasController extends Controller
         if (!in_array((int)$jenisKf, [1, 2, 3, 4], true)) abort(404);
 
         $pasienNifas = PasienNifasBidan::findOrFail($id);
-        $anak = AnakPasien::where('id', $anakId)->where('nifas_bidan_id', $pasienNifas->id)->firstOrFail();
+        $anak = AnakPasien::findOrFail($anakId);
+        $belongsToBidan = (int) ($anak->nifas_bidan_id ?? 0) === (int) $pasienNifas->id;
+        $belongsToRs = false;
+        if (!$belongsToBidan && !empty($anak->nifas_id)) {
+            $rsEpisode = \App\Models\PasienNifasRs::find($anak->nifas_id);
+            $belongsToRs = $rsEpisode && (int) $rsEpisode->pasien_id === (int) $pasienNifas->pasien_id;
+        }
+        abort_unless($belongsToBidan || $belongsToRs, 403);
 
         $data = $request->validate([
             'tanggal_kunjungan' => 'required|date',
