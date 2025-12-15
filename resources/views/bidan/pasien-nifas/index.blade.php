@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    {{-- Set karakter dan pengaturan dokumen --}}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bidan — Pasien NIFAS</title>
-    
-    {{-- Memuat file CSS & JS dari Laravel Vite --}}
+
     @vite([
-        'resources/css/app.css', 
-        'resources/js/app.js', 
+        'resources/css/app.css',
+        'resources/js/app.js',
         'resources/js/dropdown.js',
         'resources/js/bidan/sidebar-toggle.js',
         'resources/js/bidan/delete-confirm.js'
@@ -17,182 +15,228 @@
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
-    {{-- State Alpine.js untuk membuka/menutup sidebar --}}
-    <div class="flex min-h-screen" x-data="{ openSidebar: false }">
-        
-        {{-- Komponen sidebar bidan --}}
-        <x-bidan.sidebar />
+<div class="flex min-h-screen" x-data="{ openSidebar: false }">
 
-        <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
+    <x-bidan.sidebar />
 
-            {{-- Judul halaman --}}
-            <header class="mb-6">
-                <h1 class="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#1D1D1D]">List Pasien Nifas</h1>
-            </header>
-            
-            {{-- Card utama untuk tabel data --}}
-            <section class="space-y-4">
-                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
-                    {{-- Header card: judul + tombol tambah --}}
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="flex items-start gap-3">
-                            <div>
-                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Nifas</h2>
-                                <p class="text-xs text-[#7C7C7C]">Data pasien yang sedang nifas pada puskesmas ini</p>
-                            </div>
-                        </div>
-                        <a href="{{ route('bidan.pasien-nifas.create') }}" 
-                            class="px-5 py-2 rounded-full bg-[#FF5BAE] text-white font-semibold hover:bg-[#E91E8C] transition-colors">
-                            + Tambah Pasien
-                        </a>
+    <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
+
+        <header class="mb-2">
+            <h1 class="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#1D1D1D]">List Pasien Nifas</h1>
+        </header>
+
+        @if (session('success'))
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+                {{ session('success') }}
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        <section class="space-y-4">
+            <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
+
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Nifas</h2>
+                        <p class="text-xs text-[#7C7C7C]">Data pasien nifas pada puskesmas ini</p>
                     </div>
-                    
-                    {{-- Wrapper tabel agar bisa scroll horizontal --}}
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm border-collapse">
-                            <br>
-                            {{-- Header tabel --}}
-                            <thead class="border-b border-[#EFEFEF] bg-[#FFF7FC] font-semibold">
-                                <tr class="text-left">
-                                    <th class="px-4 py-3 font-semibold">No</th>
-                                    <th class="px-4 py-3 font-semibold">Nama Pasien</th>
-                                    <th class="px-4 py-3 font-semibold">NIK</th>
-                                    <th class="px-4 py-3 font-semibold">Tanggal Mulai Nifas</th>
-                                    <th class="px-4 py-3 font-semibold">Alamat</th>
-                                    <th class="px-4 py-3 font-semibold">No Telp</th>
-                                    <th class="px-4 py-3 font-semibold">Pengingat</th>
-                                    <th class="px-4 py-3 font-semibold">Kunjungan Nifas</th>
-                                    <th class="px-4 py-3 font-semibold">Aksi</th>
-                                </tr>
-                            </thead>
 
-                            {{-- Isi tabel --}}
-                            <tbody>
+                    <a href="{{ route('bidan.pasien-nifas.create') }}"
+                       class="px-5 py-2 rounded-full bg-[#FF5BAE] text-white font-semibold hover:bg-[#E91E8C] transition-colors">
+                        + Tambah Pasien
+                    </a>
+                </div>
 
-                                {{-- Loop tiap data pasien --}}
-                                @forelse($pasienNifas as $pasien)
-                                <tr class="hover:bg-[#FAFAFA]">
+                <div class="overflow-x-auto mt-4">
+                    <table class="w-full text-sm border-collapse">
 
-                                    {{-- Nomor urut --}}
-                                    <td class="px-4 py-3 font-medium">{{ $loop->iteration }}</td>
+                        <thead class="border-b border-[#EFEFEF] bg-[#FFF7FC] font-semibold">
+                        <tr class="text-left text-[#1D1D1D]">
+                            <th class="px-4 py-3 font-semibold w-[70px]">No</th>
+                            <th class="px-4 py-3 font-semibold">Nama Pasien</th>
+                            <th class="px-4 py-3 font-semibold">NIK</th>
+                            <th class="px-4 py-3 font-semibold">No Telp</th>
+                            <th class="px-4 py-3 font-semibold">Tanggal Mulai NIFAS</th>
+                            <th class="px-4 py-3 font-semibold">Alamat</th>
+                            <th class="px-4 py-3 font-semibold">Asal Data</th>
+                            <th class="px-4 py-3 font-semibold">Status KF</th>
+                            <th class="px-4 py-3 font-semibold">Action</th>
+                        </tr>
+                        </thead>
 
-                                    {{-- Nama pasien --}}
-                                    <td class="px-4 py-3 font-medium">{{ $pasien->nama_pasien ?? '-' }}</td>
+                        <tbody>
+                        @forelse($pasienNifas as $pasien)
+                            @php
+                                $no = method_exists($pasienNifas, 'firstItem') && $pasienNifas->firstItem()
+                                    ? $pasienNifas->firstItem() + $loop->index
+                                    : $loop->iteration;
 
-                                    {{-- NIK --}}
-                                    <td class="px-4 py-3 font-medium">{{ $pasien->nik ?? '-' }}</td>
+                                $asalLabel = 'RS: Rumah sakit 1'; // sementara (biar match UI). Nanti bisa dibuat dinamis.
 
-                                    {{-- Tanggal (formatting tanggal) --}}
-                                    <td class="px-4 py-3 font-medium">
-                                        {{ isset($pasien->tanggal) ? \Carbon\Carbon::parse($pasien->tanggal)->format('d/m/Y') : '-' }}
-                                    </td>
+                                $statusLabel = $pasien->peringat_label ?? 'Perlu KF';
+                                $statusClass = $pasien->badge_class ?? null;
 
-                                    {{-- Alamat --}}
-                                    <td class="px-4 py-3 font-medium">{{ $pasien->alamat ?? $pasien->kelurahan ?? '-' }}</td>
+                                if (!$statusClass) {
+                                    $state = $pasien->peringat_state ?? 'early';
+                                    if ($state === 'late') $statusClass = 'bg-red-100 text-red-800 border border-red-200';
+                                    elseif ($state === 'window') $statusClass = 'bg-amber-100 text-amber-800 border border-amber-200';
+                                    elseif ($state === 'done') $statusClass = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                                    elseif ($state === 'no_date') $statusClass = 'bg-gray-100 text-gray-700 border border-gray-200';
+                                    else $statusClass = 'bg-gray-100 text-gray-700 border border-gray-200';
+                                }
 
-                                    {{-- Telepon --}}
-                                    <td class="px-4 py-3 font-medium">{{ $pasien->telp ?? '-' }}</td>
+                                $maxKe = (int) ($pasien->max_ke ?? 0);
+                                $nextKe = (int) ($pasien->next_ke ?? 1);
 
-                                    {{-- Badge status (Aman / Peringatan) --}}
-                                    <td class="px-4 py-3">
-                                        @php($state = $pasien->peringat_state ?? 'early')
-                                        <span class="inline-flex items-center rounded-full px-4 h-8 text-sm font-semibold
-                                            @if($state==='late') bg-red-100 text-red-800 border border-red-200
-                                            @elseif($state==='window') bg-amber-100 text-amber-800 border border-amber-200
-                                            @elseif($state==='done') bg-emerald-100 text-emerald-800 border border-emerald-200
-                                            @elseif($state==='no_date') bg-gray-100 text-gray-700 border border-gray-200
-                                            @else bg-gray-100 text-gray-700 border border-gray-200 @endif">
-                                            {{ $pasien->peringat_label ?? 'Aman' }}
-                                        </span>
-                                    </td>
+                                $tglMulai = isset($pasien->tanggal)
+                                    ? \Carbon\Carbon::parse($pasien->tanggal)->format('d/m/Y')
+                                    : '-';
+                            @endphp
 
-                                    <td class="px-4 py-3">
-                                        <div class="inline-flex items-center gap-2">
-                                            @php($maxKe = $pasien->max_ke ?? 0)
-                                            @foreach([1,2,3,4] as $jk)
-                                                <a href="{{ route('bidan.pasien-nifas.show', $pasien->id) }}" class="px-3 py-1.5 rounded-full border text-xs {{ $maxKe >= $jk ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'border-[#E5E5E5]' }}">KF{{ $jk }}</a>
-                                            @endforeach
-                                        </div>
-                                    </td>
+                            <tr class="hover:bg-[#FAFAFA] align-middle">
+                                <td class="px-4 py-3 font-medium">{{ $no }}</td>
+                                <td class="px-4 py-3 font-medium">{{ $pasien->nama_pasien ?? '-' }}</td>
+                                <td class="px-4 py-3 font-medium">{{ $pasien->nik ?? '-' }}</td>
+                                <td class="px-4 py-3 font-medium">{{ $pasien->telp ?? '-' }}</td>
+                                <td class="px-4 py-3 font-medium">{{ $tglMulai }}</td>
+                                <td class="px-4 py-3 font-medium">{{ $pasien->alamat ?? $pasien->kelurahan ?? '-' }}</td>
 
-                                    {{-- Aksi --}}
-                                    <td class="px-4 py-3">
-                                        <div class="flex items-center gap-2">
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center gap-2 rounded-full bg-[#EAF1FF] px-3 py-1 text-xs font-semibold text-[#1A4FD8]">
+                                        <span class="w-2 h-2 rounded-full bg-[#1A4FD8]"></span>
+                                        {{ $asalLabel }}
+                                    </span>
+                                </td>
+
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center rounded-full px-4 h-8 text-sm font-semibold {{ $statusClass }}">
+                                        {{ $statusLabel }}
+                                    </span>
+                                </td>
+
+                                <td class="px-4 py-3">
+                                    <div class="flex flex-col gap-2">
+
+                                        {{-- Baris Action utama: tambah anak, view, hapus --}}
+                                        <div class="flex items-center gap-2 flex-wrap">
                                             @if (Route::has('bidan.pasien-nifas.anak.create'))
-                                                <a href="{{ route('bidan.pasien-nifas.anak.create', $pasien->id) }}" class="px-3 py-1.5 rounded-full border border-[#E5E5E5] text-xs">Tambah Data Anak</a>
+                                                <a href="{{ route('bidan.pasien-nifas.anak.create', $pasien->id) }}"
+                                                   class="px-3 py-1.5 rounded-full border border-[#E5E5E5] text-xs hover:bg-gray-50">
+                                                    Tambah Data Anak
+                                                </a>
                                             @else
-                                                <button type="button" class="px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 text-xs" title="Route tambah anak belum tersedia" disabled>Tambah Data Anak</button>
+                                                <button type="button" class="px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 text-xs" disabled>
+                                                    Tambah Data Anak
+                                                </button>
                                             @endif
 
-                                            @if (Route::has('bidan.pasien-nifas.show'))
-                                                <a href="{{ route('bidan.pasien-nifas.show', $pasien->id) }}" class="px-3 py-1.5 rounded-full border border-[#E5E5E5] text-xs">View</a>
+                                            @if (Route::has('bidan.pasien-nifas.detail'))
+                                                <a href="{{ route('bidan.pasien-nifas.detail', $pasien->id) }}"
+                                                   class="px-3 py-1.5 rounded-full border border-[#E5E5E5] text-xs hover:bg-gray-50">
+                                                    View
+                                                </a>
                                             @else
-                                                <button type="button" class="px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 text-xs" title="Route detail belum tersedia" disabled>View</button>
+                                                <button type="button" class="px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 text-xs" disabled>
+                                                    View
+                                                </button>
                                             @endif
 
                                             @if (Route::has('bidan.pasien-nifas.destroy'))
-                                                <form action="{{ route('bidan.pasien-nifas.destroy', $pasien->id) }}" method="POST" class="inline js-delete-skrining-form">
+                                                <form action="{{ route('bidan.pasien-nifas.destroy', $pasien->id) }}"
+                                                      method="POST"
+                                                      class="inline js-delete-skrining-form">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="button" class="js-delete-skrining-btn px-3 py-1.5 rounded-full border border-red-200 text-red-700 hover:bg-red-50 text-xs">Hapus</button>
+                                                    <button type="button"
+                                                            class="js-delete-skrining-btn px-3 py-1.5 rounded-full border border-red-200 text-red-700 hover:bg-red-50 text-xs">
+                                                        Hapus
+                                                    </button>
                                                 </form>
                                             @else
-                                                <button type="button" class="px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 text-xs" title="Route hapus belum tersedia" disabled>Hapus</button>
+                                                <button type="button" class="px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 text-xs" disabled>
+                                                    Hapus
+                                                </button>
                                             @endif
                                         </div>
-                                    </td>
 
-                                </tr>
+                                        {{-- Baris tombol KF1-KF4 (ngisi KF jangan diilangin) --}}
+                                        <div class="inline-flex items-center gap-2 flex-wrap">
+                                            @foreach([1,2,3,4] as $jk)
+                                                @php
+                                                    $chipClass = 'bg-white text-gray-500 border-[#E5E5E5]';
+                                                    if ($jk <= $maxKe) $chipClass = 'bg-emerald-50 border-emerald-200 text-emerald-700';
+                                                    elseif ($jk === $nextKe) $chipClass = 'bg-amber-50 border-amber-200 text-amber-800';
+                                                @endphp
 
-                                {{-- Jika tidak ada data --}}
-                                @empty
-                                <tr>
-                                    <td colspan="9" class="px-4 py-2 h-16 text-center text-[#7C7C7C]">
-                                        <p class="text-sm">Belum ada data pasien nifas</p>
-                                    </td>
-                                </tr>
-                                @endforelse
+                                                {{-- Aman: arahkan ke detail dulu (di detail baru masuk form KF per anak) --}}
+                                                @if (Route::has('bidan.pasien-nifas.detail'))
+                                                    <a href="{{ route('bidan.pasien-nifas.detail', $pasien->id) }}"
+                                                       class="px-3 py-1.5 rounded-full border text-xs font-semibold {{ $chipClass }}"
+                                                       title="Isi KF{{ $jk }} (melalui detail)">
+                                                        KF{{ $jk }}
+                                                    </a>
+                                                @else
+                                                    <span class="px-3 py-1.5 rounded-full border text-xs font-semibold {{ $chipClass }}">
+                                                        KF{{ $jk }}
+                                                    </span>
+                                                @endif
+                                            @endforeach
+                                        </div>
 
-                            </tbody>
-                        </table>
-                    </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="9" class="px-4 py-6 text-center text-[#7C7C7C]">
+                                    <p class="text-sm">Belum ada data pasien nifas</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                        </tbody>
+                    </table>
+                </div>
 
-                    {{-- Pagination --}}
-                    @if($pasienNifas->hasPages())
+                @if($pasienNifas->hasPages())
                     <div class="mt-6 flex items-center justify-end">
                         <div class="inline-flex items-center gap-2 text-sm">
+                            @if($pasienNifas->onFirstPage())
+                                <span class="px-3 py-1 rounded-lg border border-[#E5E5E5] text-gray-400 bg-[#FAFAFA]">Previous</span>
+                            @else
+                                <a href="{{ $pasienNifas->previousPageUrl() }}" class="px-3 py-1 rounded-lg border border-[#E5E5E5] hover:bg-[#FAFAFA]">Previous</a>
+                            @endif
 
-                            {{-- Tombol sebelumnya --}}
-                            <a href="{{ $pasienNifas->previousPageUrl() }}" class="px-3 py-1 ...">Previous</a>
-
-                            {{-- Logika menampilkan halaman di sekitar halaman aktif --}}
                             @php($last = $pasienNifas->lastPage())
                             @php($current = $pasienNifas->currentPage())
 
                             @for($i = max(1, $current - 1); $i <= min($last, $current + 1); $i++)
                                 @if($i === $current)
-                                    {{-- Halaman aktif --}}
-                                    <span class="px-3 py-1 rounded-lg border bg-[#FAFAFA]">{{ $i }}</span>
+                                    <span class="px-3 py-1 rounded-lg border border-[#E5E5E5] bg-[#FAFAFA] font-semibold">{{ $i }}</span>
                                 @else
-                                    {{-- Link halaman lain --}}
-                                    <a href="{{ $pasienNifas->url($i) }}" class="px-3 py-1 ...">{{ $i }}</a>
+                                    <a href="{{ $pasienNifas->url($i) }}" class="px-3 py-1 rounded-lg border border-[#E5E5E5] hover:bg-[#FAFAFA]">{{ $i }}</a>
                                 @endif
                             @endfor
 
-                            {{-- Tombol next --}}
-                            <a href="{{ $pasienNifas->nextPageUrl() }}" class="px-3 py-1 ...">Next</a>
-
+                            @if($pasienNifas->hasMorePages())
+                                <a href="{{ $pasienNifas->nextPageUrl() }}" class="px-3 py-1 rounded-lg border border-[#E5E5E5] hover:bg-[#FAFAFA]">Next</a>
+                            @else
+                                <span class="px-3 py-1 rounded-lg border border-[#E5E5E5] text-gray-400 bg-[#FAFAFA]">Next</span>
+                            @endif
                         </div>
                     </div>
-                    @endif
-                </div>
-            </section>
+                @endif
 
-            {{-- Footer --}}
-            <footer class="text-center text-xs text-[#7C7C7C] py-6">
-                © 2025 Dinas Kesehatan Kota Depok — DeLISA
-            </footer>
-        </main>
-    </div>
+            </div>
+        </section>
+
+        <footer class="text-center text-xs text-[#7C7C7C] py-6">
+            © 2025 Dinas Kesehatan Kota Depok — DeLISA
+        </footer>
+    </main>
+</div>
 </body>
 </html>

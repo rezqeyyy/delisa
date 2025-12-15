@@ -259,6 +259,14 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/pasien-nifas/{id}', [BidanPasienNifasController::class, 'destroy'])->name('pasien-nifas.destroy');
             Route::post('/pasien-nifas/cek-nik', [BidanPasienNifasController::class, 'cekNik'])->name('pasien-nifas.cek-nik');
             Route::post('/pasien-nifas/store', [BidanPasienNifasController::class, 'store'])->name('pasien-nifas.store');
+
+            // Rujukan nifas masuk dari RS (tujuan puskesmas = puskesmas bidan)
+            Route::get('/rujukan-masuk', [\App\Http\Controllers\Bidan\PasienNifasController::class, 'rujukanMasuk'])
+                ->name('rujukan-masuk');
+
+            // Terima rujukan (buat entry di pasien_nifas_bidan)
+            Route::post('/rujukan-masuk/{nifasRs}/terima', [\App\Http\Controllers\Bidan\PasienNifasController::class, 'terimaRujukan'])
+                ->name('rujukan-masuk.terima');
         });
 
     // ================== RUMAH SAKIT ==================

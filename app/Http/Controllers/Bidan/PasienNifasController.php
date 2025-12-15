@@ -9,11 +9,14 @@ use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+
 use App\Models\PasienNifasBidan;
+use App\Models\PasienNifasRs;
+use App\Models\AnakPasien;
 use App\Models\Pasien;
 use App\Models\User;
 use App\Models\Skrining;
-use App\Models\AnakPasien;
+
 
 
 /*
@@ -64,6 +67,7 @@ class PasienNifasController extends Controller
             ->orderByDesc('pasien_nifas_bidan.tanggal_mulai_nifas')
             ->orderByDesc('pasien_nifas_bidan.created_at')
             ->paginate(10);
+
 
         // 3. Ambil Status KF (Kunjungan Nifas) Terakhir berbasis episode RS
         $pasienIds = $pasienNifas->getCollection()->pluck('pasien_id')->all();
@@ -193,6 +197,113 @@ class PasienNifasController extends Controller
         ));
     }
 
+    public function rujukanMasuk(Request $request)
+    {
+        $bidan = Auth::user()->bidan;
+        abort_unless($bidan, 403, 'Anda tidak memiliki akses sebagai Bidan.');
+
+        $puskesmasId = $bidan->puskesmas_id;
+
+        // pasien_id yang sudah pernah "diambil" bidan (biar tidak dobel diterima)
+        $alreadyTakenPasienIds = DB::table('pasien_nifas_bidan')
+            ->where('bidan_id', $puskesmasId) // NOTE: kamu memang pakai bidan_id = puskesmas_id
+            ->pluck('pasien_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        // Rujukan masuk = pasien_nifas_rs yang punya anak_pasien.puskesmas_id == puskesmas bidan
+        $rujukanMasuk = DB::table('pasien_nifas_rs as pnrs')
+            ->join('pasiens as p', 'pnrs.pasien_id', '=', 'p.id')
+            ->join('users as u', 'p.user_id', '=', 'u.id')
+            ->join('anak_pasien as ap', 'ap.nifas_id', '=', 'pnrs.id')
+            ->select(
+                'pnrs.id as nifas_rs_id',
+                'pnrs.pasien_id',
+                'pnrs.tanggal_mulai_nifas',
+                'pnrs.created_at',
+                'p.nik',
+                'u.name as nama_pasien',
+                'u.phone as telp',
+                'p.PKecamatan as alamat',
+                'p.PWilayah as kelurahan'
+            )
+            ->where('ap.puskesmas_id', $puskesmasId)
+            ->when(!empty($alreadyTakenPasienIds), function ($q) use ($alreadyTakenPasienIds) {
+                $q->whereNotIn('pnrs.pasien_id', $alreadyTakenPasienIds);
+            })
+            ->groupBy(
+                'pnrs.id',
+                'pnrs.pasien_id',
+                'pnrs.tanggal_mulai_nifas',
+                'pnrs.created_at',
+                'p.nik',
+                'u.name',
+                'u.phone',
+                'p.PKecamatan',
+                'p.PWilayah'
+            )
+            ->orderByDesc('pnrs.created_at')
+            ->paginate(10);
+
+        return view('bidan.pasien-nifas.rujukan-masuk', compact('rujukanMasuk'));
+    }
+
+    public function terimaRujukan(Request $request, $nifasRs)
+    {
+        $bidan = Auth::user()->bidan;
+        abort_unless($bidan, 403, 'Anda tidak memiliki akses sebagai Bidan.');
+
+        $puskesmasId = $bidan->puskesmas_id;
+
+        // Pastikan nifas RS valid
+        $pnrs = PasienNifasRs::with(['pasien.user'])->findOrFail($nifasRs);
+
+        // VALIDASI: pastikan memang ada anak_pasien yang menunjuk puskesmas bidan ini
+        $isTujuanBenar = AnakPasien::where('nifas_id', $pnrs->id)
+            ->where('puskesmas_id', $puskesmasId)
+            ->exists();
+
+        if (!$isTujuanBenar) {
+            return back()->with('error', 'Rujukan ini bukan ditujukan ke puskesmas/bidan Anda.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Cegah dobel: kalau pasien sudah ada di daftar nifas bidan ini, jangan bikin lagi
+            $exists = PasienNifasBidan::where('bidan_id', $puskesmasId) // NOTE: konsisten dengan kode kamu
+                ->where('pasien_id', $pnrs->pasien_id)
+                ->exists();
+
+            if ($exists) {
+                DB::rollBack();
+                return back()->with('info', 'Pasien ini sudah pernah diterima/terdaftar pada Bidan Anda.');
+            }
+
+            // Buat episode nifas bidan dari episode RS
+            PasienNifasBidan::create([
+                'bidan_id'            => $puskesmasId,
+                'pasien_id'           => $pnrs->pasien_id,
+                'tanggal_mulai_nifas' => $pnrs->tanggal_mulai_nifas ?? now()->toDateString(),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('bidan.pasien-nifas')
+                ->with('success', 'Rujukan berhasil diterima. Pasien masuk ke daftar nifas Bidan.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Bidan Terima Rujukan: ' . $e->getMessage(), [
+                'nifas_rs_id' => $pnrs->id ?? null,
+                'pasien_id' => $pnrs->pasien_id ?? null,
+                'puskesmas_id' => $puskesmasId,
+            ]);
+
+            return back()->with('error', 'Gagal menerima rujukan: ' . $e->getMessage());
+        }
+    }
+
     /*
     |--------------------------------------------------------------------------
     | METHOD: create()
@@ -203,6 +314,7 @@ class PasienNifasController extends Controller
     */
     public function create()
     {
+        
         return view('bidan.pasien-nifas.create');
     }
 
@@ -488,7 +600,14 @@ class PasienNifasController extends Controller
         $bidan = Auth::user()->bidan;
         abort_unless($bidan, 403);
 
+        // FIX: sebelumnya $puskesmasId kepake tapi belum didefinisikan
+        $puskesmasId = $bidan->puskesmas_id;
+
         $pasienNifas = PasienNifasBidan::with(['pasien.user'])->findOrFail($id);
+
+        // Safety: pastikan ini memang milik puskesmas bidan yang login
+        abort_unless((int)$pasienNifas->bidan_id === (int)$puskesmasId, 403);
+
         $status = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
         $pasienNifas->status_display = $status['label'];
         $pasienNifas->status_type = $status['type'];
@@ -504,31 +623,51 @@ class PasienNifasController extends Controller
         $deathKe = null;
 
         if ($episode) {
-            // Riwayat KF per jenis (untuk status & tanggal terakhir)
             $rows = \App\Models\KfKunjungan::where('pasien_nifas_id', $episode->id)
                 ->select('jenis_kf', DB::raw('MAX(tanggal_kunjungan) as last_date'))
                 ->groupBy('jenis_kf')
                 ->get();
             $kfDoneByJenis = $rows->keyBy('jenis_kf');
 
-            // Cari KF pertama yang berkesimpulan Meninggal/Wafat
             $deathKe = \App\Models\KfKunjungan::query()
                 ->where('pasien_nifas_id', $episode->id)
                 ->where(function ($q) {
                     $q->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'meninggal'")
-                        ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
+                    ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
                 })
-                ->min('jenis_kf'); // bisa null jika belum ada yang wafat
+                ->min('jenis_kf');
         }
+
+        /**
+         * (Opsional) Kalau kamu memang lagi hitung “rujukan masuk” di detail:
+         * FIX utama cuma definisi $puskesmasId di atas.
+         * Kalau query ini dipakai di view, biarin ada.
+         */
+        $rujukanMasukCount = DB::table('pasien_nifas_rs as pnrs')
+            ->join('anak_pasien as ap', 'ap.nifas_id', '=', 'pnrs.id')
+            ->where('ap.puskesmas_id', $puskesmasId)
+            ->whereNotIn(
+                'pnrs.pasien_id',
+                DB::table('pasien_nifas_bidan')
+                    ->where('bidan_id', $puskesmasId)
+                    ->pluck('pasien_id')
+                    ->unique()
+                    ->values()
+                    ->all()
+            )
+            ->distinct('pnrs.pasien_id')
+            ->count('pnrs.pasien_id');
 
         return view('bidan.pasien-nifas.show', compact(
             'pasienNifas',
             'anakPasien',
             'kfDoneByJenis',
             'firstAnakId',
-            'deathKe'
+            'deathKe',
+            'rujukanMasukCount'
         ));
     }
+
 
     public function formKfAnak($id, $anakId, $jenisKf)
     {
@@ -674,6 +813,36 @@ class PasienNifasController extends Controller
 
         return redirect()->route('bidan.pasien-nifas.detail', $id)->with('success', 'KF' . $jenisKf . ' berhasil disimpan');
     }
+
+    private function getStatusKF($pasienId)
+    {
+        $total = 4;
+
+        $selesai = \DB::table('kunjungan_kf')
+            ->where('pasien_nifas_id', $pasienId)
+            ->where('status', 'selesai')
+            ->count();
+
+        if ($selesai == 0) {
+            return [
+                'label' => 'Perlu KF',
+                'class' => 'badge-warning'
+            ];
+        }
+
+        if ($selesai < $total) {
+            return [
+                'label' => 'Menunggu',
+                'class' => 'badge-secondary'
+            ];
+        }
+
+        return [
+            'label' => 'Semua KF Selesai',
+            'class' => 'badge-success'
+        ];
+    }
+
 }
 
 /*
