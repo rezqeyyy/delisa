@@ -213,6 +213,79 @@ class PasienNifasController extends Controller
         ));
     }
 
+    /**
+     * Hapus data pasien nifas (universal untuk RS dan Bidan) oleh Puskesmas
+     * - Validasi akses wajib: sesuai puskesmas yang login
+     * - RS: wajib pasien_nifas_rs.puskesmas_id == puskesmas.id
+     * - Bidan: wajib bidan.puskesmas_id == puskesmas.id
+     */
+    public function destroy($type, $id)
+    {
+        $userId = Auth::id();
+
+        $puskesmas = DB::table('puskesmas')
+            ->select('id')
+            ->where('user_id', $userId)
+            ->first();
+
+        abort_unless($puskesmas, 404, 'Puskesmas tidak ditemukan');
+
+        try {
+            DB::beginTransaction();
+
+            if ($type === 'rs') {
+                $data = PasienNifasRs::with(['pasien.user'])
+                    ->findOrFail($id);
+
+                // Validasi akses: wajib milik puskesmas ini
+                abort_unless(((int) $data->puskesmas_id === (int) $puskesmas->id), 403, 'Anda tidak memiliki akses menghapus data ini.');
+
+                // Hapus kunjungan KF yang terkait (umumnya memang nempel ke pasien_nifas_rs)
+                KfKunjungan::where('pasien_nifas_id', $data->id)->delete();
+
+                // Hapus data nifas RS
+                $data->delete();
+
+                DB::commit();
+
+                return redirect()
+                    ->route('puskesmas.pasien-nifas.index')
+                    ->with('success', 'Data pasien nifas (RS) berhasil dihapus.');
+            }
+
+            if ($type === 'bidan') {
+                $data = PasienNifasBidan::with(['pasien.user', 'bidan'])
+                    ->findOrFail($id);
+
+                // Validasi akses: bidan harus berada pada puskesmas ini
+                $allowed = (int) optional($data->bidan)->puskesmas_id === (int) $puskesmas->id;
+                abort_unless($allowed, 403, 'Anda tidak memiliki akses menghapus data ini.');
+
+                // NOTE:
+                // Tidak menghapus kf_kunjungans di sini untuk menghindari salah-hapus,
+                // karena struktur FK KF untuk bidan bisa berbeda di proyekmu.
+                $data->delete();
+
+                DB::commit();
+
+                return redirect()
+                    ->route('puskesmas.pasien-nifas.index')
+                    ->with('success', 'Data pasien nifas (Bidan) berhasil dihapus.');
+            }
+
+            // Kalau type bukan rs/bidan
+            abort(404, 'Tipe data nifas tidak valid');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Gagal hapus pasien nifas puskesmas: ' . $e->getMessage());
+
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+        }
+    }
+
+
 
     /**
      * Form untuk mencatat KF (universal untuk RS dan Bidan)

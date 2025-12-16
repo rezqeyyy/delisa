@@ -50,8 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.js-delete-skrining-form .js-delete-skrining-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const form = e.currentTarget.closest('form');
-            if (form) openModal(form);
+        const form = e.currentTarget.closest('form');
+        if (form) openModal(form);
         });
     });
 });

@@ -162,7 +162,8 @@
                     <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Status Kunjungan Nifas (KF)</h2>
                 </div>
                 @if (!is_null($deathKe ?? null))
-                    <div class="bg-red-50 border border-red-200 text-red-800 text-xs sm:text-sm rounded-2xl px-4 py-3 mb-4">
+                    <div
+                        class="bg-red-50 border border-red-200 text-red-800 text-xs sm:text-sm rounded-2xl px-4 py-3 mb-4">
                         <div class="font-semibold mb-1">
                             Perhatian: Pasien tercatat meninggal/wafat pada KF{{ $deathKe }}.
                         </div>
@@ -180,7 +181,13 @@
                             $isDone = isset($kfDoneByJenis[$jk]);
                             $deathKeVal = $deathKe ?? null;
                             $isBlockedByDeath = !is_null($deathKeVal) && $jk > (int) $deathKeVal;
+
+                            // ✅ GATE dari model (ini yang menentukan "MENUNGGU")
+                            $statusKf = $pasienNifas->getKfStatus((int) $jk); // selesai | belum_mulai | dalam_periode | terlambat
+                            $canDoKf = $pasienNifas->canDoKf((int) $jk); // true kalau dalam_periode/terlambat
+                            $mulaiKf = $pasienNifas->getKfMulai((int) $jk);
                         @endphp
+
 
                         <div
                             class="rounded-2xl border
@@ -232,6 +239,19 @@
                                             title="Tidak dapat mencatat KF{{ $jk }} karena pasien wafat pada KF{{ $deathKeVal }}">
                                             KF{{ $jk }} terkunci
                                         </button>
+                                    @elseif ($isDone)
+                                        <button type="button"
+                                            class="inline-flex items-center rounded-full bg-emerald-100 px-4 py-2 text-xs font-semibold text-emerald-700 border border-emerald-200 cursor-not-allowed"
+                                            disabled title="KF{{ $jk }} sudah dicatat">
+                                            KF{{ $jk }} sudah selesai
+                                        </button>
+                                    @elseif (!$canDoKf)
+                                        <button type="button"
+                                            class="inline-flex items-center rounded-full bg-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 cursor-not-allowed"
+                                            disabled
+                                            title="{{ $mulaiKf ? 'Belum waktunya. Mulai: ' . $mulaiKf->format('d/m/Y H:i') : 'Belum waktunya' }}">
+                                            Menunggu jadwal KF{{ $jk }}
+                                        </button>
                                     @else
                                         <a href="{{ route('bidan.pasien-nifas.kf-anak.form', ['id' => $pasienNifas->id, 'anakId' => $firstAnakId, 'jenisKf' => $jk]) }}"
                                             class="inline-flex items-center rounded-full bg-[#E91E8C] px-4 py-2 text-xs font-semibold text-white hover:bg-[#C2185B]">
@@ -245,6 +265,7 @@
                                         Tambah Data Anak dahulu
                                     </button>
                                 @endif
+
                             </div>
                         </div>
                     @endforeach

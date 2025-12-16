@@ -23,13 +23,6 @@
             <a href="{{ route('bidan.dashboard') }}" class="inline-flex items-center gap-3">
                 <img src="{{ asset('images/logo_fulltext.png') }}" alt="DeLISA" class="w-42 h-auto object-contain">
             </a>
-
-            <!-- Tombol close minimal tanpa border/shadow -->
-            <button id="sidebarCloseBtn" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-transparent hover:bg-black/5 transition outline-none focus:outline-none ring-0 shadow-none border-0" aria-label="Tutup menu">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#1D1D1D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M15 18l-6-6 6-6" />
-                </svg>
-            </button>
         </div>
 
         <nav class="mt-4 px-3 pb-4 overflow-y-auto max-h-[calc(100vh-150px)] space-y-4">

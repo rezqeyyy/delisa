@@ -28,7 +28,7 @@ class PasienNifasBidan extends Model
     ];
 
     protected $casts = [
-        'tanggal_mulai_nifas' => 'date',
+        'tanggal_mulai_nifas' => 'datetime',
         'kf1_tanggal' => 'datetime',
         'kf2_tanggal' => 'datetime',
         'kf3_tanggal' => 'datetime',
@@ -85,106 +85,114 @@ class PasienNifasBidan extends Model
     // ========== METHOD UNTUK LOGIKA KF ==========
 
     /**
-     * Mendapatkan waktu mulai periode KF
+     * Base date untuk hitung window KF.
+     * Prioritas: tanggal_melahirkan (jika ada) > tanggal_mulai_nifas.
+     * Catatan: pada Bidan, tanggal_melahirkan sering ada di episode RS.
+     * Kalau kolom ini tidak ada di tabel bidan, tetap aman karena fallback.
      */
-    public function getKfMulai($jenisKf)
+    public function getKfBaseDate(): ?Carbon
     {
-        if (!$this->tanggal_mulai_nifas) {
-            return null;
-        }
+        // 1) Prioritas: tanggal melahirkan dari episode RS terbaru (kalau ada)
+        $rs = \App\Models\PasienNifasRs::where('pasien_id', $this->pasien_id)
+            ->orderByDesc('created_at')
+            ->first();
 
-        $mulaiNifas = Carbon::parse($this->tanggal_mulai_nifas);
+        $base = $rs?->tanggal_melahirkan
+            ?? $rs?->tanggal_mulai_nifas
+            ?? $this->tanggal_mulai_nifas
+            ?? null;
 
-        switch ($jenisKf) {
-            case 1:
-                return $mulaiNifas->copy()->addHours(6);
-            case 2:
-                return $mulaiNifas->copy()->addDays(4);
-            case 3:
-                return $mulaiNifas->copy()->addDays(8);
-            case 4:
-                return $mulaiNifas->copy()->addDays(36);
-            default:
-                return null;
-        }
+        return $base ? Carbon::parse($base) : null;
+    }
+
+
+    /**
+     * Waktu mulai (boleh dicatat) untuk KF tertentu.
+     * KF1: +6 jam
+     * KF2: hari ke-3 (startOfDay)
+     * KF3: hari ke-8 (startOfDay)
+     * KF4: hari ke-29 (startOfDay)
+     */
+    public function getKfMulai(int $jenisKf): ?Carbon
+    {
+        $base = $this->getKfBaseDate();
+        if (!$base) return null;
+
+        $base = Carbon::parse($base);
+
+        return match ($jenisKf) {
+            1 => $base->copy()->addHours(6),                 // ✅ pakai base asli (jam)
+            2 => $base->copy()->startOfDay()->addDays(3),    // hari ke-3
+            3 => $base->copy()->startOfDay()->addDays(8),    // hari ke-8
+            4 => $base->copy()->startOfDay()->addDays(29),   // hari ke-29
+            default => null,
+        };
+    }
+
+
+    /**
+     * Deadline akhir window KF.
+     * KF1: +48 jam
+     * KF2: hari ke-7 (endOfDay)
+     * KF3: hari ke-28 (endOfDay)
+     * KF4: hari ke-42 (endOfDay)
+     */
+    public function getKfDeadline(int $jenisKf): ?Carbon
+    {
+        $base = $this->getKfBaseDate();
+        if (!$base) return null;
+
+        $base = Carbon::parse($base);
+
+        return match ($jenisKf) {
+            1 => $base->copy()->addHours(48),                    // ✅ 48 jam dari base asli
+            2 => $base->copy()->startOfDay()->addDays(7)->endOfDay(),
+            3 => $base->copy()->startOfDay()->addDays(28)->endOfDay(),
+            4 => $base->copy()->startOfDay()->addDays(42)->endOfDay(),
+            default => null,
+        };
+    }
+
+
+    /**
+     * Cek apakah KF sudah selesai.
+     * Mengikuti pola proyek kamu: kalau kf{n}_tanggal terisi = selesai.
+     */
+    public function isKfSelesai(int $jenisKf): bool
+    {
+        $col = "kf{$jenisKf}_tanggal";
+        return !empty($this->{$col});
     }
 
     /**
-     * Mendapatkan waktu selesai periode KF
+     * Status KF:
+     * - selesai
+     * - belum_mulai  (ini yang kamu sebut “MENUNGGU”)
+     * - dalam_periode
+     * - terlambat
      */
-    public function getKfSelesai($jenisKf)
+    public function getKfStatus(int $jenisKf): string
     {
-        if (!$this->tanggal_mulai_nifas) {
-            return null;
-        }
+        if ($this->isKfSelesai($jenisKf)) return 'selesai';
 
-        $mulaiNifas = Carbon::parse($this->tanggal_mulai_nifas);
-
-        switch ($jenisKf) {
-            case 1:
-                return $mulaiNifas->copy()->addDays(3)->endOfDay();
-            case 2:
-                return $mulaiNifas->copy()->addDays(7)->endOfDay();
-            case 3:
-                return $mulaiNifas->copy()->addDays(35)->endOfDay();
-            case 4:
-                return $mulaiNifas->copy()->addDays(42)->endOfDay();
-            default:
-                return null;
-        }
-    }
-
-    /**
-     * Cek apakah sudah boleh melakukan KF
-     */
-    public function canDoKf($jenisKf)
-    {
         $mulai = $this->getKfMulai($jenisKf);
-        if (!$mulai) {
-            return false;
-        }
-        return now()->gte($mulai);
-    }
+        $deadline = $this->getKfDeadline($jenisKf);
 
-    /**
-     * Cek apakah KF sudah selesai dicatat
-     */
-    public function isKfSelesai($jenisKf)
-    {
-        return !is_null($this->{"kf{$jenisKf}_tanggal"});
-    }
+        if (!$mulai || !$deadline) return 'belum_mulai';
 
-    /**
-     * Mendapatkan status KF
-     * Return: 'belum_mulai' | 'dalam_periode' | 'terlambat' | 'selesai'
-     */
-    public function getKfStatus($jenisKf)
-    {
-        // Jika sudah selesai dicatat
-        if ($this->isKfSelesai($jenisKf)) {
-            return 'selesai';
-        }
+        $now = Carbon::now();
 
-        $mulai = $this->getKfMulai($jenisKf);
-        $selesai = $this->getKfSelesai($jenisKf);
-
-        if (!$mulai || !$selesai) {
-            return 'belum_mulai';
-        }
-
-        $now = now();
-
-        // Belum waktunya
-        if ($now->lt($mulai)) {
-            return 'belum_mulai';
-        }
-
-        // Dalam periode normal
-        if ($now->gte($mulai) && $now->lte($selesai)) {
-            return 'dalam_periode';
-        }
-
-        // Sudah lewat periode normal
+        if ($now->lt($mulai)) return 'belum_mulai';
+        if ($now->lte($deadline)) return 'dalam_periode';
         return 'terlambat';
+    }
+
+    /**
+     * Boleh dicatat jika sudah masuk waktu mulai (dalam periode atau terlambat).
+     */
+    public function canDoKf(int $jenisKf): bool
+    {
+        $status = $this->getKfStatus($jenisKf);
+        return in_array($status, ['dalam_periode', 'terlambat'], true);
     }
 }

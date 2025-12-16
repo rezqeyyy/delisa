@@ -52,7 +52,7 @@ class PasienNifasController extends Controller
             ->leftJoin('anak_pasien', 'anak_pasien.nifas_id', '=', 'pasien_nifas_rs.id')
             ->where(function ($q) use ($puskesmasId) {
                 $q->where('pasien_nifas_rs.puskesmas_id', $puskesmasId)
-                  ->orWhere('anak_pasien.puskesmas_id', $puskesmasId);
+                    ->orWhere('anak_pasien.puskesmas_id', $puskesmasId);
             })
             ->select('pasien_nifas_rs.pasien_id', 'pasien_nifas_rs.tanggal_mulai_nifas')
             ->get();
@@ -64,7 +64,9 @@ class PasienNifasController extends Controller
                 PasienNifasBidan::create([
                     'bidan_id'            => $puskesmasId,
                     'pasien_id'           => $rs->pasien_id,
-                    'tanggal_mulai_nifas' => $rs->tanggal_mulai_nifas ?? now(),
+                    'tanggal_mulai_nifas' => $rs->tanggal_mulai_nifas
+                        ? \Carbon\Carbon::parse($rs->tanggal_mulai_nifas)
+                        : now(),
                 ]);
             }
         }
@@ -158,7 +160,7 @@ class PasienNifasController extends Controller
             if ($maxKe >= 4) {
                 $row->peringat_label = 'Selesai semua';
                 $row->peringat_state = 'done';
-                $row->badge_class = 'bg-[#2EDB58] text-white';
+                $row->badge_class = 'bg-[#2EDB58]';
                 $row->next_ke = 4;
                 $row->max_ke = $maxKe;
                 return $row;
@@ -168,7 +170,7 @@ class PasienNifasController extends Controller
             if (!$baseDateStr) {
                 $row->peringat_label = 'Tidak ada tanggal';
                 $row->peringat_state = 'no_date';
-                $row->badge_class = 'bg-[#6c757d] text-white';
+                $row->badge_class = 'bg-[#6c757d]';
                 $row->next_ke = $nextKe;
                 $row->max_ke = $maxKe;
                 return $row;
@@ -181,7 +183,7 @@ class PasienNifasController extends Controller
                 if ($hours > $endH) {
                     $label = 'Telat menuju KF1';
                     $state = 'late';
-                    $cls = 'bg-[#FF3B30] text-white';
+                    $cls = 'bg-[#FF3B30]';
                 } elseif ($hours >= $startH) {
                     $label = 'Dalam periode KF1';
                     $state = 'window';
@@ -189,7 +191,7 @@ class PasienNifasController extends Controller
                 } else {
                     $label = 'J-' . max(0, $startH - $hours) . ' menuju KF1';
                     $state = 'early';
-                    $cls = 'bg-[#6c757d] text-white';
+                    $cls = 'bg-[#6c757d] ';
                 }
             } else {
                 $days = $base->diffInDays($today);
@@ -198,7 +200,7 @@ class PasienNifasController extends Controller
                 if ($days > $endDays) {
                     $label = 'Telat menuju KF' . $nextKe;
                     $state = 'late';
-                    $cls = 'bg-[#FF3B30] text-white';
+                    $cls = 'bg-[#FF3B30] ';
                 } elseif ($days >= $startDays) {
                     $label = 'Dalam periode KF' . $nextKe;
                     $state = 'window';
@@ -206,7 +208,7 @@ class PasienNifasController extends Controller
                 } else {
                     $label = 'H-' . max(0, $startDays - $days) . ' menuju KF' . $nextKe;
                     $state = 'early';
-                    $cls = 'bg-[#6c757d] text-white';
+                    $cls = 'bg-[#6c757d] ';
                 }
             }
             $row->peringat_label = $label;
@@ -326,7 +328,9 @@ class PasienNifasController extends Controller
             PasienNifasBidan::create([
                 'bidan_id'            => $puskesmasId,
                 'pasien_id'           => $pnrs->pasien_id,
-                'tanggal_mulai_nifas' => $pnrs->tanggal_mulai_nifas ?? now()->toDateString(),
+                'tanggal_mulai_nifas' => $pnrs->tanggal_mulai_nifas
+                    ? \Carbon\Carbon::parse($pnrs->tanggal_mulai_nifas)
+                    : now(),
             ]);
 
             DB::commit();
@@ -355,7 +359,7 @@ class PasienNifasController extends Controller
     */
     public function create()
     {
-        
+
         return view('bidan.pasien-nifas.create');
     }
 
@@ -678,7 +682,7 @@ class PasienNifasController extends Controller
                 ->where('pasien_nifas_id', $episode->id)
                 ->where(function ($q) {
                     $q->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'meninggal'")
-                    ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
+                        ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
                 })
                 ->min('jenis_kf');
         }
@@ -744,6 +748,38 @@ class PasienNifasController extends Controller
                 ->where('jenis_kf', (int)$jenisKf)
                 ->orderByDesc('tanggal_kunjungan')
                 ->first();
+        }
+
+        // =======================
+        // GATE JADWAL KF (SAMAKAN DENGAN PUSKESMAS)
+        // =======================
+        $statusKf = $pasienNifas->getKfStatus((int) $jenisKf);
+
+        // Jika sudah selesai, jangan boleh isi lagi
+        if ($statusKf === 'selesai') {
+            return redirect()
+                ->route('bidan.pasien-nifas.detail', $id)
+                ->with('error', "KF{$jenisKf} sudah selesai dicatat!");
+        }
+
+        // Jika belum mulai (MENUNGGU), block persis seperti puskesmas
+        if ($statusKf === 'belum_mulai') {
+            $mulai = $pasienNifas->getKfMulai((int) $jenisKf);
+            $pesan = $mulai
+                ? "Belum waktunya untuk KF{$jenisKf}. Dapat dilakukan mulai " . $mulai->format('d/m/Y H:i')
+                : "Belum dapat melakukan KF{$jenisKf}";
+
+            return redirect()
+                ->route('bidan.pasien-nifas.detail', $id)
+                ->with('error', $pesan);
+        }
+
+        // Jika terlambat, tetap izinkan buka form tapi kasih warning
+        if ($statusKf === 'terlambat') {
+            session()->flash(
+                'warning',
+                "Periode normal KF{$jenisKf} sudah lewat. Anda tetap dapat mencatatnya sebagai kunjungan terlambat."
+            );
         }
 
         if ($episode) {
@@ -850,6 +886,33 @@ class PasienNifasController extends Controller
             }
         }
 
+        // =======================
+        // GATE JADWAL KF (ANTI BYPASS URL)
+        // =======================
+        $statusKf = $pasienNifas->getKfStatus((int) $jenisKf);
+
+        // Jika sudah selesai, stop
+        if ($statusKf === 'selesai') {
+            return redirect()
+                ->route('bidan.pasien-nifas.detail', $id)
+                ->with('error', "KF{$jenisKf} sudah selesai dicatat!");
+        }
+
+        // Jika belum mulai (MENUNGGU), stop
+        if ($statusKf === 'belum_mulai') {
+            $mulai = $pasienNifas->getKfMulai((int) $jenisKf);
+            $pesan = $mulai
+                ? "Belum waktunya untuk KF{$jenisKf}. Dapat dilakukan mulai " . $mulai->format('d/m/Y H:i')
+                : "Belum dapat melakukan KF{$jenisKf}";
+
+            return redirect()
+                ->route('bidan.pasien-nifas.detail', $id)
+                ->with('error', $pesan);
+        }
+
+        // Kalau terlambat, tetap boleh simpan (opsional: bisa kasih flash warning)
+
+
         if ($episode) {
             $kk = \App\Models\KfKunjungan::updateOrCreate(
                 ['pasien_nifas_id' => $episode->id, 'jenis_kf' => (int)$jenisKf],
@@ -878,7 +941,7 @@ class PasienNifasController extends Controller
     {
         $total = 4;
 
-        $selesai = \DB::table('kunjungan_kf')
+        $selesai = DB::table('kunjungan_kf')
             ->where('pasien_nifas_id', $pasienId)
             ->where('status', 'selesai')
             ->count();
@@ -902,7 +965,6 @@ class PasienNifasController extends Controller
             'class' => 'badge-success'
         ];
     }
-
 }
 
 /*

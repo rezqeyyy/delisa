@@ -36,8 +36,10 @@
 
                     <div class="flex items-center gap-3 flex-none justify-end">
                         {{-- Tombol shortcut (ikon pengaturan) → menuju Edit Profil Bidan (route 'bidan.profile.edit') --}}
-                        <a href="{{ route('bidan.profile.edit') }}" class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
-                            <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90" alt="Setting">
+                        <a href="{{ route('bidan.profile.edit') }}"
+                            class="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-[#E5E5E5]">
+                            <img src="{{ asset('icons/Iconly/Sharp/Light/Setting.svg') }}" class="w-4 h-4 opacity-90"
+                                alt="Setting">
                         </a>
 
                         {{-- Tombol Profil + Dropdown --}}
@@ -64,25 +66,28 @@
                                 {{-- Teks nama & email, disembunyikan di mobile (hidden sm:block) --}}
                                 <div class="leading-tight pr-1 text-left hidden sm:block">
                                     {{-- Nama user, fallback ke 'Puskesmas' --}}
-                                    <p class="text-[13px] font-semibold text-[#1D1D1D] truncate max-w-[140px] sm:max-w-[200px]">
+                                    <p
+                                        class="text-[13px] font-semibold text-[#1D1D1D] truncate max-w-[140px] sm:max-w-[200px]">
                                         {{ auth()->user()->name ?? 'Puskesmas' }}
                                     </p>
                                 </div>
 
                                 {{-- Ikon caret (panah bawah) untuk menandakan dropdown --}}
                                 <!-- caret disembunyikan di mobile -->
-                                <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Down 2.svg') }}" class="sm:block w-4 h-4 opacity-70" alt="More" />
-                                
+                                <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Down 2.svg') }}"
+                                    class="sm:block w-4 h-4 opacity-70" alt="More" />
+
                             </button>
 
                             {{-- Dropdown profil (muncul saat button profile diklik, di-handle oleh JS dropdown.js) --}}
-                            <div id="profileMenu" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
+                            <div id="profileMenu"
+                                class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-[#E9E9E9] overflow-hidden z-20">
                                 <div class="px-4 py-3 border-b border-[#F0F0F0]">
                                     <p class="text-sm font-medium text-[#1D1D1D]">
                                         {{ auth()->user()->name ?? 'Puskesmas' }}
                                     </p>
                                     <p class="text-xs text-[#7C7C7C] truncate">
-                                    {{ auth()->user()->email ?? 'Puskesmas' }}</p>
+                                        {{ auth()->user()->email ?? 'Puskesmas' }}</p>
                                 </div>
                                 {{-- Form logout.
                                      method="POST" ke route('logout') → akan memproses logout Laravel standar
@@ -194,7 +199,7 @@
                         <hr class="border-[#E9E9E9]">
                         <div class="flex items-center justify-between">
                             <span class="text-[#7C7C7C]">Sudah KFI</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $sudahKFI ?? 0 }}</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $sudahKf1 ?? 0 }}</span>
                         </div>
                     </div>
                 </div>
@@ -282,9 +287,7 @@
                                         @php($label = strtolower(trim($skrining->kesimpulan ?? '')))
                                         @php($isRisk = in_array($label, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']))
                                         @php($isWarn = in_array($label, ['waspada', 'menengah', 'sedang', 'risiko sedang']))
-                                        @php($display = $isRisk ? 'Beresiko' : (
-                                            $isWarn ? 'Waspada' : ($label === 'aman' ? 'Aman' : $skrining->kesimpulan ?? '-')
-                                        ))
+                                        @php($display = $isRisk ? 'Beresiko' : ($isWarn ? 'Waspada' : ($label === 'aman' ? 'Aman' : $skrining->kesimpulan ?? '-')))
                                         <span
                                             class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $isRisk ? 'bg-[#FF3B30] text-white' : ($isWarn ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">
                                             {{ $display }}

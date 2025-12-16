@@ -44,7 +44,9 @@ class DashboardController extends Controller
 
         // 2. Ambil semua skrining milik puskesmas dan filter yang lengkap
         $skrinings = Skrining::where('puskesmas_id', $puskesmasId)
-            ->whereHas('puskesmas', function ($q) { $q->where('is_mandiri', true); })
+            ->whereHas('puskesmas', function ($q) {
+                $q->where('is_mandiri', true);
+            })
             ->with(['pasien.user', 'riwayatKehamilanGpa', 'kondisiKesehatan'])
             ->latest()
             ->get()
@@ -72,39 +74,86 @@ class DashboardController extends Controller
         $pasienHadir = $skrinings->filter(fn($s) => optional($s->updated_at)->isToday())->count();
         $pasienTidakHadir = $skrinings->count() - $pasienHadir;
 
-        // 6. Data Nifas - Ambil ID Bidan di Puskesmas yang Sama
-        $bidanIdsPuskesmas = Bidan::where('puskesmas_id', $puskesmasId)->pluck('id'); // Semua bidan di puskesmas ini
-        
-        // 7. Ambil ID Pasien Nifas yang Ditangani Bidan-bidan Tersebut
-        $pasienNifasIds = PasienNifasBidan::whereIn('bidan_id', $bidanIdsPuskesmas)->pluck('pasien_id'); // ID pasien nifas
+        // =====================
+        // 6-9. STATISTIK NIFAS (SAMAKAN DENGAN HALAMAN PASIEN NIFAS BIDAN)
+        // =====================
 
-        // 8. Card: Data Pasien Nifas (Total & Sudah KF1)
-        $totalNifas = $pasienNifasIds->count(); // Total pasien nifas
-        $sudahKf1 = Kf::whereIn('id_nifas', $pasienNifasIds) // Filter pasien nifas
-                      ->where('kunjungan_nifas_ke', '>=', 1) // Minimal sudah KF1
-                      ->distinct('id_nifas') // Hitung unik per pasien
-                      ->count(); // Total sudah KF1
+        $pasienNifasRows = DB::table('pasien_nifas_bidan')
+            ->where('bidan_id', $puskesmasId)
+            ->select('id', 'pasien_id')
+            ->get();
 
-        // 9. Card: Pemantauan Nifas (Sehat/Dirujuk/Meninggal)
-        // Ambil status kesimpulan pantauan dari tabel kf
-        $pemantauanSehat = Kf::whereIn('id_nifas', $pasienNifasIds) // Filter pasien nifas
-                             ->where('kesimpulan_pantauan', 'Sehat') // Status sehat
-                             ->distinct('id_nifas') // Hitung unik per pasien
-                             ->count(); // Total sehat
-        
-        $pemantauanDirujuk = Kf::whereIn('id_nifas', $pasienNifasIds) // Filter pasien nifas
-                               ->where('kesimpulan_pantauan', 'Dirujuk') // Status dirujuk
-                               ->distinct('id_nifas') // Hitung unik per pasien
-                               ->count(); // Total dirujuk
-        
-        $pemantauanMeninggal = Kf::whereIn('id_nifas', $pasienNifasIds) // Filter pasien nifas
-                                 ->where('kesimpulan_pantauan', 'Meninggal') // Status meninggal
-                                 ->distinct('id_nifas') // Hitung unik per pasien
-                                 ->count(); // Total meninggal
+        // Total pasien nifas (episode di bidan)
+        $totalNifas = $pasienNifasRows->count();
+
+        // Ambil latest episode RS per pasien (karena KF disimpan di kf_kunjungans berbasis pasien_nifas_rs.id)
+        $pasienIdsForNifas = $pasienNifasRows->pluck('pasien_id')->unique()->values()->all();
+
+        $rsEpisodes = DB::table('pasien_nifas_rs')
+            ->select('id', 'pasien_id', 'created_at')
+            ->whereIn('pasien_id', $pasienIdsForNifas)
+            ->orderByDesc('created_at')
+            ->get();
+
+        // map latest RS episode id per pasien_id
+        $latestRsEpisodeIdByPasien = [];
+        foreach ($rsEpisodes as $ep) {
+            if (!isset($latestRsEpisodeIdByPasien[$ep->pasien_id])) {
+                $latestRsEpisodeIdByPasien[$ep->pasien_id] = $ep->id;
+            }
+        }
+
+        $rsEpisodeIds = array_values(array_filter($latestRsEpisodeIdByPasien));
+        $rsEpisodeIds = array_values(array_unique($rsEpisodeIds));
+        // Fallback: sebagian data KF (tergantung implementasi/migrasi) bisa nyantol ke episode bidan
+        $bidanEpisodeIds = $pasienNifasRows->pluck('id')->filter()->values()->all();
+
+        // Gabungkan kandidat id episode untuk cek kf_kunjungans (RS + Bidan)
+        $kfEpisodeIds = array_values(array_unique(array_merge($rsEpisodeIds, $bidanEpisodeIds)));
+
+        $sudahKf1 = 0;
+        if (!empty($kfEpisodeIds)) {
+            $sudahKf1 = DB::table('kf_kunjungans')
+                ->whereIn('pasien_nifas_id', $kfEpisodeIds)
+                ->where('jenis_kf', 1)
+                ->distinct('pasien_nifas_id')
+                ->count('pasien_nifas_id');
+        }
+
+
+        // Belum KF1
+        $belumKf1 = max(0, $totalNifas - $sudahKf1);
+
+        // Pemantauan nifas (Sehat/Dirujuk/Meninggal) — hitung distinct pasien_nifas_id
+        $pemantauanSehat = 0;
+        $pemantauanDirujuk = 0;
+        $pemantauanMeninggal = 0;
+
+        if (!empty($kfEpisodeIds)) {
+            $pemantauanSehat = DB::table('kf_kunjungans')
+                ->whereIn('pasien_nifas_id', $kfEpisodeIds)
+                ->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'sehat'")
+                ->distinct('pasien_nifas_id')
+                ->count('pasien_nifas_id');
+
+            $pemantauanDirujuk = DB::table('kf_kunjungans')
+                ->whereIn('pasien_nifas_id', $kfEpisodeIds)
+                ->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'dirujuk'")
+                ->distinct('pasien_nifas_id')
+                ->count('pasien_nifas_id');
+
+            $pemantauanMeninggal = DB::table('kf_kunjungans')
+                ->whereIn('pasien_nifas_id', $kfEpisodeIds)
+                ->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) IN ('meninggal','wafat')")
+                ->distinct('pasien_nifas_id')
+                ->count('pasien_nifas_id');
+        }
+
+
 
         // 10. Tabel: 5 Data Skrining Terbaru dari skrining lengkap
         $pasienTerbaru = $skrinings->sortByDesc('created_at')->take(5)->values();
-        
+
         // 11. Kirim Data ke View
         // compact(): ubah variable jadi array ['daerahAsal' => $daerahAsal, ...]
         return view('bidan.dashboard', compact(
@@ -115,6 +164,7 @@ class DashboardController extends Controller
             'pasienTidakHadir',
             'totalNifas',
             'sudahKf1',
+            'belumKf1',
             'pemantauanSehat',
             'pemantauanDirujuk',
             'pemantauanMeninggal',
