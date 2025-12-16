@@ -44,7 +44,7 @@
                             Data Pemantauan Pasien Nifas
                         </h1>
                         <p class="text-xs sm:text-sm text-[#7C7C7C]">
-                            Pantau jadwal kunjungan nifas (KF) di seluruh Puskesmas dan fasilitas rujukan.
+                            Pantau jadwal kunjungan nifas (KF) di seluruh faskes.
                         </p>
                     </div>
 
@@ -92,17 +92,18 @@
 
                                         {{-- Filter Puskesmas --}}
                                         <div class="space-y-1">
-                                            <p class="text-xs font-semibold text-[#6B7280]">Filter Puskesmas</p>
-                                            <select name="puskesmas_id"
+                                            <p class="text-xs font-semibold text-[#6B7280]">Filter Faskes</p>
+                                            <select name="faskes_id"
                                                 class="w-full px-3 py-2 rounded-xl border border-[#D9D9D9]
                                                     text-xs sm:text-sm focus:outline-none focus:ring-1
                                                     focus:ring-[#B9257F]/40 bg-white">
-                                                <option value="">Semua Puskesmas</option>
+                                                <option value="">Semua Faskes</option>
                                                 @foreach ($puskesmasList as $pk)
-                                                    <option value="{{ $pk->id }}" @selected((string) ($selectedPuskesmasId ?? '') === (string) $pk->id)>
-                                                        {{ $pk->nama_puskesmas }}
+                                                    <option value="{{ $pk->faskes_key }}" @selected((string) ($selectedFaskesId ?? '') === (string) $pk->faskes_key)>
+                                                        {{ $pk->faskes_nama }}
                                                     </option>
                                                 @endforeach
+
                                             </select>
                                         </div>
 
@@ -179,7 +180,7 @@
                             {{-- TOMBOL EXPORT --}}
                             <a href="{{ route('dinkes.pasien-nifas.export', [
                                 'q' => $q ?? null,
-                                'puskesmas_id' => $selectedPuskesmasId ?? null,
+                                'faskes_id' => $selectedFaskesId ?? null,
                                 'sort' => $sort ?? null,
                                 'priority' => $priority ?? null,
                             ]) }}"
@@ -212,9 +213,16 @@
                                     </div>
 
                                     <div class="text-xs">
-                                        <span class="text-[#7C7C7C]">Puskesmas:</span>
+                                        <span class="text-[#7C7C7C]">Faskes:</span>
                                         <span class="font-medium">
-                                            {{ $row->puskesmas_nama ?? '—' }}
+                                            @if ($row->faskes_tipe === 'puskesmas')
+                                                Puskesmas {{ $row->faskes_nama }}
+                                            @elseif ($row->faskes_tipe === 'bidan')
+                                                {{ $row->faskes_nama }}
+                                            @else
+                                                {{ $row->faskes_nama ?? '-' }}
+                                            @endif
+
                                         </span>
                                     </div>
 
@@ -319,7 +327,7 @@
                                     <th class="pl-6 pr-4 py-3 font-semibold">No</th>
                                     <th class="px-4 py-3 font-semibold">Nama</th>
                                     <th class="px-4 py-3 font-semibold">NIK</th>
-                                    <th class="px-4 py-3 font-semibold">Puskesmas</th>
+                                    <th class="px-4 py-3 font-semibold">Faskes</th>
                                     <th class="px-4 py-3 font-semibold">Jadwal KF</th>
                                     <th class="px-4 py-3 font-semibold text-center w-[160px]">
                                         Sisa Waktu
@@ -346,7 +354,14 @@
 
                                         {{-- Puskesmas --}}
                                         <td class="px-4 py-3">
-                                            {{ $row->puskesmas_nama ?? '—' }}
+                                            @if ($row->faskes_tipe === 'puskesmas')
+                                                Puskesmas {{ $row->faskes_nama }}
+                                            @elseif ($row->faskes_tipe === 'bidan')
+                                                {{ $row->faskes_nama }}
+                                            @else
+                                                {{ $row->faskes_nama ?? '-' }}
+                                            @endif
+
                                         </td>
 
                                         {{-- Jadwal KF + badge progres KF --}}
