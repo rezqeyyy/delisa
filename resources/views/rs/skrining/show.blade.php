@@ -45,8 +45,8 @@
                         </svg>
                     </a>
                     <div class="min-w-0">
-                        <h1 class="ml-3 text-3xl font-bold text-gray-800">Hasil Pemeriksaan Pasien ({{ $skrining->pasien->user->name ?? 'N/A' }})</h1>
-                        <p class="ml-3 text-xs text-[#7C7C7C]">
+                        <h1 class="text-2xl font-semibold text-[#1D1D1D]">Hasil Pemeriksaan Pasien ({{ $skrining->pasien->user->name ?? 'N/A' }})</h1>
+                        <p class="text-l text-[#7C7C7C]">
                             Ringkasan hasil skrining puskesmas dan pemeriksaan di RS
                         </p>
                     </div>

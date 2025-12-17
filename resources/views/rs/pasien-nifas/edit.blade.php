@@ -24,10 +24,10 @@
                         </svg>
                     </a>
                     <div>
-                        <h1 class="text-lg sm:text-xl font-semibold text-[#1D1D1D]">
+                        <h1 class="text-2xl font-semibold text-[#1D1D1D]">
                             Data Nifas Pasien
                         </h1>
-                        <p class="text-xs text-[#7C7C7C] mt-1">
+                        <p class="text-l text-[#7C7C7C] mt-1">
                             Tambahkan data anak untuk pasien nifas ini
                         </p>
                     </div>

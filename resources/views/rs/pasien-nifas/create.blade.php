@@ -27,10 +27,10 @@
                         </svg>
                     </a>
                     <div>
-                        <h1 class="text-lg sm:text-xl font-semibold text-[#1D1D1D]">
+                        <h1 class="text-2xl font-semibold text-[#1D1D1D]">
                             Tambah Data Pasien Nifas
                         </h1>
-                        <p class="text-xs text-[#7C7C7C] mt-1">
+                        <p class="text-l text-[#7C7C7C] mt-1">
                             Lengkapi data identitas dan alamat pasien nifas di rumah sakit ini
                         </p>
                     </div>
@@ -444,11 +444,6 @@
 
                 <button type="submit" form="formPasienNifas"
                     class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-[#C2185B]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <path d="M12 5v14" />
-                        <path d="M5 12h14" />
-                    </svg>
                     <span>Simpan & Lanjutkan</span>
                 </button>
             </div>

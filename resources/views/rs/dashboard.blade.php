@@ -19,7 +19,7 @@
             <div class="flex items-center gap-3 flex-nowrap">
                 <div class="flex items-center gap-2 flex-1 min-w-0">
                     <div class="space-y-1">
-                        <h1 class="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#1D1D1D]">Dashboard Rumah Sakit</h1>
+                        <h1 class="text-2xl font-semibold text-[#1D1D1D]">Dashboard Rumah Sakit</h1>
                         <p class="text-xs sm:text-sm text-[#7C7C7C]">
                             Ringkasan pemantauan pasien preeklampsia yang ditangani Rumah Sakit.
                         </p>

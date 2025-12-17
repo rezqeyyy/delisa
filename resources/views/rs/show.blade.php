@@ -22,7 +22,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                 </a>
-                <h1 class="ml-3 text-3xl font-bold text-gray-800">Detail Skrining Pasien ({{ $skrining->pasien->user->name ?? 'N/A' }})</h1>
+                <h1 class="text-2xl font-semibold text-[#1D1D1D]">Detail Skrining Pasien ({{ $skrining->pasien->user->name ?? 'N/A' }})</h1>
             </div>
 
             @if(!$skrining)

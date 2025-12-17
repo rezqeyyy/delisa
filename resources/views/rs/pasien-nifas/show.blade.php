@@ -58,10 +58,10 @@
                         </svg>
                     </a>
                     <div>
-                        <h1 class="ml-3 text-3xl font-bold text-gray-800">
+                        <h1 class="text-2xl font-semibold text-[#1D1D1D]">
                             Data Pasien Nifas — {{ $pasienNifas->pasien->user->name ?? 'N/A' }}
                         </h1>
-                        <p class="ml-3 text-l text-[#7C7C7C] mt-1">
+                        <p class="text-l text-[#7C7C7C] mt-1">
                             Ringkasan nifas ibu, riwayat persalinan, dan kondisi bayi
                         </p>
                     </div>
