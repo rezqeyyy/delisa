@@ -18,13 +18,11 @@
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
             <div class="flex items-center gap-3 flex-nowrap">
                 <div class="flex items-center gap-2 flex-1 min-w-0">
-                    <div class="relative w-full">
-                        <span class="absolute inset-y-0 left-3 flex items-center">
-                            <img src="{{ asset('icons/Iconly/Sharp/Light/Search.svg') }}" class="w-4 h-4 opacity-60"
-                                alt="Search">
-                        </span>
-                        <input type="text" placeholder="Search..."
-                            class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+                    <div class="space-y-1">
+                        <h1 class="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#1D1D1D]">Dashboard Rumah Sakit</h1>
+                        <p class="text-xs sm:text-sm text-[#7C7C7C]">
+                            Ringkasan pemantauan pasien preeklampsia yang ditangani Rumah Sakit.
+                        </p>
                     </div>
                 </div>
 
@@ -406,7 +404,7 @@
                                                 @if (!empty($p->id))
                                                     <a href="{{ route('rs.pasien.show', $p->id) }}"
                                                         class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs hover:bg-gray-50 transition">
-                                                        View Data
+                                                        Data Pasien
                                                     </a>
                                                 @endif
 

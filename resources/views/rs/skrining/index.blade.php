@@ -199,10 +199,12 @@
                                         </td>
                                         <td class="px-3 py-3">
                                             <div class="flex items-center gap-2">
+                                                <a href="{{ route('rs.pasien.show', $pas->id) }}"
+                                                    class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs hover:bg-gray-50 transition">View Pasien</a>
                                                 <a href="{{ route('rs.skrining.edit', $skr->id) }}"
                                                     class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs hover:bg-gray-50 transition">Edit</a>
                                                 <a href="{{ route('rs.skrining.show', $skr->id) }}"
-                                                    class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs hover:bg-gray-50 transition">Detail</a>
+                                                    class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs hover:bg-gray-50 transition">Detail Pengecekan</a>
                                             </div>
                                         </td>
                                     </tr>

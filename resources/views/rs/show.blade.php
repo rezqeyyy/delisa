@@ -15,195 +15,264 @@
         <x-rs.sidebar />
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
-
-            {{-- Header --}}
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print-hidden">
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('rs.dashboard') }}"
-                       class="inline-flex items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-3 py-1.5 text-xs sm:text-sm text-[#4B4B4B] hover:bg-[#F8F8F8]">
-                        <span class="inline-flex w-5 h-5 items-center justify-center rounded-full bg-[#F5F5F5]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" stroke-width="2">
-                                <path d="M15 18l-6-6 6-6" />
-                            </svg>
-                        </span>
-                        <span>Kembali</span>
-                    </a>
-                    <div>
-                        <h1 class="text-lg sm:text-xl font-semibold text-[#1D1D1D]">
-                            Detail Pasien
-                        </h1>
-                        <p class="text-xs text-[#7C7C7C]">
-                            Informasi lengkap data pasien
-                        </p>
-                    </div>
-                </div>
+            
+            <div class="mb-6 flex items-center">
+                <a href="{{ route('rs.dashboard') }}" class="text-gray-600 hover:text-gray-900">
+                    <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </a>
+                <h1 class="ml-3 text-3xl font-bold text-gray-800">Detail Skrining Pasien</h1>
             </div>
 
-            {{-- Profile Card --}}
-            <div class="bg-gradient-to-r from-[#E91E8C] to-[#C2185B] rounded-2xl p-5 sm:p-6 shadow-lg">
-                <div class="flex flex-col sm:flex-row items-center gap-4">
-                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold text-[#E91E8C]">
-                        {{ substr($pasien->user->name ?? 'P', 0, 1) }}
-                    </div>
-                    <div class="text-center sm:text-left">
-                        <h2 class="text-xl sm:text-2xl font-bold text-white">
-                            {{ $pasien->user->name ?? 'Nama Pasien' }}
-                        </h2>
-                        <p class="text-white/90 text-sm">
-                            NIK: {{ $pasien->nik ?? '-' }}
-                        </p>
-                    </div>
+            @if(!$skrining)
+                <div class="rounded-2xl bg-white p-6 shadow text-center">
+                    <p class="text-gray-500">Belum ada data skrining untuk pasien ini.</p>
                 </div>
-            </div>
+            @else
+                <div class="rounded-2xl bg-white p-6 shadow">
+                    <h2 class="mb-4 text-xl font-semibold text-gray-800">Informasi Pasien dan Data Kehamilan</h2>
 
-            {{-- Data Cards Container --}}
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                
-                {{-- Data Pribadi --}}
-                <section class="bg-white rounded-2xl border border-[#E9E9E9] overflow-hidden">
-                    <div class="flex items-center gap-3 px-4 sm:px-5 py-3 bg-[#FAFAFA] border-b border-[#F0F0F0]">
-                        <span class="w-8 h-8 rounded-full bg-[#FCE7F3] flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#E91E8C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                <circle cx="12" cy="7" r="4"/>
-                            </svg>
-                        </span>
-                        <h3 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Data Pribadi</h3>
-                    </div>
-                    <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Nama Lengkap</div>
-                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->user->name ?? '-' }}</div>
-                        </div>
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">NIK</div>
-                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->nik ?? '-' }}</div>
-                        </div>
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Tempat Lahir</div>
-                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->tempat_lahir ?? '-' }}</div>
-                        </div>
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Tanggal Lahir</div>
-                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">
-                                @if($pasien->tanggal_lahir)
-                                    {{ \Carbon\Carbon::parse($pasien->tanggal_lahir)->format('d/m/Y') }}
+                    <input type="hidden" id="tinggi_badan" value="{{ optional($skrining->kondisiKesehatan)->tinggi_badan ?? '' }}">
+                    <input type="hidden" id="berat_badan" value="{{ optional($skrining->kondisiKesehatan)->berat_badan_saat_hamil ?? '' }}">
+
+                    <div class="overflow-hidden rounded-xl border border-gray-200">
+                        <div class="grid grid-cols-1 sm:grid-cols-3">
+                            <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
+                            <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Tanggal Pemeriksaan</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->created_at)->format('d F Y') }}</div>                        
+
+                            <div class="p-4 text-sm font-semibold">Tempat Pemeriksaan</div>
+                            <div class="sm:col-span-2 p-4 text-sm">
+                                @php($pkm = optional($skrining->puskesmas))
+                                @if($pkm && (bool) $pkm->is_mandiri)
+                                    <div class="font-medium">{{ $pkm->nama_puskesmas ?? '-' }}</div>
+                                    <div class="text-xs text-[#6B7280]">Bidan Mandiri — Kec. {{ $pkm->kecamatan ?? '-' }}</div>
+                                @else
+                                    @php($name = $pkm->nama_puskesmas ?? null)
+                                    <div class="font-medium">{{ $name ? (\Illuminate\Support\Str::startsWith(strtolower($name), 'puskesmas') ? $name : 'Puskesmas ' . $name) : '-' }}</div>
+                                    <div class="text-xs text-[#6B7280]">Kec. {{ $pkm->kecamatan ?? '-' }}</div>
+                                @endif
+                            </div>
+
+                            <div class="p-4 text-sm font-semibold">Nama</div>
+                            <div class="sm:col-span-2 p-4 text-sm">{{ optional(optional($skrining->pasien)->user)->name ?? '-' }}</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">NIK</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->pasien)->nik ?? '-' }}</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Golongan Darah</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->pasien)->golongan_darah ?? '-' }}</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kehamilan ke (G)</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->riwayatKehamilanGpa)->total_kehamilan ?? '-' }}</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Jumlah Persalinan (P)</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->riwayatKehamilanGpa)->total_persalinan ?? '-' }}</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Jumlah Abortus (A)</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->riwayatKehamilanGpa)->total_abortus ?? '-' }}</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Usia Kehamilan</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->kondisiKesehatan)->usia_kehamilan ? optional($skrining->kondisiKesehatan)->usia_kehamilan . ' Minggu' : '-' }}</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Taksiran Persalinan</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                                {{ optional($skrining->kondisiKesehatan)->tanggal_perkiraan_persalinan ? \Carbon\Carbon::parse(optional($skrining->kondisiKesehatan)->tanggal_perkiraan_persalinan)->format('d F Y') : '-' }}
+                            </div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Indeks Masa Tubuh (IMT)</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                                <input id="imt_result" type="text" readonly class="w-full rounded-md border px-3 py-2 text-sm" value="{{ optional($skrining->kondisiKesehatan)->imt !== null ? number_format(optional($skrining->kondisiKesehatan)->imt, 2) : '' }}" placeholder="Akan terisi otomatis oleh sistem" />
+                            </div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Status IMT</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                                <span id="imt_category" class="{{ optional($skrining->kondisiKesehatan)->status_imt ? '' : 'text-gray-400' }}">{{ optional($skrining->kondisiKesehatan)->status_imt ?? '-' }}</span>
+                            </div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Anjuran Kenaikan BB</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ optional($skrining->kondisiKesehatan)->anjuran_kenaikan_bb ?? '-' }}</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Tensi/Tekanan Darah</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                                @php($s = optional($skrining->kondisiKesehatan)->sdp)
+                                @php($d = optional($skrining->kondisiKesehatan)->dbp)
+                                @if($s && $d)
+                                    {{ $s }}/{{ $d }} mmHg
                                 @else
                                     -
                                 @endif
                             </div>
-                        </div>
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Status Perkawinan</div>
-                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->status_perkawinan ?? '-' }}</div>
-                        </div>
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Pekerjaan</div>
-                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->pekerjaan ?? '-' }}</div>
-                        </div>
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Pendidikan</div>
-                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->pendidikan ?? '-' }}</div>
-                        </div>
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Golongan Darah</div>
-                            <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->golongan_darah ?? '-' }}</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Mean Arterial Pressure (MAP)</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                                {{ optional($skrining->kondisiKesehatan)->map !== null ? number_format(optional($skrining->kondisiKesehatan)->map, 2) . ' mmHg' : '-' }}
+                            </div>
                         </div>
                     </div>
-                </section>
-
-                {{-- Kontak & Alamat --}}
-                <div class="space-y-4 sm:space-y-6">
-                    <section class="bg-white rounded-2xl border border-[#E9E9E9] overflow-hidden">
-                        <div class="flex items-center gap-3 px-4 sm:px-5 py-3 bg-[#FAFAFA] border-b border-[#F0F0F0]">
-                            <span class="w-8 h-8 rounded-full bg-[#FCE7F3] flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#E91E8C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                                    <circle cx="12" cy="10" r="3"/>
-                                </svg>
-                            </span>
-                            <h3 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Kontak & Alamat</h3>
-                        </div>
-                        <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
-                            <div class="grid grid-cols-2">
-                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">No. Telepon</div>
-                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->no_telepon ?? '-' }}</div>
-                            </div>
-                            <div class="grid grid-cols-2">
-                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">No. JKN</div>
-                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->no_jkn ?? '-' }}</div>
-                            </div>
-                            <div class="grid grid-cols-2">
-                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Provinsi</div>
-                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->PProvinsi ?? '-' }}</div>
-                            </div>
-                            <div class="grid grid-cols-2">
-                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Kabupaten/Kota</div>
-                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->PKabupaten ?? '-' }}</div>
-                            </div>
-                            <div class="grid grid-cols-2">
-                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Kecamatan</div>
-                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->PKecamatan ?? '-' }}</div>
-                            </div>
-                            <div class="grid grid-cols-2">
-                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Kelurahan/Wilayah</div>
-                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->PWilayah ?? '-' }}</div>
-                            </div>
-                            <div class="grid grid-cols-2">
-                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">RT / RW</div>
-                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">
-                                    {{ $pasien->rt ? 'RT ' . $pasien->rt : '-' }} / 
-                                    {{ $pasien->rw ? 'RW ' . $pasien->rw : '-' }}
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-2">
-                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Kode Pos</div>
-                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->kode_pos ?? '-' }}</div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {{-- Data Pelayanan --}}
-                    <section class="bg-white rounded-2xl border border-[#E9E9E9] overflow-hidden">
-                        <div class="flex items-center gap-3 px-4 sm:px-5 py-3 bg-[#FAFAFA] border-b border-[#F0F0F0]">
-                            <span class="w-8 h-8 rounded-full bg-[#FCE7F3] flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#E91E8C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                                    <polyline points="9,22 9,12 15,12 15,22"/>
-                                </svg>
-                            </span>
-                            <h3 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">Data Pelayanan</h3>
-                        </div>
-                        <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
-                            <div class="grid grid-cols-2">
-                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Pelayanan</div>
-                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->PPelayanan ?? '-' }}</div>
-                            </div>
-                            <div class="grid grid-cols-2">
-                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Karakteristik</div>
-                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->PKarakteristik ?? '-' }}</div>
-                            </div>
-                            <div class="grid grid-cols-2">
-                                <div class="px-4 sm:px-5 py-3 text-[#7C7C7C]">Pembiayaan Kesehatan</div>
-                                <div class="px-4 sm:px-5 py-3 text-[#1D1D1D] font-medium">{{ $pasien->pembiayaan_kesehatan ?? '-' }}</div>
-                            </div>
-                        </div>
-                    </section>
                 </div>
-            </div>
 
-            {{-- Action Buttons --}}
-            <div class="flex flex-col sm:flex-row justify-center items-center gap-3 pt-4 border-t border-[#E9E9E9] print-hidden">
-                <a href="{{ route('rs.dashboard') }}"
-                   class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-5 py-2.5 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] w-full sm:w-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2">
-                        <path d="M15 18l-6-6 6-6" />
-                    </svg>
-                    <span>Kembali ke Dashboard</span>
-                </a>
-            </div>
+                <div class="mt-8 rounded-2xl bg-white p-6 shadow">
+                    <h2 class="mb-4 text-xl font-semibold text-gray-800">Kontak dan Alamat</h2>
+                    <div class="overflow-hidden rounded-xl border border-gray-200">
+                        <div class="grid grid-cols-1 sm:grid-cols-3">
+                            <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
+                            <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+
+                            {{-- No. Telepon --}}
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">No. Telepon</div>
+                            <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                                {{ optional(optional($skrining->pasien)->user)->phone ?? optional($skrining->pasien)->no_telepon ?? '-' }}
+                            </div>
+
+                            {{-- No. JKN --}}
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">No. JKN</div>
+                            <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                                {{ optional($skrining->pasien)->no_jkn ?? '-' }}
+                            </div>
+
+                            {{-- Provinsi --}}
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Provinsi</div>
+                            <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                                {{ optional($skrining->pasien)->PProvinsi ?? '-' }}
+                            </div>
+
+                            {{-- Kabupaten/Kota --}}
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kabupaten/Kota</div>
+                            <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                                {{ optional($skrining->pasien)->PKabupaten ?? '-' }}
+                            </div>
+
+                            {{-- Kecamatan --}}
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kecamatan</div>
+                            <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                                {{ optional($skrining->pasien)->PKecamatan ?? '-' }}
+                            </div>
+
+                            {{-- Kelurahan/Wilayah --}}
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kelurahan/Wilayah</div>
+                            <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                                {{ optional($skrining->pasien)->PWilayah ?? '-' }}
+                            </div>
+
+                            {{-- RT / RW --}}
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">RT / RW</div>
+                            <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                                RT {{ optional($skrining->pasien)->rt ?? '-' }} / RW {{ optional($skrining->pasien)->rw ?? '-' }}
+                            </div>
+
+                            {{-- Kode Pos --}}
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kode Pos</div>
+                            <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                                {{ optional($skrining->pasien)->kode_pos ?? '-' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 rounded-2xl bg-white p-6 shadow">
+                    <h2 class="mb-4 text-xl font-semibold text-gray-800">Hasil Skrining dan Rekomendasi</h2>
+                    <div class="overflow-hidden rounded-xl border border-gray-200">
+                        <div class="grid grid-cols-1 sm:grid-cols-3">
+                            <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
+                            <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Jumlah Resiko Sedang</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $skrining->jumlah_resiko_sedang ?? 0 }}</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Jumlah Resiko Tinggi</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $skrining->jumlah_resiko_tinggi ?? 0 }}</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Pemicu Risiko Sedang</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                                @php($causesMod = $sebabSedang ?? [])
+                                @if(!empty($causesMod))
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        @foreach($causesMod as $c)
+                                            <li>{{ $c }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    -
+                                @endif
+                            </div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Pemicu Risiko Tinggi</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                                @php($causesHigh = $sebabTinggi ?? [])
+                                @if(!empty($causesHigh))
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        @foreach($causesHigh as $c)
+                                            <li>{{ $c }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    -
+                                @endif
+                            </div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Riwayat Penyakit Pasien</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                                @if(!empty($riwayatPenyakitPasien))
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        @foreach($riwayatPenyakitPasien as $item)
+                                            <li>{{ $item }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    -
+                                @endif
+                            </div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Riwayat Penyakit Keluarga</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                                @if(!empty($riwayatPenyakitKeluarga))
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        @foreach($riwayatPenyakitKeluarga as $item)
+                                            <li>{{ $item }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    -
+                                @endif
+                            </div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kesimpulan</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $skrining->kesimpulan ?? '-' }}</div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Rekomendasi</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                                @php($k = trim($skrining->kesimpulan ?? ''))
+                                @php($rek = 'Belum ada rekomendasi.')
+                                @if($k === 'Beresiko')
+                                    @php($rek = 'Waspada Pre Eklampsia. Disarankan untuk segera dirujuk ke Rumah Sakit atau Dokter. Kenali tanda-tanda bahaya dalam kehamilan seperti sakit kepala hebat, pandangan kabur, dan nyeri ulu hati. Jika mengalami tanda bahaya, segera ke fasilitas kesehatan.')
+                                @elseif($k === 'Normal' || $k === 'Aman')
+                                    @php($rek = 'Kondisi normal, tetap jaga kesehatan dan pola makan. Lakukan pemeriksaan rutin.')
+                                @elseif($k === 'Waspada')
+                                    @php($rek = 'Pantau kondisi secara berkala. Kenali tanda-tanda bahaya dan segera hubungi fasilitas kesehatan jika muncul.')
+                                @endif
+                                {{ $rek }}
+                            </div>
+
+                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Catatan</div>
+                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ 'Belum ada catatan.' }}</div>
+                        </div>
+                    </div>
+
+                    {{-- Action Button --}}
+                    <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
+                        <a href="{{ route('rs.dashboard') }}"
+                           class="rounded-lg bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
+                            Kembali
+                        </a>
+                        
+                        {{-- If needed, add process button here --}}
+                    </div>
+                </div>
+            @endif
 
             <footer class="text-center text-[11px] text-[#7C7C7C] py-4 print-hidden">
                 © 2025 Dinas Kesehatan Kota Depok — DeLISA

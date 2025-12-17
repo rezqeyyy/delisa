@@ -309,10 +309,169 @@ class DashboardController extends Controller
     public function showPasien($id)
     {
         try {
-            $pasien = Pasien::with('user')->findOrFail($id);
+            $pasien = Pasien::with(['user', 'skrinings' => function ($q) {
+                $q->latest();
+            }])->findOrFail($id);
 
-            return view('rs.show', compact('pasien'));
+            $skrining = $pasien->latestSkrining;
+
+            // Jika tidak ada skrining, kembalikan view dengan data minimal
+            if (!$skrining) {
+                return view('rs.show', compact('pasien', 'skrining'));
+            }
+
+            // --- Logika dari Puskesmas\SkriningController@show ---
+
+            $skrining->load(['kondisiKesehatan', 'riwayatKehamilanGpa', 'puskesmas']);
+
+            $kk = optional($skrining->kondisiKesehatan);
+            $gpa = optional($skrining->riwayatKehamilanGpa);
+
+            $sebabSedang = [];
+            $sebabTinggi = [];
+
+            // 1. Usia Ibu
+            $umur = null;
+            try {
+                $tgl = optional($pasien)->tanggal_lahir;
+                if ($tgl) {
+                    $umur = \Carbon\Carbon::parse($tgl)->age;
+                }
+            } catch (\Throwable $e) {
+                $umur = null;
+            }
+            if ($umur !== null && $umur >= 35) {
+                $sebabSedang[] = "Usia ibu {$umur} tahun (≥35)";
+            }
+
+            // 2. Primigravida
+            if ($gpa && intval($gpa->total_kehamilan) === 1) {
+                $sebabSedang[] = 'Primigravida (G=1)';
+            }
+
+            // 3. IMT
+            if ($kk && $kk->imt !== null && floatval($kk->imt) > 30) {
+                $sebabSedang[] = 'IMT ' . number_format(floatval($kk->imt), 2) . ' kg/m² (>30)';
+            }
+
+            // 4. Tekanan Darah
+            $sistol = $kk->sdp ?? null;
+            $diastol = $kk->dbp ?? null;
+            if (($sistol !== null && $sistol >= 130) || ($diastol !== null && $diastol >= 90)) {
+                $sebabTinggi[] = 'Tekanan darah di atas 130/90 mHg';
+            }
+
+            // 5. Kuisioner Risiko Sedang
+            $preModerateNames = [
+                'Apakah kehamilan ini adalah kehamilan kedua/lebih tetapi bukan dengan suami pertama (Pernikahan kedua atau lebih)',
+                'Apakah kehamilan ini dengan Teknologi Reproduksi Berbantu (Bayi tabung, Obat induksi ovulasi)',
+                'Apakah kehamilan ini berjarak 10 tahun dari kehamilan sebelumnya',
+                'Apakah ibu kandung atau saudara perempuan anda memiliki riwayat pre-eklampsia',
+            ];
+            $preModerateLabels = [
+                $preModerateNames[0] => 'Kehamilan kedua/lebih bukan dengan suami pertama',
+                $preModerateNames[1] => 'Teknologi reproduksi berbantu',
+                $preModerateNames[2] => 'Jarak 10 tahun dari kehamilan sebelumnya',
+                $preModerateNames[3] => 'Riwayat keluarga preeklampsia',
+            ];
+
+            $preKuisModerate = DB::table('kuisioner_pasiens')
+                ->where('status_soal', 'pre_eklampsia')
+                ->whereIn('nama_pertanyaan', $preModerateNames)
+                ->get(['id', 'nama_pertanyaan'])
+                ->keyBy('nama_pertanyaan');
+
+            $preJawabModerate = DB::table('jawaban_kuisioners')
+                ->where('skrining_id', $skrining->id)
+                ->whereIn('kuisioner_id', $preKuisModerate->pluck('id')->all())
+                ->get(['kuisioner_id', 'jawaban'])
+                ->keyBy('kuisioner_id');
+
+            foreach ($preModerateNames as $nm) {
+                $id = optional($preKuisModerate->get($nm))->id;
+                if ($id && (bool) optional($preJawabModerate->get($id))->jawaban) {
+                    $sebabSedang[] = $preModerateLabels[$nm] ?? $nm;
+                }
+            }
+
+            // 6. Kuisioner Risiko Tinggi
+            $preHighNames = [
+                'Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya',
+                'Apakah kehamilan anda saat ini adalah kehamilan kembar',
+                'Apakah anda memiliki diabetes dalam masa kehamilan',
+                'Apakah anda memiliki penyakit ginjal',
+                'Apakah anda memiliki penyakit autoimun, SLE',
+                'Apakah anda memiliki penyakit Anti Phospholipid Syndrome',
+            ];
+            $preHighLabels = [
+                $preHighNames[0] => 'Riwayat preeklampsia sebelumnya',
+                $preHighNames[1] => 'Kehamilan kembar',
+                $preHighNames[2] => 'Diabetes dalam kehamilan',
+                $preHighNames[3] => 'Penyakit ginjal',
+                $preHighNames[4] => 'Penyakit autoimun (SLE)',
+                $preHighNames[5] => 'Anti Phospholipid Syndrome',
+            ];
+
+            $preKuisHigh = DB::table('kuisioner_pasiens')
+                ->where('status_soal', 'pre_eklampsia')
+                ->whereIn('nama_pertanyaan', $preHighNames)
+                ->get(['id', 'nama_pertanyaan'])
+                ->keyBy('nama_pertanyaan');
+
+            $preJawabHigh = DB::table('jawaban_kuisioners')
+                ->where('skrining_id', $skrining->id)
+                ->whereIn('kuisioner_id', $preKuisHigh->pluck('id')->all())
+                ->get(['kuisioner_id', 'jawaban'])
+                ->keyBy('kuisioner_id');
+
+            foreach ($preHighNames as $nm) {
+                $id = optional($preKuisHigh->get($nm))->id;
+                if ($id && (bool) optional($preJawabHigh->get($id))->jawaban) {
+                    $sebabTinggi[] = $preHighLabels[$nm] ?? $nm;
+                }
+            }
+
+            // 7. Riwayat Penyakit Pasien & Keluarga
+            $riwayatPenyakitPasien = DB::table('jawaban_kuisioners as j')
+                ->join('kuisioner_pasiens as k', 'k.id', '=', 'j.kuisioner_id')
+                ->where('j.skrining_id', $skrining->id)
+                ->where('k.status_soal', 'individu')
+                ->where('j.jawaban', true)
+                ->select('k.nama_pertanyaan', 'j.jawaban_lainnya')
+                ->get()
+                ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: ' . $r->jawaban_lainnya) : $r->nama_pertanyaan)
+                ->values()->all();
+
+            $riwayatPenyakitKeluarga = DB::table('jawaban_kuisioners as j')
+                ->join('kuisioner_pasiens as k', 'k.id', '=', 'j.kuisioner_id')
+                ->where('j.skrining_id', $skrining->id)
+                ->where('k.status_soal', 'keluarga')
+                ->where('j.jawaban', true)
+                ->select('k.nama_pertanyaan', 'j.jawaban_lainnya')
+                ->get()
+                ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: ' . $r->jawaban_lainnya) : $r->nama_pertanyaan)
+                ->values()->all();
+
+            // Hitung status risiko untuk UI
+            $resikoSedangCount = (int)($skrining->jumlah_resiko_sedang ?? 0);
+            $resikoTinggiCount = (int)($skrining->jumlah_resiko_tinggi ?? 0);
+            $isBerisiko = ($resikoTinggiCount >= 1 || $resikoSedangCount >= 2);
+            
+            // Cek apakah sudah ada rujukan
+            $hasReferral = RujukanRs::where('skrining_id', $skrining->id)->exists();
+
+            return view('rs.show', compact(
+                'pasien', 
+                'skrining', 
+                'sebabSedang', 
+                'sebabTinggi', 
+                'riwayatPenyakitPasien', 
+                'riwayatPenyakitKeluarga',
+                'isBerisiko',
+                'hasReferral'
+            ));
         } catch (\Exception $e) {
+            Log::error($e->getMessage());
             return redirect()
                 ->route('rs.dashboard')
                 ->with('error', 'Data pasien tidak ditemukan');
