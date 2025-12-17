@@ -114,7 +114,7 @@
                                     <th class="px-4 py-2 font-semibold">Panjang (cm)</th>
                                     <th class="px-4 py-2 font-semibold">Lingkar Kepala (cm)</th>
                                     <th class="px-4 py-2 font-semibold">Kondisi Ibu</th>
-                                    <th class="px-4 py-2 font-semibold">Aksi</th>
+                                    <!-- <th class="px-4 py-2 font-semibold">Aksi</th> -->
                                 </tr>
                             </thead>
                             <tbody class="min-w-full text-xs sm:text-sm">
@@ -130,7 +130,7 @@
                                         <td class="px-4 py-2">{{ $anak->lingkar_kepala_anak }}</td>
                                         <td class="px-4 py-2">{{ $anak->kondisi_ibu ?? '-' }}</td>
                                         <td class="px-4 py-2">
-                                            <div class="inline-flex items-center gap-2 whitespace-nowrap">
+                                            <!-- <div class="inline-flex items-center gap-2 whitespace-nowrap">
                                                 <a href="{{ route('bidan.pasien-nifas.anak.edit', ['id' => $pasienNifas->id, 'anakId' => $anak->id]) }}"
                                                     class="px-3 py-1.5 rounded-full border text-xs border-[#E5E5E5]">Edit</a>
                                                 <form
@@ -143,7 +143,7 @@
                                                     <button type="button"
                                                         class="js-delete-skrining-btn px-3 py-1.5 rounded-full border border-red-200 text-red-700 hover:bg-red-50 text-xs">Hapus</button>
                                                 </form>
-                                            </div>
+                                            </div> -->
                                         </td>
                                     </tr>
                                 @empty

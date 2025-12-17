@@ -39,8 +39,6 @@
 
             <!-- Konten Pasien Nifas -->
             <div class="flex-1 flex flex-col">
-
-
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
                         <div class="flex items-center justify-between mb-3">
@@ -358,7 +356,7 @@
 
 
                                                 <!-- Tombol Hapus (tetap delete-confirm.js bidan) -->
-                                                @if (Route::has('bidan.pasien-nifas.destroy'))
+                                                <!-- @if (Route::has('bidan.pasien-nifas.destroy'))
                                                     <form
                                                         action="{{ route('bidan.pasien-nifas.destroy', $pasien->id) }}"
                                                         method="POST" class="inline js-delete-skrining-form">
@@ -388,7 +386,7 @@
                                                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m-4 0h14" />
                                                         </svg>
                                                     </span>
-                                                @endif
+                                                @endif -->
                                             </div>
                                         </td>
                                     </tr>
