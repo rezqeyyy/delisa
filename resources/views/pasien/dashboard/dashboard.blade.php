@@ -100,24 +100,16 @@
 
                     <div class="flex items-center gap-2 w-full md:w-auto min-w-0 flex-wrap md:justify-start">
                         <form id="skriningFilterForm" action="{{ route('pasien.dashboard') }}" method="GET" class="w-full md:w-auto">
-                            <!-- <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"> -->
-                                <div class="relative">
-                                    @php $currentStatus = $status ?? ''; @endphp
-                                    <select id="statusSelect" name="status"
-                                            class="w-full pl-3 pr-9 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
-                                        <option value="" {{ $currentStatus === '' ? 'selected' : '' }}>Cari Berdasarkan Status</option>
-                                        <option value="Tidak berisiko preeklampsia" {{ $currentStatus === 'Tidak berisiko preeklampsia' ? 'selected' : '' }}>Normal</option>
-                                        <option value="Berisiko preeklampsia" {{ $currentStatus === 'Berisiko preeklampsia' ? 'selected' : '' }}>Berisiko</option>
-                                        <option value="Skrining belum selesai" {{ $currentStatus === 'Skrining belum selesai' ? 'selected' : '' }}>Skrining belum selesai</option>
-                                    </select>
-                                </div>
-                                <!-- <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}"
-                                       class="w-full pl-3 pr-3 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40"
-                                       onchange="if(this.value && this.form.date_to.value) this.form.submit();" />
-                                <input type="date" name="date_to" value="{{ $dateTo ?? '' }}"
-                                       class="w-full pl-3 pr-3 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40"
-                                       onchange="if(this.value && this.form.date_from.value) this.form.submit();" />
-                            </div> -->
+                            <div class="relative">
+                                @php $currentStatus = $status ?? ''; @endphp
+                                <select id="statusSelect" name="status"
+                                        class="w-full pl-3 pr-9 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
+                                    <option value="" {{ $currentStatus === '' ? 'selected' : '' }}>Cari Berdasarkan Status</option>
+                                    <option value="Tidak berisiko preeklampsia" {{ $currentStatus === 'Tidak berisiko preeklampsia' ? 'selected' : '' }}>Normal</option>
+                                    <option value="Berisiko preeklampsia" {{ $currentStatus === 'Berisiko preeklampsia' ? 'selected' : '' }}>Berisiko</option>
+                                    <option value="Skrining belum selesai" {{ $currentStatus === 'Skrining belum selesai' ? 'selected' : '' }}>Skrining belum selesai</option>
+                                </select>
+                            </div>
                         </form>
 
                         <!-- Tombol Ajukan Skrining -->
@@ -135,22 +127,20 @@
                         </a>
                     </div>
                 </div>
-
+                <br>
                 <!-- Tabel daftar skrining -->
-                <div class="overflow-x-auto mt-4 md:mt-6">
-                    <table class="w-full table-auto border-separate
-                        sm:border-spacing-x-[12px] sm:border-spacing-y-[6px]
-                        md:border-spacing-x-[20px] md:border-spacing-y-[8px]
-                        lg:border-spacing-x-[24px] lg:border-spacing-y-[10px]">
-                        <thead>
-                            <tr>
-                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">No</th>
-                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">NIK</th>
-                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Tanggal Skrining</th>
-                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Alamat</th>
-                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">No Telp</th>
-                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">Kesimpulan</th>
-                                <th class="px-3 py-2 md:px-6 md:py-3 text-left whitespace-nowrap">View Detail</th>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
+                            <tr class="align-middle">
+                                <th class="px-3 py-2">No.</th>
+                                <th class="px-3 py-2">NIK</th>
+                                <th class="px-3 py-2">No Telp</th>
+                                <th class="px-3 py-2">Tanggal Lahir</th>
+                                <th class="px-3 py-2">Alamat</th>
+                                <th class="px-3 py-2">Kesimpulan</th>
+                                <th class="px-3 py-2">Status Verifikasi</th>
+                                <th class="px-3 py-2">View Detail</th>
                             </tr>
                         </thead>
 
@@ -171,20 +161,31 @@
                                 $editUrl = route('pasien.skrining.edit', $skrining->id);
                                 $viewUrl = route('pasien.skrining.show', $skrining->id);
                                 @endphp
-                                <tr class="align-middle">
-
-                                    <td class="px-3 py-3 md:px-6 md:py-4 tabular-nums">{{ $loop->iteration }}</td>
-                                    <td class="px-3 py-3 md:px-6 md:py-4 tabular-nums">{{ $nik }}</td>
-                                    <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $tanggal }}</td>
-                                    <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $alamatDisplay }}</td>
-                                    <td class="px-3 py-3 md:px-6 md:py-4 text-[#1D1D1D]">{{ $phone }}</td>
-                                    <td class="px-3 py-3 md:px-6 md:py-4">
-                                        <span class="inline-flex items-center rounded-full px-4 h-8 text-sm font-semibold leading-none whitespace-nowrap {{ $cls }}">
+                                <tr class="text-center">
+                                    <td class="px-3 py-3">{{ $loop->iteration }}</td>
+                                    <td class="px-3 py-3">{{ $nik }}</td>
+                                    <td class="px-3 py-3 text-[#1D1D1D]">{{ $phone }}</td>
+                                    <td class="px-3 py-3 text-[#1D1D1D]">{{ $tanggal }}</td>
+                                    <td class="px-3 py-3 text-[#1D1D1D]">{{ $alamatDisplay }}</td>
+                                    <td class="px-3 py-3">
+                                        <span class="inline-flex items-center justify-center rounded-full px-4 h-8 text-sm font-medium leading-none whitespace-nowrap {{ $cls }}">
                                             {{ $conclusion }}
                                         </span>
                                     </td>
+                                    <td class="px-3 py-3">
+                                        @if(!empty($skrining->is_verified))
+                                            <span class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                                </svg>
+                                                Terverifikasi
+                                            </span>
+                                        @else
+                                            <span class="text-xs text-gray-400">-</span>
+                                        @endif
+                                    </td>
                                     <td class="px-3 py-3 md:px-6 md:py-4">
-                                        <div class="flex items-center gap-2">
+                                        <div class="flex justify-center items-center gap-2">
                                             @if(empty($skrining->has_referral) && empty($skrining->is_verified))
                                                 <a href="{{ $editUrl }}" class="px-4 py-1.5 rounded-full bg-white border border-[#E5E5E5] hover:bg-[#F0F0F0]">Edit</a>
                                             @else
@@ -207,10 +208,10 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" class="px-4 py-8 text-center text-[#7C7C7C]">
+                                    <td colspan="8" class="px-4 py-8 text-center text-[#7C7C7C]">
                                         Belum ada data skrining.
                                     </td>
-                                </tr>
+                                </tr>                                
                             @endforelse
                         </tbody>
                     </table>

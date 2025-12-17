@@ -66,14 +66,14 @@
                         </form>
                         <table class="w-full text-sm">
                             <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">No</th>
-                                    <th class="px-4 py-3 text-left">Nama Pasien</th>
-                                    <th class="px-4 py-3 text-left">NIK</th>
-                                    <th class="px-4 py-3 text-left">Rumah Sakit Tujuan</th>
-                                    <th class="px-4 py-3 text-left">Tanggal Rujukan</th>
-                                    <th class="px-4 py-3 text-left">Status</th>
-                                    <th class="px-4 py-3 text-left">Aksi</th>
+                                <tr class="text-left">
+                                    <th class="px-4 py-3">No</th>
+                                    <th class="px-4 py-3">Nama Pasien</th>
+                                    <th class="px-4 py-3">NIK</th>
+                                    <th class="px-4 py-3">Rumah Sakit Tujuan</th>
+                                    <th class="px-4 py-3">Tanggal Rujukan</th>
+                                    <th class="px-4 py-3">Status</th>
+                                    <th class="px-4 py-3">View Detail</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#E9E9E9]">
@@ -120,14 +120,13 @@
                                                 }
                                             @endphp
                                             <span
-                                                class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[11px] font-semibold leading-tight text-center whitespace-normal break-words max-w-[160px] {{ $statusClass }}">
+                                                class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[11px] font-semibold leading-tight text-center whitespace-nowrap {{ $statusClass }}">
                                                 {{ $statusText }}
                                             </span>
                                         </td>
                                         <td class="px-4 py-3 align-top">
                                             <a href="{{ route('puskesmas.rujukan.show', $rujukan->id) }}"
-                                                class="px-4 py-2 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-sm hover:bg-gray-50 transition-colors">
-                                                Lihat Detail
+                                                class="px-4 py-1.5 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">View
                                             </a>
                                         </td>
                                     </tr>
