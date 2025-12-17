@@ -126,26 +126,14 @@
                             </p>
                         </div>
                         <a href="{{ route('rs.pasien-nifas.detail', $pasienNifas->id) }}"
-                           class="inline-flex items-center gap-2 rounded-full border border-[#D9D9D9] bg-white px-4 py-1.5 text-xs font-semibold text-[#1D1D1D] hover:bg-[#F8F8F8]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10" />
-                                <circle cx="12" cy="12" r="3" />
-                                <path d="M12 2v2" />
-                                <path d="M12 20v2" />
-                                <path d="m4.93 4.93 1.41 1.41" />
-                                <path d="m17.66 17.66 1.41 1.41" />
-                                <path d="M2 12h2" />
-                                <path d="M20 12h2" />
-                                <path d="m6.34 17.66-1.41 1.41" />
-                                <path d="m19.07 4.93-1.41 1.41" />
-                            </svg>
+                            class="inline-flex items-center gap-2 rounded-full border border-[#D9D9D9] bg-white px-4 py-1.5 text-xs font-semibold text-[#1D1D1D] hover:bg-[#F8F8F8]">
                             <span>Lihat Detail</span>
                         </a>
                     </div>
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs sm:text-sm">
-                            <thead class="text-[#7C7C7C] bg-[#FAFAFA]">
+                            <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
                                 <tr class="text-left">
                                     <th class="px-3 py-2">Anak Ke</th>
                                     <th class="px-3 py-2">Nama Anak</th>
@@ -532,21 +520,12 @@
             {{-- Button Actions --}}
             <div class="flex flex-col sm:flex-row sm:justify-between gap-3">
                 <a href="{{ route('rs.pasien-nifas.index') }}"
-                   class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2">
-                        <path d="M15 18l-6-6 6-6" />
-                    </svg>
+                   class="rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
                     <span>Kembali</span>
                 </a>
 
                 <button type="submit" form="formAnakPasien"
-                        class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-[#C2185B]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2">
-                        <path d="M12 5v14" />
-                        <path d="M5 12h14" />
-                    </svg>
+                    class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-[#C2185B]">
                     <span>Simpan Data</span>
                 </button>
             </div>

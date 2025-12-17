@@ -411,20 +411,21 @@
                 <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2 print-hidden">
                     <a href="{{ route('rs.skrining.index') }}"
                         class="rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
-                        <span>Kembali ke List</span>
+                        <span>Kembali</span>
                     </a>
 
                     <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         {{-- Tombol Cetak PDF --}}
                         <a href="{{ route('rs.skrining.exportPdf', $skrining->id) }}"
-                            class="inline-flex items-center justify-center gap-2 rounded-full border border-[#DC2626] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#DC2626] hover:bg-[#FEE2E2] w-full sm:w-auto">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14,2 14,8 20,8" />
-                                <line x1="16" y1="13" x2="8" y2="13" />
-                                <line x1="16" y1="17" x2="8" y2="17" />
-                                <polyline points="10,9 9,9 8,9" />
+                            class="inline-flex items-center gap-2 px-4 h-10
+                                bg-red-600 text-white rounded-full
+                                hover:bg-red-700 transition text-sm font-medium">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
+                                <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
+                                <path d="M9 15h6"/>
+                                <path d="M12 18V12"/>
                             </svg>
                             <span>Unduh PDF</span>
                         </a>

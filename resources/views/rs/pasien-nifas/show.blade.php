@@ -58,10 +58,10 @@
                         </svg>
                     </a>
                     <div>
-                        <h1 class="text-lg sm:text-xl font-semibold text-[#1D1D1D]">
+                        <h1 class="ml-3 text-3xl font-bold text-gray-800">
                             Data Pasien Nifas — {{ $pasienNifas->pasien->user->name ?? 'N/A' }}
                         </h1>
-                        <p class="text-xs text-[#7C7C7C] mt-1">
+                        <p class="ml-3 text-l text-[#7C7C7C] mt-1">
                             Ringkasan nifas ibu, riwayat persalinan, dan kondisi bayi
                         </p>
                     </div>
@@ -137,199 +137,113 @@
             {{-- =========================
                  1. INFORMASI PASIEN
                ========================== --}}
-            <section class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">
-                        Informasi Pasien dan Data Kehamilan
-                    </h2>
-                </div>
 
-                <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
-                    {{-- Header bar --}}
-                    <div
-                        class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
-                        <div class="px-4 sm:px-6 py-3 border-r border-[#F0F0F0]">
-                            Informasi
-                        </div>
-                        <div class="px-4 sm:px-6 py-3">
-                            Data
-                        </div>
-                    </div>
+            <div class="rounded-2xl bg-white p-6 shadow">
+                <h2 class="mb-4 text-xl font-semibold text-gray-800">Informasi Pasien dan Data Kehamilan</h2>
 
-                    {{-- Rows --}}
-                    <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
-                        {{-- Tanggal Pemeriksaan --}}
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                Tanggal Pemeriksaan
-                            </div>
-                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
-                                @if ($pasienNifas->tanggal_mulai_nifas)
-                                    {{ \Carbon\Carbon::parse($pasienNifas->tanggal_mulai_nifas)->translatedFormat('d F Y') }}
-                                @else
-                                    -
-                                @endif
-                            </div>
+                <div class="overflow-hidden rounded-xl border border-gray-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-3">
+                        <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+
+                        <div class="p-4 text-sm font-semibold">Tanggal Pemeriksaan</div>            
+                        <div class="sm:col-span-2 p-4 text-sm">
+                            @if ($pasienNifas->tanggal_mulai_nifas)
+                                {{ \Carbon\Carbon::parse($pasienNifas->tanggal_mulai_nifas)->translatedFormat('d F Y') }}
+                            @else
+                                -
+                            @endif
                         </div>
 
-                        {{-- Nama --}}
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                Nama
-                            </div>
-                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
-                                {{ $pasienNifas->pasien->user->name ?? '-' }}
-                            </div>
+                        <div class="p-4 text-sm font-semibold">Nama</div>  
+                        <div class="sm:col-span-2 p-4 text-sm">
+                            {{ $pasienNifas->pasien->user->name ?? '-' }}
                         </div>
 
-                        {{-- NIK --}}
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                NIK
-                            </div>
-                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
-                                {{ $pasienNifas->pasien->nik ?? '-' }}
-                            </div>
+                        <div class="p-4 text-sm font-semibold">NIK</div>  
+                        <div class="sm:col-span-2 p-4 text-sm">
+                            {{ $pasienNifas->pasien->nik ?? '-' }}
                         </div>
 
-                        {{-- Status Risiko Pre-Eklampsia --}}
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                Status Risiko Pre-Eklampsia
-                            </div>
-                            <div class="px-4 sm:px-6 py-3">
-                                <span
-                                    class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold {{ $badgeClass }}">
-                                    {{ $statusDisplay }}
-                                </span>
-                            </div>
+                        <div class="p-4 text-sm font-semibold">Nomor Telepon</div>  
+                        <div class="sm:col-span-2 p-4 text-sm">
+                            {{ $pasienNifas->pasien->user->phone ?? ($pasienNifas->pasien->no_telepon ?? '-') }}
                         </div>
 
-                        {{-- Usia Kehamilan --}}
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                Usia Kehamilan
-                            </div>
-                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
-                                @if ($anakPertama)
-                                    {{ $anakPertama->usia_kehamilan_saat_lahir }} Minggu
-                                @else
-                                    -
-                                @endif
-                            </div>
+                        <div class="p-4 text-sm font-semibold">Status Risiko Preeklampsia</div>  
+                        <div class="sm:col-span-2 p-4 text-sm">
+                            <span
+                                class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold {{ $badgeClass }}">
+                                {{ $statusDisplay }}
+                            </span>
                         </div>
 
-                        {{-- Alamat --}}
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                Alamat
-                            </div>
-                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D] leading-relaxed">
-                                {{ $pasienNifas->pasien->PWilayah ?? '-' }},
-                                {{ $pasienNifas->pasien->PKecamatan ?? '-' }},
-                                {{ $pasienNifas->pasien->PKabupaten ?? '-' }},
-                                {{ $pasienNifas->pasien->PProvinsi ?? '-' }}
-                            </div>
+                        <div class="p-4 text-sm font-semibold">Usia Kehamilan</div>  
+                        <div class="sm:col-span-2 p-4 text-sm">
+                            @if ($anakPertama)
+                                {{ $anakPertama->usia_kehamilan_saat_lahir }} Minggu
+                            @else
+                                -
+                            @endif
                         </div>
 
-                        {{-- Nomor Telepon --}}
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                Nomor Telepon
-                            </div>
-                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
-                                {{ $pasienNifas->pasien->user->phone ?? ($pasienNifas->pasien->no_telepon ?? '-') }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+                        <div class="p-4 text-sm font-semibold">Alamat</div>  
+                        <div class="sm:col-span-2 p-4 text-sm">
+                            {{ $pasienNifas->pasien->PWilayah ?? '-' }},
+                            {{ $pasienNifas->pasien->PKecamatan ?? '-' }},
+                            {{ $pasienNifas->pasien->PKabupaten ?? '-' }},
+                            {{ $pasienNifas->pasien->PProvinsi ?? '-' }}
+                        </div>  
+                    </div>                  
+                </div>         
+            </div>
 
             {{-- =========================
                  2. DATA ANAK (RINGKASAN)
                ========================== --}}
-            <section class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
-                <div class="mb-4">
-                    <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D]">
-                        Ringkasan Data Anak
-                    </h2>
-                </div>
 
-                <div class="bg-white rounded-3xl shadow-sm border border-[#ECECEC] overflow-hidden">
-                    {{-- Header bar --}}
-                    <div
-                        class="grid grid-cols-2 text-[11px] sm:text-xs font-semibold text-[#7C7C7C] bg-[#FAFAFA] border-b border-[#F0F0F0]">
-                        <div class="px-4 sm:px-6 py-3 border-r border-[#F0F0F0]">
-                            Informasi
-                        </div>
-                        <div class="px-4 sm:px-6 py-3">
-                            Data
-                        </div>
-                    </div>
+            <div class="rounded-2xl bg-white p-6 shadow">
+                <h2 class="mb-4 text-xl font-semibold text-gray-800">Ringkasan Data Anak</h2>
 
-                    <div class="divide-y divide-[#F3F3F3] text-xs sm:text-sm">
-                        {{-- Jumlah Anak --}}
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                Jumlah Anak
-                            </div>
-                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
-                                {{ $totalAnak }}
-                            </div>
+                <div class="overflow-hidden rounded-xl border border-gray-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-3">
+                        <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+
+                        <div class="p-4 text-sm font-semibold">Jumlah Anak</div>            
+                        <div class="sm:col-span-2 p-4 text-sm">
+                            {{ $totalAnak }}
                         </div>
 
-                        {{-- Jumlah BBLR --}}
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                Jumlah BBLR (&lt; 2,5 kg)
-                            </div>
-                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
-                                {{ $anakBBLR }}
-                            </div>
+                        <div class="p-4 text-sm font-semibold">Jumlah BBLR (&lt; 2,5 kg)</div>  
+                        <div class="sm:col-span-2 p-4 text-sm">
+                            {{ $anakBBLR }}
                         </div>
 
-                        {{-- Jumlah Prematur --}}
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                Jumlah Prematur (&lt; 37 minggu)
-                            </div>
-                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
-                                {{ $anakPreterm }}
-                            </div>
+                        <div class="p-4 text-sm font-semibold">Jumlah Prematur (&lt; 37 minggu)</div>  
+                        <div class="sm:col-span-2 p-4 text-sm">
+                            {{ $anakPreterm }}
                         </div>
 
-                        {{-- Jumlah Riwayat Komplikasi --}}
-                        <div class="grid grid-cols-2">
-                            <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                Jumlah dengan Riwayat Komplikasi Ibu
-                            </div>
-                            <div class="px-4 sm:px-6 py-3 text-[#1D1D1D]">
-                                {{ $anakRiwayat }}
-                            </div>
+                        <div class="p-4 text-sm font-semibold">Jumlah dengan Riwayat Komplikasi Ibu</div>  
+                        <div class="sm:col-span-2 p-4 text-sm">
+                            {{ $pasienNifas->pasien->user->phone ?? ($pasienNifas->pasien->no_telepon ?? '-') }}
                         </div>
 
-                        {{-- Kondisi Ibu (Hanya untuk Beresiko) --}}
-                        @if ($isBeresiko)
-                            <div class="grid grid-cols-2 bg-red-50/50">
-                                <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                    Kondisi Ibu - Aman
-                                </div>
-                                <div class="px-4 sm:px-6 py-3 text-emerald-700 font-semibold">
-                                    {{ $kondisiAman }} anak
-                                </div>
+                        @if ($isBeresiko)                            
+                            <div class="p-4 text-sm font-semibold">Kondisi Ibu - Aman</div>  
+                            <div class="sm:col-span-2 p-4 text-sm">
+                                {{ $kondisiAman }} anak
                             </div>
-                            <div class="grid grid-cols-2 bg-red-50/50">
-                                <div class="px-4 sm:px-6 py-3 text-[#4B4B4B] border-r border-[#F5F5F5]">
-                                    Kondisi Ibu - Perlu Tindak Lanjut
-                                </div>
-                                <div class="px-4 sm:px-6 py-3 text-red-700 font-semibold">
-                                    {{ $kondisiPerluTindakLanjut }} anak
-                                </div>
+
+                            <div class="p-4 text-sm font-semibold">Kondisi Ibu - Perlu Tindak Lanjut</div>  
+                            <div class="sm:col-span-2 p-4 text-sm">
+                                {{ $kondisiPerluTindakLanjut }} anak
                             </div>
                         @endif
-                    </div>
-                </div>
-            </section>
+                    </div>                  
+                </div>         
+            </div>            
 
             {{-- =========================
                  3. DETAIL SETIAP ANAK
@@ -358,7 +272,7 @@
                         @endphp
 
 
-                        <div class="bg-[#F3F3F3] rounded-3xl p-4 sm:p-6">
+                        <div class="bg-white rounded-3xl p-4 sm:p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center gap-3">
                                     <div
@@ -430,6 +344,7 @@
 
                                     {{-- ⭐ Puskesmas Tujuan --}}
                                     <div class="p-4 pt-0">
+                                        <br>
                                         <div class="rounded-2xl border border-[#F0F0F0] bg-white px-4 py-3">
                                             <p class="text-[10px] text-[#7C7C7C] mb-1">Puskesmas Tujuan</p>
 
@@ -455,7 +370,7 @@
 
 
                                     {{-- Info Tambahan --}}
-                                    <div class="grid grid-cols-3 gap-4 p-4 bg-[#FAFAFA]">
+                                    <div class="grid grid-cols-3 gap-4 p-4 bg-white">
                                         <div class="flex items-center gap-2">
                                             @if ($anak->memiliki_buku_kia)
                                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -594,12 +509,8 @@
             {{-- TOMBOL AKSI BAWAH --}}
             <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
                 <a href="{{ route('rs.pasien-nifas.index') }}"
-                    class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] w-full sm:w-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <path d="M15 18l-6-6 6-6" />
-                    </svg>
-                    <span>Kembali ke List</span>
+                    class="rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
+                    <span>Kembali</span>
                 </a>
 
                 @if ($pasienNifas->anakPasien->count() > 0)

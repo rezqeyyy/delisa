@@ -251,7 +251,7 @@
                     {{-- Action Button --}}
                     <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
                         <a href="{{ route('rs.skrining.index') }}"
-                           class="rounded-lg border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
+                           class="rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
                             Kembali
                         </a>
                     </div>

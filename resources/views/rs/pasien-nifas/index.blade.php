@@ -86,13 +86,22 @@
                             </button>
 
                             <a href="{{ route('rs.pasien-nifas.create') }}" 
-                               class="px-5 py-2 rounded-full bg-[#FF5BAE] text-white font-semibold hover:bg-[#E91E8C] transition-colors">
-                                + Tambah Pasien
+                               class="px-5 py-2 rounded-full bg-[#E91E8C] text-white font-semibold hover:bg-[#C2185B] transition-colors">
+                                Tambah Pasien
                             </a>
 
                             <a href="{{ route('rs.pasien-nifas.download-pdf') }}" 
-                               class="px-5 py-2 rounded-full bg-[#E9E9E9] text-[#1D1D1D] font-semibold hover:bg-[#D9D9D9] transition-colors">
-                                Download Data
+                                class="inline-flex items-center gap-2 px-4 h-10
+                                    bg-red-600 text-white rounded-full
+                                    hover:bg-red-700 transition text-sm font-medium">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
+                                    <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
+                                    <path d="M9 15h6"/>
+                                    <path d="M12 18V12"/>
+                                </svg>
+                                Download PDF
                             </a>
                         </div>
                     </div>
