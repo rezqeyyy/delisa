@@ -42,7 +42,7 @@
                     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border {{ $badgeClass }}">
                         <span class="text-xs font-semibold">{{ $statusDisplay }}</span>
                     </div>
-                    <a href="{{ route('bidan.pasien-nifas.anak.create', $pasienNifas->id) }}"
+                    <!-- <a href="{{ route('bidan.pasien-nifas.anak.create', $pasienNifas->id) }}"
                         class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#C2185B]">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2">
@@ -50,7 +50,7 @@
                             <path d="M5 12h14" />
                         </svg>
                         <span>Tambah Data Anak</span>
-                    </a>
+                    </a> -->
                 </div>
             </div>
 
@@ -232,40 +232,41 @@
 
                             <div class="mt-3">
                                 @if ($firstAnakId)
-                                    @if ($isBlockedByDeath)
-                                        <button type="button"
-                                            class="inline-flex items-center rounded-full bg-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 cursor-not-allowed"
-                                            disabled
-                                            title="Tidak dapat mencatat KF{{ $jk }} karena pasien wafat pada KF{{ $deathKeVal }}">
-                                            KF{{ $jk }} terkunci
-                                        </button>
-                                    @elseif ($isDone)
-                                        <button type="button"
-                                            class="inline-flex items-center rounded-full bg-emerald-100 px-4 py-2 text-xs font-semibold text-emerald-700 border border-emerald-200 cursor-not-allowed"
-                                            disabled title="KF{{ $jk }} sudah dicatat">
-                                            KF{{ $jk }} sudah selesai
-                                        </button>
-                                    @elseif (!$canDoKf)
-                                        <button type="button"
-                                            class="inline-flex items-center rounded-full bg-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 cursor-not-allowed"
-                                            disabled
-                                            title="{{ $mulaiKf ? 'Belum waktunya. Mulai: ' . $mulaiKf->format('d/m/Y H:i') : 'Belum waktunya' }}">
-                                            Menunggu jadwal KF{{ $jk }}
-                                        </button>
-                                    @else
+                                    @if ($isDone)
+                                        {{-- DATA ADA: Tampilkan tombol LIHAT HASIL --}}
                                         <a href="{{ route('bidan.pasien-nifas.kf-anak.form', ['id' => $pasienNifas->id, 'anakId' => $firstAnakId, 'jenisKf' => $jk]) }}"
-                                            class="inline-flex items-center rounded-full bg-[#E91E8C] px-4 py-2 text-xs font-semibold text-white hover:bg-[#C2185B]">
-                                            Catat KF{{ $jk }}
+                                            class="inline-flex items-center rounded-full bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-600 border border-blue-200 hover:bg-blue-100 transition">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            Lihat Hasil
                                         </a>
+
+                                    @elseif ($isBlockedByDeath)
+                                        {{-- KASUS MENINGGAL: Disable --}}
+                                        <button type="button"
+                                            class="inline-flex items-center rounded-full bg-gray-200 px-4 py-2 text-xs font-semibold text-gray-500 cursor-not-allowed"
+                                            disabled>
+                                            KF{{ $jk }} Terhenti
+                                        </button>
+
+                                    @else
+                                        {{-- BELUM ADA DATA: Disable (Tunggu Puskesmas) --}}
+                                        <button type="button"
+                                            class="inline-flex items-center rounded-full bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-400 border border-gray-200 cursor-not-allowed"
+                                            disabled
+                                            title="Data belum diinput oleh Puskesmas">
+                                            Belum ada data Puskesmas
+                                        </button>
                                     @endif
                                 @else
                                     <button type="button"
                                         class="inline-flex items-center rounded-full bg-gray-200 px-4 py-2 text-xs font-semibold text-gray-600"
                                         disabled>
-                                        Tambah Data Anak dahulu
+                                        Data anak belum disinkron
                                     </button>
                                 @endif
-
                             </div>
                         </div>
                     @endforeach

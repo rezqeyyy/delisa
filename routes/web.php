@@ -269,6 +269,10 @@ Route::middleware(['auth'])->group(function () {
             // Terima rujukan (buat entry di pasien_nifas_bidan)
             Route::post('/rujukan-masuk/{nifasRs}/terima', [\App\Http\Controllers\Bidan\PasienNifasController::class, 'terimaRujukan'])
                 ->name('rujukan-masuk.terima');
+
+            // Catatan KF (read-only)
+            Route::get('/pasien-nifas/{id}/kf/{anakId}/{jenisKf}/catatan', [\App\Http\Controllers\Bidan\PasienNifasController::class, 'catatanKfAnak'])
+                ->name('pasien-nifas.kf-anak.catatan');
         });
 
     // ================== RUMAH SAKIT ==================

@@ -724,7 +724,10 @@ class PasienNifasController extends Controller
         abort_unless($bidan, 403);
         if (!in_array((int)$jenisKf, [1, 2, 3, 4], true)) abort(404);
 
+        // 1. Load Data Pasien Nifas
         $pasienNifas = PasienNifasBidan::with(['pasien.user'])->findOrFail($id);
+
+        // 2. Load Data Anak
         $anakList = AnakPasien::where('nifas_bidan_id', $id)->get();
         if ($anakList->isEmpty()) {
             $episode = \App\Models\PasienNifasRs::where('pasien_id', $pasienNifas->pasien_id)
@@ -735,13 +738,17 @@ class PasienNifasController extends Controller
             }
         }
         $selectedAnakId = (int) $anakId;
+
+        // 3. Load Status Risiko (Untuk tampilan header/badge)
         $status = $this->getStatusRisikoFromSkrining($pasienNifas->pasien);
         $pasienNifas->status_display = $status['label'];
         $pasienNifas->status_type = $status['type'];
 
+        // 4. Cari Episode RS & DATA HASIL KF
         $episode = \App\Models\PasienNifasRs::where('pasien_id', $pasienNifas->pasien_id)
             ->orderByDesc('created_at')
             ->first();
+        
         $existingKf = null;
         if ($episode) {
             $existingKf = \App\Models\KfKunjungan::where('pasien_nifas_id', $episode->id)
@@ -750,62 +757,27 @@ class PasienNifasController extends Controller
                 ->first();
         }
 
-        // =======================
-        // GATE JADWAL KF (SAMAKAN DENGAN PUSKESMAS)
-        // =======================
-        $statusKf = $pasienNifas->getKfStatus((int) $jenisKf);
-
-        // Jika sudah selesai, jangan boleh isi lagi
-        if ($statusKf === 'selesai') {
+        // ==========================================================
+        // PERUBAHAN UTAMA: HANYA TAMPILKAN JIKA DATA ADA
+        // ==========================================================
+        
+        // Jika data KF belum pernah diisi/disimpan dari Puskesmas
+        if (!$existingKf) {
             return redirect()
                 ->route('bidan.pasien-nifas.detail', $id)
-                ->with('error', "KF{$jenisKf} sudah selesai dicatat!");
+                ->with('info', "Data hasil KF{$jenisKf} belum tersedia dari Puskesmas.");
         }
 
-        // Jika belum mulai (MENUNGGU), block persis seperti puskesmas
-        if ($statusKf === 'belum_mulai') {
-            $mulai = $pasienNifas->getKfMulai((int) $jenisKf);
-            $pesan = $mulai
-                ? "Belum waktunya untuk KF{$jenisKf}. Dapat dilakukan mulai " . $mulai->format('d/m/Y H:i')
-                : "Belum dapat melakukan KF{$jenisKf}";
-
-            return redirect()
-                ->route('bidan.pasien-nifas.detail', $id)
-                ->with('error', $pesan);
-        }
-
-        // Jika terlambat, tetap izinkan buka form tapi kasih warning
-        if ($statusKf === 'terlambat') {
-            session()->flash(
-                'warning',
-                "Periode normal KF{$jenisKf} sudah lewat. Anda tetap dapat mencatatnya sebagai kunjungan terlambat."
-            );
-        }
-
-        if ($episode) {
-            // STOP: jika sudah ada KF dengan kesimpulan Meninggal/Wafat,
-            // maka KF sesudahnya tidak boleh dicatat lagi.
-            $deathKe = \App\Models\KfKunjungan::query()
-                ->where('pasien_nifas_id', $episode->id)
-                ->where(function ($q) {
-                    $q->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'meninggal'")
-                        ->orWhereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'wafat'");
-                })
-                ->selectRaw('MIN((jenis_kf)::int) as death_ke')
-                ->value('death_ke');
-
-            if (!is_null($deathKe) && (int) $jenisKf > (int) $deathKe) {
-                return redirect()
-                    ->route('bidan.pasien-nifas.detail', $id)
-                    ->with(
-                        'error',
-                        "KF{$jenisKf} tidak dapat dicatat karena pada KF{$deathKe} ibu/bayi sudah tercatat meninggal/wafat."
-                    );
-            }
-        }
-
-
-        return view('bidan.pasien-nifas.kf-form', compact('pasienNifas', 'jenisKf', 'anakList', 'selectedAnakId', 'existingKf'));
+        // Jika data ada, tampilkan View Detail (Read Only)
+        // Disarankan buat file view baru: resources/views/bidan/pasien-nifas/kf-detail.blade.php
+        // Atau gunakan view lama tapi pastikan input-nya didisabled/hanya text.
+        return view('bidan.pasien-nifas.kf-detail', compact(
+            'pasienNifas', 
+            'jenisKf', 
+            'anakList', 
+            'selectedAnakId', 
+            'existingKf'
+        ));
     }
 
     public function catatKfAnak(Request $request, $id, $anakId, $jenisKf)
