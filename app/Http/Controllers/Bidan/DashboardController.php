@@ -73,82 +73,99 @@ class DashboardController extends Controller
         // 5. Card: Pasien Hadir (Hadir Hari Ini vs Tidak Hadir) dari skrining lengkap
         $pasienHadir = $skrinings->filter(fn($s) => optional($s->updated_at)->isToday())->count();
         $pasienTidakHadir = $skrinings->count() - $pasienHadir;
-
         // =====================
-        // 6-9. STATISTIK NIFAS (SAMAKAN DENGAN HALAMAN PASIEN NIFAS BIDAN)
+        // 6-9. STATISTIK NIFAS (SYNC DENGAN LOGIKA TERBARU + PEMANTAUAN PER RIWAYAT KF)
         // =====================
 
-        $pasienNifasRows = DB::table('pasien_nifas_bidan')
-            ->where('bidan_id', $puskesmasId)
-            ->select('id', 'pasien_id')
-            ->get();
+        // A. Ambil pasien yang skrining di puskesmas bidan ini DAN SUDAH SELESAI (step_form=6)
+        $clinicPasienIds = DB::table('skrinings')
+            ->where('puskesmas_id', $puskesmasId)
+            ->where('step_form', 6)
+            ->distinct()
+            ->pluck('pasien_id')
+            ->filter()
+            ->values()
+            ->all();
 
-        // Total pasien nifas (episode di bidan)
-        $totalNifas = $pasienNifasRows->count();
-
-        // Ambil latest episode RS per pasien (karena KF disimpan di kf_kunjungans berbasis pasien_nifas_rs.id)
-        $pasienIdsForNifas = $pasienNifasRows->pluck('pasien_id')->unique()->values()->all();
-
-        $rsEpisodes = DB::table('pasien_nifas_rs')
-            ->select('id', 'pasien_id', 'created_at')
-            ->whereIn('pasien_id', $pasienIdsForNifas)
-            ->orderByDesc('created_at')
-            ->get();
-
-        // map latest RS episode id per pasien_id
-        $latestRsEpisodeIdByPasien = [];
-        foreach ($rsEpisodes as $ep) {
-            if (!isset($latestRsEpisodeIdByPasien[$ep->pasien_id])) {
-                $latestRsEpisodeIdByPasien[$ep->pasien_id] = $ep->id;
-            }
-        }
-
-        $rsEpisodeIds = array_values(array_filter($latestRsEpisodeIdByPasien));
-        $rsEpisodeIds = array_values(array_unique($rsEpisodeIds));
-        // Fallback: sebagian data KF (tergantung implementasi/migrasi) bisa nyantol ke episode bidan
-        $bidanEpisodeIds = $pasienNifasRows->pluck('id')->filter()->values()->all();
-
-        // Gabungkan kandidat id episode untuk cek kf_kunjungans (RS + Bidan)
-        $kfEpisodeIds = array_values(array_unique(array_merge($rsEpisodeIds, $bidanEpisodeIds)));
-
+        $totalNifas = 0;
         $sudahKf1 = 0;
-        if (!empty($kfEpisodeIds)) {
-            $sudahKf1 = DB::table('kf_kunjungans')
-                ->whereIn('pasien_nifas_id', $kfEpisodeIds)
-                ->where('jenis_kf', 1)
-                ->distinct('pasien_nifas_id')
-                ->count('pasien_nifas_id');
-        }
+        $belumKf1 = 0;
 
-
-        // Belum KF1
-        $belumKf1 = max(0, $totalNifas - $sudahKf1);
-
-        // Pemantauan nifas (Sehat/Dirujuk/Meninggal) — hitung distinct pasien_nifas_id
         $pemantauanSehat = 0;
         $pemantauanDirujuk = 0;
         $pemantauanMeninggal = 0;
 
-        if (!empty($kfEpisodeIds)) {
-            $pemantauanSehat = DB::table('kf_kunjungans')
-                ->whereIn('pasien_nifas_id', $kfEpisodeIds)
-                ->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'sehat'")
-                ->distinct('pasien_nifas_id')
-                ->count('pasien_nifas_id');
+        if (!empty($clinicPasienIds)) {
 
-            $pemantauanDirujuk = DB::table('kf_kunjungans')
-                ->whereIn('pasien_nifas_id', $kfEpisodeIds)
-                ->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) = 'dirujuk'")
-                ->distinct('pasien_nifas_id')
-                ->count('pasien_nifas_id');
+            // B. Ambil LATEST episode nifas RS per pasien (TANPA SYARAT HARUS ADA KF)
+            $rsEpisodesAll = DB::table('pasien_nifas_rs as pnr')
+                ->select('pnr.id', 'pnr.pasien_id', 'pnr.created_at')
+                ->whereIn('pnr.pasien_id', $clinicPasienIds)
+                ->orderBy('pnr.pasien_id')
+                ->orderByDesc('pnr.created_at')
+                ->get();
 
-            $pemantauanMeninggal = DB::table('kf_kunjungans')
-                ->whereIn('pasien_nifas_id', $kfEpisodeIds)
-                ->whereRaw("LOWER(TRIM(kesimpulan_pantauan)) IN ('meninggal','wafat')")
-                ->distinct('pasien_nifas_id')
-                ->count('pasien_nifas_id');
+            // Map latest RS episode id per pasien_id
+            $latestRsEpisodeIdByPasien = [];
+            foreach ($rsEpisodesAll as $ep) {
+                if (!isset($latestRsEpisodeIdByPasien[$ep->pasien_id])) {
+                    $latestRsEpisodeIdByPasien[$ep->pasien_id] = $ep->id;
+                }
+            }
+
+            $rsEpisodeIds = array_values(array_unique(array_filter(array_values($latestRsEpisodeIdByPasien))));
+
+            // Total nifas = jumlah pasien yang punya episode nifas RS (latest per pasien)
+            $totalNifas = count($rsEpisodeIds);
+
+            // C. Sudah KF1 = episode yang punya jenis_kf = 1 (distinct per episode)
+            if (!empty($rsEpisodeIds)) {
+                $sudahKf1 = DB::table('kf_kunjungans')
+                    ->whereIn('pasien_nifas_id', $rsEpisodeIds)
+                    ->where('jenis_kf', 1)
+                    ->distinct('pasien_nifas_id')
+                    ->count('pasien_nifas_id');
+            }
+
+            $belumKf1 = max(0, $totalNifas - $sudahKf1);
+
+            // D. PEMANTAUAN = PER RIWAYAT KF (SEPERTI DINKES)
+            // - Total KF = semua baris KF (raw)
+            // - Dirujuk = per baris
+            // - Meninggal/Wafat = dihitung 1x per episode (distinct), tapi raw meninggal bisa dobel
+            // - Sehat = sisa (total efektif - dirujuk - meninggal_distinct)
+            if (!empty($rsEpisodeIds)) {
+
+                $basePemantauan = DB::table('kf_kunjungans')
+                    ->whereIn('pasien_nifas_id', $rsEpisodeIds);
+
+                // 1) Total semua kunjungan KF (raw)
+                $totalKfRaw = (clone $basePemantauan)->count();
+
+                // 2) Dirujuk (per baris)
+                $pemantauanDirujuk = (clone $basePemantauan)
+                    ->whereRaw("LOWER(COALESCE(kesimpulan_pantauan,'')) = 'dirujuk'")
+                    ->count();
+
+                // 3a) Meninggal/Wafat (raw rows)
+                $meninggalRowsRaw = (clone $basePemantauan)
+                    ->whereRaw("LOWER(COALESCE(kesimpulan_pantauan,'')) IN ('meninggal','wafat')")
+                    ->count();
+
+                // 3b) Meninggal/Wafat (distinct per episode)
+                $pemantauanMeninggal = (clone $basePemantauan)
+                    ->whereRaw("LOWER(COALESCE(kesimpulan_pantauan,'')) IN ('meninggal','wafat')")
+                    ->distinct('pasien_nifas_id')
+                    ->count('pasien_nifas_id');
+
+                // 4) Buang duplikat “meninggal” dari total efektif
+                $dupMeninggal = max(0, $meninggalRowsRaw - $pemantauanMeninggal);
+                $totalKfEffective = max(0, $totalKfRaw - $dupMeninggal);
+
+                // 5) Sehat = sisa dari total efektif
+                $pemantauanSehat = max(0, $totalKfEffective - $pemantauanDirujuk - $pemantauanMeninggal);
+            }
         }
-
 
 
         // 10. Tabel: 5 Data Skrining Terbaru dari skrining lengkap
