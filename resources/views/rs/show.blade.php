@@ -22,7 +22,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                 </a>
-                <h1 class="ml-3 text-3xl font-bold text-gray-800">Detail Skrining Pasien</h1>
+                <h1 class="ml-3 text-3xl font-bold text-gray-800">Detail Skrining Pasien ({{ $skrining->pasien->user->name ?? 'N/A' }})</h1>
             </div>
 
             @if(!$skrining)
@@ -174,7 +174,7 @@
                 </div>
 
                 <div class="mt-8 rounded-2xl bg-white p-6 shadow">
-                    <h2 class="mb-4 text-xl font-semibold text-gray-800">Hasil Skrining dan Rekomendasi</h2>
+                    <h2 class="mb-4 text-xl font-semibold text-gray-800">Hasil Skrining</h2>
                     <div class="overflow-hidden rounded-xl border border-gray-200">
                         <div class="grid grid-cols-1 sm:grid-cols-3">
                             <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
@@ -242,20 +242,6 @@
 
                             <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kesimpulan</div>
                             <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $skrining->kesimpulan ?? '-' }}</div>
-
-                            <div class="border-t border-gray-200 p-4 text-sm font-semibold">Rekomendasi</div>
-                            <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
-                                @php($k = trim($skrining->kesimpulan ?? ''))
-                                @php($rek = 'Belum ada rekomendasi.')
-                                @if($k === 'Beresiko')
-                                    @php($rek = 'Waspada Pre Eklampsia. Disarankan untuk segera dirujuk ke Rumah Sakit atau Dokter. Kenali tanda-tanda bahaya dalam kehamilan seperti sakit kepala hebat, pandangan kabur, dan nyeri ulu hati. Jika mengalami tanda bahaya, segera ke fasilitas kesehatan.')
-                                @elseif($k === 'Normal' || $k === 'Aman')
-                                    @php($rek = 'Kondisi normal, tetap jaga kesehatan dan pola makan. Lakukan pemeriksaan rutin.')
-                                @elseif($k === 'Waspada')
-                                    @php($rek = 'Pantau kondisi secara berkala. Kenali tanda-tanda bahaya dan segera hubungi fasilitas kesehatan jika muncul.')
-                                @endif
-                                {{ $rek }}
-                            </div>
 
                             <div class="border-t border-gray-200 p-4 text-sm font-semibold">Catatan</div>
                             <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ 'Belum ada catatan.' }}</div>
