@@ -340,6 +340,7 @@ class DashboardController extends Controller
             ->from(DB::raw($latestSkriningSql))
             // Join pasien agar bisa akses data demografi
             ->join('pasiens as p', 'p.id', '=', 'ls.pasien_id')
+            // ✅ Hanya tampilkan skrining yang SUDAH SELESAI / valid
             // Join users untuk nama, phone, dsb.
             ->join('users as u', 'u.id', '=', 'p.user_id')
             // Left join kondisi_kesehatans (bisa null)
@@ -401,6 +402,12 @@ class DashboardController extends Controller
                     ELSE 'non-risk'
                 END AS resiko
             ");
+
+        // - checked_status tidak boleh NULL (NULL = masih proses / belum final)
+        // - status_pre_eklampsia tidak boleh NULL/kosong (kalau kosong = belum ada hasil)
+        $peQuery->whereNotNull('ls.checked_status')
+            ->whereRaw("NULLIF(TRIM(COALESCE(ls.status_pre_eklampsia,'')), '') IS NOT NULL");
+
 
         // ---- Search bebas (nama / NIK)
         if ($q !== '') {

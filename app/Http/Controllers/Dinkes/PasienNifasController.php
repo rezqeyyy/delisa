@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
+
 // Excel .xlsx
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -21,6 +22,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\Pasien;
 use App\Models\PasienNifasBidan;
 use App\Models\PasienNifasRs;
+use App\Models\KfKunjungan;        // ✅ PAKAI TABEL kf_kunjungans
+use App\Models\Puskesmas;
 
 class PasienNifasController extends Controller
 {
@@ -29,21 +32,27 @@ class PasienNifasController extends Controller
      */
     public function index(Request $request)
     {
-        $q        = trim($request->get('q', ''));
-        $faskesId = $request->get('faskes_id'); // contoh: "puskesmas:12" / "bidan:3" / "rs:5"
-        $sort     = $request->get('sort', 'prioritas');
-        $priority = $request->get('priority'); // 'hitam','merah','kuning','hijau','tanpa_jadwal' atau null
+        $q           = trim($request->get('q', ''));
+        $puskesmasId = $request->get('puskesmas_id');
+        $sort        = $request->get('sort', 'prioritas');
+        $priority    = $request->get('priority'); // 'hitam','merah','kuning','hijau','tanpa_jadwal' atau null
+        $death       = $request->get('death'); // 'meninggal' | 'hidup' | null
+
 
         // Query dasar: pasien nifas + pasien + user + puskesmas (dari skrining terbaru)
-        $baseQuery = $this->buildPasienNifasQuery($q, $faskesId);
+        $baseQuery = $this->buildPasienNifasQuery(
+            $q,
+            $puskesmasId ? (int) $puskesmasId : null
+        );
 
         // Ambil semua episode nifas (diproses di Collection lalu dipaginate manual)
         $allRows = $baseQuery->get();
 
         /**
          * ==========================================
-         *  🔍 AMBIL PROGRES KF BERDASARKAN
+         *  🔍 PERBAIKAN: AMBIL PROGRES KF BERDASARKAN
          *  PASIEN_ID + EPISODE NIFAS RS TERBARU
+         *  (bukan lagi pakai nifas_id campur bidan/rs)
          * ==========================================
          */
         $kfDone    = collect();
@@ -104,6 +113,8 @@ class PasienNifasController extends Controller
                 $kfDone = collect($map);
             }
 
+
+            // ✅ DEBUGGING: untuk memastikan mapping pasien → KF berjalan
             Log::debug('Dinkes Pasien Nifas - Mapping KF per pasien', [
                 'total_rows'        => $allRows->count(),
                 'pasien_ids'        => $pasienIds,
@@ -112,36 +123,49 @@ class PasienNifasController extends Controller
             ]);
         }
 
-        // Konfigurasi jadwal KF (hari setelah tanggal_mulai_nifas)
-        $dueDays = [
-            1 => 3,
-            2 => 7,
-            3 => 14,
-            4 => 42,
+        // ✅ Window jadwal KF (hari setelah tanggal_mulai_nifas)
+        // Mengikuti Buku KIA umum:
+        // KF1: 0–2 hari
+        // KF2: 3–7 hari
+        // KF3: 8–28 hari
+        // KF4: 29–42 hari
+        $kfWindows = [
+            1 => ['start' => 0,  'end' => 2],
+            2 => ['start' => 3,  'end' => 7],
+            3 => ['start' => 8,  'end' => 28],
+            4 => ['start' => 29, 'end' => 42],
         ];
+
 
         $today  = Carbon::today();
-        $namaKf = [
-            1 => 'satu',
-            2 => 'dua',
-            3 => 'tiga',
-            4 => 'empat',
-        ];
 
         // Hitung jadwal KF dan sisa waktu + prioritas
-        $allRows = $allRows->map(function ($row) use ($kfDone, $dueDays, $today, $namaKf) {
-            return $this->hitungKfDanPrioritas($row, $kfDone, $dueDays, $today, $namaKf);
+        $allRows = $allRows->map(function ($row) use ($kfDone, $kfWindows, $today) {
+            return $this->hitungKfDanPrioritas($row, $kfDone, $kfWindows, $today);
         });
+
+        // ✅ Filter status pasien meninggal (opsional)
+        if (!empty($death)) {
+            if ($death === 'meninggal') {
+                $allRows = $allRows->filter(fn($row) => !empty($row->is_meninggal));
+            } elseif ($death === 'hidup') {
+                $allRows = $allRows->filter(fn($row) => empty($row->is_meninggal));
+            }
+        }
+
+
 
         // Filter berdasarkan warna prioritas (opsional)
         if (!empty($priority)) {
             $priorityMap = [
-                'hitam'        => 1, // terlambat
-                'merah'        => 2, // sisa 0–3 hari
-                'kuning'       => 3, // sisa 4–6 hari
-                'hijau'        => 4, // sisa ≥ 7 hari
-                'tanpa_jadwal' => 5, // jadwal KF belum tersedia / tidak ada tanggal nifas / sudah selesai semua KF
+                'hitam'   => 1, // Telat
+                'periode' => 2, // Dalam periode KF
+                'merah'   => 3, // Sisa 1–3 hari (sebelum periode mulai)
+                'kuning'  => 4, // Sisa 4–6 hari
+                'hijau'   => 5, // Sisa ≥ 7 hari
+                'selesai' => 6, // Selesai / Meninggal
             ];
+
 
             if (isset($priorityMap[$priority])) {
                 $targetLevel = $priorityMap[$priority];
@@ -171,12 +195,17 @@ class PasienNifasController extends Controller
                 });
                 break;
             default:
-                // Default: prioritas warna + yang paling mepet di dalam tiap level
-                $allRows = $allRows
-                    ->sortBy(function ($row) {
-                        return $row->hari_sisa ?? 9999;
-                    })
-                    ->sortBy('priority_level');
+                // ✅ Urutan terbaik untuk pemantauan:
+                // 1) priority_level kecil dulu (hitam->merah->kuning->hijau->abu)
+                // 2) di dalam level tsb, yang paling urgent dulu:
+                //    - telat: hari_sisa negatif (lebih kecil = lebih telat) akan naik ke atas
+                //    - dalam periode: 0
+                //    - H-: kecil dulu (H-1 lebih urgent daripada H-7)
+                $allRows = $allRows->sortBy(function ($row) {
+                    $pl = $row->priority_level ?? 9;
+                    $hs = $row->hari_sisa ?? 9999;
+                    return [$pl, $hs];
+                });
                 break;
         }
 
@@ -200,37 +229,20 @@ class PasienNifasController extends Controller
             ]
         );
 
-        /**
-         * ==========================================================
-         * ✅ FIX UTAMA ERROR faskes_key:
-         * Jangan distinct langsung dari query utama,
-         * tapi bungkus dulu jadi subquery agar alias jadi kolom nyata.
-         * ==========================================================
-         */
-        $sub = $this->buildPasienNifasQuery('', null)->toBase();
-        $faskesList = DB::query()
-            ->fromSub($sub, 'q')
-            ->selectRaw("
-                faskes_key,
-                CASE
-                    WHEN faskes_tipe = 'puskesmas' THEN ('Puskesmas ' || faskes_nama)
-                    WHEN faskes_tipe = 'bidan' THEN faskes_nama
-                    ELSE faskes_nama
-                END as faskes_nama
-    ")
-            ->distinct()
-            ->orderBy('faskes_nama')
+        // Daftar puskesmas (hanya induk, is_mandiri = 0) untuk filter
+        $puskesmasList = Puskesmas::query()
+            ->where('is_mandiri', 0)
+            ->orderBy('nama_puskesmas')
             ->get();
 
         return view('dinkes.pasien-nifas.pasien-nifas', [
-            'rows'              => $rows,
-            'q'                 => $q,
-            'faskesList'        => $faskesList,
-            // ✅ alias untuk Blade lama yang masih pakai $puskesmasList
-            'puskesmasList'     => $faskesList,
-            'selectedFaskesId'  => $faskesId,
-            'sort'              => $sort,
-            'priority'          => $priority,
+            'rows'                => $rows,
+            'q'                   => $q,
+            'puskesmasList'       => $puskesmasList,
+            'selectedPuskesmasId' => $puskesmasId,
+            'sort'                => $sort,
+            'priority'            => $priority, // dipakai di Blade untuk label sort
+            'death' => $death,
         ]);
     }
 
@@ -238,7 +250,7 @@ class PasienNifasController extends Controller
     /**
      * Query dasar pasien nifas.
      */
-    private function buildPasienNifasQuery(?string $q = '', ?string $faskesId = null)
+    private function buildPasienNifasQuery(?string $q = '', ?int $puskesmasId = null)
     {
         $q = trim($q ?? '');
 
@@ -258,82 +270,34 @@ class PasienNifasController extends Controller
         $query = Pasien::query()
             ->from('pasiens as p')
             ->join('users as u', 'u.id', '=', 'p.user_id')
-
             ->leftJoin('pasien_nifas_bidan as pnb', 'pnb.pasien_id', '=', 'p.id')
-
-            // ✅ FIX: pnb.bidan_id = puskesmas.id (klinik bidan)
-            ->leftJoin('puskesmas as kb', 'kb.id', '=', 'pnb.bidan_id')
-
-            // (opsional tapi aman) kalau suatu saat nama klinik ternyata di users.name,
-            // ini bisa dipakai sebagai fallback (karena puskesmas biasanya punya user_id).
-            ->leftJoin('users as ub', 'ub.id', '=', 'kb.user_id')
-
-
-
             ->leftJoin('pasien_nifas_rs as pnr', 'pnr.pasien_id', '=', 'p.id')
-            // ✅ perbaikan menyeluruh: join rumah_sakits biar nama RS muncul
-            ->leftJoin('rumah_sakits as rs', 'rs.id', '=', 'pnr.rs_id')
-
-            // skrining terbaru (mengandung puskesmas induk)
+            // skrining terbaru (mengandung puskesmas induk → ini yang jadi kolom "Puskesmas")
             ->leftJoin(DB::raw($latestSkriningSql), 'ls.pasien_id', '=', 'p.id')
             // puskesmas asal skrining
             ->leftJoin('puskesmas as pk', 'pk.id', '=', 'ls.puskesmas_id')
-
             // ❗ Hanya pasien yang berdomisili di Depok (sesuai PKabupaten)
             ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'")
-
             ->selectRaw(<<<'SQL'
                 p.id as pasien_id,
                 u.name,
                 p.nik,
                 p.tempat_lahir,
                 p.tanggal_lahir,
-
-                CASE
+                CASE 
                     WHEN pnb.id IS NOT NULL THEN 'Bidan'
                     WHEN pnr.id IS NOT NULL THEN 'Rumah Sakit'
                     ELSE 'Puskesmas'
                 END as role_penanggung,
-
                 COALESCE(pnb.id, pnr.id) as nifas_id,
-
                 CASE
                     WHEN pnb.id IS NOT NULL THEN 'bidan'
                     WHEN pnr.id IS NOT NULL THEN 'rs'
                     ELSE NULL
                 END as sumber_nifas,
-
                 COALESCE(pnb.tanggal_mulai_nifas, pnr.tanggal_mulai_nifas) as tanggal_mulai_nifas,
-
                 pk.id as puskesmas_id,
-                pk.nama_puskesmas as puskesmas_nama,
-
-                CASE
-                    WHEN pnb.id IS NOT NULL THEN
-                        COALESCE(
-                            NULLIF(kb.nama_puskesmas, ''),
-                            NULLIF(ub.name, ''),
-                            '-'
-                        )
-                    WHEN pnr.id IS NOT NULL THEN COALESCE(pk.nama_puskesmas, '-')
-                    ELSE COALESCE(pk.nama_puskesmas, '-')
-                END as faskes_nama,
-
-                CASE
-                    WHEN pnb.id IS NOT NULL THEN ('bidan:' || COALESCE(pnb.bidan_id::text, '0'))
-                    WHEN pnr.id IS NOT NULL THEN ('puskesmas:' || COALESCE(pk.id::text, '0'))
-                    ELSE ('puskesmas:' || COALESCE(pk.id::text, '0'))
-                END as faskes_key,
-
-
-                CASE
-                    WHEN pnb.id IS NOT NULL THEN 'bidan'
-
-                    -- ✅ RS dipaksa dianggap "puskesmas" untuk tujuan tampilan (agar output: "Puskesmas + [nama wilayah]")
-                    WHEN pnr.id IS NOT NULL THEN 'puskesmas'
-
-                    ELSE 'puskesmas'
-                END as faskes_tipe
+                pk.nama_puskesmas as puskesmas_nama
             SQL);
 
         // Hanya pasien yang punya episode nifas
@@ -350,44 +314,33 @@ class PasienNifasController extends Controller
             });
         }
 
-        /**
-         * Filter faskes berdasarkan KEY "tipe:id"
-         * contoh: puskesmas:12 / bidan:3 / rs:5
-         */
-        if (!empty($faskesId) && is_string($faskesId) && str_contains($faskesId, ':')) {
-            [$type, $id] = explode(':', $faskesId, 2);
-            $id = is_numeric($id) ? (int) $id : null;
-
-            $query->where(function ($w) use ($type, $id) {
-                if ($type === 'puskesmas' && $id) {
-                    $w->where('pk.id', $id);
-                } elseif ($type === 'bidan' && $id) {
-                    // ✅ karena key bidan sekarang = klinik_id (puskesmas.id) yang ada di pnb.bidan_id
-                    $w->where('pnb.bidan_id', $id);
-                } elseif ($type === 'rs' && $id) {
-                    $w->where('rs.id', $id);
-                } else {
-                    // key invalid -> jangan filter biar tidak blank total
-                }
-            });
+        // Filter berdasarkan puskesmas skrining
+        if (!is_null($puskesmasId)) {
+            $query->where('pk.id', $puskesmasId);
         }
 
+        // Order dasar
         return $query->orderBy('u.name');
     }
 
 
     /**
-     * Export Excel (menghormati filter q + faskes_id + sort).
+     * Export Excel (menghormati filter q + puskesmas_id + sort).
      */
     public function export(Request $request)
     {
-        $q        = trim($request->get('q', ''));
-        $faskesId = $request->get('faskes_id');
-        $sort     = $request->get('sort', 'prioritas');
-        $priority = $request->get('priority');
+        $q           = trim($request->get('q', ''));
+        $puskesmasId = $request->get('puskesmas_id');
+        $sort        = $request->get('sort', 'prioritas');
+        $priority    = $request->get('priority');
+        $death       = $request->get('death'); // 'meninggal' | 'hidup' | null
 
         // 1) Ambil data dasar pasien nifas (sama seperti index)
-        $baseQuery = $this->buildPasienNifasQuery($q, $faskesId);
+        $baseQuery = $this->buildPasienNifasQuery(
+            $q,
+            $puskesmasId ? (int) $puskesmasId : null
+        );
+
         $rows = $baseQuery->get();
 
         /**
@@ -447,6 +400,8 @@ class PasienNifasController extends Controller
                 $kfDone = collect($map);
             }
 
+
+            // ✅ DEBUGGING: jejak singkat saat export
             Log::debug('Dinkes Export Pasien Nifas - KF per pasien', [
                 'total_rows'     => $rows->count(),
                 'pasien_ids'     => $pasienIds,
@@ -454,34 +409,48 @@ class PasienNifasController extends Controller
             ]);
         }
 
-        $dueDays = [
-            1 => 3,
-            2 => 7,
-            3 => 14,
-            4 => 42,
+        // ✅ Window jadwal KF (hari setelah tanggal_mulai_nifas)
+        // Mengikuti Buku KIA umum:
+        // KF1: 0–2 hari
+        // KF2: 3–7 hari
+        // KF3: 8–28 hari
+        // KF4: 29–42 hari
+        $kfWindows = [
+            1 => ['start' => 0,  'end' => 2],
+            2 => ['start' => 3,  'end' => 7],
+            3 => ['start' => 8,  'end' => 28],
+            4 => ['start' => 29, 'end' => 42],
         ];
+
 
         $today  = Carbon::today();
-        $namaKf = [
-            1 => 'satu',
-            2 => 'dua',
-            3 => 'tiga',
-            4 => 'empat',
-        ];
 
-        $rows = $rows->map(function ($row) use ($kfDone, $dueDays, $today, $namaKf) {
-            return $this->hitungKfDanPrioritas($row, $kfDone, $dueDays, $today, $namaKf);
+
+        // Terapkan logika KF yang sama persis dengan index()
+        $rows = $rows->map(function ($row) use ($kfDone, $kfWindows, $today) {
+            return $this->hitungKfDanPrioritas($row, $kfDone, $kfWindows, $today);
         });
+
+        // ✅ Filter status pasien meninggal (opsional)
+        if (!empty($death)) {
+            if ($death === 'meninggal') {
+                $rows = $rows->filter(fn($row) => !empty($row->is_meninggal));
+            } elseif ($death === 'hidup') {
+                $rows = $rows->filter(fn($row) => empty($row->is_meninggal));
+            }
+        }
 
         // Filter berdasarkan warna prioritas (opsional)
         if (!empty($priority)) {
             $priorityMap = [
-                'hitam'        => 1,
-                'merah'        => 2,
-                'kuning'       => 3,
-                'hijau'        => 4,
-                'tanpa_jadwal' => 5,
+                'hitam'   => 1, // Telat
+                'periode' => 2, // Dalam periode KF
+                'merah'   => 3, // Sisa 1–3 hari (sebelum periode mulai)
+                'kuning'  => 4, // Sisa 4–6 hari
+                'hijau'   => 5, // Sisa ≥ 7 hari
+                'selesai' => 6, // Selesai / Meninggal
             ];
+
 
             if (isset($priorityMap[$priority])) {
                 $targetLevel = $priorityMap[$priority];
@@ -511,17 +480,23 @@ class PasienNifasController extends Controller
                 });
                 break;
             default:
-                $rows = $rows
-                    ->sortBy(function ($row) {
-                        return $row->hari_sisa ?? 9999;
-                    })
-                    ->sortBy('priority_level');
+                // ✅ Urutan terbaik untuk pemantauan:
+                // 1) priority_level kecil dulu (hitam->merah->kuning->hijau->abu)
+                // 2) di dalam level tsb, yang paling urgent dulu:
+                //    - telat: hari_sisa negatif (lebih kecil = lebih telat) akan naik ke atas
+                //    - dalam periode: 0
+                //    - H-: kecil dulu (H-1 lebih urgent daripada H-7)
+                $rows = $rows->sortBy(function ($row) {
+                    $pl = $row->priority_level ?? 9;
+                    $hs = $row->hari_sisa ?? 9999;
+                    return [$pl, $hs];
+                });
                 break;
         }
 
         $rows = $rows->values();
 
-        // === BAGIAN STYLING EXCEL (tetap) ===
+        // === MULAI BAGIAN STYLING EXCEL (TIDAK DIUBAH) ===
         $spreadsheet = new Spreadsheet();
         $sheet       = $spreadsheet->getActiveSheet();
 
@@ -541,7 +516,7 @@ class PasienNifasController extends Controller
             'A' => 'No',
             'B' => 'Nama Lengkap',
             'C' => 'NIK',
-            'D' => 'Faskes',
+            'D' => 'Puskesmas',
             'E' => 'Jadwal KF',
             'F' => 'Sisa Waktu',
         ];
@@ -585,7 +560,7 @@ class PasienNifasController extends Controller
                 \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
             );
 
-            $sheet->setCellValue('D' . $rowIndex, $row->faskes_nama ?? '-');
+            $sheet->setCellValue('D' . $rowIndex, $row->puskesmas_nama ?? '-');
             $sheet->setCellValue('E' . $rowIndex, $row->jadwal_kf_text ?? '');
             $sheet->setCellValue('F' . $rowIndex, $row->sisa_waktu_label ?? '');
 
@@ -623,112 +598,186 @@ class PasienNifasController extends Controller
 
     /**
      * Helper: Hitung jadwal KF berikutnya, sisa waktu, teks, dan prioritas.
+     * - Belum pernah KF → jadwal KF1 tetap dihitung.
+     * - Hari ini (0 hari) → dianggap masih sisa waktu (badge merah, bukan telat).
+     * - Telat → badge hitam, teks "Sisa -X Hari".
+     * - JIKA SUDAH KF4 → dianggap selesai, tidak ada sisa waktu.
      */
-    private function hitungKfDanPrioritas($row, $kfDone, array $dueDays, Carbon $today, array $namaKf)
+    /**
+     * Helper: Hitung jadwal KF berikutnya, sisa waktu, teks, dan prioritas.
+     * - Belum pernah KF → jadwal KF1 tetap dihitung.
+     * - Hari ini (0 hari) → dianggap masih sisa waktu (badge merah, bukan telat).
+     * - Telat → badge hitam, teks "Sisa -X Hari".
+     * - JIKA SUDAH KF4 → dianggap selesai, tidak ada sisa waktu.
+     *
+     * Catatan: $kfDone sekarang dikey berdasarkan pasien_id,
+     *          bukan lagi berdasarkan nifas_id.
+     */
+    private function hitungKfDanPrioritas($row, $kfDone, array $kfWindows, Carbon $today)
     {
+        // ✅ gunakan pasien_id sebagai key
         $pasienId = $row->pasien_id ?? null;
 
         $hasKf = $pasienId && $kfDone->has($pasienId);
         $info  = $hasKf ? $kfDone->get($pasienId) : null;
 
-        $maxKe = $hasKf ? (int) ($info->max_ke ?? 0) : 0;
-        $maxKe = max(0, min(4, $maxKe));
+        if ($hasKf) {
+            $maxKe = (int) ($info->max_ke ?? 0);
+            $maxKe = max(0, min(4, $maxKe));
+        } else {
+            $maxKe = 0; // belum pernah KF → mulai dari KF1
+        }
 
         $isMeninggal = $info && !empty($info->is_meninggal);
 
+        // Dipakai di Blade
         $row->is_meninggal = $isMeninggal ? true : false;
         $row->max_kf_done  = $maxKe;
 
+        // === JIKA PASIEN MENINGGAL → pemantauan selesai ===
         if ($isMeninggal) {
             $row->next_kf_ke       = null;
             $row->jadwal_kf_date   = null;
             $row->hari_sisa        = null;
 
-            $row->jadwal_kf_text    = 'Pemantauan dihentikan (status meninggal/wafat)';
-            $row->sisa_waktu_label  = 'Pasien Meninggal';
-            $row->badge_class       = 'bg-[#111827] text-white';
-            $row->priority_level    = 5;
+            $row->status_kf        = 'SELESAI';
+            $row->status_text      = 'Pasien meninggal — pemantauan dihentikan';
+
+            $row->sisa_waktu_label = 'Pasien Meninggal';
+            $row->priority_level   = 6;
 
             return $row;
         }
 
+        // === JIKA SUDAH KF4 → SEMUA KUNJUNGAN SELESAI ===
         if ($maxKe >= 4) {
             $row->next_kf_ke       = null;
             $row->jadwal_kf_date   = null;
             $row->hari_sisa        = null;
 
-            $row->jadwal_kf_text    = 'Seluruh kunjungan KF (KF1–KF4) sudah dilakukan';
-            $row->sisa_waktu_label  = 'Selesai';
-            $row->badge_class       = 'bg-[#E5E7EB] text-[#374151]';
-            $row->priority_level    = 5;
+            $row->status_kf        = 'SELESAI';
+            $row->status_text      = 'Seluruh KF selesai';
+
+            $row->jadwal_kf_text   = 'Seluruh kunjungan KF (KF1–KF4) sudah dilakukan';
+            $row->sisa_waktu_label = 'Selesai';
+            $row->priority_level   = 6;
 
             return $row;
         }
 
+        // ===== Tentukan KF berikutnya =====
         $nextKe = $maxKe + 1;
         $row->next_kf_ke = $nextKe;
 
         $tanggalMulai = $row->tanggal_mulai_nifas
-            ? Carbon::parse($row->tanggal_mulai_nifas)
+            ? Carbon::parse($row->tanggal_mulai_nifas)->startOfDay()
             : null;
+        if (!$tanggalMulai) {
+            // Ini seharusnya tidak terjadi di DeLISA (tanggal nifas wajib ada).
+            // Kalau terjadi, anggap data invalid supaya bisa diinvestigasi, bukan "Selesai".
+            $row->next_kf_ke       = null;
+            $row->jadwal_kf_date   = null;
+            $row->hari_sisa        = null;
 
-        $jadwalDate = null;
-        $hariSisa   = null;
+            $row->status_kf        = 'INVALID';
+            $row->status_text      = 'Tanggal nifas kosong (data tidak valid)';
 
-        if ($tanggalMulai) {
-            $due        = $dueDays[$nextKe] ?? 42;
-            $jadwalDate = $tanggalMulai->copy()->addDays($due);
-            $hariSisa   = $today->diffInDays($jadwalDate, false);
+            $row->jadwal_kf_text   = 'Data nifas tidak valid (tanggal mulai nifas kosong)';
+            $row->sisa_waktu_label = 'Data Invalid';
+            $row->priority_level   = 6; // jangan campur dengan selesai (5)
+
+            return $row;
         }
 
-        $row->jadwal_kf_date = $jadwalDate;
-        $row->hari_sisa      = $hariSisa;
 
-        if ($jadwalDate) {
-            $kfLabel = 'KF' . $nextKe;
+        // ===== Window start–end untuk KF berikutnya =====
+        $win   = $kfWindows[$nextKe] ?? ['start' => 0, 'end' => 42];
+        $start = (int) ($win['start'] ?? 0);
+        $end   = (int) ($win['end'] ?? 42);
 
-            if ($hariSisa > 0) {
-                $row->jadwal_kf_text = sprintf(
-                    '%s akan dilakukan pada tanggal %s',
-                    $kfLabel,
-                    $jadwalDate->locale('id')->translatedFormat('d F Y')
-                );
-            } elseif ($hariSisa === 0) {
-                $row->jadwal_kf_text = sprintf('Hari ini jadwal %s', $kfLabel);
+        $windowStartDate = $tanggalMulai->copy()->addDays($start);
+        $windowEndDate   = $tanggalMulai->copy()->addDays($end);
+
+        // Untuk keperluan sorting: sebelum window = positif, dalam window = 0, telat = negatif
+        $daysToStart = $today->diffInDays($windowStartDate, false); // >0 berarti masih H-
+        $daysToEnd   = $today->diffInDays($windowEndDate, false);   // <0 berarti sudah lewat end
+
+        $row->jadwal_kf_date = $windowStartDate; // anchor (boleh start date)
+        $kfLabel = 'KF' . $nextKe;
+
+        // ===== Tentukan status KF =====
+        if ($today->lt($windowStartDate)) {
+            $row->status_kf   = 'H_MINUS';
+            $row->status_text = "Sisa {$daysToStart} hari menuju {$kfLabel}";
+
+            $row->hari_sisa = $daysToStart;
+
+            $row->jadwal_kf_text = sprintf(
+                '%s akan masuk periode pada %s (periode s/d %s)',
+                $kfLabel,
+                $windowStartDate->locale('id')->translatedFormat('d F Y'),
+                $windowEndDate->locale('id')->translatedFormat('d F Y')
+            );
+
+            // ✅ label baru (bukan H-)
+            $row->sisa_waktu_label = 'Sisa ' . $daysToStart . ' Hari';
+
+            // ✅ level prioritas baru (agar merah tidak nyampur dengan "Dalam Periode")
+            if ($daysToStart >= 7) {
+                $row->priority_level = 5; // hijau
+            } elseif ($daysToStart >= 4) {
+                $row->priority_level = 4; // kuning
             } else {
-                $row->jadwal_kf_text = sprintf('%s sudah terlewat %d hari', $kfLabel, abs($hariSisa));
+                // Sisa 1–3 hari (sebelum periode mulai)
+                $row->priority_level = 3; // merah
             }
-        } else {
-            $row->jadwal_kf_text = 'Jadwal KF belum tersedia';
+
+            return $row;
         }
 
-        if ($hariSisa === null) {
-            $row->sisa_waktu_label = '—';
-            $row->badge_class      = 'bg-[#E5E7EB] text-[#374151]';
-            $row->priority_level   = 5;
-        } else {
-            if ($hariSisa >= 7) {
-                $row->sisa_waktu_label = "Sisa {$hariSisa} Hari";
-                $row->badge_class      = 'bg-[#2EDB58] text-white';
-                $row->priority_level   = 4;
-            } elseif ($hariSisa >= 4) {
-                $row->sisa_waktu_label = "Sisa {$hariSisa} Hari";
-                $row->badge_class      = 'bg-[#FFC400] text-[#1D1D1D]';
-                $row->priority_level   = 3;
-            } elseif ($hariSisa >= 0) {
-                $row->sisa_waktu_label = "Sisa {$hariSisa} Hari";
-                $row->badge_class      = 'bg-[#FF3B30] text-white';
-                $row->priority_level   = 2;
-            } else {
-                $telat = abs($hariSisa);
-                $row->sisa_waktu_label = "Sisa -{$telat} Hari";
-                $row->badge_class      = 'bg-[#000000] text-white';
-                $row->priority_level   = 1;
-            }
+
+        if ($today->gte($windowStartDate) && $today->lte($windowEndDate)) {
+            $row->status_kf   = 'DALAM_PERIODE';
+            $row->status_text = "Dalam periode {$kfLabel}";
+
+            $row->hari_sisa = 0;
+
+            $row->jadwal_kf_text = sprintf(
+                'Dalam periode %s (%s s/d %s)',
+                $kfLabel,
+                $windowStartDate->locale('id')->translatedFormat('d F Y'),
+                $windowEndDate->locale('id')->translatedFormat('d F Y')
+            );
+
+            // ✅ dipisah dari "merah sisa 1-3"
+            $row->sisa_waktu_label = 'Dalam Periode KF';
+            $row->priority_level   = 2;
+
+            return $row;
         }
+
+
+        // Telat (sudah lewat windowEnd)
+        $telat = abs($daysToEnd); // daysToEnd negatif → telat
+        $row->status_kf   = 'TELAT';
+        $row->status_text = "Telat menuju {$kfLabel}";
+
+        $row->hari_sisa = -$telat;
+
+        $row->jadwal_kf_text = sprintf(
+            '%s telat %d hari (periode berakhir %s)',
+            $kfLabel,
+            $telat,
+            $windowEndDate->locale('id')->translatedFormat('d F Y')
+        );
+
+        $row->sisa_waktu_label = "Telat {$telat} Hari";
+        $row->priority_level   = 1;
 
         return $row;
     }
+
+
 
 
     /**
