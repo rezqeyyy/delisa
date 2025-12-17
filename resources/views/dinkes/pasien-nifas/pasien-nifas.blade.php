@@ -31,7 +31,7 @@
                 $prioritySortLabel = 'Prioritas Hijau — Sisa ≥ 7 Hari';
                 break;
             case 'selesai':
-                $prioritySortLabel = 'Prioritas Abu — Selesai';
+                $prioritySortLabel = 'Prioritas Abu-abu — Selesai';
                 break;
         }
 
@@ -195,7 +195,7 @@
                                                     Hari</option>
                                                 <option value="hijau" @selected(($priority ?? '') === 'hijau')>Hijau — Sisa
                                                     Seminggu/Lebih</option>
-                                                <option value="selesai" @selected(($priority ?? '') === 'selesai')>Abu — Selesai
+                                                <option value="selesai" @selected(($priority ?? '') === 'selesai')>Abu-abu — Selesai
                                                 </option>
                                             </select>
                                         </div>

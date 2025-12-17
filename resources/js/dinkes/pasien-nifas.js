@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // label default (kalau normal)
   const LABELS = {
-    '': 'Prioritas (Hitam → Hijau)',
+    '': 'Prioritas (Hitam → Abu-abu)',
     hitam: 'Prioritas Hitam — Terlambat',
     merah: 'Prioritas Merah — Sisa 1–3 hari',
     kuning: 'Prioritas Kuning — Sisa 4–6 hari',

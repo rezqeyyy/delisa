@@ -127,20 +127,34 @@ class DashboardController extends Controller
 
 
 
-        // ===================== 3. RISIKO PRE-EKLAMPSIA (LATEST ONLY) =====================
+        // ===================== 3. RISIKO PRE-EKLAMPSIA (LATEST ONLY + VALID ONLY) =====================
+        // Samakan definisi "valid" seperti tabel PE:
+        // - checked_status tidak boleh NULL
+        // - status_pre_eklampsia tidak boleh kosong/null (trim)
 
-        $resikoNormal = DB::query()
+        $baseResikoQuery = DB::query()
             ->from(DB::raw($latestSkriningSql))
+            ->whereNotNull('checked_status')
+            ->whereRaw("NULLIF(TRIM(COALESCE(status_pre_eklampsia,'')), '') IS NOT NULL");
+
+        $resikoNormal = (clone $baseResikoQuery)
             ->whereRaw("COALESCE(status_pre_eklampsia, '') ILIKE 'normal'")
             ->count();
 
-        $resikoPreeklampsia = DB::query()
-            ->from(DB::raw($latestSkriningSql))
+        $resikoPreeklampsia = (clone $baseResikoQuery)
             ->whereRaw("COALESCE(status_pre_eklampsia, '') NOT ILIKE 'normal'")
             ->count();
 
         $normal = $resikoNormal;
         $risk   = $resikoPreeklampsia;
+
+        // Debug biar kelihatan kalau sudah match tabel (harusnya total = 12)
+        Log::debug('Dashboard Dinkes - Statistik Risiko PE (valid only)', [
+            'normal' => $resikoNormal,
+            'risk'   => $resikoPreeklampsia,
+            'total'  => $resikoNormal + $resikoPreeklampsia,
+        ]);
+
 
         // ===================== 4. DATA NIFAS (TOTAL & SUDAH KFI) =====================
 
@@ -208,45 +222,65 @@ class DashboardController extends Controller
             $absensiPerBulan->pluck('total', 'bulan')->toArray()
         ));
 
-        // ===================== 6. PEMANTAUAN KF (STATUS TERAKHIR PER PASIEN) =====================
-        // Pakai subquery latest KF per pasien_nifas_id, lalu hitung jumlah pasien Sehat / Dirujuk / Meninggal
+        
+        // ===================== 6. PEMANTAUAN KF (ALL KUNJUNGAN, TAPI MENINGGAL = SEKALI PER EPISODE) =====================
+        // Aturan:
+        // - total_kf_raw       = jumlah semua baris kunjungan KF (mentah)
+        // - meninggal_rows_raw = jumlah baris yang kesimpulan = meninggal/wafat (mentah, bisa dobel)
+        // - meninggal_distinct = dihitung 1x per pasien_nifas_id
+        // - total_kf_effective = total_kf_raw - (meninggal_rows_raw - meninggal_distinct)  // buang duplikat meninggal
+        // - dirujuk            = per baris
+        // - sehat              = sisa dari total_kf_effective
 
-        $latestKfSql = <<<SQL
-            (
-                SELECT DISTINCT ON (pasien_nifas_id)
-                       id,
-                       pasien_nifas_id,
-                       kesimpulan_pantauan,
-                       tanggal_kunjungan,
-                       created_at
-                FROM kf_kunjungans
-                ORDER BY pasien_nifas_id, tanggal_kunjungan DESC, created_at DESC
-            ) AS lkf
-        SQL;
-
-        // Hanya hitung pemantauan untuk pasien nifas RS yang PASIEN-nya warga Depok
-        $basePemantauanQuery = DB::query()
-            ->from(DB::raw($latestKfSql))
-            ->join('pasien_nifas_rs as pnr', 'pnr.id', '=', 'lkf.pasien_nifas_id')
+        $basePemantauanKfAll = KfKunjungan::query()
+            ->join('pasien_nifas_rs as pnr', 'pnr.id', '=', 'kf_kunjungans.pasien_nifas_id')
             ->join('pasiens as p', 'p.id', '=', 'pnr.pasien_id')
             ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'");
 
-        $pemantauanSehat = (clone $basePemantauanQuery)
-            ->where('kesimpulan_pantauan', 'Sehat')
+        // 1) Total semua kunjungan KF (raw)
+        $totalKfRaw = (clone $basePemantauanKfAll)->count();
+
+        // 2) Dirujuk (per baris)
+        $pemantauanDirujuk = (clone $basePemantauanKfAll)
+            ->whereRaw("LOWER(COALESCE(kf_kunjungans.kesimpulan_pantauan,'')) = 'dirujuk'")
             ->count();
 
-        $pemantauanDirujuk = (clone $basePemantauanQuery)
-            ->where('kesimpulan_pantauan', 'Dirujuk')
+        // 3a) Meninggal/Wafat (raw rows, bisa dobel)
+        $meninggalRowsRaw = (clone $basePemantauanKfAll)
+            ->whereRaw("LOWER(COALESCE(kf_kunjungans.kesimpulan_pantauan,'')) IN ('meninggal','wafat')")
             ->count();
 
-        $pemantauanMeninggal = (clone $basePemantauanQuery)
-            ->where('kesimpulan_pantauan', 'Meninggal')
-            ->count();
+        // 3b) Meninggal/Wafat (distinct per pasien_nifas_id, harusnya 1x per episode)
+        $pemantauanMeninggal = (clone $basePemantauanKfAll)
+            ->whereRaw("LOWER(COALESCE(kf_kunjungans.kesimpulan_pantauan,'')) IN ('meninggal','wafat')")
+            ->distinct('kf_kunjungans.pasien_nifas_id')
+            ->count('kf_kunjungans.pasien_nifas_id');
 
+        // 4) Buang “meninggal” duplikat dari total efektif
+        $dupMeninggal = max(0, $meninggalRowsRaw - $pemantauanMeninggal);
+        $totalKfEffective = max(0, $totalKfRaw - $dupMeninggal);
+
+        // 5) Sehat = sisa dari total efektif
+        $pemantauanSehat = max(0, $totalKfEffective - $pemantauanDirujuk - $pemantauanMeninggal);
 
         $sehat     = $pemantauanSehat;
         $dirujuk   = $pemantauanDirujuk;
         $meninggal = $pemantauanMeninggal;
+
+        Log::debug('Dashboard Dinkes - Pemantauan KF (ALL kunjungan, Depok) [MENINGGAL DISTINCT + DROP DUP]', [
+            'total_kf_raw'       => $totalKfRaw,
+            'meninggal_rows_raw' => $meninggalRowsRaw,
+            'meninggal_distinct' => $pemantauanMeninggal,
+            'dup_meninggal'      => $dupMeninggal,
+            'total_kf_effective' => $totalKfEffective,
+            'sehat'              => $pemantauanSehat,
+            'dirujuk'            => $pemantauanDirujuk,
+            'meninggal'          => $pemantauanMeninggal,
+            'check_sum'          => ($pemantauanSehat + $pemantauanDirujuk + $pemantauanMeninggal),
+        ]);
+
+
+
 
         // ===================== 7. TABEL PE (LATEST PER PASIEN) =====================
 
