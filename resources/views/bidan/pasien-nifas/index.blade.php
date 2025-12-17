@@ -124,281 +124,220 @@
                                 </tr>
                             </thead>
 
-                            <tbody class="divide-y divide-[#E9E9E9]">
+                            <tbody>
+                                {{-- // MULAI LOOPING DATA: Mengecek apakah ada data di variabel $pasienNifas --}}
                                 @forelse($pasienNifas as $pasien)
-                                    @php
-                                        $no =
-                                            method_exists($pasienNifas, 'firstItem') && $pasienNifas->firstItem()
-                                                ? $pasienNifas->firstItem() + $loop->index
-                                                : $loop->iteration;
 
+                                    @php
+                                        // LOGIKA NOMOR URUT:
+                                        // Menghitung nomor baris tabel agar tetap urut meskipun pindah halaman (pagination)
+                                        $no = method_exists($pasienNifas, 'firstItem') && $pasienNifas->firstItem()
+                                            ? $pasienNifas->firstItem() + $loop->index
+                                            : $loop->iteration;
+
+                                        // LABEL SUMBER DATA:
+                                        // Menentukan apakah data ini inputan Bidan atau sinkronisasi dari RS
                                         $asalLabel = $pasien->asal_data_label ?? 'BIDAN';
 
-                                        // ✅ Ambil model episode bidan supaya bisa pakai getKfStatus/canDoKf
-                                        $episodeBidan = \App\Models\PasienNifasBidan::find($pasien->id);
+                                        // LOGIKA PROGRESS KF (KUNJUNGAN NIFAS):
+                                        // Mengambil status perhitungan dari Controller (misal: sekarang harus isi KF2)
+                                        $maxKe  = $pasien->max_ke ?? 0;        // Pasien sudah selesai sampai KF berapa?
+                                        $nextKe = $pasien->next_ke ?? 1;       // Giliran KF berapa sekarang?
+                                        $state  = $pasien->peringat_state ?? 'normal'; // Status waktu (terlambat/tepat waktu/belum saatnya)
 
-                                        // Default jika record tidak ketemu (harusnya nggak kejadian)
-                                        $nextKe = 1;
-                                        $statusLabel = 'Perlu KF';
-                                        $statusClass = 'bg-amber-100 text-amber-800';
+                                        // LABEL STATUS & WARNA:
+                                        // Menentukan teks status (misal: "Terlambat KF1") dan warna badge-nya
+                                        $statusLabel = $pasien->peringat_label ?? 'Perlu KF';
+                                        $statusClass = $pasien->badge_class ?? 'bg-amber-100 text-amber-800';
 
-                                        if ($episodeBidan) {
-                                            // Tentukan "KF berikutnya" = KF pertama yang belum selesai
-                                            $nextKe = 1;
-                                            for ($k = 1; $k <= 4; $k++) {
-                                                if (!$episodeBidan->isKfSelesai($k)) {
-                                                    $nextKe = $k;
-                                                    break;
-                                                }
-                                                if ($k === 4) {
-                                                    $nextKe = 4;
-                                                } // fallback
-                                            }
-
-                                            // Jika semua selesai
-                                            $allDone =
-                                                $episodeBidan->isKfSelesai(1) &&
-                                                $episodeBidan->isKfSelesai(2) &&
-                                                $episodeBidan->isKfSelesai(3) &&
-                                                $episodeBidan->isKfSelesai(4);
-
-                                            if ($allDone) {
-                                                $statusLabel = 'Semua KF Selesai';
-                                                $statusClass = 'bg-emerald-100 text-emerald-800';
-                                            } else {
-                                                $st = $episodeBidan->getKfStatus($nextKe); // selesai|belum_mulai|dalam_periode|terlambat
-
-                                                if ($st === 'belum_mulai') {
-                                                    $mulai = $episodeBidan->getKfMulai($nextKe);
-                                                    $statusLabel = $mulai
-                                                        ? 'Menunggu jadwal KF' .
-                                                            $nextKe .
-                                                            ' (' .
-                                                            $mulai->format('d/m/Y H:i') .
-                                                            ')'
-                                                        : 'Menunggu jadwal KF' . $nextKe;
-                                                    $statusClass = 'bg-gray-100 text-gray-700';
-                                                } elseif ($st === 'dalam_periode') {
-                                                    $statusLabel = 'Dalam periode KF' . $nextKe;
-                                                    $statusClass = 'bg-amber-100 text-amber-800';
-                                                } elseif ($st === 'terlambat') {
-                                                    $statusLabel = 'Terlambat KF' . $nextKe;
-                                                    $statusClass = 'bg-red-100 text-red-800';
-                                                } else {
-                                                    // fallback
-                                                    $statusLabel = 'Perlu KF';
-                                                    $statusClass = 'bg-amber-100 text-amber-800';
-                                                }
-                                            }
-                                        }
-
-                                        // ✅ tanggal mulai nifas tampilkan pakai datetime (biar konsisten dengan gate)
+                                        // FORMAT TANGGAL:
+                                        // Mengubah format database menjadi format Indonesia (Hari/Bulan/Tahun Jam:Menit)
                                         $tglMulai = !empty($pasien->tanggal)
                                             ? \Carbon\Carbon::parse($pasien->tanggal)->format('d/m/Y H:i')
                                             : '-';
                                     @endphp
 
-
                                     <tr class="hover:bg-[#FAFAFA]">
-                                        <!-- NO -->
+                                        {{-- // KOLOM NOMOR URUT --}}
                                         <td class="px-4 py-3 text-[#7C7C7C]">
                                             {{ $no }}
                                         </td>
 
-                                        <!-- NAMA PASIEN -->
+                                        {{-- // KOLOM NAMA PASIEN --}}
                                         <td class="px-4 py-3 font-medium text-[#1D1D1D]">
                                             {{ $pasien->nama_pasien ?? '-' }}
                                         </td>
 
-                                        <!-- NIK -->
+                                        {{-- // KOLOM NIK --}}
                                         <td class="px-4 py-3 text-[#7C7C7C]">
                                             {{ $pasien->nik ?? '-' }}
                                         </td>
 
-                                        <!-- NO TELP -->
+                                        {{-- // KOLOM NO TELEPON --}}
                                         <td class="px-4 py-3 text-[#7C7C7C]">
                                             {{ $pasien->telp ?? '-' }}
                                         </td>
 
-                                        <!-- TANGGAL MULAI NIFAS -->
+                                        {{-- // KOLOM TANGGAL MULAI NIFAS --}}
                                         <td class="px-4 py-3 text-[#7C7C7C]">
                                             {{ $tglMulai }}
                                         </td>
 
-                                        <!-- ALAMAT -->
+                                        {{-- // KOLOM ALAMAT (Dibatasi lebarnya agar tidak terlalu panjang) --}}
                                         <td class="px-4 py-3 text-[#7C7C7C] max-w-xs truncate">
                                             {{ $pasien->alamat ?? ($pasien->kelurahan ?? '-') }}
                                         </td>
 
-                                        <!-- ASAL DATA -->
+                                        {{-- // KOLOM BADGE ASAL DATA (RS/BIDAN) --}}
                                         <td class="px-4 py-3">
-                                            <span
-                                                class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
                                                 {{ $asalLabel }}
                                             </span>
                                         </td>
 
-                                        <!-- STATUS KF -->
+                                        {{-- // KOLOM BADGE STATUS KESEHATAN/WAKTU (Warna dinamis sesuai $statusClass) --}}
                                         <td class="px-4 py-3">
-                                            <span
-                                                class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">
+                                            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">
                                                 {{ $statusLabel }}
                                             </span>
                                         </td>
 
-                                        <!-- ACTION -->
+                                        {{-- // KOLOM AKSI (Tombol-tombol) --}}
                                         <td class="px-4 py-3">
                                             <div class="flex items-center gap-2">
 
-                                                <!-- Tombol Detail -->
+                                                {{-- // TOMBOL DETAIL: --}}
+                                                {{-- // Cek dulu apakah route detail tersedia, jika ya tampilkan link, jika tidak tampilkan tombol mati --}}
                                                 @if (Route::has('bidan.pasien-nifas.detail'))
                                                     <a href="{{ route('bidan.pasien-nifas.detail', $pasien->id) }}"
                                                         class="p-1.5 rounded-lg border border-[#D9D9D9] hover:bg-[#F5F5F5] transition-colors"
                                                         title="Detail Pasien">
-                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                            class="w-4 h-4 text-[#7C7C7C]" fill="none"
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#7C7C7C]" fill="none"
                                                             viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                 d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                         </svg>
                                                     </a>
                                                 @else
-                                                    <span
-                                                        class="p-1.5 rounded-lg border border-gray-300 bg-gray-50 cursor-not-allowed"
+                                                    <span class="p-1.5 rounded-lg border border-gray-300 bg-gray-50 cursor-not-allowed"
                                                         title="Route detail belum tersedia">
-                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                            class="w-4 h-4 text-gray-400" fill="none"
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none"
                                                             viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                 d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                         </svg>
                                                     </span>
                                                 @endif
 
-                                                <!-- Tombol KF1-KF4 (logic tetap max_ke/next_ke, style mengikuti puskesmas) -->
-                                                @foreach ([1, 2, 3, 4] as $jk)
-                                                    @php
-                                                        $isDone = $episodeBidan
-                                                            ? $episodeBidan->isKfSelesai($jk)
-                                                            : false;
-
-                                                        // KF yang boleh diisi = hanya "nextKe" dan statusnya bukan belum_mulai
-                                                        $isNext = $jk === (int) $nextKe && !$isDone;
-
-                                                        $canDo = $episodeBidan ? $episodeBidan->canDoKf($jk) : false; // true hanya untuk dalam_periode/terlambat
-                                                        $st = $episodeBidan ? $episodeBidan->getKfStatus($jk) : null;
-
-                                                        if ($isDone) {
-                                                            $btnClass = 'border-green-300 bg-green-50 cursor-default';
-                                                            $textClass = 'text-green-600';
-                                                            $title = "KF{$jk} Sudah Selesai";
-                                                        } elseif ($isNext && $canDo) {
-                                                            $btnClass =
-                                                                'border-amber-300 bg-amber-50 hover:bg-amber-100';
-                                                            $textClass = 'text-amber-600';
-                                                            $title = "Isi KF{$jk} (melalui detail)";
-                                                        } else {
-                                                            $btnClass = 'border-gray-300 bg-gray-50 cursor-not-allowed';
-                                                            $textClass = 'text-gray-400';
-
-                                                            if ($isNext && $st === 'belum_mulai') {
-                                                                $mulai = $episodeBidan
-                                                                    ? $episodeBidan->getKfMulai($jk)
-                                                                    : null;
-                                                                $title = $mulai
-                                                                    ? "KF{$jk} masih MENUNGGU. Mulai: " .
-                                                                        $mulai->format('d/m/Y H:i')
-                                                                    : "KF{$jk} masih MENUNGGU";
-                                                            } else {
-                                                                $title = "KF{$jk} Belum Tersedia";
-                                                            }
-                                                        }
-                                                    @endphp
-
-                                                    @if ($isDone)
-                                                        <span class="p-1.5 rounded-lg border {{ $btnClass }}"
-                                                            title="{{ $title }}">
-                                                            <span
-                                                                class="text-xs font-bold {{ $textClass }}">✓</span>
-                                                        </span>
-                                                    @elseif($isNext && $canDo)
-                                                        @if (Route::has('bidan.pasien-nifas.detail'))
-                                                            <a href="{{ route('bidan.pasien-nifas.detail', $pasien->id) }}"
-                                                                class="p-1.5 rounded-lg border {{ $btnClass }} transition-colors"
-                                                                title="{{ $title }}">
-                                                                <span
-                                                                    class="text-xs font-bold {{ $textClass }}">KF{{ $jk }}</span>
-                                                            </a>
-                                                        @else
-                                                            <span
-                                                                class="p-1.5 rounded-lg border border-gray-300 bg-gray-50 cursor-not-allowed"
-                                                                title="Route detail belum tersedia">
-                                                                <span
-                                                                    class="text-xs font-bold text-gray-400">KF{{ $jk }}</span>
-                                                            </span>
-                                                        @endif
-                                                    @else
-                                                        <span class="p-1.5 rounded-lg border {{ $btnClass }}"
-                                                            title="{{ $title }}">
-                                                            <span
-                                                                class="text-xs font-bold {{ $textClass }}">KF{{ $jk }}</span>
-                                                        </span>
-                                                    @endif
-                                                @endforeach
-
-
-                                                <!-- Tombol Hapus (tetap delete-confirm.js bidan) -->
-                                                <!-- @if (Route::has('bidan.pasien-nifas.destroy'))
-                                                    <form
-                                                        action="{{ route('bidan.pasien-nifas.destroy', $pasien->id) }}"
+                                                <!-- TOMBOL DELETE: -->
+                                                <!-- {{-- // Membungkus tombol delete dalam Form karena method-nya DELETE --}}
+                                                @if (Route::has('bidan.pasien-nifas.destroy'))
+                                                    <form action="{{ route('bidan.pasien-nifas.destroy', $pasien->id) }}"
                                                         method="POST" class="inline js-delete-skrining-form">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="button"
                                                             class="js-delete-skrining-btn p-1.5 rounded-lg border border-red-300 bg-red-50 hover:bg-red-100 transition-colors"
                                                             title="Hapus Pasien">
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                class="w-4 h-4 text-red-600" fill="none"
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-600" fill="none"
                                                                 viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m-4 0h14" />
                                                             </svg>
                                                         </button>
                                                     </form>
                                                 @else
-                                                    <span
-                                                        class="p-1.5 rounded-lg border border-gray-300 bg-gray-50 cursor-not-allowed"
+                                                    <span class="p-1.5 rounded-lg border border-gray-300 bg-gray-50 cursor-not-allowed"
                                                         title="Route hapus belum tersedia">
-                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                            class="w-4 h-4 text-gray-400" fill="none"
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none"
                                                             viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m-4 0h14" />
                                                         </svg>
                                                     </span>
                                                 @endif -->
+
+                                                {{-- // TOMBOL INDIKATOR KF (KF1, KF2, KF3, KF4): --}}
+                                                {{-- // Looping angka 1 sampai 4 untuk membuat 4 kotak status --}}
+                                                {{-- // TOMBOL INDIKATOR KF (KF1, KF2, KF3, KF4) --}}
+                                                @foreach ([1, 2, 3, 4] as $jk)
+                                                    @php
+                                                        $isDone = ($jk <= $maxKe);
+                                                        $isNext = (!$isDone && $jk == $nextKe);
+                                                        $canDo  = ($state != 'early' && $state != 'no_date');
+
+                                                        if ($isDone) {
+                                                            // MODIFIKASI: Tambah hover effect dan hilangkan cursor-default
+                                                            // KASUS A: SUDAH SELESAI -> Warna Hijau
+                                                            $btnClass = 'border-green-300 bg-green-50 hover:bg-green-100'; 
+                                                            $textClass = 'text-green-600';
+                                                            $content  = "KF{$jk}"; 
+                                                            $title = "KF{$jk} Sudah Selesai (Klik untuk lihat detail)";
+                                                        } elseif ($isNext && $canDo) {
+                                                            // KASUS B: GILIRAN SEKARANG -> Warna Kuning
+                                                            $btnClass = 'border-amber-300 bg-amber-50 hover:bg-amber-100';
+                                                            $textClass = 'text-amber-600';
+                                                            $content  = "KF{$jk}";
+                                                            $title = "Isi KF{$jk} (melalui detail)";
+                                                        } else {
+                                                            // KASUS C: BELUM WAKTUNYA -> Warna Abu-abu
+                                                            $btnClass = 'border-gray-300 bg-gray-50 cursor-not-allowed';
+                                                            $textClass = 'text-gray-400';
+                                                            $content  = "KF{$jk}";
+
+                                                            if ($isNext && $state === 'early') {
+                                                                $title = "KF{$jk} masih MENUNGGU";
+                                                            } else {
+                                                                $title = "KF{$jk} Belum Tersedia";
+                                                            }
+                                                        }
+                                                    @endphp
+
+                                                    {{-- // RENDER TOMBOL --}}
+                                                    
+                                                    {{-- 1. JIKA SUDAH SELESAI (HIJAU) ATAU GILIRAN SEKARANG (KUNING) --}}
+                                                    {{-- Kita gabung logicnya biar dua-duanya jadi Link --}}
+                                                    @if ($isDone || ($isNext && $canDo))
+                                                        
+                                                        @if (Route::has('bidan.pasien-nifas.detail'))
+                                                            <a href="{{ route('bidan.pasien-nifas.detail', $pasien->id) }}"
+                                                                class="p-1.5 rounded-lg border {{ $btnClass }} transition-colors"
+                                                                title="{{ $title }}">
+                                                                <span class="text-xs font-bold {{ $textClass }}">{{ $content }}</span>
+                                                            </a>
+                                                        @else
+                                                            {{-- Fallback kalau route tidak ada --}}
+                                                            <span class="p-1.5 rounded-lg border border-gray-300 bg-gray-50 cursor-not-allowed"
+                                                                title="Route detail belum tersedia">
+                                                                <span class="text-xs font-bold text-gray-400">{{ $content }}</span>
+                                                            </span>
+                                                        @endif
+
+                                                    {{-- 2. JIKA BELUM WAKTUNYA (ABU-ABU) --}}
+                                                    @else
+                                                        <span class="p-1.5 rounded-lg border {{ $btnClass }}" title="{{ $title }}">
+                                                            <span class="text-xs font-bold {{ $textClass }}">{{ $content }}</span>
+                                                        </span>
+                                                    @endif
+                                                    
+                                                @endforeach
+
                                             </div>
                                         </td>
                                     </tr>
+
+                                {{-- // EMPTY STATE: Tampilan jika data kosong (Looping tidak menemukan data) --}}
                                 @empty
                                     <tr>
                                         <td colspan="9" class="px-4 py-6 text-center text-[#7C7C7C]">
                                             <div class="flex flex-col items-center justify-center py-8">
-                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                    class="w-12 h-12 text-[#D9D9D9] mb-3" fill="none"
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-[#D9D9D9] mb-3" fill="none"
                                                     viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                                 </svg>
                                                 <p class="text-sm">Belum ada data pasien nifas</p>

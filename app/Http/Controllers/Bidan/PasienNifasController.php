@@ -124,7 +124,7 @@ class PasienNifasController extends Controller
             }
         }
         $kfDone = DB::table('kf_kunjungans')
-            ->selectRaw('pasien_nifas_id as rs_episode_id, MAX(jenis_kf)::int as max_ke')
+            ->selectRaw('pasien_nifas_id as rs_episode_id, MAX(jenis_kf) as max_ke') // Hapus ::int
             ->whereIn('pasien_nifas_id', $rsEpisodeIds)
             ->groupBy('pasien_nifas_id')
             ->get()
@@ -156,7 +156,7 @@ class PasienNifasController extends Controller
             $rsId = $rsIdByPasien[$row->pasien_id] ?? null;
             $row->asal_data_label = isset($rsNameByPasien[$row->pasien_id]) ? ('RS: ' . $rsNameByPasien[$row->pasien_id]) : 'Bidan';
             $row->first_anak_id = $rsId ? (optional($firstAnakByRsEpisode->get($rsId))->first_id ?? null) : null;
-            $maxKe = $rsId ? (optional($kfDone->get($rsId))->max_ke ?? 0) : 0;
+            $maxKe = $rsId ? (int) (optional($kfDone->get($rsId))->max_ke ?? 0) : 0;
             if ($maxKe >= 4) {
                 $row->peringat_label = 'Selesai semua';
                 $row->peringat_state = 'done';
