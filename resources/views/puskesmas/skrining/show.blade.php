@@ -129,6 +129,64 @@
             </div>
 
             <div class="mt-8 rounded-2xl bg-white p-6 shadow">
+                <h2 class="mb-4 text-xl font-semibold text-gray-800">Kontak dan Alamat</h2>
+                <div class="overflow-hidden rounded-xl border border-gray-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-3">
+                        <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+
+                        {{-- No. Telepon --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">No. Telepon</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            {{ optional(optional($skrining->pasien)->user)->phone ?? optional($skrining->pasien)->no_telepon ?? '-' }}
+                        </div>
+
+                        {{-- No. JKN --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">No. JKN</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            {{ optional($skrining->pasien)->no_jkn ?? '-' }}
+                        </div>
+
+                        {{-- Provinsi --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Provinsi</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            {{ optional($skrining->pasien)->PProvinsi ?? '-' }}
+                        </div>
+
+                        {{-- Kabupaten/Kota --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kabupaten/Kota</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            {{ optional($skrining->pasien)->PKabupaten ?? '-' }}
+                        </div>
+
+                        {{-- Kecamatan --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kecamatan</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            {{ optional($skrining->pasien)->PKecamatan ?? '-' }}
+                        </div>
+
+                        {{-- Kelurahan/Wilayah --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kelurahan/Wilayah</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            {{ optional($skrining->pasien)->PWilayah ?? '-' }}
+                        </div>
+
+                        {{-- RT / RW --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">RT / RW</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            RT {{ optional($skrining->pasien)->rt ?? '-' }} / RW {{ optional($skrining->pasien)->rw ?? '-' }}
+                        </div>
+
+                        {{-- Kode Pos --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kode Pos</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            {{ optional($skrining->pasien)->kode_pos ?? '-' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 rounded-2xl bg-white p-6 shadow">
                 <h2 class="mb-4 text-xl font-semibold text-gray-800">Hasil Skrining dan Rekomendasi</h2>
                 <div class="overflow-hidden rounded-xl border border-gray-200">
                     <div class="grid grid-cols-1 sm:grid-cols-3">
@@ -257,7 +315,7 @@
                     {{-- Tombol aksi di pojok kanan bawah --}}
                     <div class="flex flex-wrap items-center justify-end gap-3">
                         <a href="{{ route('puskesmas.skrining.index') }}"
-                           class="rounded-lg bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
+                           class="rounded-lg border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
                             Kembali
                         </a>
 

@@ -250,12 +250,10 @@
 
                     {{-- Action Button --}}
                     <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
-                        <a href="{{ route('rs.dashboard') }}"
-                           class="rounded-lg bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
+                        <a href="{{ route('rs.skrining.index') }}"
+                           class="rounded-lg border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
                             Kembali
                         </a>
-                        
-                        {{-- If needed, add process button here --}}
                     </div>
                 </div>
             @endif

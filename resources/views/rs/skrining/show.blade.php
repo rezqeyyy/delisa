@@ -278,7 +278,7 @@
                                     {{ $rujukan->catatan_rujukan }}
                                 </div>
                             @endif
-                        </div>      
+                        </div>                             
                                           
                     </div>
                 </div>
@@ -292,22 +292,22 @@
                             <div class="px-4 sm:px-5 py-4">
                                 <div class="overflow-x-auto rounded-xl border border-[#E5E5E5]">
                                     <table class="min-w-full text-xs sm:text-sm">
-                                        <thead class="bg-[#FAFAFA] text-[#6B7280]">
+                                        <thead class="bg-[#FAFAFA]">
                                             <tr class="bg-pink-50"> 
                                                 <th
-                                                    class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
+                                                    class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-sm">
                                                     No
                                                 </th>
                                                 <th
-                                                    class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
+                                                    class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-sm">
                                                     Nama Obat
                                                 </th>
                                                 <th
-                                                    class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
+                                                    class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-sm">
                                                     Dosis
                                                 </th>
                                                 <th
-                                                    class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-[10px] sm:text-[11px]">
+                                                    class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-sm">
                                                     Cara Penggunaan
                                                 </th>
                                             </tr>
@@ -410,11 +410,7 @@
                 {{-- Aksi bawah --}}
                 <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2 print-hidden">
                     <a href="{{ route('rs.skrining.index') }}"
-                        class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] w-full sm:w-auto">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
-                            <path d="M15 18l-6-6 6-6" />
-                        </svg>
+                        class="rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
                         <span>Kembali ke List</span>
                     </a>
 
