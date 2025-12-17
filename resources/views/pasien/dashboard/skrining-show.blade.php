@@ -175,10 +175,10 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="mt-6">
+            <br>
+            <div class="flex flex-wrap items-center justify-end gap-3">
                 <a href="{{ route('pasien.dashboard') }}"
-                   class="rounded-full bg-[#F2F2F2] px-6 py-3 text-sm font-medium text-[#1D1D1D]">
+                    class="rounded-lg bg-gray-200 px-6 py-3 text-sm font-medium text-gray-800 hover:bg-gray-300">
                     Kembali
                 </a>
             </div>

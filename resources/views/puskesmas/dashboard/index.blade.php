@@ -182,7 +182,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-[#1D1D1D]" fill="currentColor"><path d="M6 2a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2H6Zm2 5h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
                             </span>
                             <div>
-                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Pre Eklampsia</h2>
+                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Preeklampsia</h2>
                                 <p class="text-xs text-[#7C7C7C]">Daftar pasien skrining preeklampsia terbaru</p>
                             </div>
                         </div>
@@ -210,7 +210,7 @@
                             </thead>
                             <tbody class="divide-y divide-[#E9E9E9]" id="patientsTableBody">
                                 @forelse(($pePatients ?? []) as $p)
-                                    <tr>
+                                    <tr class="text-left">
                                         <td class="px-3 py-3 font-medium tabular-nums">{{ $loop->iteration }}</td>
                                         <td class="px-3 py-3">{{ $p->nama ?? '-' }}</td>
                                         <td class="px-3 py-3 tabular-nums">{{ $p->nik ?? '-' }}</td>
@@ -240,7 +240,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="9" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada data pasien pre eklampsia.</td>
+                                        <td colspan="9" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada data pasien preeklampsia.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
