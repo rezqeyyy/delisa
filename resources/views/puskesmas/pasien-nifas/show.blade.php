@@ -28,11 +28,18 @@
             @endphp
 
             <!-- Back Button -->
-            <div class="mb-6">
-                <a href="{{ route('puskesmas.pasien-nifas.index') }}"
-                    class="inline-flex items-center text-sm text-[#B9257F] hover:text-[#9D1B6A]">
-                    ← Kembali ke Daftar Pasien
+            <div class="flex items-center gap-3">
+                <a href="{{ route('puskesmas.pasien-nifas.index') }}" class="text-gray-600 hover:text-gray-900">
+                    <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
                 </a>
+                <div class="min-w-0">
+                    <h1 class="text-2xl font-semibold text-[#1D1D1D]">Detail Pasien Nifas</h1>
+                    <p class="text-l text-[#7C7C7C]">
+                        Informasi singkat dan riwayat KF pasien
+                    </p>
+                </div>
             </div>
 
             <!-- Alert Messages -->
@@ -56,11 +63,6 @@
 
             <!-- Header dengan Tombol Download PDF -->
             <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h1 class="text-2xl font-semibold text-[#1D1D1D]">Detail Pasien Nifas</h1>
-                    <p class="text-gray-600 mt-1">Informasi singkat dan riwayat KF pasien</p>
-                </div>
-
                 <!-- Tombol Download PDF (akan muncul jika ada KF yang sudah dicatat) -->
                 @if ($pasienNifas->kf1_tanggal || $pasienNifas->kf2_tanggal || $pasienNifas->kf3_tanggal || $pasienNifas->kf4_tanggal)
                     <div class="flex items-center gap-2">
@@ -90,63 +92,62 @@
                     </div>
                 </div>
             @endif
+            
+            <!-- Pasien Info Card -->
+            <div class="rounded-2xl bg-white p-6 shadow">
+                <h2 class="mb-4 text-xl font-semibold text-gray-800">Informasi Pasien</h2>
 
-            <!-- Main Content -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Left Column: Data Pasien -->
-                <div class="lg:col-span-2 space-y-6">
-                    <!-- Pasien Info Card -->
-                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
-                        <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Data Pasien</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-sm text-[#7C7C7C]">Nama Pasien</p>
-                                <p class="font-medium text-[#1D1D1D]">
-                                    {{ $pasienNifas->pasien->user->name ?? 'N/A' }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-[#7C7C7C]">NIK</p>
-                                <p class="font-medium text-[#1D1D1D]">{{ $pasienNifas->pasien->nik ?? 'N/A' }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-[#7C7C7C]">Rumah Sakit</p>
-                                <p class="font-medium text-[#1D1D1D]">{{ $pasienNifas->rs->nama ?? 'N/A' }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-[#7C7C7C]">Tanggal Mulai Nifas</p>
-                                <p class="font-medium text-[#1D1D1D]">
-                                    @if ($pasienNifas->tanggal_mulai_nifas)
-                                        {{ \Carbon\Carbon::parse($pasienNifas->tanggal_mulai_nifas)->format('d/m/Y') }}
-                                    @else
-                                        Belum diisi
-                                    @endif
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-[#7C7C7C]">Tanggal Melahirkan</p>
-                                <p class="font-medium text-[#1D1D1D]">
-                                    @if ($pasienNifas->tanggal_melahirkan)
-                                        {{ \Carbon\Carbon::parse($pasienNifas->tanggal_melahirkan)->format('d/m/Y') }}
-                                    @else
-                                        Belum diisi
-                                    @endif
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-[#7C7C7C]">Alamat</p>
-                                <p class="font-medium text-[#1D1D1D]">
-                                    {{ $pasienNifas->pasien->PKecamatan ?? ($pasienNifas->pasien->PKabupaten ?? 'N/A') }}
-                                </p>
-                            </div>
+                <div class="overflow-hidden rounded-xl border border-gray-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-3">
+                        <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+
+                        {{-- Nama --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Nama</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            {{ $pasienNifas->pasien->user->name ?? 'N/A' }}
                         </div>
+
+                        {{-- NIK --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">NIK</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            {{ $pasienNifas->pasien->nik ?? 'N/A' }}
+                        </div>
+
+                        {{-- No. Telepon --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">No. Telepon</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            {{ optional(optional($pasienNifas->pasien)->user)->phone ?? optional($pasienNifas->pasien)->no_telepon ?? '-' }}
+                        </div>
+
+                        {{-- Tanggal Melahirkan --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Tanggal Melahirkan</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            @if ($pasienNifas->tanggal_melahirkan)
+                                {{ \Carbon\Carbon::parse($pasienNifas->tanggal_melahirkan)->format('d/m/Y') }}
+                            @else
+                                Belum diisi
+                            @endif
+                        </div>
+
+                        {{-- Rumah Sakit --}}
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Rumah Sakit</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm font-medium text-gray-900">
+                            {{ $pasienNifas->rs->nama ?? 'N/A' }}
+                        </div>
+
                     </div>
+                </div>
+            </div>
 
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Column: Status KF -->
+                <div class="lg:col-span-2 flex flex-col gap-6">
                     <!-- Status KF Card -->
-                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
-                        <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Status Kunjungan Fisiologis (KF)</h2>
+                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6 flex-1">
+                        <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Status Kunjungan Nifas (KF)</h2>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             @foreach ([1, 2, 3, 4] as $jenisKf)
                                 @php
                                     $status = $pasienNifas->getKfStatus($jenisKf);
@@ -159,13 +160,11 @@
                                     $isBlockedByDeath = !is_null($deathKeVal) && $jenisKf > (int) $deathKeVal;
                                 @endphp
 
-                                <div
-                                    class="border rounded-xl p-4
+                                <div class="border rounded-xl p-4
                                         @if ($status == 'selesai') border-green-200 bg-green-50
                                         @elseif($isBlockedByDeath) border-gray-300 bg-gray-50
                                         @else border-[#E9E9E9] @endif
-                                    "
-                                >
+                                    ">
                                     <div class="flex justify-between items-start mb-2">
                                         <h3 class="font-semibold text-[#1D1D1D]">KF{{ $jenisKf }}</h3>
 
@@ -175,8 +174,7 @@
                                                 @elseif($badgeColor == 'warning') bg-amber-100 text-amber-800
                                                 @elseif($badgeColor == 'danger') bg-red-100 text-red-800
                                                 @else bg-gray-100 text-gray-800 @endif
-                                            "
-                                        >
+                                            ">
                                             @if ($isBlockedByDeath)
                                                 {{-- sengaja kosong seperti UI lama --}}
                                             @else
@@ -277,7 +275,7 @@
                 </div>
 
                 <!-- Right Column: Timeline & Info -->
-                <div class="space-y-6">
+                <div class="flex flex-col gap-6">
                     <!-- Timeline KF Card -->
                     @if ($pasienNifas->kf1_tanggal || $pasienNifas->kf2_tanggal || $pasienNifas->kf3_tanggal || $pasienNifas->kf4_tanggal)
                         <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
@@ -323,7 +321,7 @@
                     @endif
 
                     <!-- Info Periode KF -->
-                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
+                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6 flex-1">
                         <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Informasi Periode KF</h2>
                         <div class="space-y-3">
                             <div>
@@ -344,13 +342,13 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Footer -->
-                    <footer class="text-center text-xs text-[#7C7C7C] py-6">
-                        © 2025 Dinas Kesehatan Kota Depok — DeLISA
-                    </footer>
                 </div>
             </div>
+            
+            <!-- Footer -->
+            <footer class="text-center text-xs text-[#7C7C7C] py-6">
+                © 2025 Dinas Kesehatan Kota Depok — DeLISA
+            </footer>
 
         </main>
     </div>

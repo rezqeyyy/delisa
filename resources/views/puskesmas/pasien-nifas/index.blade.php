@@ -87,15 +87,15 @@
                         <table class="w-full text-sm">
                             <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
                                 <tr class="text-left">
-                                    <th class="px-4 py-3 font-semibold">No</th>
-                                    <th class="px-4 py-3 font-semibold">Nama Pasien</th>
-                                    <th class="px-4 py-3 font-semibold">NIK</th>
-                                    <th class="px-4 py-3 font-semibold">No Telp</th>
-                                    <th class="px-4 py-3 font-semibold">Tanggal Mulai NIFAS</th>
-                                    <th class="px-4 py-3 font-semibold">Alamat</th>
-                                    <th class="px-4 py-3 font-semibold">Asal Data</th>
-                                    <th class="px-4 py-3 font-semibold">Status KF</th>
-                                    <th class="px-4 py-3 font-semibold">Action</th>
+                                    <th class="px-4 py-3">No</th>
+                                    <th class="px-4 py-3">Nama Pasien</th>
+                                    <th class="px-4 py-3">NIK</th>
+                                    <th class="px-4 py-3">No Telp</th>
+                                    <th class="px-4 py-3">Tanggal Mulai NIFAS</th>
+                                    <th class="px-4 py-3">Alamat</th>
+                                    <th class="px-4 py-3">Asal Data</th>
+                                    <th class="px-4 py-3">Status KF</th>
+                                    <th class="px-4 py-3">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#E9E9E9]">
@@ -109,27 +109,27 @@
                                     @endphp
                                     <tr class="hover:bg-[#FAFAFA]">
                                         <!-- NO -->
-                                        <td class="px-4 py-3 text-[#7C7C7C]">
+                                        <td class="px-4 py-3">
                                             {{ $rsCounter }}
                                         </td>
 
                                         <!-- NAMA PASIEN -->
-                                        <td class="px-4 py-3 font-medium text-[#1D1D1D]">
+                                        <td class="px-4 py-3">
                                             {{ $item->pasien->user->name ?? 'N/A' }}
                                         </td>
 
                                         <!-- NIK -->
-                                        <td class="px-4 py-3 text-[#7C7C7C]">
+                                        <td class="px-4 py-3">
                                             {{ $item->pasien->nik ?? 'N/A' }}
                                         </td>
 
                                         <!-- NO TELP -->
-                                        <td class="px-4 py-3 text-[#7C7C7C]">
+                                        <td class="px-4 py-3">
                                             {{ $item->pasien->user->phone ?? ($item->pasien->no_telepon ?? 'N/A') }}
                                         </td>
 
                                         <!-- TANGGAL MULAI NIFAS -->
-                                        <td class="px-4 py-3 text-[#7C7C7C]">
+                                        <td class="px-4 py-3">
                                             @if ($item->tanggal_mulai_nifas)
                                                 {{ \Carbon\Carbon::parse($item->tanggal_mulai_nifas)->format('d/m/Y') }}
                                             @else
@@ -138,7 +138,7 @@
                                         </td>
 
                                         <!-- ALAMAT -->
-                                        <td class="px-4 py-3 text-[#7C7C7C] max-w-xs truncate">
+                                        <td class="px-4 py-3 max-w-xs truncate">
                                             {{ $item->pasien->PKecamatan ?? ($item->pasien->PKabupaten ?? 'N/A') }}
                                         </td>
 
