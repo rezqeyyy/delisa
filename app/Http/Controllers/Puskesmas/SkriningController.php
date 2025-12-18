@@ -43,6 +43,20 @@ class SkriningController extends Controller
             ->first();
     }
 
+    /**
+     * Menghapus data skrining.
+     *
+     * @param Skrining $skrining
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy(Skrining $skrining)
+    {
+        $skrining->delete();
+
+        return redirect()->back()->with('success', 'Data skrining berhasil dihapus.');
+    }
+
+
     private function applyWilayahFilter($query, $ps)
     {
         $kecamatan = trim((string) ($ps->kecamatan ?? ''));
@@ -344,7 +358,18 @@ class SkriningController extends Controller
             ->where('j.jawaban', true)
             ->select('k.nama_pertanyaan', 'j.jawaban_lainnya')
             ->get()
-            ->map(fn($r) => !empty($r->jawaban_lainnya) ? ('Lainnya: ' . $r->jawaban_lainnya) : $r->nama_pertanyaan)
+            ->map(function ($r) {
+                // Jika pertanyaan adalah "Lainnya" dan ada jawaban custom, tampilkan "Lainnya: <jawaban>"
+                if (strtolower($r->nama_pertanyaan) === 'lainnya' && !empty($r->jawaban_lainnya)) {
+                    return 'Lainnya: ' . $r->jawaban_lainnya;
+                }
+                // Jika pertanyaan bukan "Lainnya", tapi ada jawaban_lainnya (walaupun jarang terjadi di logic normal, handle saja)
+                if (!empty($r->jawaban_lainnya)) {
+                    return $r->nama_pertanyaan . ': ' . $r->jawaban_lainnya;
+                }
+                // Default: nama pertanyaan
+                return $r->nama_pertanyaan;
+            })
             ->values()->all();
 
         // Catatan: Ambil data pasien untuk ditampilkan.

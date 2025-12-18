@@ -130,6 +130,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('{skrining}/verify', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'verify'])->name('verify');
                 Route::get('export/excel', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'exportExcel'])->name('export.excel');
                 Route::get('export/pdf', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'exportPdf'])->name('export.pdf');
+                Route::delete('{skrining}', [\App\Http\Controllers\Puskesmas\SkriningController::class, 'destroy'])->name('destroy');
             });
 
             // ========== RUJUKAN ==========

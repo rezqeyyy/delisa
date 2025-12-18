@@ -182,8 +182,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-[#1D1D1D]" fill="currentColor"><path d="M6 2a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2H6Zm2 5h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
                             </span>
                             <div>
-                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Ibu Hamil</h2>
-                                <p class="text-gray-600">Daftar pasien skrining ibu hamil terbaru</p>
+                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Preeklampsia</h2>
+                                <p class="text-gray-600">Daftar pasien skrining preeklampsia terbaru</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
@@ -226,13 +226,23 @@
                                                 {{ $display }}
                                             </span>
                                         </td>
+                                        <!-- Added Delete Button with Alert to Dashboard -->
                                         <td class="px-3 py-3">
-                                        <a href="{{ route('puskesmas.skrining.show', $p->id) }}" class="px-4 py-1.5 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">View</a>
-                                    </td>
+                                            <div class="flex items-center gap-2">
+                                                <a href="{{ route('puskesmas.skrining.show', $p->id) }}" class="px-4 py-1.5 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs hover:bg-gray-50">View</a>
+                                                <form action="{{ route('puskesmas.skrining.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data skrining ini?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="px-4 py-1.5 rounded-full border border-red-200 bg-red-50 text-red-600 text-xs hover:bg-red-100 transition-colors">
+                                                        Hapus
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="9" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada data pasien ibu hamil.</td>
+                                        <td colspan="9" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada data pasien preeklampsia.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -248,7 +258,3 @@
     </div>
 </body>
 </html>
-
-
-
-        

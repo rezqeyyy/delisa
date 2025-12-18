@@ -172,7 +172,9 @@
                         
                         <!-- Lainnya -->
                         <div class="relative">
-                            <input type="checkbox" id="lainnya" name="penyakit[]" value="lainnya" class="peer absolute opacity-0 h-0 w-0">
+                            <input type="checkbox" id="lainnya" name="penyakit[]" value="lainnya" 
+                                   {{ in_array('lainnya', old('penyakit', $selected ?? [])) ? 'checked' : '' }}
+                                   class="peer absolute opacity-0 h-0 w-0">
                             <label for="lainnya" class="flex items-center justify-between w-full p-4 rounded-full border border-[#B9257F] cursor-pointer peer-checked:bg-[#B9257F] peer-checked:text-white text-[#1D1D1D] transition-colors"><span>Lainnya</span><span class="h-5 w-5 rounded-full border border-[#B9257F] flex items-center justify-center peer-checked:bg-white"><svg class="h-3 w-3 text-[#B9257F] hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg></span></label>
                             <div class="mt-2 hidden peer-checked:block">
                                 <input type="text" name="penyakit_lainnya" placeholder="Sebutkan penyakit lainnya" value="{{ old('penyakit_lainnya', $penyakitLainnya ?? '') }}" class="w-full rounded-xl border border-[#B9257F] px-4 py-2 text-sm text-[#1D1D1D] placeholder-[#8C8C8C]" />

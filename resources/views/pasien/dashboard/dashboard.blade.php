@@ -94,7 +94,7 @@
                     <div class="flex items-center gap-3 flex-none">
                         <div class="leading-tight">
                             <h2 class="text-xl font-semibold text-[#1D1D1D]">List Skrining</h2>
-                            <p class="text-xs text-[#B9257F]">*Selesaikan skrining sebelum membuat skrining baru</p>
+                            <p class="text-[#B9257F]">*Selesaikan skrining sebelum membuat skrining baru</p>
                         </div>
                     </div>
 
@@ -198,10 +198,10 @@
                                             <form method="POST" action="{{ route('pasien.skrining.destroy', $skrining->id) }}" class="js-delete-skrining-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="button" class="js-delete-skrining-btn rounded-full border px-4 py-2 text-red-600 hover:bg-red-50">Hapus</button>
+                                                <button type="button" class="js-delete-skrining-btn rounded-full border px-4 py-2 text-red-600 hover:bg-red-50">Delete</button>
                                             </form>
                                             @else
-                                                <span class="px-4 py-1.5 rounded-full bg-[#F2F2F2] border border-[#E5E5E5] text-[#7C7C7C]">Hapus</span>
+                                                <span class="px-4 py-1.5 rounded-full bg-[#F2F2F2] border border-[#E5E5E5] text-[#7C7C7C]">Delete</span>
                                             @endif
                                         </div>
                                     </td>
