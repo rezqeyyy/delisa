@@ -44,7 +44,6 @@ class ProfileController extends \App\Http\Controllers\Controller
         // - password baru harus minimal 8 karakter, wajib jika old_password diisi, dan harus konfirmasi.
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . Auth::id(),
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'old_password' => 'nullable|required_with:password',
             'password' => 'nullable|min:8|required_with:old_password|confirmed',
@@ -54,9 +53,8 @@ class ProfileController extends \App\Http\Controllers\Controller
         // Catatan: Mengambil instance model User dari pengguna yang sedang login.
         $user = Auth::user();
 
-        // Catatan: Memperbarui nama dan email pengguna.
+        // Catatan: Memperbarui nama pengguna.
         $user->name = $request->name;
-        $user->email = $request->email;
 
         // Catatan: Memeriksa apakah password baru diisi.
         // Jika ya, maka password lama harus dicek kecocokannya.

@@ -218,7 +218,7 @@
                                 </svg>
                             </span>
                             <div>
-                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Rujukan Pre Eklampsia</h2>
+                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Rujukan Preeklampsia</h2>
                                 <p class="text-xs text-[#7C7C7C]">
                                     Pilih satu atau lebih untuk memindahkan pasien rujukan
                                 </p>
@@ -254,7 +254,7 @@
                         <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
                              @click.stop>
                             <div class="sticky top-0 bg-white border-b border-[#E9E9E9] px-6 py-4 flex items-center justify-between">
-                                <h3 class="text-lg font-semibold text-[#1D1D1D]">Filter Data Pasien Pre Eklampsia</h3>
+                                <h3 class="text-lg font-semibold text-[#1D1D1D]">Filter Data Pasien Preeklampsia</h3>
                                 <button @click="showFilter = false" class="text-[#7C7C7C] hover:text-[#1D1D1D]">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -426,7 +426,7 @@
                                             @if(request()->hasAny(['nik', 'nama', 'tanggal_dari', 'tanggal_sampai', 'risiko']))
                                                 Tidak ada data yang sesuai dengan filter yang dipilih.
                                             @else
-                                                Belum ada data pasien pre eklampsia.
+                                                Belum ada data pasien preeklampsia.
                                             @endif
                                         </td>
                                     </tr>

@@ -12,13 +12,13 @@
     <x-rs.sidebar />
 
     <div class="lg:ml-[260px] mx-auto max-w-8xl px-3 sm:px-6 lg:px-8 py-6 lg:py-8">
-        <div class="mb-6 flex items-center">            
+        <div class="mb-6 flex items-center gap-3">            
             <a href="{{ route('rs.dashboard') }}" class="text-[#1D1D1D] hover:text-[#000]">
                 <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
             </a>
-            <h1 class="ml-3 text-3xl font-bold text-[#1D1D1D]">Edit Profil RS</h1>
+            <h1 class="text-2xl font-semibold text-[#1D1D1D]">Edit Profil RS</h1>
         </div>
 
         @if (session('success'))
@@ -70,13 +70,13 @@
                     Hapus Foto
                 </button>
 
-                <form id="removePhotoForm" action="{{ route('pasien.profile.photo.destroy') }}" method="POST" class="hidden">
+                <form id="removePhotoForm" action="{{ route('rs.profile.photo.destroy') }}" method="POST" class="hidden">
                     @csrf
                     @method('DELETE')
                 </form>
             </div>
 
-            <form id="profileForm" action="{{ route('pasien.profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
+            <form id="profileForm" action="{{ route('rs.profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
                 @csrf
                 @method('PUT')
 
@@ -120,11 +120,11 @@
                     </button>
                 </div>
             </form>
+        </div>    
 
-            <footer class="text-center text-xs text-[#7C7C7C] py-6">
-                © 2025 Dinas Kesehatan Kota Depok — DeLISA
-            </footer>
-        </div>
+        <footer class="text-center text-xs text-[#7C7C7C] py-6">
+            © 2025 Dinas Kesehatan Kota Depok — DeLISA
+        </footer>
     </div>
 </body>
 
