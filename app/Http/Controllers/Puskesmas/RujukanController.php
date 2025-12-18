@@ -66,6 +66,41 @@ class RujukanController extends Controller
         }
     }
 
+    private function resolvePuskesmasContext(?int $userId)
+    {
+        if (!$userId) return null;
+
+        // 1) Normal: user pemilik row puskesmas (puskesmas.user_id = users.id)
+        $ps = DB::table('puskesmas')
+            ->select('id', 'kecamatan', 'is_mandiri')
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($ps) return $ps;
+
+        // 2) Bidan (nebeng puskesmas): bidans.puskesmas_id -> puskesmas.id
+        return DB::table('bidans')
+            ->join('puskesmas', 'puskesmas.id', '=', 'bidans.puskesmas_id')
+            ->where('bidans.user_id', $userId)
+            ->select('puskesmas.id', 'puskesmas.kecamatan', 'puskesmas.is_mandiri')
+            ->first();
+    }
+
+    private function applyWilayahFilterToSkriningJoin($query, $ps)
+    {
+        $kecamatan = trim((string) ($ps->kecamatan ?? ''));
+
+        return $query->where(function ($w) use ($ps, $kecamatan) {
+            // 1) Skrining yang dilakukan di puskesmas ini
+            $w->where('skrinings.puskesmas_id', $ps->id);
+
+            // 2) Skrining yang dilakukan di faskes manapun yang kecamatannya sama
+            // (mencakup klinik mandiri karena tetap row di tabel puskesmas)
+            if ($kecamatan !== '') {
+                $w->orWhereRaw('LOWER("puskesmas"."kecamatan") = LOWER(?)', [$kecamatan]);
+            }
+        });
+    }
 
 
 
@@ -166,82 +201,96 @@ class RujukanController extends Controller
      * dan data rujukan yang dipakai adalah rujukan TERBARU pasien tersebut.
      */
     public function index(Request $request)
-{
-    try {
-        // ===============================
-        // 0. Ambil parameter search
-        // ===============================
-        $search = trim($request->get('search'));
-
-        // ===============================
-        // 1. BASE QUERY
-        // - Rujukan aktif
-        // - Skrining berisiko
-        // - Sudah JOIN pasien, user, RS (untuk search)
-        // ===============================
-        $baseQuery = DB::table('rujukan_rs')
-            ->join('skrinings', 'rujukan_rs.skrining_id', '=', 'skrinings.id')
-            ->join('pasiens', 'rujukan_rs.pasien_id', '=', 'pasiens.id')
-            ->join('users', 'pasiens.user_id', '=', 'users.id')
-            ->join('rumah_sakits', 'rujukan_rs.rs_id', '=', 'rumah_sakits.id')
-            ->where('rujukan_rs.is_rujuk', 1)
-            ->where(function ($q) {
-                $q->where('skrinings.jumlah_resiko_tinggi', '>=', 1)
-                  ->orWhere('skrinings.jumlah_resiko_sedang', '>=', 2);
-            })
+    {
+        try {
             // ===============================
-            // 2. SEARCH (opsional)
+            // 0. Ambil parameter search
             // ===============================
-            ->when($search, function ($q) use ($search) {
-                $q->where(function ($w) use ($search) {
-                    $w->whereRaw('LOWER(users.name) LIKE ?', ['%' . strtolower($search) . '%'])
-                      ->orWhere('pasiens.nik', 'ILIKE', "%{$search}%")
-                      ->orWhereRaw('LOWER(rumah_sakits.nama) LIKE ?', ['%' . strtolower($search) . '%']);
-                });
-            });
+            $search = trim($request->get('search'));
+            $userId = optional(Auth::user())->id;
+            $ps = $this->resolvePuskesmasContext($userId);
+            abort_unless($ps, 404);
 
-        // ===============================
-        // 3. Ambil ID rujukan TERBARU per pasien
-        // ===============================
-        $latestRujukanIds = $baseQuery
-            ->select(DB::raw('MAX(rujukan_rs.id) as id'))
-            ->groupBy('rujukan_rs.pasien_id')
-            ->pluck('id');
 
-        // ===============================
-        // 4. Ambil data final rujukan
-        // ===============================
-        if ($latestRujukanIds->isEmpty()) {
-            $rujukans = collect();
-        } else {
-            $rujukans = DB::table('rujukan_rs')
+            // ===============================
+            // 1. BASE QUERY
+            // - Rujukan aktif
+            // - Skrining berisiko
+            // - Sudah JOIN pasien, user, RS (untuk search)
+            // ===============================
+            $baseQuery = DB::table('rujukan_rs')
+                ->join('skrinings', 'rujukan_rs.skrining_id', '=', 'skrinings.id')
+                ->join('puskesmas', 'puskesmas.id', '=', 'skrinings.puskesmas_id') // ✅ penting
                 ->join('pasiens', 'rujukan_rs.pasien_id', '=', 'pasiens.id')
                 ->join('users', 'pasiens.user_id', '=', 'users.id')
                 ->join('rumah_sakits', 'rujukan_rs.rs_id', '=', 'rumah_sakits.id')
-                ->whereIn('rujukan_rs.id', $latestRujukanIds)
-                ->orderBy('rujukan_rs.created_at', 'desc')
-                ->select(
-                    'rujukan_rs.*',
-                    'users.name as nama_pasien',
-                    'pasiens.nik',
-                    'rumah_sakits.nama as nama_rs'
-                )
-                ->paginate(10);
+                ->where('rujukan_rs.is_rujuk', 1)
+                ->where(function ($q) {
+                    $q->where('skrinings.jumlah_resiko_tinggi', '>=', 1)
+                        ->orWhere('skrinings.jumlah_resiko_sedang', '>=', 2);
+                });
 
-            $rujukans->appends($request->except('page'));
+            // ✅ kunci wilayah: hanya rujukan dari skrining yang “masuk” list skrining puskesmas ini
+            $this->applyWilayahFilterToSkriningJoin($baseQuery, $ps);
+
+            // SEARCH tetap
+            $baseQuery->when($search, function ($q) use ($search) {
+                $q->where(function ($w) use ($search) {
+                    $w->whereRaw('LOWER(users.name) LIKE ?', ['%' . strtolower($search) . '%'])
+                        ->orWhere('pasiens.nik', 'ILIKE', "%{$search}%")
+                        ->orWhereRaw('LOWER(rumah_sakits.nama) LIKE ?', ['%' . strtolower($search) . '%']);
+                });
+            });
+
+
+            // ===============================
+            // 3. Ambil ID rujukan TERBARU per pasien
+            // ===============================
+            $latestRujukanIds = $baseQuery
+                ->select(DB::raw('MAX(rujukan_rs.id) as id'))
+                ->groupBy('rujukan_rs.pasien_id')
+                ->pluck('id');
+
+            // ===============================
+            // 4. Ambil data final rujukan
+            // ===============================
+            if ($latestRujukanIds->isEmpty()) {
+                $rujukans = collect();
+            } else {
+                $rujukans = DB::table('rujukan_rs')
+                    ->join('skrinings', 'rujukan_rs.skrining_id', '=', 'skrinings.id')
+                    ->join('puskesmas', 'puskesmas.id', '=', 'skrinings.puskesmas_id') // ✅ penting
+                    ->join('pasiens', 'rujukan_rs.pasien_id', '=', 'pasiens.id')
+                    ->join('users', 'pasiens.user_id', '=', 'users.id')
+                    ->join('rumah_sakits', 'rujukan_rs.rs_id', '=', 'rumah_sakits.id')
+                    ->whereIn('rujukan_rs.id', $latestRujukanIds);
+
+                // ✅ kunci wilayah lagi di query final
+                $this->applyWilayahFilterToSkriningJoin($rujukans, $ps);
+
+                $rujukans = $rujukans
+                    ->orderBy('rujukan_rs.created_at', 'desc')
+                    ->select(
+                        'rujukan_rs.*',
+                        'users.name as nama_pasien',
+                        'pasiens.nik',
+                        'rumah_sakits.nama as nama_rs'
+                    )
+                    ->paginate(10);
+
+                $rujukans->appends($request->except('page'));
+            }
+
+            return view('puskesmas.rujukan.index', compact('rujukans'));
+        } catch (\Exception $e) {
+            Log::error('ERROR Puskesmas.RujukanController@index', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'Gagal memuat data rujukan');
         }
-
-        return view('puskesmas.rujukan.index', compact('rujukans'));
-
-    } catch (\Exception $e) {
-        Log::error('ERROR Puskesmas.RujukanController@index', [
-            'message' => $e->getMessage(),
-            'trace'   => $e->getTraceAsString(),
-        ]);
-
-        return back()->with('error', 'Gagal memuat data rujukan');
     }
-}
     /**
      * Tampilkan detail rujukan - DEBUG VERSION
      */
@@ -255,6 +304,31 @@ class RujukanController extends Controller
             $rujukan = DB::table('rujukan_rs')
                 ->where('id', $id)
                 ->first();
+
+            $userId = optional(Auth::user())->id;
+            $ps = $this->resolvePuskesmasContext($userId);
+            abort_unless($ps, 404);
+
+            // Ambil kecamatan faskes tempat skrining rujukan ini
+            $kecPuskesmas = mb_strtolower(trim((string) ($ps->kecamatan ?? '')));
+
+            $row = DB::table('skrinings')
+                ->join('puskesmas', 'puskesmas.id', '=', 'skrinings.puskesmas_id')
+                ->where('skrinings.id', $rujukan->skrining_id)
+                ->select('skrinings.puskesmas_id', 'puskesmas.kecamatan')
+                ->first();
+
+            abort_unless($row, 404);
+
+            $kecFaskes = mb_strtolower(trim((string) ($row->kecamatan ?? '')));
+
+            $allowed = (
+                ((int)$row->puskesmas_id === (int)$ps->id)
+                || ($kecFaskes !== '' && $kecPuskesmas !== '' && $kecFaskes === $kecPuskesmas)
+            );
+
+            abort_unless($allowed, 403);
+
 
             Log::info('Rujukan ditemukan: ' . ($rujukan ? 'YA' : 'TIDAK'));
 

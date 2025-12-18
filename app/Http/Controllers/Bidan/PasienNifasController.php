@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Bidan;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Carbon\Carbon;
 
 use App\Models\PasienNifasBidan;
 use App\Models\PasienNifasRs;
@@ -16,6 +16,7 @@ use App\Models\AnakPasien;
 use App\Models\Pasien;
 use App\Models\User;
 use App\Models\Skrining;
+
 
 
 
@@ -83,10 +84,12 @@ class PasienNifasController extends Controller
             ->select(
                 'pnr.id',
                 'pnr.pasien_id',
+                'pnr.puskesmas_id', // ✅ tambahan: sumber puskesmas yang melakukan KF
                 'pnr.tanggal_mulai_nifas',
                 'pnr.tanggal_melahirkan',
                 'pnr.created_at'
             )
+
             ->whereIn('pnr.pasien_id', $clinicPasienIds)
             ->orderBy('pnr.pasien_id')
             ->orderByDesc('pnr.created_at')
@@ -183,16 +186,40 @@ class PasienNifasController extends Controller
         // ==========================================================
         $pagePasienIds = $pasienNifas->getCollection()->pluck('pasien_id')->all();
 
-        // Episode id RS yang dipakai per pasien untuk halaman ini
         $rsIdByPasien = [];
         $rsBaseDates = [];
+        $rsPuskesmasIdByPasien = []; // ✅ tambahan
+
         foreach ($pagePasienIds as $pid) {
             if (isset($latestRsEpisodeByPasien[$pid])) {
                 $ep = $latestRsEpisodeByPasien[$pid];
+
                 $rsIdByPasien[$pid] = $ep->id;
                 $rsBaseDates[$pid] = $ep->tanggal_melahirkan ?? $ep->tanggal_mulai_nifas ?? null;
+
+                // ✅ ambil puskesmas_id dari episode RS terbaru
+                $rsPuskesmasIdByPasien[$pid] = $ep->puskesmas_id ?? null;
             }
         }
+
+        // ==========================================================
+        // E.1 Lookup nama puskesmas untuk label "Asal Data"
+        //     (DELISA SQL terbaru: kolom nama = nama_puskesmas)
+        // ==========================================================
+        $puskesmasIds = array_values(array_unique(array_filter(array_values($rsPuskesmasIdByPasien))));
+
+        $puskesmasNameById = collect();
+
+        if (!empty($puskesmasIds)) {
+            $puskesmasNameById = DB::table('puskesmas')
+                ->whereIn('id', $puskesmasIds)
+                ->select('id', 'nama_puskesmas as nama_view')
+                ->get()
+                ->keyBy('id');
+        }
+
+
+
 
         $rsEpisodeIds = array_values(array_unique(array_filter(array_values($rsIdByPasien))));
 
@@ -233,12 +260,27 @@ class PasienNifasController extends Controller
             $now,
             $rsIdByPasien,
             $rsBaseDates,
+            $rsPuskesmasIdByPasien,
+            $puskesmasNameById, // ✅ tambah ini
             $firstAnakByRsEpisode
         ) {
+
             $rsId = $rsIdByPasien[$row->pasien_id] ?? null;
 
-            // Karena ini mode monitoring berbasis KF puskesmas/RS, label asal dibuat konsisten
-            $row->asal_data_label = 'Puskesmas/RS';
+            // ✅ Asal Data = "Puskesmas {puskesmas_id}" dari pasien_nifas_rs
+            $puskId = $rsPuskesmasIdByPasien[$row->pasien_id] ?? null;
+
+            if ($puskId) {
+                $namaPusk = optional($puskesmasNameById->get($puskId))->nama_view;
+                // Kalau nama tidak ketemu (data puskesmas belum ada), fallback tetap tampil id
+                $row->asal_data_label = $namaPusk
+                    ? ('Puskesmas ' . $namaPusk)
+                    : ('Puskesmas ' . $puskId);
+            } else {
+                $row->asal_data_label = 'Puskesmas -';
+            }
+
+
             $row->first_anak_id = $rsId ? (optional($firstAnakByRsEpisode->get($rsId))->first_id ?? null) : null;
 
             $maxKe = $rsId ? (int) (optional($kfDone->get($rsId))->max_ke ?? 0) : 0;
@@ -1016,35 +1058,6 @@ class PasienNifasController extends Controller
         }
 
         return redirect()->route('bidan.pasien-nifas.detail', $id)->with('success', 'KF' . $jenisKf . ' berhasil disimpan');
-    }
-
-    private function getStatusKF($pasienId)
-    {
-        $total = 4;
-
-        $selesai = DB::table('kunjungan_kf')
-            ->where('pasien_nifas_id', $pasienId)
-            ->where('status', 'selesai')
-            ->count();
-
-        if ($selesai == 0) {
-            return [
-                'label' => 'Perlu KF',
-                'class' => 'badge-warning'
-            ];
-        }
-
-        if ($selesai < $total) {
-            return [
-                'label' => 'Menunggu',
-                'class' => 'badge-secondary'
-            ];
-        }
-
-        return [
-            'label' => 'Semua KF Selesai',
-            'class' => 'badge-success'
-        ];
     }
 }
 

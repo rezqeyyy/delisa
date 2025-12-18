@@ -23,6 +23,46 @@ class SkriningController extends Controller
     // Catatan: Menggunakan trait SkriningHelpers untuk fungsi-fungsi bantu.
     use SkriningHelpers;
 
+    private function resolvePuskesmasContext(?int $userId)
+    {
+        if (!$userId) return null;
+
+        // 1) Normal: user memang “pemilik” row puskesmas (puskesmas.user_id = users.id)
+        $ps = DB::table('puskesmas')
+            ->select('id', 'kecamatan', 'is_mandiri')
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($ps) return $ps;
+
+        // 2) Bidan: user punya row di bidans, dan bidans.puskesmas_id menunjuk puskesmas (mandiri atau nebeng)
+        return DB::table('bidans')
+            ->join('puskesmas', 'puskesmas.id', '=', 'bidans.puskesmas_id')
+            ->where('bidans.user_id', $userId)
+            ->select('puskesmas.id', 'puskesmas.kecamatan', 'puskesmas.is_mandiri')
+            ->first();
+    }
+
+    private function applyWilayahFilter($query, $ps)
+    {
+        $kecamatan = trim((string) ($ps->kecamatan ?? ''));
+
+        return $query->where(function ($w) use ($ps, $kecamatan) {
+            // 1) Skrining yang dilakukan di faskes ini (puskesmas user)
+            $w->where('puskesmas_id', $ps->id);
+
+            // 2) Skrining yang dilakukan di faskes manapun yang kecamatannya sama
+            //    (ini otomatis mencakup klinik mandiri karena mereka juga row di tabel puskesmas)
+            if ($kecamatan !== '') {
+                $w->orWhereHas('puskesmas', function ($q) use ($kecamatan) {
+                    $q->whereRaw('LOWER("kecamatan") = LOWER(?)', [$kecamatan]);
+                });
+            }
+        });
+    }
+
+
+
     /**
      * Menampilkan daftar skrining yang telah lengkap beserta informasi pasien.
      *
@@ -30,74 +70,82 @@ class SkriningController extends Controller
      * @return \Illuminate\Contracts\View\View
      */
     public function index(Request $request)
-{
-    $user = Auth::user();
-    $search = trim($request->search);
+    {
+        $user = Auth::user();
+        $search = trim($request->search);
 
-    $puskesmas = $user->puskesmas;
-    if (!$puskesmas) {
-        return view('puskesmas.skrining.index', ['skrinings' => collect()]);
-    }
-
-    $query = Skrining::query()
-        ->with(['pasien.user', 'puskesmas'])
-        ->whereNotNull('status_pre_eklampsia');
-
-    // 🔍 SEARCH (Nama, NIK, No Telp)
-    if ($search) {
-        $query->whereHas('pasien', function ($q) use ($search) {
-            $q->where('nik', 'like', "%{$search}%")
-              ->orWhereHas('user', function ($u) use ($search) {
-                  $u->where('name', 'ilike', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
-              });
-        });
-    }
-
-    // 🔒 Filter wilayah (puskesmas / kecamatan / bidan mandiri)
-    $query->where(function ($w) use ($puskesmas) {
-        $kecamatan = $puskesmas->kecamatan;
-
-        $w->where('puskesmas_id', $puskesmas->id)
-          ->orWhereHas('pasien', function ($q) use ($kecamatan) {
-              $q->whereRaw('LOWER("PKecamatan") = LOWER(?)', [$kecamatan]);
-          })
-          ->orWhereHas('puskesmas', function ($q) use ($kecamatan) {
-              $q->whereRaw('LOWER("kecamatan") = LOWER(?)', [$kecamatan]);
-          })
-          ->orWhere(function ($sub) use ($kecamatan) {
-              $sub->whereHas('puskesmas', fn ($q) => $q->where('is_mandiri', true))
-                  ->whereHas('pasien', fn ($q) =>
-                      $q->whereRaw('LOWER("PKecamatan") = LOWER(?)', [$kecamatan])
-                  );
-          });
-    });
-
-    $skrinings = $query->latest()->paginate(10);
-
-    $skrinings->setCollection(
-        $skrinings->getCollection()->filter(fn ($s) => $this->isSkriningCompleteForSkrining($s))->values()
-    );
-
-    $skrinings->getCollection()->transform(function ($s) {
-        $resikoSedang = (int) $s->jumlah_resiko_sedang;
-        $resikoTinggi = (int) $s->jumlah_resiko_tinggi;
-
-        if ($resikoTinggi >= 1 || $resikoSedang >= 2) {
-            $s->conclusion_display = 'Berisiko';
-            $s->badge_class = 'bg-red-600 text-white';
-        } else {
-            $s->conclusion_display = 'Normal';
-            $s->badge_class = 'bg-green-500 text-white';
+        $ps = $this->resolvePuskesmasContext(optional($user)->id);
+        if (!$ps) {
+            return view('puskesmas.skrining.index', ['skrinings' => collect()]);
         }
 
-        return $s;
-    });
 
-    $skrinings->appends($request->except('page'));
+        $query = Skrining::query()
+            ->with(['pasien.user', 'puskesmas'])
+            ->whereNotNull('status_pre_eklampsia');
 
-    return view('puskesmas.skrining.index', compact('skrinings'));
-}
+        // 🔍 SEARCH (Nama, NIK, No Telp)
+        if ($search) {
+            $query->whereHas('pasien', function ($q) use ($search) {
+                $q->where('nik', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($u) use ($search) {
+                        $u->where('name', 'ilike', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // 🔒 Filter wilayah (berdasarkan TEMPAT skrining / faskes), BUKAN domisili pasien
+        $this->applyWilayahFilter($query, $ps);
+
+        // DEBUG STEP 0: pastikan puskesmas & kecamatan kebaca
+        Log::info('DEBUG skrining.index: puskesmas context', [
+            'user_id' => optional($user)->id,
+            'puskesmas_id' => optional($ps)->id,
+            'kecamatan_puskesmas' => optional($ps)->kecamatan,
+            'is_mandiri' => optional($ps)->is_mandiri,
+        ]);
+
+        // DEBUG STEP 1: cek SQL dan bindings query utama
+        Log::info('DEBUG skrining.index: base query', [
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings(),
+        ]);
+
+        // DEBUG STEP 2: hitung jumlah sebelum complete-filter
+        Log::info('DEBUG skrining.index: count before complete', [
+            'count' => (clone $query)->count(),
+        ]);
+
+        // DEBUG STEP 3: ambil sample kecil untuk lihat apa yang nyangkut
+        $sample = (clone $query)->latest()->take(5)->get(['id', 'pasien_id', 'puskesmas_id', 'status_pre_eklampsia', 'created_at']);
+        Log::info('DEBUG skrining.index: sample rows', $sample->toArray());
+
+
+        // ✅ Untuk puskesmas: cukup pastikan skrining sudah punya status_pre_eklampsia
+        $skrinings = (clone $query)
+            ->latest()
+            ->paginate(10);
+
+        $skrinings->getCollection()->transform(function ($s) {
+            $resikoSedang = (int) $s->jumlah_resiko_sedang;
+            $resikoTinggi = (int) $s->jumlah_resiko_tinggi;
+
+            if ($resikoTinggi >= 1 || $resikoSedang >= 2) {
+                $s->conclusion_display = 'Berisiko';
+                $s->badge_class = 'bg-red-600 text-white';
+            } else {
+                $s->conclusion_display = 'Normal';
+                $s->badge_class = 'bg-green-500 text-white';
+            }
+
+            return $s;
+        });
+
+        $skrinings->appends($request->except('page'));
+
+        return view('puskesmas.skrining.index', compact('skrinings'));
+    }
 
 
     /**
@@ -111,31 +159,28 @@ class SkriningController extends Controller
     {
         // Catatan: Mendapatkan ID pengguna yang sedang login.
         $userId = optional(Auth::user())->id;
-        // Catatan: Mengambil data puskesmas milik pengguna.
-        $ps = DB::table('puskesmas')->select('id', 'kecamatan')->where('user_id', $userId)->first();
-        // Catatan: Jika data puskesmas tidak ditemukan, kembalikan error 404.
+        $ps = $this->resolvePuskesmasContext($userId);
         abort_unless($ps, 404);
 
         // Catatan: Ambil kecamatan pasien & faskes (puskesmas/bidan) untuk validasi akses.
         $kecPasienRaw = optional($skrining->pasien)->PKecamatan;
         $kecPasien    = mb_strtolower(trim((string) $kecPasienRaw));
-        $kecPuskesmas = mb_strtolower(trim((string) optional($ps)->kecamatan));
         $kecFaskesRaw = optional($skrining->puskesmas)->kecamatan;
-        $kecFaskes    = mb_strtolower(trim((string) $kecFaskesRaw));
         $isBidanMandiri = optional($skrining->puskesmas)->is_mandiri ?? false;
         // Catatan: Cek apakah skrining milik puskesmas ini atau berada di kecamatan yang sama (pasien ATAU faskes tempat skrining).
+        $kecPuskesmas = mb_strtolower(trim((string) ($ps->kecamatan ?? '')));
+        $kecFaskes    = mb_strtolower(trim((string) (optional($skrining->puskesmas)->kecamatan ?? '')));
+
         $allowed = (
             ($skrining->puskesmas_id === $ps->id)
-            || ($kecPasien !== '' && $kecPuskesmas !== '' && $kecPasien === $kecPuskesmas)
             || ($kecFaskes !== '' && $kecPuskesmas !== '' && $kecFaskes === $kecPuskesmas)
-            || ($isBidanMandiri && $kecPasien !== '' && $kecPuskesmas !== '' && $kecPasien === $kecPuskesmas)
         );
+        abort_unless($allowed, 403);
+
         // Catatan: Jika tidak diizinkan, kembalikan error 403 (Forbidden).
         abort_unless($allowed, 403);
         // Catatan: Jika skrining belum lengkap, kembalikan error 404.
-        abort_unless($this->isSkriningCompleteForSkrining($skrining), 404);
-
-        // Catatan: Hitung jumlah risiko untuk menentukan kesimpulan & status berisiko/tidak.
+        abort_unless(!is_null($skrining->status_pre_eklampsia), 404);        // Catatan: Hitung jumlah risiko untuk menentukan kesimpulan & status berisiko/tidak.
         $resikoSedang = (int)($skrining->jumlah_resiko_sedang ?? 0);
         $resikoTinggi = (int)($skrining->jumlah_resiko_tinggi ?? 0);
 
@@ -159,7 +204,7 @@ class SkriningController extends Controller
             'conclusion_display' => $conclusion,
             'is_bidan_mandiri'   => $isBidanMandiri,
             'kecamatan_pasien'   => $kecPasienRaw,
-            'kecamatan_puskesmas'=> $ps->kecamatan,
+            'kecamatan_puskesmas' => $ps->kecamatan,
         ]);
 
         // Catatan: Load relasi-relasi yang dibutuhkan untuk tampilan detail.
@@ -397,34 +442,25 @@ class SkriningController extends Controller
     {
         // Catatan: Mendapatkan ID pengguna yang sedang login.
         $userId = optional(Auth::user())->id;
-        // Catatan: Mengambil data puskesmas milik pengguna.
-        $ps = DB::table('puskesmas')->select('id', 'kecamatan')->where('user_id', $userId)->first();
-        // Catatan: Jika data puskesmas tidak ditemukan, kembalikan error 404.
+        $ps = $this->resolvePuskesmasContext($userId);
         abort_unless($ps, 404);
 
-        // Catatan: Ambil kecamatan pasien & faskes (puskesmas/bidan) untuk validasi akses.
-        $kecPasienRaw = optional($skrining->pasien)->PKecamatan;
-        $kecPasien    = mb_strtolower(trim((string) $kecPasienRaw));
-        $kecPuskesmas = mb_strtolower(trim((string) optional($ps)->kecamatan));
-        $kecFaskesRaw = optional($skrining->puskesmas)->kecamatan;
-        $kecFaskes    = mb_strtolower(trim((string) $kecFaskesRaw));
-        
-        // Catatan: Cek apakah skrining dari bidan mandiri.
-        $isBidanMandiri = optional($skrining->puskesmas)->is_mandiri ?? false;
-        
         // Catatan: Cek apakah skrining milik puskesmas ini, berada di kecamatan yang sama, atau dari bidan mandiri di kecamatan yang sama.
+        $kecPuskesmas = mb_strtolower(trim((string) ($ps->kecamatan ?? '')));
+        $kecFaskes    = mb_strtolower(trim((string) (optional($skrining->puskesmas)->kecamatan ?? '')));
+
         $allowed = (
             ($skrining->puskesmas_id === $ps->id)
-            || ($kecPasien !== '' && $kecPuskesmas !== '' && $kecPasien === $kecPuskesmas)
             || ($kecFaskes !== '' && $kecPuskesmas !== '' && $kecFaskes === $kecPuskesmas)
-            || ($isBidanMandiri && $kecPasien !== '' && $kecPuskesmas !== '' && $kecPasien === $kecPuskesmas)
         );
-        
+        abort_unless($allowed, 403);
+
+
         // Catatan: Jika tidak diizinkan, kembalikan error 403 (Forbidden).
         abort_unless($allowed, 403);
 
         // Catatan: Pastikan skrining sudah lengkap sebelum dirujuk.
-        abort_unless($this->isSkriningCompleteForSkrining($skrining), 404);
+        abort_unless(!is_null($skrining->status_pre_eklampsia), 404);
 
         // Catatan: Validasi input ID rumah sakit.
         $validated = $request->validate([
@@ -458,38 +494,29 @@ class SkriningController extends Controller
      * @param Skrining $skrining
      * @return \Illuminate\Http\RedirectResponse
      */
-        public function verify(Request $request, Skrining $skrining)
+    public function verify(Request $request, Skrining $skrining)
     {
         // Catatan: Mendapatkan ID pengguna yang sedang login.
         $userId = optional(Auth::user())->id;
-        // Catatan: Mengambil data puskesmas milik pengguna.
-        $ps = DB::table('puskesmas')->select('id', 'kecamatan')->where('user_id', $userId)->first();
-        // Catatan: Jika data puskesmas tidak ditemukan, kembalikan error 404.
+        $ps = $this->resolvePuskesmasContext($userId);
         abort_unless($ps, 404);
 
-        // Catatan: Ambil kecamatan pasien & faskes (puskesmas/bidan) untuk validasi akses.
-        $kecPasienRaw = optional($skrining->pasien)->PKecamatan;
-        $kecPasien    = mb_strtolower(trim((string) $kecPasienRaw));
-        $kecPuskesmas = mb_strtolower(trim((string) optional($ps)->kecamatan));
-        $kecFaskesRaw = optional($skrining->puskesmas)->kecamatan;
-        $kecFaskes    = mb_strtolower(trim((string) $kecFaskesRaw));
-        
-        // Catatan: Cek apakah skrining dari bidan mandiri.
-        $isBidanMandiri = optional($skrining->puskesmas)->is_mandiri ?? false;
-        
         // Catatan: Cek apakah skrining milik puskesmas ini, berada di kecamatan yang sama, atau dari bidan mandiri di kecamatan yang sama.
+        $kecPuskesmas = mb_strtolower(trim((string) ($ps->kecamatan ?? '')));
+        $kecFaskes    = mb_strtolower(trim((string) (optional($skrining->puskesmas)->kecamatan ?? '')));
+
         $allowed = (
             ($skrining->puskesmas_id === $ps->id)
-            || ($kecPasien !== '' && $kecPuskesmas !== '' && $kecPasien === $kecPuskesmas)
             || ($kecFaskes !== '' && $kecPuskesmas !== '' && $kecFaskes === $kecPuskesmas)
-            || ($isBidanMandiri && $kecPasien !== '' && $kecPuskesmas !== '' && $kecPasien === $kecPuskesmas)
         );
-        
+        abort_unless($allowed, 403);
+
+
         // Catatan: Jika tidak diizinkan, kembalikan error 403 (Forbidden).
         abort_unless($allowed, 403);
 
         // Catatan: Pastikan skrining sudah lengkap sebelum diverifikasi.
-        abort_unless($this->isSkriningCompleteForSkrining($skrining), 404);
+        abort_unless(!is_null($skrining->status_pre_eklampsia), 404);
 
         // Catatan: Jika sudah diverifikasi sebelumnya, tidak perlu diulang.
         if ($skrining->checked_status) {
@@ -512,17 +539,15 @@ class SkriningController extends Controller
      *
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
-        public function exportExcel()
+    public function exportExcel()
     {
         try {
             // Catatan: Mendapatkan ID pengguna yang sedang login.
             $userId = optional(Auth::user())->id;
 
             // Catatan: Mengambil data puskesmas milik pengguna.
-            $ps = DB::table('puskesmas')
-                ->select('id', 'kecamatan')
-                ->where('user_id', $userId)
-                ->first();
+            $ps = $this->resolvePuskesmasContext($userId);
+
 
             // Catatan: Mengambil ID dan kecamatan puskesmas.
             $puskesmasId = optional($ps)->id;
@@ -541,17 +566,17 @@ class SkriningController extends Controller
                             $w->orWhereHas('pasien', function ($ww) use ($kecamatan) {
                                 $ww->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]);
                             })
-                            ->orWhereHas('puskesmas', function ($wp) use ($kecamatan) {
-                                $wp->whereRaw('LOWER("puskesmas"."kecamatan") = LOWER(?)', [$kecamatan]);
-                            })
-                            ->orWhere(function ($sub) use ($kecamatan) {
-                                $sub->whereHas('puskesmas', function ($wp) {
-                                    $wp->where('is_mandiri', true);
+                                ->orWhereHas('puskesmas', function ($wp) use ($kecamatan) {
+                                    $wp->whereRaw('LOWER("puskesmas"."kecamatan") = LOWER(?)', [$kecamatan]);
                                 })
-                                ->whereHas('pasien', function ($wp) use ($kecamatan) {
-                                    $wp->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]);
+                                ->orWhere(function ($sub) use ($kecamatan) {
+                                    $sub->whereHas('puskesmas', function ($wp) {
+                                        $wp->where('is_mandiri', true);
+                                    })
+                                        ->whereHas('pasien', function ($wp) use ($kecamatan) {
+                                            $wp->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]);
+                                        });
                                 });
-                            });
                         }
                     });
                 })
@@ -560,8 +585,9 @@ class SkriningController extends Controller
 
             // Catatan: Filter hanya skrining yang sudah lengkap.
             $skrinings = $skrinings->filter(function ($s) {
-                return $this->isSkriningCompleteForSkrining($s);
+                return !is_null($s->status_pre_eklampsia);
             })->values();
+
 
             // Catatan: Nama file CSV yang akan diunduh.
             $fileName = 'data-skrining-ibu-hamil-' . date('Y-m-d') . '.csv';
@@ -640,10 +666,7 @@ class SkriningController extends Controller
             $userId = optional(Auth::user())->id;
 
             // Catatan: Mengambil data puskesmas milik pengguna.
-            $ps = DB::table('puskesmas')
-                ->select('id', 'kecamatan')
-                ->where('user_id', $userId)
-                ->first();
+            $ps = $this->resolvePuskesmasContext($userId);
 
             // Catatan: Mengambil ID dan kecamatan puskesmas.
             $puskesmasId = optional($ps)->id;
@@ -662,17 +685,17 @@ class SkriningController extends Controller
                             $w->orWhereHas('pasien', function ($ww) use ($kecamatan) {
                                 $ww->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]);
                             })
-                            ->orWhereHas('puskesmas', function ($wp) use ($kecamatan) {
-                                $wp->whereRaw('LOWER("puskesmas"."kecamatan") = LOWER(?)', [$kecamatan]);
-                            })
-                            ->orWhere(function ($sub) use ($kecamatan) {
-                                $sub->whereHas('puskesmas', function ($wp) {
-                                    $wp->where('is_mandiri', true);
+                                ->orWhereHas('puskesmas', function ($wp) use ($kecamatan) {
+                                    $wp->whereRaw('LOWER("puskesmas"."kecamatan") = LOWER(?)', [$kecamatan]);
                                 })
-                                ->whereHas('pasien', function ($wp) use ($kecamatan) {
-                                    $wp->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]);
+                                ->orWhere(function ($sub) use ($kecamatan) {
+                                    $sub->whereHas('puskesmas', function ($wp) {
+                                        $wp->where('is_mandiri', true);
+                                    })
+                                        ->whereHas('pasien', function ($wp) use ($kecamatan) {
+                                            $wp->whereRaw('LOWER("pasiens"."PKecamatan") = LOWER(?)', [$kecamatan]);
+                                        });
                                 });
-                            });
                         }
                     });
                 })
@@ -681,7 +704,7 @@ class SkriningController extends Controller
 
             // Catatan: Filter hanya skrining yang sudah lengkap.
             $skrinings = $skrinings->filter(function ($s) {
-                return $this->isSkriningCompleteForSkrining($s);
+                return !is_null($s->status_pre_eklampsia);
             })->values();
 
             // Catatan: Transformasi data untuk menambahkan informasi kesimpulan.
@@ -689,8 +712,7 @@ class SkriningController extends Controller
                 $resikoSedang = (int)($s->jumlah_resiko_sedang ?? 0);
                 $resikoTinggi = (int)($s->jumlah_resiko_tinggi ?? 0);
 
-                $isComplete = $this->isSkriningCompleteForSkrining($s);
-
+                $isComplete = !is_null($s->status_pre_eklampsia);
                 // Catatan: Menentukan kesimpulan berdasarkan jumlah risiko.
                 if (!$isComplete) {
                     $s->kesimpulan = 'Skrining belum selesai';

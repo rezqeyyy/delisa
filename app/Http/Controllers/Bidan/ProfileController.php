@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Bidan;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -45,7 +47,37 @@ class ProfileController extends Controller
         }
 
         // Kirim data user & bidan ke view
-        return view('bidan.profile.edit', compact('user', 'bidan'));
+        // Ambil informasi puskesmas binaan (nama + kecamatan)
+        // 1) Ambil dulu record puskesmas yang direferensikan oleh bidan.puskesmas_id
+        // Ambil dulu record puskesmas yg direferensikan oleh bidan.puskesmas_id
+        $puskesmasRef = DB::table('puskesmas')
+            ->where('id', $bidan->puskesmas_id)
+            ->select('id', 'nama_puskesmas', 'kecamatan', 'is_mandiri')
+            ->first();
+
+        // Default: kalau bukan mandiri, binaannya = puskesmasRef itu sendiri
+        $puskesmasBinaan = $puskesmasRef
+            ? (object) [
+                'nama_puskesmas' => $puskesmasRef->nama_puskesmas,
+                'kecamatan'      => $puskesmasRef->kecamatan,
+            ]
+            : null;
+
+        // Kalau puskesmasRef adalah klinik mandiri, cari puskesmas binaan (non-mandiri) berdasarkan kecamatan yang sama
+        if ($puskesmasRef && $puskesmasRef->is_mandiri === true) {
+            $puskesmasBinaan = DB::table('puskesmas')
+                ->where('kecamatan', $puskesmasRef->kecamatan)
+                ->where(function ($q) {
+                    $q->whereNull('is_mandiri')
+                        ->orWhere('is_mandiri', false);
+                })
+                ->select('nama_puskesmas', 'kecamatan')
+                ->orderBy('id') // biar deterministik
+                ->first()
+                ?: $puskesmasBinaan; // fallback kalau tidak ketemu
+        }
+        // Kirim data user, bidan, dan puskesmas binaan ke view
+        return view('bidan.profile.edit', compact('user', 'bidan', 'puskesmasBinaan'));
     }
 
     /*
@@ -112,7 +144,7 @@ class ProfileController extends Controller
             // store('folder', 'disk'): simpan file ke folder & disk tertentu
             // Return: path file (contoh: profile-photos/abc123.jpg)
             $path = $request->file('photo')->store('profile-photos', 'public');
-            
+
             // Set path foto ke user
             $user->photo = $path;
         }
@@ -125,7 +157,7 @@ class ProfileController extends Controller
         // ========================================================
         // Update nomor izin praktek
         $bidan->nomor_izin_praktek = $validated['nomor_izin_praktek'];
-        
+
         // Simpan perubahan bidan ke database
         $bidan->save(); // Anotasi @var membantu IDE tahu ini Model Bidan
 
@@ -162,10 +194,10 @@ class ProfileController extends Controller
         if ($user->photo) {
             // Hapus file foto dari storage
             Storage::disk('public')->delete($user->photo);
-            
+
             // Set kolom photo jadi null
             $user->photo = null;
-            
+
             // Simpan perubahan
             $user->save();
         }
