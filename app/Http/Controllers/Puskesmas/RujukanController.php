@@ -409,7 +409,7 @@ class RujukanController extends Controller
                 $rujukan->kunjungan_berikutnya = $riwayat->kunjungan_berikutnya;
                 // Kalau nanti mau ditampilkan juga:
                 // $rujukan->tindakan_rs      = $riwayat->tindakan;
-                // $rujukan->catatan_rs       = $riwayat->catatan;
+                $rujukan->catatan       = $riwayat->catatan;
                 // $rujukan->tekanan_darah_rs = $riwayat->tekanan_darah;
             }
 

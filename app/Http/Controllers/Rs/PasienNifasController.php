@@ -540,15 +540,15 @@ class PasienNifasController extends Controller
             ->join('users', 'puskesmas.user_id', '=', 'users.id')
             ->whereNotNull('puskesmas.user_id')
             ->where('users.status', true)
+            ->where('puskesmas.is_mandiri', false) // ✅ kunci: hanya puskesmas asli
             ->select(
                 'puskesmas.id',
                 'puskesmas.nama_puskesmas',
                 'puskesmas.kecamatan'
-
-
             )
             ->orderBy('puskesmas.nama_puskesmas')
             ->get();
+
 
         return view('rs.pasien-nifas.edit', compact('pasienNifas', 'puskesmasList'));
     }

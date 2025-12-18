@@ -1,22 +1,19 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Puskesmas — Detail Rujukan</title>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    @vite([
-        'resources/css/app.css', 
-        'resources/js/app.js', 
-        'resources/js/puskesmas/sidebar-toggle.js',
-    ])
+
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/puskesmas/sidebar-toggle.js'])
 </head>
 
 <body class="bg-[#FFF7FC] min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
-        
+
         <x-puskesmas.sidebar />
 
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
@@ -32,7 +29,7 @@
                     {{ session('error') }}
                 </div>
             @endif
-            
+
             {{-- Header --}}
             <div class="mb-6 flex items-center">
                 <a href="{{ route('puskesmas.rujukan.index') }}" class="text-gray-600 hover:text-gray-900">
@@ -49,31 +46,35 @@
                 <div class="overflow-hidden rounded-xl border border-gray-200">
                     <div class="grid grid-cols-1 sm:grid-cols-3">
                         <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
-                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data
+                        </div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">ID Rujukan</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">#{{ $rujukan->id }}</div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Tanggal Rujukan</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
-                             {{ \Carbon\Carbon::parse($rujukan->created_at)->format('d F Y, H:i') }} WIB
+                            {{ \Carbon\Carbon::parse($rujukan->created_at)->format('d F Y, H:i') }} WIB
                         </div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Status</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
-                            @if($rujukan->done_status == 1)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            @if ($rujukan->done_status == 1)
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     Selesai
                                 </span>
                             @else
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                     Menunggu Konfirmasi RS
                                 </span>
                             @endif
                         </div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">ID Skrining</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">#{{ $rujukan->skrining_id }}</div>
+                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">#{{ $rujukan->skrining_id }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -84,25 +85,31 @@
                 <div class="overflow-hidden rounded-xl border border-gray-200">
                     <div class="grid grid-cols-1 sm:grid-cols-3">
                         <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
-                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data
+                        </div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Nama Lengkap</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm font-bold">{{ $rujukan->nama_pasien ?? '-' }}</div>
+                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm font-bold">
+                            {{ $rujukan->nama_pasien ?? '-' }}</div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Alamat</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $rujukan->alamat ?? '-' }}</div>
+                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $rujukan->alamat ?? '-' }}
+                        </div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">NIK</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $rujukan->nik ?? '-' }}</div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">No. Telepon</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $rujukan->no_telepon ?? '-' }}</div>
+                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                            {{ $rujukan->no_telepon ?? '-' }}</div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Tanggal Lahir</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
-                             @if(isset($rujukan->tanggal_lahir))
+                            @if (isset($rujukan->tanggal_lahir))
                                 {{ \Carbon\Carbon::parse($rujukan->tanggal_lahir)->format('d F Y') }}
-                                <span class="text-gray-500 text-xs">({{ \Carbon\Carbon::parse($rujukan->tanggal_lahir)->age }} tahun)</span>
+                                <span
+                                    class="text-gray-500 text-xs">({{ \Carbon\Carbon::parse($rujukan->tanggal_lahir)->age }}
+                                    tahun)</span>
                             @else
                                 -
                             @endif
@@ -117,16 +124,20 @@
                 <div class="overflow-hidden rounded-xl border border-gray-200">
                     <div class="grid grid-cols-1 sm:grid-cols-3">
                         <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
-                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data
+                        </div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Nama Rumah Sakit</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm font-bold">{{ $rujukan->nama_rs ?? '-' }}</div>
+                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm font-bold">
+                            {{ $rujukan->nama_rs ?? '-' }}</div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Alamat</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $rujukan->alamat_rs ?? '-' }}</div>
+                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                            {{ $rujukan->alamat_rs ?? '-' }}</div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Telepon</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm italic">{{ $rujukan->telepon_rs ?? 'Nomor telepon belum tersedia' }}</div>
+                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm italic">
+                            {{ $rujukan->telepon_rs ?? 'Nomor telepon belum tersedia' }}</div>
                     </div>
                 </div>
             </div>
@@ -137,20 +148,24 @@
                 <div class="overflow-hidden rounded-xl border border-gray-200">
                     <div class="grid grid-cols-1 sm:grid-cols-3">
                         <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
-                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data</div>
+                        <div class="sm:col-span-2 border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Data
+                        </div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kesimpulan Skrining</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $rujukan->kesimpulan ?? '-' }}</div>
+                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                            {{ $rujukan->kesimpulan ?? '-' }}</div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Anjuran Kontrol</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $rujukan->anjuran_kontrol ?? '-' }}</div>
+                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                            {{ $rujukan->anjuran_kontrol ?? '-' }}</div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Pemeriksaan Berikutnya</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $rujukan->kunjungan_berikutnya ?? '-' }}</div>
-                        
+                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
+                            {{ $rujukan->kunjungan_berikutnya ?? '-' }}</div>
+
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Pasien Datang</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
-                            @if(isset($rujukan->anjuran_kontrol) || isset($rujukan->kunjungan_berikutnya))
+                            @if (isset($rujukan->anjuran_kontrol) || isset($rujukan->kunjungan_berikutnya))
                                 Ya, pasien datang ke RS
                             @else
                                 -
@@ -164,16 +179,19 @@
             <div class="mt-8 rounded-2xl bg-white p-6 shadow">
                 <h2 class="mb-4 text-xl font-semibold text-gray-800">Catatan Rujukan</h2>
                 <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm italic text-gray-600">
-                    {{ $rujukan->catatan_rujukan ?: 'Tidak ada catatan tambahan' }}
+                    {{ $rujukan->catatan ?: 'Tidak ada catatan rujukan dari RS' }}
                 </div>
+
             </div>
 
             {{-- Buttons --}}
             <div class="mt-8 flex items-center gap-3">
-                 <a href="{{ route('puskesmas.rujukan.index') }}" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <a href="{{ route('puskesmas.rujukan.index') }}"
+                    class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                     Kembali ke Daftar
                 </a>
-                <button onclick="window.print()" class="rounded-lg bg-pink-500 px-4 py-2 text-sm font-medium text-white hover:bg-pink-600">
+                <button onclick="window.print()"
+                    class="rounded-lg bg-pink-500 px-4 py-2 text-sm font-medium text-white hover:bg-pink-600">
                     Cetak
                 </button>
             </div>
@@ -181,4 +199,5 @@
         </main>
     </div>
 </body>
+
 </html>

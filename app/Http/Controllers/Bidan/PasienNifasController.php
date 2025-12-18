@@ -309,22 +309,36 @@ class PasienNifasController extends Controller
             $base = Carbon::parse($baseDateStr);
 
             if ($nextKe === 1) {
-                $hours = $base->diffInHours($now);
-                $startH = 6;
-                $endH = 48;
 
-                if ($hours > $endH) {
+                // ✅ pakai menit biar presisi, lalu bikin jam bulat
+                // signed diff: kalau base masih di masa depan => negatif
+                $minutes = $base->diffInMinutes($now, false);
+
+                // Jam berlalu (boleh negatif). Kita butuh jam bulat:
+                // - untuk kondisi > endH (telat) kita pakai floor saat positif
+                // - untuk countdown (early) kita pakai ceil biar tidak muncul pecahan dan tidak “0 padahal masih 59 menit”
+                $hoursElapsed = $minutes >= 0
+                    ? intdiv($minutes, 60)               // floor untuk yang sudah lewat
+                    : -(int) ceil(abs($minutes) / 60);  // tetap negatif, dibulatkan
+
+                $startH = 6;
+                $endH   = 48;
+
+                if ($hoursElapsed > $endH) {
                     $label = 'Telat menuju KF1';
                     $state = 'late';
-                    $cls = 'bg-[#FF3B30]';
-                } elseif ($hours >= $startH) {
+                    $cls   = 'bg-[#FF3B30]';
+                } elseif ($hoursElapsed >= $startH) {
                     $label = 'Dalam periode KF1';
                     $state = 'window';
-                    $cls = 'bg-[#FFC400] text-[#1D1D1D]';
+                    $cls   = 'bg-[#FFC400] text-[#1D1D1D]';
                 } else {
-                    $label = 'J-' . max(0, $startH - $hours) . ' menuju KF1';
-                    $state = 'early';
-                    $cls = 'bg-[#6c757d]';
+                    // ✅ countdown menuju mulai KF1 (jam)
+                    // kalau hoursElapsed negatif, berarti belum lahiran/ baseDate future -> tetap “menuju”
+                    $remain = $startH - max(0, $hoursElapsed); // tetap integer
+                    $label  = 'H-' . max(0, (int)$remain) . ' menuju KF1'; // ✅ pakai H- (jam), bukan J-
+                    $state  = 'early';
+                    $cls    = 'bg-[#6c757d]';
                 }
             } else {
                 $days = $base->diffInDays($today);
