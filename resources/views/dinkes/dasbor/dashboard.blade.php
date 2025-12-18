@@ -194,7 +194,7 @@
                                     <img src="{{ asset('icons/Iconly/Regular/Light/Graph.svg') }}"
                                         class="sm:block w-3.5 h-3.5" alt="">
                                 </span>
-                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Pasien Hadir</h3>
+                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Jumlah Pasien Hadir Saat KF1</h3>
                             </div>
                         </div>
 
@@ -202,12 +202,12 @@
                         <div class="space-y-3 flex-1">
                             <div class="flex items-center justify-between">
                                 <span class="text-[#7C7C7C]">Pasien Hadir</span>
-                                <span class="font-bold text-[#1D1D1D]">{{ $pasienHadir ?? 0 }}</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $hadir ?? 0 }}</span>
                             </div>
                             <hr class="border-[#E9E9E9]">
                             <div class="flex items-center justify-between">
                                 <span class="text-[#7C7C7C]">Pasien Tidak Hadir</span>
-                                <span class="font-bold text-[#1D1D1D]">{{ $pasienTidakHadir ?? 0 }}</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $mangkir ?? 0 }}</span>
                             </div>
                         </div>
                     </div>
@@ -227,7 +227,7 @@
                             </div>
                         </div>
 
-                        {{-- Isi kartu: total nifas dan sudah KFI --}}
+                        {{-- Isi kartu: total nifas dan sudah selesai KF --}}
                         <div class="space-y-3 flex-1 pt-8">
                             <div class="flex items-center justify-between">
                                 <span class="text-[#7C7C7C]">Total Pasien Nifas</span>
@@ -235,8 +235,8 @@
                             </div>
                             <hr class="border-[#E9E9E9]">
                             <div class="flex items-center justify-between">
-                                <span class="text-[#7C7C7C]">Sudah KFI</span>
-                                <span class="font-bold text-[#1D1D1D]">{{ $sudahKFI ?? 0 }}</span>
+                                <span class="text-[#7C7C7C]">Sudah Selesai KF (KF1-KF4)</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $sudahKF ?? 0 }}</span>
                             </div>
                         </div>
                     </div>
@@ -253,7 +253,7 @@
                                     <img src="{{ asset('icons/Iconly/Sharp/Outline/Activity.svg') }}"
                                         class="sm:block w-3.5 h-3.5" alt="">
                                 </span>
-                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan Kunjungan Nifas</h3>
+                                <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan kesimpulan KF</h3>
                             </div>
                         </div>
 
@@ -563,7 +563,6 @@
             </section>
 
 
-            {{-- TABEL: Data Pasien Pre-Eklampsia --}}
             <!-- Tabel: Data Pasien Pre-Eklampsia -->
             <section id="peTableSection" class="bg-white rounded-2xl p-5 shadow-md" data-pe-table-section>
                 {{-- Header tabel: judul + search + filter + unduh --}}

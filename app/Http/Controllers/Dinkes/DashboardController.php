@@ -156,72 +156,100 @@ class DashboardController extends Controller
             'total'  => $resikoNormal + $resikoPreeklampsia,
         ]);
 
+        // ===================== 4. DATA NIFAS (TOTAL & SUDAH KF) [KONSISTEN RS EPISODE] =====================
+        // Dashboard ini memakai kf_kunjungans yang terhubung ke pasien_nifas_rs,
+        // jadi total nifas & status "sudah KF" harus berbasis episode RS juga (bukan union bidan+rs).
 
-        // ===================== 4. DATA NIFAS (TOTAL & SUDAH KFI) =====================
+        $episodeRsDepok = PasienNifasRs::query()
+            ->join('pasiens as p', 'p.id', '=', 'pasien_nifas_rs.pasien_id')
+            ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'");
 
-        // Gabungkan semua episode nifas (bidan + RS)
-        $unionNifas = PasienNifasBidan::select('pasien_id')
-            ->union(
-                PasienNifasRs::select('pasien_id')
-            );
+        $totalNifas = (clone $episodeRsDepok)
+            ->distinct('pasien_nifas_rs.id')
+            ->count('pasien_nifas_rs.id');
 
-        // Ambil daftar pasien_id nifas yang berdomisili di Depok saja
-        $pasienNifasDepokIds = DB::query()
-            ->fromSub($unionNifas, 't')
-            ->join('pasiens as p', 'p.id', '=', 't.pasien_id')
-            ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'")
-            ->distinct()
-            ->pluck('t.pasien_id')
-            ->toArray();
+        /**
+         * SUDAH KF:
+         * Episode RS dianggap "sudah selesai pemantauan" bila:
+         * - sudah ada KF4, ATAU
+         * - ada kesimpulan_pantauan meninggal/wafat pada salah satu kunjungan KF
+         */
+        $sudahKF = (clone $episodeRsDepok)
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('kf_kunjungans as kk')
+                    ->whereColumn('kk.pasien_nifas_id', 'pasien_nifas_rs.id')
+                    ->where(function ($w) {
+                        $w->whereRaw("UPPER(COALESCE(kk.jenis_kf,'')) = 'KF4'")
+                            ->orWhereRaw("LOWER(COALESCE(kk.kesimpulan_pantauan,'')) IN ('meninggal','wafat')");
+                    });
+            })
+            ->distinct('pasien_nifas_rs.id')
+            ->count('pasien_nifas_rs.id');
 
-        $totalNifas = count($pasienNifasDepokIds);
-
-        // Sudah KFI = episode nifas RS yang punya minimal 1 KF
-        // dan PASIEN-nya warga Depok
-        $sudahKFI = 0;
-
-        if (!empty($pasienNifasDepokIds)) {
-            $sudahKFI = KfKunjungan::query()
-                ->join('pasien_nifas_rs as pnr', 'pnr.id', '=', 'kf_kunjungans.pasien_nifas_id')
-                ->join('pasiens as p', 'p.id', '=', 'pnr.pasien_id')
-                ->whereIn('pnr.pasien_id', $pasienNifasDepokIds)
-                ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'")
-                ->distinct('kf_kunjungans.pasien_nifas_id')
-                ->count('kf_kunjungans.pasien_nifas_id');
-        }
-
-        // Debug singkat supaya bisa dipantau di log
-        Log::debug('Dashboard Dinkes - Statistik Nifas (Depok saja)', [
+        Log::debug('Dashboard Dinkes - Statistik Nifas (Depok) [RS episode only]', [
             'total_nifas_depok' => $totalNifas,
-            'sudah_kfi_depok'   => $sudahKFI,
-            'pasien_ids_depok'  => $pasienNifasDepokIds,
+            'sudah_kf_depok'    => $sudahKF,
         ]);
 
 
-        // ===================== 5. HADIR / MANGKIR (LATEST SKRINING) =====================
+        // ===================== 5. PASIEN HADIR PEMANTAUAN NIFAS (BERDASARKAN KF1) =====================
+        // Definisi:
+        // - Hadir       = episode nifas RS domisili Depok yang sudah punya KF1 (kapan pun).
+        // - Tidak Hadir = episode nifas RS domisili Depok yang belum punya KF1 dan sudah lewat due KF1 (base_date + 2 hari).
 
-        $totalPasienTerdaftar = Pasien::count();
+        $baseNifasDepokRs = PasienNifasRs::query()
+            ->join('pasiens as p', 'p.id', '=', 'pasien_nifas_rs.pasien_id')
+            ->whereRaw("COALESCE(p.\"PKabupaten\", '') ILIKE '%Depok%'");
 
-        $pasienHadir = Skrining::query()
-            ->distinct('pasien_id')
-            ->count('pasien_id');
+        // Normalisasi jenis_kf:
+        // - buang semua selain A-Z0-9
+        // - hasilnya bisa "1" atau "KF1"
+        $kf1MatchSql = "
+    regexp_replace(upper(coalesce(kk.jenis_kf::text,'')), '[^A-Z0-9]', '', 'g')
+    IN ('1','KF1')
+";
 
-        $pasienTidakHadir = $totalPasienTerdaftar - $pasienHadir;
+        // 1) HADIR: sudah ada KF1 untuk episode nifas tsb
+        $pasienHadirPemantauanNifas = (clone $baseNifasDepokRs)
+            ->whereExists(function ($q) use ($kf1MatchSql) {
+                $q->select(DB::raw(1))
+                    ->from('kf_kunjungans as kk')
+                    ->whereColumn('kk.pasien_nifas_id', 'pasien_nifas_rs.id')
+                    ->whereRaw($kf1MatchSql);
+            })
+            ->distinct('pasien_nifas_rs.id')
+            ->count('pasien_nifas_rs.id');
 
-        $hadir   = $pasienHadir;
-        $mangkir = $pasienTidakHadir;
+        // 2) TIDAK HADIR: belum ada KF1, tapi sudah lewat deadline KF1
+        $pasienTidakHadirPemantauanNifas = (clone $baseNifasDepokRs)
+            ->whereNotExists(function ($q) use ($kf1MatchSql) {
+                $q->select(DB::raw(1))
+                    ->from('kf_kunjungans as kk')
+                    ->whereColumn('kk.pasien_nifas_id', 'pasien_nifas_rs.id')
+                    ->whereRaw($kf1MatchSql);
+            })
+            ->whereRaw("
+        (
+            COALESCE(
+                pasien_nifas_rs.tanggal_melahirkan,
+                pasien_nifas_rs.tanggal_mulai_nifas,
+                pasien_nifas_rs.created_at::date
+            ) + INTERVAL '2 days'
+        ) < NOW()
+    ")
+            ->distinct('pasien_nifas_rs.id')
+            ->count('pasien_nifas_rs.id');
 
-        $absensiPerBulan = DB::query()
-            ->from(DB::raw($latestSkriningSql))
-            ->selectRaw('EXTRACT(MONTH FROM created_at)::int as bulan, COUNT(*)::int as total')
-            ->groupBy('bulan')
-            ->orderBy('bulan')
-            ->get();
+        // Alias untuk view
+        $hadir   = $pasienHadirPemantauanNifas;
+        $mangkir = $pasienTidakHadirPemantauanNifas;
 
-        $seriesAbsensi = array_values(array_replace(
-            array_fill(1, 12, 0),
-            $absensiPerBulan->pluck('total', 'bulan')->toArray()
-        ));
+        Log::debug('Dashboard Dinkes - Hadir Pemantauan Nifas (KF1) [DB jenis_kf=angka OK]', [
+            'hadir_kf1'       => $pasienHadirPemantauanNifas,
+            'tidak_hadir_kf1' => $pasienTidakHadirPemantauanNifas,
+        ]);
+
 
 
         // ===================== 6. PEMANTAUAN KF (ALL KUNJUNGAN, TAPI MENINGGAL = SEKALI PER EPISODE) =====================
@@ -278,8 +306,9 @@ class DashboardController extends Controller
             'dirujuk'            => $pemantauanDirujuk,
             'meninggal'          => $pemantauanMeninggal,
             'check_sum'          => ($pemantauanSehat + $pemantauanDirujuk + $pemantauanMeninggal),
+            'nifas_total' => $totalNifas,
+            'nifas_sudah' => $sudahKF,
         ]);
-
 
 
 
@@ -315,7 +344,7 @@ class DashboardController extends Controller
 
             // Nifas
             'totalNifas' => $totalNifas,
-            'sudahKFI'   => $sudahKFI,
+            'sudahKF'   => $sudahKF,
 
             // Risiko Pre-Eklampsia
             'resikoNormal'       => $resikoNormal,
@@ -324,11 +353,8 @@ class DashboardController extends Controller
             'risk'               => $risk,
 
             // Hadir / Tidak Hadir
-            'pasienHadir'      => $pasienHadir,
-            'pasienTidakHadir' => $pasienTidakHadir,
             'hadir'            => $hadir,
             'mangkir'          => $mangkir,
-            'seriesAbsensi'    => $seriesAbsensi,
 
             // Pemantauan KF (berdasarkan status TERAKHIR per pasien nifas)
             'pemantauanSehat'     => $pemantauanSehat,

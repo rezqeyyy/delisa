@@ -131,11 +131,6 @@
                                 {{ $daerahAsal->non_depok ?? 0 }}</div>
                         </div>
                     </div>
-
-                    {{-- Footer teks tambahan kartu ini --}}
-                    <p class="mt-4 text-xs text-[#7C7C7C]">
-                        Data berdasarkan pasien yang pernah melakukan skrining preeklampsia di puskesmas ini.
-                    </p>
                 </div>
 
                 {{-- Kartu Resiko Preeklampsia --}}
@@ -162,26 +157,23 @@
                         <div>
                             {{-- Kartu "Pasien Hadir": menampilkan jumlah pasien yang menjalani skrining hari ini vs. tidak hadir.
                                  Variabel: $pasienHadir dan $pasienTidakHadir. --}}
-                            <h2 class="text-base sm:text-lg font-semibold text-[#1D1D1D]">Pasien Hadir</h2>
-                            <p class="text-xs text-[#7C7C7C]">Rekap kehadiran skrining hari ini</p>
-                        </div>
-                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FFF0F7]">
-                            <span class="w-2 h-2 rounded-full bg-[#E91E63]"></span>
-                            <span class="text-[11px] font-medium text-[#E91E63]">Hari Ini</span>
+                            <h2 class="text-base sm:text-lg font-semibold text-[#1D1D1D]">Pasien Hadir Pemantauan Nifas
+                            </h2>
                         </div>
                     </div>
 
                     <div class="space-y-3 mt-6 lg:mt-10">
                         <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Jumlah Hadir</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $pasienHadir ?? 0 }}</span>
+                            <span class="text-[#7C7C7C]">Hadir (sudah KF1)</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $hadir ?? 0 }}</span>
                         </div>
                         <hr class="border-[#E9E9E9]">
                         <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Tidak Hadir / Tidak Tercatat</span>
-                            <span class="font-bold text-[#FF3B30]">{{ $pasienTidakHadir ?? 0 }}</span>
+                            <span class="text-[#7C7C7C]">Tidak Hadir (belum KF1 & lewat batas waktu)</span>
+                            <span class="font-bold text-[#FF3B30]">{{ $mangkir ?? 0 }}</span>
                         </div>
                     </div>
+
                 </div>
 
                 {{-- Kartu Data Pasien Nifas --}}
@@ -198,8 +190,8 @@
                         </div>
                         <hr class="border-[#E9E9E9]">
                         <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Sudah KFI</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $sudahKf1 ?? 0 }}</span>
+                            <span class="text-[#7C7C7C]">Sudah Selesai KF (KF1-KF4)</span>
+                            <span class="font-bold text-[#1D1D1D]">{{ $sudahKf ?? ($sudahKf1 ?? 0) }}</span>
                         </div>
                     </div>
                 </div>

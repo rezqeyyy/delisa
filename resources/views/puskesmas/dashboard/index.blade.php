@@ -147,7 +147,7 @@
                         </div>
                         <hr class="border-[#E9E9E9]">
                         <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Sudah KFI</span>
+                            <span class="text-[#7C7C7C]">Sudah Selesai KF (KF1-KF4)</span>
                             <span class="font-bold text-[#1D1D1D]">{{ $sudahKFI ?? 0 }}</span>
                         </div>
                     </div>
