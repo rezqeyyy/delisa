@@ -256,7 +256,7 @@
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Kesimpulan</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $skrining->kesimpulan ?? '-' }}</div>
 
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">Rekomendasi</div>
+                        <!-- <div class="border-t border-gray-200 p-4 text-sm font-semibold">Rekomendasi</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
                             @php($k = trim($skrining->kesimpulan ?? ''))
                             @php($rek = 'Belum ada rekomendasi.')
@@ -268,7 +268,7 @@
                                 @php($rek = 'Pantau kondisi secara berkala. Kenali tanda-tanda bahaya dan segera hubungi fasilitas kesehatan jika muncul.')
                             @endif
                             {{ $rek }}
-                        </div>
+                        </div> -->
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Catatan</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ 'Belum ada catatan.' }}</div>

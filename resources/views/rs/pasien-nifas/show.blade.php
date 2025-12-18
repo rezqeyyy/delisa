@@ -227,7 +227,7 @@
 
                         <div class="p-4 text-sm font-semibold">Jumlah dengan Riwayat Komplikasi Ibu</div>  
                         <div class="sm:col-span-2 p-4 text-sm">
-                            {{ $pasienNifas->pasien->user->phone ?? ($pasienNifas->pasien->no_telepon ?? '-') }}
+                            {{ $anakRiwayat }}
                         </div>
 
                         @if ($isBeresiko)                            
@@ -448,9 +448,12 @@
 
                                     {{-- Keterangan Masalah Lain --}}
                                     @if ($anak->keterangan_masalah_lain)
-                                        <div class="p-4 bg-gray-50">
-                                            <p class="text-[10px] text-[#7C7C7C] mb-1">Keterangan Masalah Lain</p>
-                                            <p class="text-xs text-[#1D1D1D]">{{ $anak->keterangan_masalah_lain }}</p>
+                                        <div class="p-4">
+                                            <p class="text-[10px] text-[#7C7C7C] mb-2">Keterangan Masalah Lain
+                                            </p>
+                                            <div class="flex flex-wrap gap-2">
+                                                <p class="text-xs text-[#1D1D1D]">{{ $anak->keterangan_masalah_lain }}</p>
+                                            </div>
                                         </div>
                                     @endif
 
@@ -507,7 +510,7 @@
             @endif
 
             {{-- TOMBOL AKSI BAWAH --}}
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
+            <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
                 <a href="{{ route('rs.pasien-nifas.index') }}"
                     class="rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
                     <span>Kembali</span>
@@ -527,7 +530,7 @@
                     </a>
                 @endif
             </div>
-
+            
             <footer class="text-center text-[11px] text-[#7C7C7C] py-4 print:hidden">
                 © 2025 Dinas Kesehatan Kota Depok — DeLISA
             </footer>

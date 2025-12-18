@@ -176,35 +176,32 @@
                 </div>
             </div>
 
-            {{-- 5. Catatan Rujukan --}}
-            <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-                {{-- Catatan Pengajuan (Puskesmas) --}}
-                <div class="rounded-2xl bg-white p-6 shadow">
-                    <h2 class="mb-4 text-xl font-semibold text-gray-800">Catatan Pengajuan (Puskesmas)</h2>
-                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm italic text-gray-600 min-h-[80px]">
-                        {{ $rujukan->catatan_rujukan ?? 'Tidak ada catatan pengajuan.' }}
-                    </div>
-                </div>
-
-                {{-- Catatan Balasan (RS) --}}
-                <div class="rounded-2xl bg-white p-6 shadow">
-                    <h2 class="mb-4 text-xl font-semibold text-gray-800">Catatan Balasan (RS)</h2>
-                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm italic text-gray-600 min-h-[80px]">
-                        {{ $rujukan->catatan ?? 'Belum ada balasan dari RS.' }}
-                    </div>
-                </div>
+            {{-- 5. Catatan RS --}}
+            <div class="mt-8 rounded-2xl bg-white p-6 shadow">
+                <h2 class="mb-4 text-xl font-semibold text-gray-800">Catatan Balasan (RS)</h2>
+                <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 min-h-[80px]">
+                    {{ $rujukan->catatan ?? 'Belum ada balasan dari RS.' }}
+                </div>                
             </div>
 
-            {{-- Buttons --}}
-            <div class="mt-8 flex items-center gap-3">
+            <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
                 <a href="{{ route('puskesmas.rujukan.index') }}"
-                    class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    Kembali ke Daftar
+                    class="rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
+                    Kembali
                 </a>
-                <button onclick="window.print()"
-                    class="rounded-lg bg-pink-500 px-4 py-2 text-sm font-medium text-white hover:bg-pink-600">
-                    Cetak
-                </button>
+                <a href="#" {{-- {{ route('puskesmas.pdf.kf-all', $rujukan->id) }} --}}
+                    class="inline-flex items-center gap-2 px-4 h-10
+                        bg-red-600 text-white rounded-full
+                        hover:bg-red-700 transition text-sm font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
+                        <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
+                        <path d="M9 15h6"/>
+                        <path d="M12 18V12"/>
+                    </svg>
+                    <span>Download PDF</span>
+                </a>
             </div>
 
         </main>

@@ -22,12 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
         wrap.innerHTML = `
         <div data-backdrop class="absolute inset-0 bg-black/40"></div>
         <div class="relative z-10 w-full max-w-sm rounded-2xl bg-white shadow-xl">
-            <div class="p-5 space-y-3">
-                <h2 class="text-lg font-bold text-[#1D1D1D]">Hapus Data?</h2>
-                <p class="text-sm text-[#7C7C7C]">Tindakan ini tidak bisa dibatalkan.</p>
-                <div class="mt-4 flex items-center justify-end gap-2">
-                    <button data-cancel class="px-4 py-2 rounded-full border border-[#E5E5E5] bg-white text-[#1D1D1D] hover:bg-[#F8F8F8]">Batal</button>
-                    <button data-confirm class="px-4 py-2 rounded-full bg-[#E53935] text-white hover:bg-[#d32f2f]">Hapus</button>
+            <div class="p-6 space-y-4 text-center">
+                <h2 class="text-xl font-bold text-[#1D1D1D]">Ingin Menghapus Skrining?</h2>
+                <p class="text-sm text-[#7C7C7C]">Pilih \"Ya\" untuk menghapus dan \"Batal\" untuk membatalkan</p>
+                <div class="mt-2 flex items-center justify-center gap-3">
+                    <button data-confirm class="px-6 py-2 rounded-full bg-[#39E93F] text-white font-semibold hover:bg-[#2AC933]">Ya</button>
+                    <button data-cancel class="px-6 py-2 rounded-full bg-[#E20D0D] text-white font-semibold hover:bg-[#C10B0B]">Batal</button>
                 </div>
             </div>
         </div>

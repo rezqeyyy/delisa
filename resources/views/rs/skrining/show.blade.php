@@ -38,19 +38,31 @@
         <main class="flex-1 w-full xl:ml-[260px] bg-[#FFF7FC] max-w-none min-w-0 overflow-y-auto print:ml-0">
             <div class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-6">
 
-                <div class="mb-6 flex items-center">
+                <div class="mb-6 flex items-center gap-3">
                     <a href="{{ route('rs.skrining.index') }}" class="text-gray-600 hover:text-gray-900">
                         <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                         </svg>
                     </a>
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                         <h1 class="text-2xl font-semibold text-[#1D1D1D]">Hasil Pemeriksaan Pasien ({{ $skrining->pasien->user->name ?? 'N/A' }})</h1>
                         <p class="text-l text-[#7C7C7C]">
                             Ringkasan hasil skrining puskesmas dan pemeriksaan di RS
                         </p>
                     </div>
+
+                    
+                    <a href="{{ route('rs.skrining.edit', $skrining->id) }}"
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#C2185B] w-full sm:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        <span>Edit Data Pemeriksaan</span>
+                    </a>
                 </div>
+                
 
                 {{-- Print Header (only visible when printing) --}}
                 <div class="hidden print:block mb-6">
@@ -78,7 +90,7 @@
 
                 <div class="rounded-2xl bg-white p-6 shadow">
                     <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D] mb-4">Informasi Pasien</h2>
-
+                
                     <div class="overflow-hidden rounded-xl border border-gray-200">
                         <div class="grid grid-cols-1 sm:grid-cols-3">
                             <div class="border-b border-gray-200 p-4 text-sm bg-pink-50 font-semibold">Informasi</div>
@@ -287,53 +299,50 @@
                 @if ($rujukan && $resepObats->count() > 0)
                     <div class="rounded-2xl bg-white p-6 shadow">
                         <h2 class="text-sm sm:text-base font-semibold text-[#1D1D1D] mb-4">Resep Obat</h2>
-
-                        <div class="overflow-hidden rounded-xl border border-gray-200">
-                            <div class="px-4 sm:px-5 py-4">
-                                <div class="overflow-x-auto rounded-xl border border-[#E5E5E5]">
-                                    <table class="min-w-full text-xs sm:text-sm">
-                                        <thead class="bg-[#FAFAFA]">
-                                            <tr class="bg-pink-50"> 
-                                                <th
-                                                    class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-sm">
-                                                    No
-                                                </th>
-                                                <th
-                                                    class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-sm">
-                                                    Nama Obat
-                                                </th>
-                                                <th
-                                                    class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-sm">
-                                                    Dosis
-                                                </th>
-                                                <th
-                                                    class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-sm">
-                                                    Cara Penggunaan
-                                                </th>
+                        <div class="px-4 sm:px-5 py-4">
+                            <div class="overflow-x-auto rounded-xl border border-[#E5E5E5]">
+                                <table class="min-w-full text-xs sm:text-sm">
+                                    <thead class="bg-[#FAFAFA]">
+                                        <tr class="bg-pink-50"> 
+                                            <th
+                                                class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-sm">
+                                                No
+                                            </th>
+                                            <th
+                                                class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-sm">
+                                                Nama Obat
+                                            </th>
+                                            <th
+                                                class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-sm">
+                                                Dosis
+                                            </th>
+                                            <th
+                                                class="px-3 sm:px-4 py-2.5 text-left font-semibold uppercase tracking-wide text-sm">
+                                                Cara Penggunaan
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-[#F3F3F3] bg-white">
+                                        @foreach ($resepObats as $index => $resep)
+                                            <tr class="hover:bg-[#FAFAFA]">
+                                                <td class="px-3 sm:px-4 py-2.5 align-top text-[#4B4B4B]">
+                                                    {{ $index + 1 }}
+                                                </td>
+                                                <td class="px-3 sm:px-4 py-2.5 align-top text-[#1D1D1D]">
+                                                    <span class="font-semibold">{{ $resep->resep_obat }}</span>
+                                                </td>
+                                                <td class="px-3 sm:px-4 py-2.5 align-top text-[#4B4B4B]">
+                                                    {{ $resep->dosis ?? '-' }}
+                                                </td>
+                                                <td class="px-3 sm:px-4 py-2.5 align-top text-[#4B4B4B]">
+                                                    {{ $resep->penggunaan ?? '-' }}
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-[#F3F3F3] bg-white">
-                                            @foreach ($resepObats as $index => $resep)
-                                                <tr class="hover:bg-[#FAFAFA]">
-                                                    <td class="px-3 sm:px-4 py-2.5 align-top text-[#4B4B4B]">
-                                                        {{ $index + 1 }}
-                                                    </td>
-                                                    <td class="px-3 sm:px-4 py-2.5 align-top text-[#1D1D1D]">
-                                                        <span class="font-semibold">{{ $resep->resep_obat }}</span>
-                                                    </td>
-                                                    <td class="px-3 sm:px-4 py-2.5 align-top text-[#4B4B4B]">
-                                                        {{ $resep->dosis ?? '-' }}
-                                                    </td>
-                                                    <td class="px-3 sm:px-4 py-2.5 align-top text-[#4B4B4B]">
-                                                        {{ $resep->penggunaan ?? '-' }}
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
-                        </div>
+                        </div>                        
                     </div>
                 @endif            
                
@@ -408,40 +417,27 @@
                 </div>
 
                 {{-- Aksi bawah --}}
-                <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2 print-hidden">
+                <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
                     <a href="{{ route('rs.skrining.index') }}"
                         class="rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
-                        <span>Kembali</span>
+                        Kembali
                     </a>
 
-                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        {{-- Tombol Cetak PDF --}}
-                        <a href="{{ route('rs.skrining.exportPdf', $skrining->id) }}"
-                            class="inline-flex items-center gap-2 px-4 h-10
-                                bg-red-600 text-white rounded-full
-                                hover:bg-red-700 transition text-sm font-medium">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
-                                <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
-                                <path d="M9 15h6"/>
-                                <path d="M12 18V12"/>
-                            </svg>
-                            <span>Unduh PDF</span>
-                        </a>
-
-                        <a href="{{ route('rs.skrining.edit', $skrining->id) }}"
-                            class="inline-flex items-center justify-center gap-2 rounded-full bg-[#E91E8C] px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#C2185B] w-full sm:w-auto">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                            <span>Edit Data Pemeriksaan</span>
-                        </a>
-                    </div>
+                    <a href="{{ route('rs.skrining.exportPdf', $skrining->id) }}"
+                        class="inline-flex items-center gap-2 px-4 h-10
+                            bg-red-600 text-white rounded-full
+                            hover:bg-red-700 transition text-sm font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
+                            <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
+                            <path d="M9 15h6"/>
+                            <path d="M12 18V12"/>
+                        </svg>
+                        <span>Download PDF</span>
+                    </a>
                 </div>
-
+                
                 <footer class="text-center text-[11px] text-[#7C7C7C] py-4 print-hidden">
                     © 2025 Dinas Kesehatan Kota Depok — DeLISA
                 </footer>

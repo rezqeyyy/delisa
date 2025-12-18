@@ -432,13 +432,9 @@
             </section>
 
             {{-- Button Actions --}}
-            <div class="flex flex-col sm:flex-row sm:justify-between gap-3">
+            <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
                 <a href="{{ route('rs.pasien-nifas.index') }}"
-                    class="inline-flex items-center justify-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <path d="M15 18l-6-6 6-6" />
-                    </svg>
+                    class="rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
                     <span>Kembali</span>
                 </a>
 

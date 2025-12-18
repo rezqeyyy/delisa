@@ -130,7 +130,7 @@
                             <form action="{{ route('rs.pasien-nifas.index') }}" method="GET" class="p-6 space-y-4">
                                 <!-- NIK -->
                                 <div>
-                                    <label class="block text-sm font-medium text-[#1D1D1D] mb-2">NIK Pasien</label>
+                                    <label class="block text-sm font-medium text-[#1D1D1D] mb-2">NIK</label>
                                     <input type="text" name="nik" value="{{ request('nik') }}"
                                         placeholder="Masukkan NIK"
                                         class="w-full px-4 py-2 border border-[#E9E9E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300">
@@ -283,12 +283,6 @@
                                                 </div>
                                             @else
                                                 <div class="flex flex-col items-center gap-2">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-[#D9D9D9]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                                        <circle cx="9" cy="7" r="4" />
-                                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                                    </svg>
                                                     <p>Belum ada data pasien nifas di RS ini.</p>
                                                     <a href="{{ route('rs.pasien-nifas.create') }}" class="text-[#E91E8C] hover:underline">
                                                         + Tambah Pasien Baru

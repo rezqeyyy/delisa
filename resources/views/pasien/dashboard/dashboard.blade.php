@@ -94,7 +94,7 @@
                     <div class="flex items-center gap-3 flex-none">
                         <div class="leading-tight">
                             <h2 class="text-xl font-semibold text-[#1D1D1D]">List Skrining</h2>
-                            <p class="text-[#B9257F]">*Selesaikan skrining sebelum membuat skrining baru</p>
+                            <p class="text-[#B9257F]">*Selesaikan skrining sebelum membuat skrining baru, lanjutkan dengan edit</p>
                         </div>
                     </div>
 

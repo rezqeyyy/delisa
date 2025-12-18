@@ -9,7 +9,8 @@
         'resources/css/app.css', 
         'resources/js/app.js', 
         'resources/js/dropdown.js', 
-        'resources/js/puskesmas/sidebar-toggle.js'
+        'resources/js/puskesmas/sidebar-toggle.js',
+        'resources/js/puskesmas/delete-confirm.js'
         ])
 
 </head>
@@ -134,8 +135,15 @@
                                                 {{ $conclusion }}
                                             </span>
                                         </td>
-                                        <td class="px-3 py-3">
+                                        <td class="px-3 py-3 flex items-center gap-2">
                                             <a href="{{ route('puskesmas.skrining.show', $skrining->id) }}" class="px-4 py-1.5 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">View</a>
+                                            <form action="{{ route('puskesmas.skrining.destroy', $skrining->id) }}" method="POST" class="js-delete-skrining-form">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="button" class="js-delete-skrining-btn px-4 py-1.5 rounded-full border border-red-200 bg-red-50 text-red-600 text-xs hover:bg-red-100 transition">
+                                                    Hapus
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 @empty

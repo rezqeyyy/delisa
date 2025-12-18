@@ -79,7 +79,7 @@
                                 3 => 'Umur ≥ 35 tahun',
                                 4 => 'Apakah ini termasuk ke kehamilan pertama',
                                 5 => 'Apakah kehamilan ini berjarak 10 tahun dari kehamilan sebelumnya',
-                                6 => 'Apakah ibu kandung atau saudara perempuan anda memiliki riwayat pre-eklampsia',
+                                6 => 'Apakah ibu kandung atau saudara perempuan anda memiliki riwayat preeklampsia',
                                 7 => 'Apakah memiliki riwayat obesitas sebelum hamil (IMT > 30Kg/m2)',
                             ];
                             $high = [
@@ -150,7 +150,7 @@
                             name="catatan"
                             rows="4"
                             class="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-[#1D1D1D] focus:border-[#B9257F] focus:outline-none focus:ring-1 focus:ring-[#B9257F]"
-                            placeholder="Tuliskan catatan tambahan jika ada..."></textarea>
+                            placeholder="Tuliskan catatan tambahan jika ada...">{{ old('catatan', $catatan ?? '') }}</textarea>
                     </div>
 
                     <div class="flex justify-between mt-8">
