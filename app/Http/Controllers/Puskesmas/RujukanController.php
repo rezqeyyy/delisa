@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RujukanController extends Controller
 {
@@ -472,5 +473,111 @@ class RujukanController extends Controller
             ->where('done_status', 0)
             ->where('is_rujuk', 1)
             ->exists();
+    }
+
+    /**
+     * Download PDF detail rujukan pasien
+     */
+    public function downloadPdf($id)
+    {
+        try {
+            // Reuse logic dari show(): ambil data rujukan + enrich
+            $rujukan = DB::table('rujukan_rs')
+                ->where('id', $id)
+                ->first();
+
+            if (!$rujukan) {
+                return back()->with('error', 'Data rujukan tidak ditemukan');
+            }
+
+            $userId = optional(Auth::user())->id;
+            $ps = $this->resolvePuskesmasContext($userId);
+            abort_unless($ps, 404);
+
+            $row = DB::table('skrinings')
+                ->join('puskesmas', 'puskesmas.id', '=', 'skrinings.puskesmas_id')
+                ->where('skrinings.id', $rujukan->skrining_id)
+                ->select('skrinings.puskesmas_id', 'puskesmas.kecamatan')
+                ->first();
+
+            abort_unless($row, 404);
+
+            $kecPuskesmas = mb_strtolower(trim((string) ($ps->kecamatan ?? '')));
+            $kecFaskes    = mb_strtolower(trim((string) ($row->kecamatan ?? '')));
+            $allowed = (
+                ((int)$row->puskesmas_id === (int)$ps->id)
+                || ($kecFaskes !== '' && $kecPuskesmas !== '' && $kecFaskes === $kecPuskesmas)
+            );
+            abort_unless($allowed, 403);
+
+            // Pasien
+            $pasien = DB::table('pasiens')
+                ->join('users', 'pasiens.user_id', '=', 'users.id')
+                ->where('pasiens.id', $rujukan->pasien_id)
+                ->select(
+                    'users.name as nama_pasien',
+                    'pasiens.nik',
+                    'pasiens.tanggal_lahir',
+                    'users.address as alamat',
+                    'users.phone as no_telepon'
+                )
+                ->first();
+
+            if ($pasien) {
+                $rujukan->nama_pasien   = $pasien->nama_pasien;
+                $rujukan->nik           = $pasien->nik;
+                $rujukan->tanggal_lahir = $pasien->tanggal_lahir;
+                $rujukan->alamat        = $pasien->alamat;
+                $rujukan->no_telepon    = $pasien->no_telepon;
+            }
+
+            // Rumah sakit
+            $rs = DB::table('rumah_sakits')
+                ->where('id', $rujukan->rs_id)
+                ->select('nama as nama_rs', 'lokasi as alamat_rs', 'telepon as telepon_rs')
+                ->first();
+            if ($rs) {
+                $rujukan->nama_rs    = $rs->nama_rs;
+                $rujukan->alamat_rs  = $rs->alamat_rs;
+                $rujukan->telepon_rs = $rs->telepon_rs;
+            }
+
+            // Skrining ringkas
+            $skrining = DB::table('skrinings')
+                ->where('id', $rujukan->skrining_id)
+                ->select('kesimpulan')
+                ->first();
+            if ($skrining) {
+                $rujukan->kesimpulan = $skrining->kesimpulan;
+            }
+
+            // Riwayat rujukan dari RS (balasan)
+            $riwayat = DB::table('riwayat_rujukans')
+                ->where('rujukan_id', $rujukan->id)
+                ->orderByDesc('tanggal_datang')
+                ->first();
+            if ($riwayat) {
+                $rujukan->anjuran_kontrol      = $riwayat->anjuran_kontrol;
+                $rujukan->kunjungan_berikutnya = $riwayat->kunjungan_berikutnya;
+                $rujukan->catatan              = $riwayat->catatan;
+            }
+
+            // Generate PDF
+            $pdf = Pdf::loadView('puskesmas.rujukan.pdf', [
+                'rujukan' => $rujukan,
+            ]);
+            $pdf->setPaper('A4', 'portrait');
+
+            $patientName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $rujukan->nama_pasien ?? 'Pasien');
+            $fileName = 'Rujukan_' . $patientName . '_' . date('Y-m-d') . '.pdf';
+
+            return $pdf->download($fileName);
+        } catch (\Throwable $e) {
+            Log::error('Puskesmas.RujukanController@downloadPdf ERROR', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+            return back()->with('error', 'Gagal mengunduh PDF: ' . $e->getMessage());
+        }
     }
 }

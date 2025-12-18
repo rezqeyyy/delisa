@@ -189,7 +189,7 @@
                     class="rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-[#4B4B4B] hover:bg-[#F8F8F8] px-6 py-3 text-sm font-medium text-black">
                     Kembali
                 </a>
-                <a href="#" {{-- {{ route('puskesmas.pdf.kf-all', $rujukan->id) }} --}}
+                <a href="{{ route('puskesmas.rujukan.download-pdf', $rujukan->id) }}"
                     class="inline-flex items-center gap-2 px-4 h-10
                         bg-red-600 text-white rounded-full
                         hover:bg-red-700 transition text-sm font-medium">

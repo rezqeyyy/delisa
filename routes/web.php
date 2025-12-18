@@ -137,6 +137,7 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('rujukan', \App\Http\Controllers\Puskesmas\RujukanController::class)->except(['create', 'edit', 'destroy']);
             Route::put('rujukan/{id}/status', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'updateStatus'])->name('rujukan.status.update');
             Route::get('rujukan/rs/search', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'searchRS'])->name('rujukan.rs.search');
+            Route::get('rujukan/{id}/download-pdf', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'downloadPdf'])->name('rujukan.download-pdf');
             Route::post('skrining/{skrining}/rujuk', [\App\Http\Controllers\Puskesmas\RujukanController::class, 'ajukanRujukan'])->name('skrining.rujuk');
 
             // ========== PASIEN NIFAS ==========
