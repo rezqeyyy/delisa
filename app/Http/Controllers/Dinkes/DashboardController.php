@@ -100,21 +100,22 @@ class DashboardController extends Controller
         $non   = $asalNonDepok;
 
         // ===================== 2. KUNJUNGAN NIFAS PER BULAN =====================
-        // Dihitung per PASIEN nifas warga Depok yang punya kunjungan KF
-        // (bukan jumlah baris KF mentah)
+        // Dihitung per RIWAYAT kunjungan KF (setiap baris kunjungan = 1)
+        // (bukan jumlah pasien unik)
 
         $kfPerBulan = KfKunjungan::query()
             ->join('pasien_nifas_rs as pnr', 'pnr.id', '=', 'kf_kunjungans.pasien_nifas_id')
             ->join('pasiens as p', 'p.id', '=', 'pnr.pasien_id')
             ->selectRaw('
-                EXTRACT(MONTH FROM kf_kunjungans.tanggal_kunjungan)::int AS bulan,
-                COUNT(DISTINCT p.id)::int AS total
-            ')
+        EXTRACT(MONTH FROM kf_kunjungans.tanggal_kunjungan)::int AS bulan,
+        COUNT(kf_kunjungans.id)::int AS total
+    ')
             ->whereYear('kf_kunjungans.tanggal_kunjungan', $selectedYear)
             ->whereRaw('COALESCE(p."PKabupaten", \'\') ILIKE \'%Depok%\'')
             ->groupBy('bulan')
             ->orderBy('bulan')
             ->get();
+
 
         // isi 12 slot bulan (1–12), default 0
         $seriesBulanan = array_fill(1, 12, 0);
@@ -222,7 +223,7 @@ class DashboardController extends Controller
             $absensiPerBulan->pluck('total', 'bulan')->toArray()
         ));
 
-        
+
         // ===================== 6. PEMANTAUAN KF (ALL KUNJUNGAN, TAPI MENINGGAL = SEKALI PER EPISODE) =====================
         // Aturan:
         // - total_kf_raw       = jumlah semua baris kunjungan KF (mentah)

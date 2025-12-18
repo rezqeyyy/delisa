@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
-    {{-- 
+{{-- 
         lang="id" → Menandakan bahasa utama halaman ini adalah Bahasa Indonesia.
         Ini membantu browser dan alat bantu aksesibilitas (screen reader).
     --}}
+
 <head>
     {{-- 
         Mengatur karakter encoding dokumen menjadi UTF-8.
@@ -32,12 +33,7 @@
         - resources/js/dinkes/data-master-form.js → logika form data master (misalnya filter kelurahan).
         Semua JS mengikuti guideline: tidak ada inline script, semua lewat resource JS.
     --}}
-    @vite([
-        'resources/css/app.css',
-        'resources/js/app.js',
-        'resources/js/dinkes/sidebar-toggle.js',
-        'resources/js/dinkes/data-master-form.js',
-    ])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/dinkes/sidebar-toggle.js', 'resources/js/dinkes/data-master-form.js'])
 </head>
 
 {{-- 
@@ -47,6 +43,7 @@
     - font-[Poppins] → font utama menggunakan Poppins.
     - text-[#000000cc] → warna teks hitam dengan opacity sedikit (sekitar 80%).
 --}}
+
 <body class="bg-[#F5F5F5] font-[Poppins] text-[#000000cc]">
     @php
         /**
@@ -335,13 +332,12 @@
                                 class:
                                 - rounded-lg → sudut kotak tapi agak tumpul.
                             --}}
-                            <textarea name="lokasi" rows="3"
-                                class="w-full border border-pink-400 rounded-lg px-4 py-2 mt-1">{{ old('lokasi', $data->lokasi) }}</textarea>
+                            <textarea name="lokasi" rows="3" class="w-full border border-pink-400 rounded-lg px-4 py-2 mt-1">{{ old('lokasi', $data->lokasi) }}</textarea>
                         </div>
 
-                    {{-- ======================================== --}}
-                    {{-- CABANG UNTUK TAB = 'puskesmas'          --}}
-                    {{-- ======================================== --}}
+                        {{-- ======================================== --}}
+                        {{-- CABANG UNTUK TAB = 'puskesmas'          --}}
+                        {{-- ======================================== --}}
                     @elseif ($tab === 'puskesmas')
                         {{-- ====== Puskesmas ====== --}}
 
@@ -376,7 +372,8 @@
                                         Jika $selectedNama sama dengan $value, option menjadi selected.
                                         Ini menjaga pilihan user tetap konsisten setelah reload/error.
                                     --}}
-                                    <option value="{{ $value }}" {{ $selectedNama === $value ? 'selected' : '' }}>
+                                    <option value="{{ $value }}"
+                                        {{ $selectedNama === $value ? 'selected' : '' }}>
                                         {{ $label }}
                                     </option>
                                 @endforeach
@@ -390,13 +387,12 @@
                                 textarea lokasi Puskesmas.
                                 - value mengambil old('lokasi') atau $data->lokasi.
                             --}}
-                            <textarea name="lokasi" rows="3"
-                                class="w-full border border-pink-400 rounded-lg px-4 py-2 mt-1">{{ old('lokasi', $data->lokasi) }}</textarea>
+                            <textarea name="lokasi" rows="3" class="w-full border border-pink-400 rounded-lg px-4 py-2 mt-1">{{ old('lokasi', $data->lokasi) }}</textarea>
                         </div>
 
-                    {{-- ======================================== --}}
-                    {{-- CABANG UNTUK TAB LAIN (BIDAN)           --}}
-                    {{-- ======================================== --}}
+                        {{-- ======================================== --}}
+                        {{-- CABANG UNTUK TAB LAIN (BIDAN)           --}}
+                        {{-- ======================================== --}}
                     @else
                         {{-- ====== BIDAN ====== --}}
 
@@ -435,8 +431,12 @@
                                         memprioritaskan input lama jika ada, kalau tidak pakai data existing.
                                         Jika sama dengan $p->id, maka option ini selected.
                                     --}}
+                                    @php
+                                        $currentPembinaId = old('puskesmas_id', $selectedPembinaId ?? null);
+                                    @endphp
+
                                     <option value="{{ $p->id }}"
-                                        {{ old('puskesmas_id', $data->puskesmas_id) == $p->id ? 'selected' : '' }}>
+                                        {{ (string) $currentPembinaId === (string) $p->id ? 'selected' : '' }}>
                                         {{ $p->nama_puskesmas }}
                                     </option>
                                 @endforeach

@@ -369,20 +369,45 @@ class DataMasterController extends Controller
             // Selain itu, dianggap tab = 'bidan'
         } else { // bidan
             $accounts = $base
-                // Join ke tabel bidans berdasarkan user_id
                 ->join('bidans', 'bidans.user_id', '=', 'users.id')
-                // Left join ke puskesmas untuk mendapatkan nama_puskesmas (boleh null)
-                ->leftJoin('puskesmas', 'puskesmas.id', '=', 'bidans.puskesmas_id')
-                // Pilih kolom yang akan ditampilkan
-                ->select('users.id', 'users.name', 'users.email', 'puskesmas.nama_puskesmas')
-                // Filter pencarian berdasarkan nama user, email, atau nama_puskesmas
+
+                // p_ref = puskesmas yang direferensikan bidan (seringnya klinik mandiri)
+                ->leftJoin('puskesmas as p_ref', 'p_ref.id', '=', 'bidans.puskesmas_id')
+
+                // p_bina = puskesmas pembina (non-mandiri) berdasarkan kecamatan p_ref
+                ->leftJoin('puskesmas as p_bina', function ($join) {
+                    $join->on('p_bina.kecamatan', '=', 'p_ref.kecamatan')
+                        ->where('p_bina.is_mandiri', '=', false);
+                })
+
+                // Ambil nama pembina:
+                // - jika p_ref mandiri → pakai p_bina
+                // - jika p_ref bukan mandiri → pakai p_ref sendiri
+                ->select(
+                    'users.id',
+                    'users.name',
+                    'users.email',
+                    DB::raw("
+            CASE 
+                WHEN p_ref.is_mandiri = true THEN p_bina.nama_puskesmas
+                ELSE p_ref.nama_puskesmas
+            END as nama_puskesmas
+        ")
+                )
+
                 ->when($q !== '', function ($qq) use ($q) {
                     $qq->where(function ($w) use ($q) {
                         $w->where('users.name', 'ilike', "%$q%")
                             ->orWhere('users.email', 'ilike', "%$q%")
-                            ->orWhere('puskesmas.nama_puskesmas', 'ilike', "%$q%");
+                            ->orWhere(DB::raw("
+                    CASE 
+                        WHEN p_ref.is_mandiri = true THEN p_bina.nama_puskesmas
+                        ELSE p_ref.nama_puskesmas
+                    END
+                "), 'ilike', "%$q%");
                     });
                 })
+
                 ->orderBy('users.created_at', 'desc')
                 ->paginate(5)->withQueryString();
         }
@@ -538,11 +563,18 @@ class DataMasterController extends Controller
 
             $base = Puskesmas::find($payload['puskesmas_id']);
             $clinic = new Puskesmas();
+            $clinicName = trim((string) ($payload['name'] ?? 'Bidan'));
+
+            // Opsional: kalau user nulis "Klinik X", jangan dobel-dobel
+            // (menghapus prefix "Klinik " di awal jika ada, case-insensitive)
+            $clinicName = preg_replace('/^\s*klinik\s+/i', '', $clinicName);
+            $clinicName = trim($clinicName);
             $clinic->user_id        = $user->id;
-            $clinic->nama_puskesmas = 'Klinik ' . ($payload['name'] ?? 'Bidan');
-            $clinic->kecamatan      = $base ? $base->kecamatan : ($payload['address'] ?? '');
-            $clinic->lokasi         = $payload['address'] ?? '';
-            $clinic->is_mandiri     = true;
+            $clinic->nama_puskesmas = 'Klinik ' . $clinicName;
+            // Kecamatan klinik ikut kecamatan puskesmas pembina (yang dipilih)
+            $clinic->kecamatan  = $base ? $base->kecamatan : '';
+            $clinic->lokasi     = $payload['address'] ?? '';
+            $clinic->is_mandiri = true;
             $clinic->save();
             Puskesmas::where('id', $clinic->id)->update(['is_mandiri' => true]);
 
@@ -678,12 +710,23 @@ class DataMasterController extends Controller
         } else {
             $data = User::query()
                 ->join('bidans', 'bidans.user_id', '=', 'users.id')
-                ->join('puskesmas', 'puskesmas.id', '=', 'bidans.puskesmas_id')
+
+                ->leftJoin('puskesmas as p_ref', 'p_ref.id', '=', 'bidans.puskesmas_id')
+                ->leftJoin('puskesmas as p_bina', function ($join) {
+                    $join->on('p_bina.kecamatan', '=', 'p_ref.kecamatan')
+                        ->where('p_bina.is_mandiri', '=', false);
+                })
+
                 ->where('users.id', $user)
                 ->select(
                     'users.*',
                     'bidans.nomor_izin_praktek',
-                    'puskesmas.nama_puskesmas'
+                    DB::raw("
+            CASE 
+                WHEN p_ref.is_mandiri = true THEN p_bina.nama_puskesmas
+                ELSE p_ref.nama_puskesmas
+            END as nama_puskesmas
+        ")
                 )
                 ->first();
         }
@@ -709,8 +752,11 @@ class DataMasterController extends Controller
 
         // Ambil list Puskesmas untuk dropdown (misal di form Bidan)
         $puskesmasList = Puskesmas::query()
-            ->select('id', 'nama_puskesmas')
-            ->orderBy('nama_puskesmas')
+            ->join('users', 'users.id', '=', 'puskesmas.user_id')
+            ->where('users.status', true)
+            ->where('puskesmas.is_mandiri', false)
+            ->orderBy('puskesmas.nama_puskesmas')
+            ->select('puskesmas.id', 'puskesmas.nama_puskesmas')
             ->get();
 
         // Default kelurahanOptions kosong, akan diisi jika tab = rs
@@ -762,14 +808,18 @@ class DataMasterController extends Controller
             // Join users + bidans
             $data = User::query()
                 ->join('bidans', 'bidans.user_id', '=', 'users.id')
+                ->leftJoin('puskesmas as p_ref', 'p_ref.id', '=', 'bidans.puskesmas_id')
                 ->where('users.id', $user)
                 ->select(
                     'users.*',
                     'bidans.nomor_izin_praktek',
                     'bidans.puskesmas_id',
-                    'users.address'
+                    'users.address',
+                    'p_ref.is_mandiri as ref_is_mandiri',
+                    'p_ref.kecamatan as ref_kecamatan'
                 )
                 ->first();
+
 
             // Master kecamatan (bisa dipakai jika di view butuh)
             $kecamatanOptions = $this->depokKecamatanOptions();
@@ -777,15 +827,33 @@ class DataMasterController extends Controller
 
         // Jika data tidak ditemukan, lempar 404
         abort_unless($data, 404);
+        $selectedPembinaId = null;
+
+        if (!empty($data->puskesmas_id)) {
+            // Jika referensi bidan adalah klinik mandiri, cari pembina berdasar kecamatan
+            if ((bool) ($data->ref_is_mandiri ?? false)) {
+                $selectedPembinaId = Puskesmas::query()
+                    ->where('kecamatan', $data->ref_kecamatan)
+                    ->where('is_mandiri', false)
+                    ->value('id');
+            } else {
+                // Kalau referensi sudah puskesmas biasa, itu pembinanya langsung
+                $selectedPembinaId = (int) $data->puskesmas_id;
+            }
+        }
+
 
         // Tampilkan view edit
         return view('dinkes.data-master.data-master-edit', [
-            'tab'                   => $tab,
-            'data'                  => $data,
-            'puskesmasList'         => $puskesmasList,
-            'kecamatanOptions'      => $kecamatanOptions,
-            'kelurahanOptions'      => $kelurahanOptions,
+            'tab'                    => $tab,
+            'data'                   => $data,
+            'puskesmasList'          => $puskesmasList,
+            'kecamatanOptions'       => $kecamatanOptions,
+            'kelurahanOptions'       => $kelurahanOptions,
             'rsKelurahanByKecamatan' => $rsKelurahanByKecamatan,
+
+            // tambahan:
+            'selectedPembinaId'      => $selectedPembinaId,
         ]);
     }
 
@@ -975,9 +1043,16 @@ class DataMasterController extends Controller
                         Puskesmas::where('id', $puskesmasId)->delete();
                     }
                 } else {
-                    // Tab = bidan: hapus detail bidan
+                    // Tab = bidan:
+                    // 1) Hapus detail bidan
                     Bidan::where('user_id', $user)->delete();
+
+                    // 2) Hapus puskesmas klinik mandiri milik user bidan ini (kalau ada)
+                    Puskesmas::where('user_id', $user)
+                        ->where('is_mandiri', true)
+                        ->delete();
                 }
+
 
                 // Terakhir, hapus user-nya
                 User::where('id', $user)->delete();
