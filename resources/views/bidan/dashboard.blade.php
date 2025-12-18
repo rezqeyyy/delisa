@@ -201,7 +201,7 @@
                     <div class="flex items-center justify-between mb-3">
                         {{-- Kartu status pemantauan nifas: menampilkan jumlah pasien dengan kesimpulan pantauan Sehat / Dirujuk / Meninggal.
                              Diambil dari variabel $pemantauanSehat, $pemantauanDirujuk, $pemantauanMeninggal. --}}
-                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan</h3>
+                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan Kesimpulan KF</h3>
                     </div>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">

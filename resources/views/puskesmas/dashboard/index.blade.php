@@ -155,7 +155,7 @@
 
                 <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan</h3>
+                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan Kesimpulan KF</h3>
                     </div>
                     <div class="flex items-center text-center divide-x-2 divide-[#E9E9E9]">
                         <div class="flex-1 px-4">
