@@ -12,7 +12,7 @@
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
         <x-bidan.sidebar />
         <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6">
-            
+
             <div class="flex items-center gap-3 mb-6">
                 <a href="{{ route('bidan.pasien-nifas.detail', $pasienNifas->id) }}" class="text-gray-600 hover:text-gray-900">
                     <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -32,8 +32,30 @@
             <section class="bg-white rounded-3xl p-4 sm:p-6 shadow-sm">
                 <div class="mb-4 pb-4 border-b border-gray-100 flex justify-between items-center">
                     <h2 class="text-base font-semibold text-[#1D1D1D]">Detail Kunjungan</h2>
-                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
-                        Selesai
+
+                    @php
+                        $kes = strtolower(trim($existingKf->kesimpulan_pantauan ?? ''));
+
+                        if (in_array($kes, ['meninggal', 'wafat'])) {
+                            $badgeText  = 'Meninggal / Wafat';
+                            $badgeClass = 'bg-red-100 text-red-700';
+                        } elseif ($kes === 'sehat') {
+                            $badgeText  = 'Sehat';
+                            $badgeClass = 'bg-blue-100 text-blue-700';
+                        } elseif ($kes === 'dirujuk') {
+                            $badgeText  = 'Dirujuk';
+                            $badgeClass = 'bg-amber-100 text-amber-800';
+                        } elseif ($kes !== '') {
+                            $badgeText  = $existingKf->kesimpulan_pantauan; // fallback tampilkan value as-is
+                            $badgeClass = 'bg-amber-100 text-amber-800';
+                        } else {
+                            $badgeText  = 'Belum ada kesimpulan';
+                            $badgeClass = 'bg-gray-100 text-gray-600';
+                        }
+                    @endphp
+
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $badgeClass }}">
+                        {{ $badgeText }}
                     </span>
                 </div>
 
@@ -101,7 +123,7 @@
                 </div>
 
                 <div class="mt-8 flex justify-end">
-                    <a href="{{ route('bidan.pasien-nifas.detail', $pasienNifas->id) }}" 
+                    <a href="{{ route('bidan.pasien-nifas.detail', $pasienNifas->id) }}"
                        class="px-6 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-300 transition">
                         Kembali
                     </a>
