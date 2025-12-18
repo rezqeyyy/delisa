@@ -23,7 +23,7 @@
 
             <!-- Header -->
             <header class="mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">List Skrining Ibu Hamil</h1>
+                <h1 class="text-2xl font-semibold text-[#1D1D1D]">List Skrining Ibu Hamil</h1>
             </header>
 
             <section class="space-y-4">
@@ -34,66 +34,67 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-[#1D1D1D]" fill="currentColor"><path d="M6 2a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2H6Zm2 5h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
                             </span>
                             <div>
-                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Pre Eklampsia</h2>
-                                <p class="text-xs text-[#7C7C7C]">Daftar pasien skrining preeklampsia terbaru</p>
+                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Ibu Hamil</h2>
+                                <p class="text-gray-600">Data pasien yang melakukan pengecekan pada puskesmas ini</p>
                             </div>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
+                            <!-- SEARCH -->
+                            <form method="GET"
+                                action="{{ route('puskesmas.skrining.index') }}"
+                                class="flex items-center bg-[#F5F5F5] border border-[#E5E5E5]
+                                        rounded-full px-4 h-10 w-64
+                                        focus-within:ring-2 focus-within:ring-pink-400 transition">
 
-    <!-- SEARCH -->
-    <form method="GET"
-          action="{{ route('puskesmas.skrining.index') }}"
-          class="flex items-center bg-[#F5F5F5] border border-[#E5E5E5]
-                 rounded-full px-4 h-10 w-64
-                 focus-within:ring-2 focus-within:ring-pink-400 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="w-4 h-4 text-gray-400 mr-2"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="m21 21-4.35-4.35M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0Z"/>
+                                </svg>
 
-        <svg xmlns="http://www.w3.org/2000/svg"
-             class="w-4 h-4 text-gray-400 mr-2"
-             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="m21 21-4.35-4.35M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0Z"/>
-        </svg>
+                                <input
+                                    type="text"
+                                    name="search"
+                                    value="{{ request('search') }}"
+                                    placeholder="Cari Nama / NIK / No Telp"
+                                    class="bg-transparent outline-none text-sm w-full text-gray-700 placeholder-gray-400"
+                                />
+                            </form>
 
-        <input
-            type="text"
-            name="search"
-            value="{{ request('search') }}"
-            placeholder="Cari Nama / NIK / No Telp"
-            class="bg-transparent outline-none text-sm w-full text-gray-700 placeholder-gray-400"
-        />
-    </form>
+                            <div class="flex items-center gap-3">
+                                <!-- DOWNLOAD EXCEL -->
+                                <a href="{{ route('puskesmas.skrining.export.excel') }}"
+                                class="inline-flex items-center gap-2 px-4 h-10
+                                        bg-green-600 text-white rounded-full
+                                        hover:bg-green-700 transition text-sm font-medium">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
+                                        <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
+                                        <path d="M9 15h6"/>
+                                        <path d="M12 18V12"/>
+                                    </svg>
+                                    Download Excel
+                                </a>
 
-    <!-- DOWNLOAD EXCEL -->
-    <a href="{{ route('puskesmas.skrining.export.excel') }}"
-       class="inline-flex items-center gap-2 px-4 h-10
-              bg-green-600 text-white rounded-full
-              hover:bg-green-700 transition text-sm font-medium">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
-             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
-            <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
-            <path d="M9 15h6"/>
-            <path d="M12 18V12"/>
-        </svg>
-        Download Excel
-    </a>
+                                <!-- DOWNLOAD PDF -->
+                                <a href="{{ route('puskesmas.skrining.export.pdf') }}"
+                                class="inline-flex items-center gap-2 px-4 h-10
+                                        bg-red-600 text-white rounded-full
+                                        hover:bg-red-700 transition text-sm font-medium">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
+                                        <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
+                                        <path d="M9 15h6"/>
+                                        <path d="M12 18V12"/>
+                                    </svg>
+                                    Download PDF
+                                </a>
+                            </div>
 
-    <!-- DOWNLOAD PDF -->
-    <a href="{{ route('puskesmas.skrining.export.pdf') }}"
-       class="inline-flex items-center gap-2 px-4 h-10
-              bg-red-600 text-white rounded-full
-              hover:bg-red-700 transition text-sm font-medium">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
-             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
-            <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
-            <path d="M9 15h6"/>
-            <path d="M12 18V12"/>
-        </svg>
-        Download PDF
-    </a>
-
-</div>
+                        </div>
                     </div>  
                     <br>
                     <div class="overflow-x-auto">

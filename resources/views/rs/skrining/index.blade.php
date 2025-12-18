@@ -31,7 +31,7 @@
                             </span>
                             <div>
                                 <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Ibu Hamil</h2>
-                                <p class="text-xs text-[#7C7C7C]">Data pasien yang melakukan pengecekan pada rumah sakit
+                                <p class="text-gray-600">Data pasien yang melakukan pengecekan pada rumah sakit
                                     ini</p>
                             </div>
                         </div>

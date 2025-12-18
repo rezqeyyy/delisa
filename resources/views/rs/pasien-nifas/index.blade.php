@@ -72,7 +72,7 @@
                             </span>
                             <div>
                                 <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Nifas</h2>
-                                <p class="text-xs text-[#7C7C7C]">Data pasien yang sedang nifas pada rumah sakit ini</p>
+                                <p class="text-gray-600">Data pasien yang sedang nifas pada rumah sakit ini</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">

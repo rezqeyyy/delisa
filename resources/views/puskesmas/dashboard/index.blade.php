@@ -182,8 +182,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-[#1D1D1D]" fill="currentColor"><path d="M6 2a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2H6Zm2 5h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
                             </span>
                             <div>
-                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Preeklampsia</h2>
-                                <p class="text-xs text-[#7C7C7C]">Daftar pasien skrining preeklampsia terbaru</p>
+                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Ibu Hamil</h2>
+                                <p class="text-gray-600">Daftar pasien skrining ibu hamil terbaru</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
@@ -227,20 +227,12 @@
                                             </span>
                                         </td>
                                         <td class="px-3 py-3">
-                                            <div x-data="{ open:false }" class="relative inline-block">
-                                                <button @click="open=!open" class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">View</button>
-                                                <div x-show="open" @click.outside="open=false" x-transition class="mt-2 p-3 border border-[#E9E9E9] rounded-lg bg-[#FAFAFA] text-xs text-[#1D1D1D] w-max max-w-[60ch] shadow">
-                                                    <div class="font-semibold mb-1">Hasil Akhir</div>
-                                                    <div class="mb-2">{{ $p->hasil_akhir ?? '-' }}</div>
-                                                    <div class="font-semibold mb-1">Rekomendasi</div>
-                                                    <div>{{ $p->rekomendasi ?? '-' }}</div>
-                                                </div>
-                                            </div>
-                                        </td>
+                                        <a href="{{ route('puskesmas.skrining.show', $p->id) }}" class="px-4 py-1.5 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">View</a>
+                                    </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="9" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada data pasien preeklampsia.</td>
+                                        <td colspan="9" class="px-3 py-6 text-center text-[#7C7C7C]">Belum ada data pasien ibu hamil.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

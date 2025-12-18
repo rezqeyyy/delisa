@@ -57,8 +57,8 @@
             <!-- Header dengan Tombol Download PDF -->
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h1 class="text-2xl font-bold text-[#1D1D1D]">Detail Pasien Nifas</h1>
-                    <p class="text-[#7C7C7C] mt-1">Informasi lengkap dan riwayat KF pasien</p>
+                    <h1 class="text-2xl font-semibold text-[#1D1D1D]">Detail Pasien Nifas</h1>
+                    <p class="text-gray-600 mt-1">Informasi singkat dan riwayat KF pasien</p>
                 </div>
 
                 <!-- Tombol Download PDF (akan muncul jika ada KF yang sudah dicatat) -->

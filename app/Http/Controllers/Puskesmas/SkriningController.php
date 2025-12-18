@@ -333,7 +333,7 @@ class SkriningController extends Controller
             ->where('j.jawaban', true)
             ->select('k.nama_pertanyaan', 'j.jawaban_lainnya')
             ->get()
-            ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: ' . $r->jawaban_lainnya) : $r->nama_pertanyaan)
+            ->map(fn($r) => !empty($r->jawaban_lainnya) ? ('Lainnya: ' . $r->jawaban_lainnya) : $r->nama_pertanyaan)
             ->values()->all();
 
         // Catatan: Ambil riwayat penyakit keluarga dari jawaban kuisioner keluarga.
@@ -344,7 +344,7 @@ class SkriningController extends Controller
             ->where('j.jawaban', true)
             ->select('k.nama_pertanyaan', 'j.jawaban_lainnya')
             ->get()
-            ->map(fn($r) => ($r->nama_pertanyaan === 'Lainnya' && $r->jawaban_lainnya) ? ('Lainnya: ' . $r->jawaban_lainnya) : $r->nama_pertanyaan)
+            ->map(fn($r) => !empty($r->jawaban_lainnya) ? ('Lainnya: ' . $r->jawaban_lainnya) : $r->nama_pertanyaan)
             ->values()->all();
 
         // Catatan: Ambil data pasien untuk ditampilkan.

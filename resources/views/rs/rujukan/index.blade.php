@@ -21,7 +21,7 @@
                         </span>
                         <div>
                             <h2 class="text-xl font-semibold text-[#1D1D1D]">Rujukan dari Puskesmas</h2>
-                            <p class="text-xs text-[#7C7C7C]">Menampilkan skrining pasien yang diajukan puskesmas untuk rumah sakit ini</p>
+                            <p class="text-gray-600">Menampilkan skrining pasien yang diajukan puskesmas untuk rumah sakit ini</p>
                         </div>
                     </div>
                 </div>

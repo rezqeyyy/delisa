@@ -90,14 +90,15 @@
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Nama Lengkap</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm font-bold">
-                            {{ $rujukan->nama_pasien ?? '-' }}</div>
+                            {{ $rujukan->nama_pasien ?? '-' }}
+                        </div>                        
+
+                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">NIK</div>
+                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $rujukan->nik ?? '-' }}</div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">Alamat</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $rujukan->alamat ?? '-' }}
                         </div>
-
-                        <div class="border-t border-gray-200 p-4 text-sm font-semibold">NIK</div>
-                        <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">{{ $rujukan->nik ?? '-' }}</div>
 
                         <div class="border-t border-gray-200 p-4 text-sm font-semibold">No. Telepon</div>
                         <div class="sm:col-span-2 border-t border-gray-200 p-4 text-sm">
@@ -176,12 +177,22 @@
             </div>
 
             {{-- 5. Catatan Rujukan --}}
-            <div class="mt-8 rounded-2xl bg-white p-6 shadow">
-                <h2 class="mb-4 text-xl font-semibold text-gray-800">Catatan Rujukan</h2>
-                <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm italic text-gray-600">
-                    {{ $rujukan->catatan ?: 'Tidak ada catatan rujukan dari RS' }}
+            <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+                {{-- Catatan Pengajuan (Puskesmas) --}}
+                <div class="rounded-2xl bg-white p-6 shadow">
+                    <h2 class="mb-4 text-xl font-semibold text-gray-800">Catatan Pengajuan (Puskesmas)</h2>
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm italic text-gray-600 min-h-[80px]">
+                        {{ $rujukan->catatan_rujukan ?? 'Tidak ada catatan pengajuan.' }}
+                    </div>
                 </div>
 
+                {{-- Catatan Balasan (RS) --}}
+                <div class="rounded-2xl bg-white p-6 shadow">
+                    <h2 class="mb-4 text-xl font-semibold text-gray-800">Catatan Balasan (RS)</h2>
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm italic text-gray-600 min-h-[80px]">
+                        {{ $rujukan->catatan ?? 'Belum ada balasan dari RS.' }}
+                    </div>
+                </div>
             </div>
 
             {{-- Buttons --}}

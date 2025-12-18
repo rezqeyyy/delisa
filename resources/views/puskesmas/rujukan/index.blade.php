@@ -18,19 +18,29 @@
     <div class="flex min-h-screen" x-data="{ openSidebar: false }">
         <x-puskesmas.sidebar />
 
-        <main class="flex-1 w-full xl:ml-[260px] p-6">
+        <main class="flex-1 w-full xl:ml-[260px] p-4 sm:p-6 lg:p-8 space-y-6 max-w-none min-w-0 overflow-y-auto">
             <!-- Header -->
             <div class="mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">Data Rujukan</h1>
-                <p class="text-gray-600">Daftar semua rujukan yang diajukan dari puskesmas ini</p>
+                <h1 class="text-2xl font-semibold text-[#1D1D1D]">List Rujukan Ibu Hamil</h1>                
             </div>
 
             <!-- Table Rujukan -->
             <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
                 @if ($rujukans->count() > 0)
-                    <div class="overflow-x-auto">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        <div class="flex items-start gap-3">
+                            <span class="w-10 h-10 grid place-items-center rounded-full bg-[#F5F5F5]">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-[#1D1D1D]" fill="currentColor"><path d="M6 2a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2H6Zm2 5h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
+                            </span>
+                            <div>
+                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Rujukan Pasien Ibu Hamil</h2>
+                                <p class="text-gray-600">Daftar semua rujukan yang diajukan dari puskesmas ini</p>
+                            </div>
+                        </div>
+
                         <!-- Search Bar -->
                         <form method="GET" action="{{ route('puskesmas.rujukan.index') }}" class="mb-4 flex justify-end">
+                            
                             <div class="flex flex-col sm:flex-row gap-3 sm:items-center w-full sm:w-auto">
                                 <div class="relative w-full sm:max-w-md">
                                     <input
@@ -64,6 +74,9 @@
                                 @endif
                             </div>
                         </form>
+                    </div>
+                    <br>
+                    <div class="overflow-x-auto">                        
                         <table class="w-full text-sm">
                             <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
                                 <tr class="text-left">
