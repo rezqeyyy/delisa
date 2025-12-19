@@ -115,7 +115,7 @@ class SkriningController extends Controller
         });
 
         // Append query string ke pagination
-        $skrinings->appends($request->all());
+        $skrinings->withQueryString();
 
         return view('rs.skrining.index', compact('skrinings'));
     }

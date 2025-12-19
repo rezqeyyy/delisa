@@ -50,114 +50,135 @@ class DashboardController extends Controller
             ->unique();
 
         // Pasien yang hanya punya rujukan pending dan belum pernah selesai
-        $nonRujukanPatientIds = $pendingPatientIds
-            ->diff($acceptedPatientIds);
+        $pasienRujukan = $acceptedPatientIds->count();
 
-        $pasienRujukan    = $acceptedPatientIds->count();
-        $pasienNonRujukan = $nonRujukanPatientIds->count();
+        // ✅ Rujukan Menunggu Konfirmasi = semua rujukan pending (done_status=false) seperti halaman rujukan RS
+        $rujukanMenungguKonfirmasi = $pendingPatientIds->count();
 
         /**
          * ==============================
-         * 3. DATA PASIEN RUJUKAN (RISIKO)
+         * 3. DATA PASIEN RUJUKAN (RISIKO) - SINKRON DENGAN TABEL
          * ==============================
+         * ⚠️ Stat risiko mengikuti dataset query tabel (peBase) yang akan dibuat di BLOK 7.
+         * Jadi di sini cukup inisialisasi, nanti di BLOK 7 kita isi angkanya.
          */
-        $rujukanSetelahMelahirkan = PasienNifasRs::where('rs_id', $rsId)->count();
+        $rujukanSetelahMelahirkan = 0; // nanti dihitung dari KF TERBARU di blok nifas
 
         $rujukanBeresiko     = 0;
         $resikoNormal        = 0;
         $resikoPreeklampsia  = 0;
 
-        foreach ($acceptedRujukan as $rujukan) {
-            $skr = $rujukan->skrining;
-
-            if (!$skr) {
-                continue;
-            }
-
-            $raw = strtolower(trim($skr->kesimpulan ?? $skr->status_pre_eklampsia ?? ''));
-
-            $isHigh = ($skr->jumlah_resiko_tinggi ?? 0) > 0
-                || in_array($raw, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']);
-
-            $isMed = ($skr->jumlah_resiko_sedang ?? 0) > 0
-                || in_array($raw, ['waspada', 'menengah', 'sedang', 'risiko sedang']);
-
-            if ($isHigh || $isMed) {
-                $rujukanBeresiko++;
-                $resikoPreeklampsia++;
-            } else {
-                $resikoNormal++;
-            }
-        }
 
         /**
          * ==============================
-         * 4. PASIEN HADIR / TIDAK HADIR
+         * 4. PASIEN HADIR / TIDAK HADIR (PEMANTAUAN NIFAS)
          * ==============================
+         * Hadir  = episode yang sudah mengisi KF1
+         * Tidak  = episode yang belum KF1 dan sudah melewati batas waktu KF1
+         *
+         * Nilai dihitung pada BLOK 5 (karena berbasis pasien_nifas_rs + kf_kunjungans)
          */
-        $pasienHadir = $acceptedRujukan->filter(function (RujukanRs $r) {
-            return !is_null($r->pasien_datang)
-                || !is_null($r->riwayat_tekanan_darah)
-                || !is_null($r->hasil_protein_urin)
-                || !is_null($r->perlu_pemeriksaan_lanjut)
-                || !is_null($r->catatan_rujukan);
-        })->count();
+        $pasienHadir = 0;
+        $pasienTidakHadir = 0;
 
-        $totalAccepted    = $acceptedRujukan->count();
-        $pasienTidakHadir = max(0, $totalAccepted - $pasienHadir);
 
         /**
          * ==============================
-         * 5. DATA PASIEN NIFAS (RS)
+         * 5 & 6. DATA PASIEN NIFAS (RS)
          * ==============================
          */
         $totalNifas = PasienNifasRs::where('rs_id', $rsId)->count();
 
-        // Ambil ID nifas RS (primary key pasien_nifas_rs)
-        $pasienNifasIds = PasienNifasRs::where('rs_id', $rsId)->pluck('id');
+        // Ambil ID nifas RS (primary key pasien_nifas_rs) - khusus RS yang login
+        $pasienNifasIds = PasienNifasRs::query()
+            ->where('rs_id', $rsId)
+            ->pluck('id');
 
         // Inisialisasi default
-        $sudahKF1            = 0;
+        $sudahKF1            = 0;   // ⚠️ dipakai sebagai "Sudah KF" (sesuai definisi terbaru)
         $pemantauanSehat     = 0;
         $pemantauanDirujuk   = 0;
         $pemantauanMeninggal = 0;
 
+        $pasienHadir = 0;           // Hadir Pemantauan Nifas
+        $pasienTidakHadir = 0;      // Tidak Hadir Pemantauan Nifas
+
         if ($pasienNifasIds->isNotEmpty()) {
-            // 🔎 Debugging: cek ID nifas yang dipakai
-            Log::debug('RS Dashboard - Pasien Nifas RS', [
-                'rs_id'           => $rsId,
-                'pasien_nifas_ids' => $pasienNifasIds->values()->all(),
+
+            Log::debug('RS Dashboard - Pasien Nifas RS (RS scoped)', [
+                'rs_id'             => $rsId,
+                'pasien_nifas_ids'  => $pasienNifasIds->values()->all(),
             ]);
 
-            /**
-             * ==============================
-             * 5a. PASIEN YANG SUDAH KF1
-             * ==============================
-             *
-             * Tabel pemantauan: kf_kunjungans
-             * - pasien_nifas_id → relasi ke pasien_nifas_rs.id
-             * - jenis_kf        → KF1 / KF2 / KF3 / KF4 (varchar)
-             */
-            $jenisKf1Candidates = ['KF1', 'kf1', '1', 'kf_1', 'KF 1'];
+            // ==============================
+            // ✅ PASIEN NIFAS YANG SEDANG DIRUJUK
+            // Definisi: ambil KF TERBARU per pasien_nifas_id, lalu hitung yang kesimpulan_pantauan = 'Dirujuk'
+            // ==============================
 
-            $sudahKF1 = KfKunjungan::query()
+            // Subquery: KF TERBARU per pasien_nifas_id (PostgreSQL: DISTINCT ON)
+            $latestKfSub = DB::table('kf_kunjungans as k')
+                ->selectRaw('DISTINCT ON (k.pasien_nifas_id) k.pasien_nifas_id, k.kesimpulan_pantauan, k.created_at')
+                ->whereIn('k.pasien_nifas_id', $pasienNifasIds)
+                ->orderBy('k.pasien_nifas_id')
+                ->orderByDesc('k.created_at'); // patokan "terbaru" (kalau ada kolom tanggal_kunjungan, boleh pakai itu)
+
+            // Hitung pasien nifas yang KF terbarunya "Dirujuk"
+            $rujukanSetelahMelahirkan = DB::query()
+                ->fromSub($latestKfSub, 'lk')
+                ->whereRaw("LOWER(TRIM(COALESCE(lk.kesimpulan_pantauan,''))) = 'dirujuk'")
+                ->count();
+
+
+
+            $jenisKf1Candidates = ['KF1', 'kf1', '1', 'kf_1', 'KF 1'];
+            $jenisKf4Candidates = ['KF4', 'kf4', '4', 'kf_4', 'KF 4'];
+
+            /**
+             * HADIR = episode yang sudah mengisi KF1
+             */
+            $pasienHadir = KfKunjungan::query()
                 ->whereIn('pasien_nifas_id', $pasienNifasIds)
                 ->whereIn('jenis_kf', $jenisKf1Candidates)
                 ->distinct('pasien_nifas_id')
                 ->count('pasien_nifas_id');
 
-            Log::debug('RS Dashboard - Hitung KF1 RS', [
-                'rs_id'    => $rsId,
-                'sudahKF1' => $sudahKF1,
-            ]);
+            /**
+             * "SUDAH KF" = ada KF4 ATAU wafat/meninggal di salah satu kunjungan KF
+             */
+            $sudahKF1 = DB::table('pasien_nifas_rs as pnr')
+                ->where('pnr.rs_id', $rsId)
+                ->whereNotNull('pnr.kf1_tanggal')
+                ->whereNotNull('pnr.kf2_tanggal')
+                ->whereNotNull('pnr.kf3_tanggal')
+                ->whereNotNull('pnr.kf4_tanggal')
+                ->count();
 
             /**
-             * ==============================
-             * 6. PEMANTAUAN KF (SEHAT / DIRUJUK / MENINGGAL)
-             * ==============================
-             *
-             * Semua diambil dari kf_kunjungans:
-             * - kesimpulan_pantauan: 'Sehat', 'Dirujuk', 'Meninggal', dst.
+             * TIDAK HADIR = belum KF1 dan sudah melewati batas waktu KF1
+             * Indikator aman: +2 hari dari tanggal_melahirkan / tanggal_mulai_nifas / created_at
+             */
+            $pasienTidakHadir = PasienNifasRs::query()
+                ->whereIn('id', $pasienNifasIds)
+                ->whereNotIn('id', function ($sub) use ($jenisKf1Candidates) {
+                    $sub->select('pasien_nifas_id')
+                        ->from('kf_kunjungans')
+                        ->whereIn('jenis_kf', $jenisKf1Candidates);
+                })
+                ->whereRaw("
+            (COALESCE(tanggal_melahirkan, tanggal_mulai_nifas, created_at::date) + INTERVAL '2 days') < CURRENT_DATE
+        ")
+                ->count();
+
+            Log::debug('RS Dashboard - Rekap Nifas (RS scoped)', [
+                'rs_id'            => $rsId,
+                'sudahKF'          => $sudahKF1,
+                'hadir_kf1'        => $pasienHadir,
+                'tidak_hadir_kf1'  => $pasienTidakHadir,
+            ]);
+
+
+            /**
+             * PEMANTAUAN KF (rekap kunjungan)
              */
             $kfBase = KfKunjungan::query()
                 ->whereIn('pasien_nifas_id', $pasienNifasIds);
@@ -173,120 +194,171 @@ class DashboardController extends Controller
             $pemantauanMeninggal = (clone $kfBase)
                 ->where('kesimpulan_pantauan', 'Meninggal')
                 ->count();
-
-            Log::debug('RS Dashboard - Rekap pemantauan KF RS', [
-                'rs_id'              => $rsId,
-                'pemantauanSehat'    => $pemantauanSehat,
-                'pemantauanDirujuk'  => $pemantauanDirujuk,
-                'pemantauanMeninggal'=> $pemantauanMeninggal,
-            ]);
         }
+
 
         /**
          * ==============================
-         * 7. TABEL DATA PASIEN RUJUKAN PRE EKLAMPSIA (DENGAN FILTER)
+         * 7. TABEL DATA PASIEN RUJUKAN (UNIQUE PASIEN) + AUTO UPDATE SKRINING TERBARU
          * ==============================
+         * - Yang tampil hanya 1x per pasien (anti redundan)
+         * - Data yang dipakai selalu skrining TERBARU pasien tsb
+         * - Filter (NIK/Nama/Tanggal/Risiko) dikenakan ke skrining terbaru itu
          */
-        $peQuery = RujukanRs::with(['skrining.pasien.user'])
+
+        // 7a) Ambil daftar pasien yang PERNAH rujuk ke RS ini (minimal done_status=true sesuai konsep tabel sebelumnya)
+        $rujukPasienIdSub = RujukanRs::query()
+            ->select('pasien_id')
             ->where('rs_id', $rsId)
-            ->where('done_status', true);
+            ->where('done_status', true)
+            ->whereNotNull('pasien_id')
+            ->distinct();
 
-        // Filter berdasarkan NIK
+        // 7b) Subquery: skrining TERBARU per pasien (PostgreSQL: DISTINCT ON)
+        $latestSkriningSub = DB::table('skrinings as s')
+            ->selectRaw('DISTINCT ON (s.pasien_id) s.*')
+            ->whereIn('s.pasien_id', $rujukPasienIdSub)
+            ->orderBy('s.pasien_id')
+            ->orderByDesc('s.created_at');
+
+        // 7c) Base dataset tabel: join latest skrining + pasien + user
+        $peBase = DB::query()
+            ->fromSub($latestSkriningSub, 'ls')
+            ->join('pasiens as p', 'p.id', '=', 'ls.pasien_id')
+            ->leftJoin('users as u', 'u.id', '=', 'p.user_id')
+            ->select([
+                'ls.id as skrining_id',
+                'ls.pasien_id as pasien_id',
+                'ls.created_at as skrining_created_at',
+                'ls.kesimpulan as skrining_kesimpulan',
+                'ls.status_pre_eklampsia as skrining_status_pre_eklampsia',
+                'ls.jumlah_resiko_sedang as jumlah_resiko_sedang',
+                'ls.jumlah_resiko_tinggi as jumlah_resiko_tinggi',
+                'p.nik as nik',
+                'p.PKecamatan as PKecamatan',
+                'p.PWilayah as PWilayah',
+                'u.name as nama',
+                'u.phone as phone',
+            ]);
+
+        // 7d) Filter NIK
         if ($request->filled('nik')) {
-            $peQuery->whereHas('skrining.pasien', function ($q) use ($request) {
-                $q->where('nik', 'like', '%' . $request->nik . '%');
-            });
+            $peBase->where('p.nik', 'like', '%' . $request->nik . '%');
         }
 
-        // Filter berdasarkan Nama Pasien
+        // 7e) Filter Nama
         if ($request->filled('nama')) {
-            $peQuery->whereHas('skrining.pasien.user', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->nama . '%');
-            });
+            $peBase->where('u.name', 'like', '%' . $request->nama . '%');
         }
 
-        // Filter berdasarkan Tanggal Mulai
+        // 7f) Filter Tanggal (berdasarkan tanggal skrining TERBARU)
         if ($request->filled('tanggal_dari')) {
-            $peQuery->whereHas('skrining', function ($q) use ($request) {
-                $q->whereDate('created_at', '>=', $request->tanggal_dari);
-            });
+            $peBase->whereDate('ls.created_at', '>=', $request->tanggal_dari);
         }
-
-        // Filter berdasarkan Tanggal Sampai
         if ($request->filled('tanggal_sampai')) {
-            $peQuery->whereHas('skrining', function ($q) use ($request) {
-                $q->whereDate('created_at', '<=', $request->tanggal_sampai);
-            });
+            $peBase->whereDate('ls.created_at', '<=', $request->tanggal_sampai);
         }
 
-        // Filter berdasarkan Status Risiko
+        // 7g) Filter Status Risiko (berdasarkan skrining TERBARU)
         if ($request->filled('risiko')) {
             $risikoFilter = $request->risiko;
 
-            $peQuery->whereHas('skrining', function ($q) use ($risikoFilter) {
-                if ($risikoFilter === 'Beresiko') {
-                    $q->where(function ($subQ) {
-                        $subQ->where('jumlah_resiko_tinggi', '>', 0)
-                            ->orWhereRaw("LOWER(TRIM(kesimpulan)) IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')")
-                            ->orWhereRaw("LOWER(TRIM(status_pre_eklampsia)) IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi')");
-                    });
-                } elseif ($risikoFilter === 'Tidak Berisiko') {
-                    $q->where(function ($subQ) {
-                        $subQ->where('jumlah_resiko_tinggi', '<=', 0)
-                            ->where('jumlah_resiko_sedang', '<=', 0)
-                            ->whereRaw("LOWER(TRIM(COALESCE(kesimpulan, ''))) NOT IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi', 'waspada', 'menengah', 'sedang', 'risiko sedang')")
-                            ->whereRaw("LOWER(TRIM(COALESCE(status_pre_eklampsia, ''))) NOT IN ('beresiko', 'berisiko', 'risiko tinggi', 'tinggi', 'waspada', 'menengah', 'sedang', 'risiko sedang')");
-                    });
-                }
-            });
+            if ($risikoFilter === 'Beresiko') {
+                $peBase->where(function ($q) {
+                    $q->where('ls.jumlah_resiko_tinggi', '>', 0)
+                        ->orWhereRaw("LOWER(TRIM(COALESCE(ls.kesimpulan,''))) IN ('beresiko','berisiko','risiko tinggi','tinggi')")
+                        ->orWhereRaw("LOWER(TRIM(COALESCE(ls.status_pre_eklampsia,''))) IN ('beresiko','berisiko','risiko tinggi','tinggi')")
+                        ->orWhere(function ($qq) {
+                            $qq->where('ls.jumlah_resiko_sedang', '>', 0)
+                                ->orWhereRaw("LOWER(TRIM(COALESCE(ls.kesimpulan,''))) IN ('waspada','menengah','sedang','risiko sedang')")
+                                ->orWhereRaw("LOWER(TRIM(COALESCE(ls.status_pre_eklampsia,''))) IN ('waspada','menengah','sedang','risiko sedang')");
+                        });
+                });
+            }
+
+            if ($risikoFilter === 'Tidak Berisiko') {
+                $peBase->where(function ($q) {
+                    $q->where('ls.jumlah_resiko_tinggi', '<=', 0)
+                        ->where('ls.jumlah_resiko_sedang', '<=', 0)
+                        ->whereRaw("LOWER(TRIM(COALESCE(ls.kesimpulan,''))) NOT IN ('beresiko','berisiko','risiko tinggi','tinggi','waspada','menengah','sedang','risiko sedang')")
+                        ->whereRaw("LOWER(TRIM(COALESCE(ls.status_pre_eklampsia,''))) NOT IN ('beresiko','berisiko','risiko tinggi','tinggi','waspada','menengah','sedang','risiko sedang')");
+                });
+            }
         }
 
-        $pePatients = $peQuery->orderByDesc('created_at')
+        // ==============================
+        // SINKRON STAT RISIKO DENGAN DATASET TABEL (peBase) - TERBARU
+        // ==============================
+        $totalPeDataset = (clone $peBase)->count();
+
+        $countHigh = (clone $peBase)
+            ->where(function ($q) {
+                $q->where('ls.jumlah_resiko_tinggi', '>', 0)
+                    ->orWhereRaw("LOWER(TRIM(COALESCE(ls.kesimpulan, ls.status_pre_eklampsia, ''))) IN ('beresiko','berisiko','risiko tinggi','tinggi')");
+            })
+            ->count();
+
+        // sedang tapi bukan high
+        $countMedOnly = (clone $peBase)
+            ->where(function ($q) {
+                $q->where('ls.jumlah_resiko_sedang', '>', 0)
+                    ->orWhereRaw("LOWER(TRIM(COALESCE(ls.kesimpulan, ls.status_pre_eklampsia, ''))) IN ('waspada','menengah','sedang','risiko sedang')");
+            })
+            ->where(function ($q) {
+                $q->where('ls.jumlah_resiko_tinggi', '<=', 0)
+                    ->whereRaw("LOWER(TRIM(COALESCE(ls.kesimpulan, ls.status_pre_eklampsia, ''))) NOT IN ('beresiko','berisiko','risiko tinggi','tinggi')");
+            })
+            ->count();
+
+        $countRisk = $countHigh + $countMedOnly;
+
+        $rujukanBeresiko    = $countRisk;
+        $resikoPreeklampsia = $countRisk;
+        $resikoNormal       = max(0, $totalPeDataset - $countRisk);
+
+        // ==============================
+        // DATA TABEL (LIMIT 5) - unik pasien + skrining terbaru
+        // ==============================
+        $pePatients = $peBase
+            ->orderByDesc('ls.created_at')
             ->limit(5)
             ->get()
-            ->map(function (RujukanRs $rujukan) {
-                $skr = $rujukan->skrining;
-                $pas = optional($skr)->pasien;
-                $usr = optional($pas)->user;
+            ->map(function ($row) {
+                $raw = strtolower(trim(($row->skrining_kesimpulan ?? $row->skrining_status_pre_eklampsia ?? '')));
 
-                if (!$skr) {
-                    return (object) [
-                        'id'          => null,
-                        'rujukan_id'  => $rujukan->id,
-                        'nik'         => '-',
-                        'nama'        => 'Data Skrining Tidak Tersedia',
-                        'tanggal'     => '-',
-                        'alamat'      => '-',
-                        'telp'        => '-',
-                        'kesimpulan'  => '-',
-                        'detail_url'  => '#',
-                        'process_url' => null,
-                    ];
-                }
+                $isHigh = ((int)($row->jumlah_resiko_tinggi ?? 0)) > 0
+                    || in_array($raw, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']);
 
-                $raw = strtolower(trim($skr->kesimpulan ?? $skr->status_pre_eklampsia ?? ''));
-
-                $isHigh = ($skr->jumlah_resiko_tinggi ?? 0) > 0
-                    || in_array($raw, ['beresiko','berisiko','risiko tinggi','tinggi']);
-
-                $isMed  = ($skr->jumlah_resiko_sedang ?? 0) > 0
-                    || in_array($raw, ['waspada','menengah','sedang','risiko sedang']);
+                $isMed = ((int)($row->jumlah_resiko_sedang ?? 0)) > 0
+                    || in_array($raw, ['waspada', 'menengah', 'sedang', 'risiko sedang']);
 
                 return (object) [
-                    'id'          => $pas->id ?? null,
-                    'rujukan_id'  => $rujukan->id,
-                    'nik'         => $pas->nik ?? '-',
-                    'nama'        => $usr->name ?? 'Nama Tidak Tersedia',
-                    'tanggal'     => optional($skr->created_at)->format('d/m/Y') ?? '-',
-                    'alamat'      => $pas->PKecamatan ?? $pas->PWilayah ?? '-',
-                    'telp'        => $usr->phone ?? $pas->no_telepon ?? '-',
+                    'id'          => $row->pasien_id,
+                    'rujukan_id'  => null, // tidak relevan, karena tabel ini unik pasien
+                    'nik'         => $row->nik ?? '-',
+                    'nama'        => $row->nama ?? 'Nama Tidak Tersedia',
+                    'tanggal'     => $row->skrining_created_at ? \Carbon\Carbon::parse($row->skrining_created_at)->format('d/m/Y') : '-',
+                    'alamat'      => $row->PKecamatan ?? $row->PWilayah ?? '-',
+                    'telp'        => $row->phone ?? '-',
                     'kesimpulan'  => $isHigh ? 'Beresiko' : ($isMed ? 'Waspada' : 'Tidak Berisiko'),
-                    'detail_url'  => route('rs.skrining.edit', $skr->id ?? 0),
-                    'process_url' => $pas && $pas->id
-                        ? route('rs.dashboard.proses-nifas', ['id' => $pas->id])
+
+                    // ✅ Auto update skrining: showPasien($id) selalu ambil latestSkrining
+                    // Pakai action() biar gak ngandelin nama route yang belum kamu tempel di sini
+                    'detail_url'  => action([self::class, 'showPasien'], ['id' => $row->pasien_id]),
+
+                    'process_url' => $row->pasien_id
+                        ? route('rs.dashboard.proses-nifas', ['id' => $row->pasien_id])
                         : null,
                 ];
             });
+
+        Log::debug('RS Dashboard - Tabel Rujukan (Unique pasien + latest skrining)', [
+            'rs_id'         => $rsId,
+            'total_dataset' => $totalPeDataset,
+            'count_risk'    => $countRisk,
+            'sample_ids'    => collect($pePatients)->pluck('id')->values()->all(),
+        ]);
+
 
         return view('rs.dashboard', compact(
             'rujukanSetelahMelahirkan',
@@ -294,7 +366,7 @@ class DashboardController extends Controller
             'resikoNormal',
             'resikoPreeklampsia',
             'pasienRujukan',
-            'pasienNonRujukan',
+            'rujukanMenungguKonfirmasi',
             'pasienHadir',
             'pasienTidakHadir',
             'totalNifas',
@@ -456,16 +528,16 @@ class DashboardController extends Controller
             $resikoSedangCount = (int)($skrining->jumlah_resiko_sedang ?? 0);
             $resikoTinggiCount = (int)($skrining->jumlah_resiko_tinggi ?? 0);
             $isBerisiko = ($resikoTinggiCount >= 1 || $resikoSedangCount >= 2);
-            
+
             // Cek apakah sudah ada rujukan
             $hasReferral = RujukanRs::where('skrining_id', $skrining->id)->exists();
 
             return view('rs.show', compact(
-                'pasien', 
-                'skrining', 
-                'sebabSedang', 
-                'sebabTinggi', 
-                'riwayatPenyakitPasien', 
+                'pasien',
+                'skrining',
+                'sebabSedang',
+                'sebabTinggi',
+                'riwayatPenyakitPasien',
                 'riwayatPenyakitKeluarga',
                 'isBerisiko',
                 'hasReferral'

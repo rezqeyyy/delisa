@@ -98,112 +98,157 @@
             @endif
 
             {{-- Kartu-kartu ringkasan --}}
-            <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
-                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
-                    <div class="flex items-center gap-3 mb-3">
-                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Data Pasien Rujukan</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Setelah Melahirkan</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $rujukanSetelahMelahirkan ?? 0 }}</span>
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+
+                {{-- ==================================================
+                 KOLOM KIRI (FLEX)
+                 Kamu bisa atur tinggi tiap card pakai flex-[angka]
+                 ================================================== --}}
+                <div class="flex flex-col gap-6 h-full">
+
+                    {{-- Card: Data Pasien Rujukan --}}
+                    {{-- 👉 Besarin flex-nya kalau mau dia “lebih turun / lebih tinggi” --}}
+                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5 flex flex-col flex-[2]">
+                        <div class="flex items-center gap-3 mb-3">
+                            <h3 class="font-semibold text-lg text-[#1D1D1D]">Data Pasien Rujukan</h3>
                         </div>
-                        <hr class="border-[#E9E9E9]">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Berisiko</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $rujukanBeresiko ?? 0 }}</span>
+
+                        <div class="space-y-4 pt-2 flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Pasien Rujuk</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $pasienRujukan ?? 0 }}</span>
+                            </div>
+                            <hr class="border-[#E9E9E9]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Rujukan Menunggu Konfirmasi</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $rujukanMenungguKonfirmasi ?? 0 }}</span>
+                            </div>
+
+                            {{-- <hr class="border-[#E9E9E9]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Berisiko</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $rujukanBeresiko ?? 0 }}</span>
+                            </div> --}}
+
                         </div>
                     </div>
+
+                    {{-- Card: Data Pasien Nifas --}}
+                    {{-- 👉 Besarin flex-nya kalau mau dia “naik / lebih tinggi” (mengisi ruang ke atas) --}}
+                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5 flex flex-col flex-[3.55]">
+                        <div class="flex items-center gap-3 mb-3">
+                            <h3 class="font-semibold text-lg text-[#1D1D1D]">Data Pasien Nifas</h3>
+                        </div>
+
+                        <div class="space-y-8 flex-1 pt-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Total Pasien Nifas</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $totalNifas ?? 0 }}</span>
+                            </div>
+                            <hr class="border-[#E9E9E9]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Pasien Nifas yang Sedang Dirujuk</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $rujukanSetelahMelahirkan ?? 0 }}</span>
+                            </div>
+                            <hr class="border-[#E9E9E9]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Sudah Selesai KF (KF1-KF4)</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $sudahKF1 ?? 0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
+                        <div class="flex items-center gap-3 mb-3">
+                            <h3 class="font-semibold text-lg text-[#1D1D1D]">Data Pasien</h3>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Rujukan</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $pasienRujukan ?? 0 }}</span>
+                            </div>
+                            <hr class="border-[#E9E9E9]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Non Rujukan</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $pasienNonRujukan ?? 0 }}</span>
+                            </div>
+                        </div>
+                    </div> --}}
+
                 </div>
 
-                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
-                    <div class="flex items-center gap-3 mb-3">
-                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Resiko Preeklampsia</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Pasien Normal</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $resikoNormal ?? 0 }}</span>
-                        </div>
-                        <hr class="border-[#E9E9E9]">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Pasien Berisiko Preeklampsia</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $resikoPreeklampsia ?? 0 }}</span>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
-                    <div class="flex items-center gap-3 mb-3">
-                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Data Pasien</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Rujukan</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $pasienRujukan ?? 0 }}</span>
-                        </div>
-                        <hr class="border-[#E9E9E9]">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Non Rujukan</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $pasienNonRujukan ?? 0 }}</span>
-                        </div>
-                    </div>
-                </div>
+                 {{-- ==================================================
+                 KOLOM KANAN (FLEX)
+                 Kamu bisa atur tinggi tiap card pakai flex-[angka]
+                 ================================================== --}}
+                <div class="flex flex-col gap-6 h-full">
 
-                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
-                    <div class="flex items-center gap-3 mb-3">
-                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Pasien yang Hadir Pemeriksaan</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Pasien Hadir</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $pasienHadir ?? 0 }}</span>
+                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5 flex flex-col flex-[2]">
+                        <div class="flex items-center gap-3 mb-3">
+                            <h3 class="font-semibold text-lg text-[#1D1D1D]">Resiko Preeklampsia Pasien Rujukan</h3>
                         </div>
-                        <hr class="border-[#E9E9E9]">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Pasien Tidak Hadir</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $pasienTidakHadir ?? 0 }}</span>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
-                    <div class="flex items-center gap-3 mb-3">
-                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Data Pasien Nifas</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Total Pasien Nifas</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $totalNifas ?? 0 }}</span>
-                        </div>
-                        <hr class="border-[#E9E9E9]">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#7C7C7C]">Sudah Selesai KF (KF1-KF4)</span>
-                            <span class="font-bold text-[#1D1D1D]">{{ $sudahKF1 ?? 0 }}</span>
-                        </div>
-                    </div>
-                </div>
+                        <div class="flex-1 flex flex-col justify-between">
+                            <div class="space-y-4 pt-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[#7C7C7C]">Pasien Berisiko</span>
+                                    <span class="font-bold text-[#1D1D1D]">{{ $resikoPreeklampsia ?? 0 }}</span>
+                                </div>
+                                <hr class="border-[#E9E9E9]">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[#7C7C7C]">Pasien Normal Setelah Rujukan</span>
+                                    <span class="font-bold text-[#1D1D1D]">{{ $resikoNormal ?? 0 }}</span>
+                                </div>
+                            </div>
 
-                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5">
-                    <div class="flex items-center gap-3 mb-3">
-                        <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan</h3>
+                            <div class="pt-6">
+                                <div class="h-px bg-transparent"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-center text-center divide-x-2 divide-[#E9E9E9]">
-                        <div class="flex-1 px-4">
-                            <div class="text-xs text-[#7C7C7C]">Sehat</div>
-                            <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanSehat ?? 0 }}</div>
+
+                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5 flex flex-col flex-[2]">
+                        <div class="flex items-center gap-3 mb-3">
+                            <h3 class="font-semibold text-lg text-[#1D1D1D]">Jumlah Pasien Hadir Saat KF1</h3>
                         </div>
-                        <div class="flex-1 px-4">
-                            <div class="text-xs text-[#7C7C7C]">Total Dirujuk</div>
-                            <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanDirujuk ?? 0 }}</div>
+
+                        <div class="space-y-3 flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Pasien Hadir</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $pasienHadir ?? 0 }}</span>
+                            </div>
+                            <hr class="border-[#E9E9E9]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#7C7C7C]">Pasien Tidak Hadir</span>
+                                <span class="font-bold text-[#1D1D1D]">{{ $pasienTidakHadir ?? 0 }}</span>
+                            </div>
                         </div>
-                        <div class="flex-1 px-4">
-                            <div class="text-xs text-[#7C7C7C]">Meninggal</div>
-                            <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanMeninggal ?? 0 }}</div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-[#E9E9E9] p-5 flex flex-col flex-[3]">
+                        <div class="flex items-center gap-3 mb-3">
+                            <h3 class="font-semibold text-lg text-[#1D1D1D]">Pemantauan Kesimpulan KF</h3>
+                        </div>
+
+                        <div class="flex items-center text-center divide-x-2 divide-[#E9E9E9] flex-1">
+                            <div class="flex-1 px-4">
+                                <div class="text-xs text-[#7C7C7C]">Sehat</div>
+                                <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanSehat ?? 0 }}</div>
+                            </div>
+                            <div class="flex-1 px-4">
+                                <div class="text-xs text-[#7C7C7C]">Total Dirujuk</div>
+                                <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanDirujuk ?? 0 }}</div>
+                            </div>
+                            <div class="flex-1 px-4">
+                                <div class="text-xs text-[#7C7C7C]">Meninggal</div>
+                                <div class="text-3xl font-bold text-[#1D1D1D]">{{ $pemantauanMeninggal ?? 0 }}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
+
 
             {{-- Tabel Pasien Rujukan Pre Eklampsia --}}
             <section class="space-y-4">
@@ -241,23 +286,21 @@
                     </div>
 
                     <!-- Filter Modal -->
-                    <div x-show="showFilter" 
-                         x-transition:enter="transition ease-out duration-200"
-                         x-transition:enter-start="opacity-0"
-                         x-transition:enter-end="opacity-100"
-                         x-transition:leave="transition ease-in duration-150"
-                         x-transition:leave-start="opacity-100"
-                         x-transition:leave-end="opacity-0"
-                         class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-                         @click.self="showFilter = false"
-                         style="display: none;">
-                        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-                             @click.stop>
-                            <div class="sticky top-0 bg-white border-b border-[#E9E9E9] px-6 py-4 flex items-center justify-between">
+                    <div x-show="showFilter" x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0"
+                        class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+                        @click.self="showFilter = false" style="display: none;">
+                        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" @click.stop>
+                            <div
+                                class="sticky top-0 bg-white border-b border-[#E9E9E9] px-6 py-4 flex items-center justify-between">
                                 <h3 class="text-lg font-semibold text-[#1D1D1D]">Filter Data Pasien Preeklampsia</h3>
                                 <button @click="showFilter = false" class="text-[#7C7C7C] hover:text-[#1D1D1D]">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
                             </div>
@@ -282,13 +325,17 @@
                                 <!-- Tanggal -->
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Tanggal Dari</label>
-                                        <input type="date" name="tanggal_dari" value="{{ request('tanggal_dari') }}"
+                                        <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Tanggal
+                                            Dari</label>
+                                        <input type="date" name="tanggal_dari"
+                                            value="{{ request('tanggal_dari') }}"
                                             class="w-full px-4 py-2 border border-[#E9E9E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Tanggal Sampai</label>
-                                        <input type="date" name="tanggal_sampai" value="{{ request('tanggal_sampai') }}"
+                                        <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Tanggal
+                                            Sampai</label>
+                                        <input type="date" name="tanggal_sampai"
+                                            value="{{ request('tanggal_sampai') }}"
                                             class="w-full px-4 py-2 border border-[#E9E9E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300">
                                     </div>
                                 </div>
@@ -296,11 +343,14 @@
                                 <!-- Status Risiko -->
                                 <div>
                                     <label class="block text-sm font-medium text-[#1D1D1D] mb-2">Status Risiko</label>
-                                    <select name="risiko" 
+                                    <select name="risiko"
                                         class="w-full px-4 py-2 border border-[#E9E9E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300">
                                         <option value="">Semua Status</option>
-                                        <option value="Beresiko" {{ request('risiko') === 'Beresiko' ? 'selected' : '' }}>Beresiko</option>
-                                        <option value="Tidak Berisiko" {{ request('risiko') === 'Tidak Berisiko' ? 'selected' : '' }}>Tidak Berisiko</option>
+                                        <option value="Beresiko"
+                                            {{ request('risiko') === 'Beresiko' ? 'selected' : '' }}>Beresiko</option>
+                                        <option value="Tidak Berisiko"
+                                            {{ request('risiko') === 'Tidak Berisiko' ? 'selected' : '' }}>Tidak
+                                            Berisiko</option>
                                     </select>
                                 </div>
 
@@ -320,34 +370,44 @@
                     </div>
 
                     <!-- Active Filters Display -->
-                    @if(request()->hasAny(['nik', 'nama', 'tanggal_dari', 'tanggal_sampai', 'risiko']))
+                    @if (request()->hasAny(['nik', 'nama', 'tanggal_dari', 'tanggal_sampai', 'risiko']))
                         <div class="mt-4 flex flex-wrap items-center gap-2">
                             <span class="text-sm text-[#7C7C7C]">Filter aktif:</span>
-                            @if(request('nik'))
-                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
+                            @if (request('nik'))
+                                <span
+                                    class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
                                     NIK: {{ request('nik') }}
-                                    <a href="{{ route('rs.dashboard', array_merge(request()->except('nik'))) }}" class="hover:text-pink-900">×</a>
+                                    <a href="{{ route('rs.dashboard', array_merge(request()->except('nik'))) }}"
+                                        class="hover:text-pink-900">×</a>
                                 </span>
                             @endif
-                            @if(request('nama'))
-                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
+                            @if (request('nama'))
+                                <span
+                                    class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
                                     Nama: {{ request('nama') }}
-                                    <a href="{{ route('rs.dashboard', array_merge(request()->except('nama'))) }}" class="hover:text-pink-900">×</a>
+                                    <a href="{{ route('rs.dashboard', array_merge(request()->except('nama'))) }}"
+                                        class="hover:text-pink-900">×</a>
                                 </span>
                             @endif
-                            @if(request('tanggal_dari') || request('tanggal_sampai'))
-                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
-                                    Tanggal: {{ request('tanggal_dari') ?? '...' }} s/d {{ request('tanggal_sampai') ?? '...' }}
-                                    <a href="{{ route('rs.dashboard', array_merge(request()->except(['tanggal_dari', 'tanggal_sampai']))) }}" class="hover:text-pink-900">×</a>
+                            @if (request('tanggal_dari') || request('tanggal_sampai'))
+                                <span
+                                    class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
+                                    Tanggal: {{ request('tanggal_dari') ?? '...' }} s/d
+                                    {{ request('tanggal_sampai') ?? '...' }}
+                                    <a href="{{ route('rs.dashboard', array_merge(request()->except(['tanggal_dari', 'tanggal_sampai']))) }}"
+                                        class="hover:text-pink-900">×</a>
                                 </span>
                             @endif
-                            @if(request('risiko'))
-                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
+                            @if (request('risiko'))
+                                <span
+                                    class="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
                                     Risiko: {{ request('risiko') }}
-                                    <a href="{{ route('rs.dashboard', array_merge(request()->except('risiko'))) }}" class="hover:text-pink-900">×</a>
+                                    <a href="{{ route('rs.dashboard', array_merge(request()->except('risiko'))) }}"
+                                        class="hover:text-pink-900">×</a>
                                 </span>
                             @endif
-                            <a href="{{ route('rs.dashboard') }}" class="text-xs text-pink-600 hover:text-pink-800 font-semibold">
+                            <a href="{{ route('rs.dashboard') }}"
+                                class="text-xs text-pink-600 hover:text-pink-800 font-semibold">
                                 Hapus semua filter
                             </a>
                         </div>
@@ -423,7 +483,7 @@
                                 @empty
                                     <tr>
                                         <td colspan="9" class="px-3 py-6 text-center text-[#7C7C7C]">
-                                            @if(request()->hasAny(['nik', 'nama', 'tanggal_dari', 'tanggal_sampai', 'risiko']))
+                                            @if (request()->hasAny(['nik', 'nama', 'tanggal_dari', 'tanggal_sampai', 'risiko']))
                                                 Tidak ada data yang sesuai dengan filter yang dipilih.
                                             @else
                                                 Belum ada data pasien preeklampsia.
