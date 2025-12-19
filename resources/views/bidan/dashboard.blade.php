@@ -223,88 +223,95 @@
             </section>
 
             {{-- SECTION DATA PRE EKLAMSIA TERBARU (TABEL) --}}
-            <section class="bg-white rounded-2xl border border-[#E9E9E9] shadow-sm overflow-hidden">
-                <div
-                    class="px-4 sm:px-5 py-3 border-b border-[#F0F0F0] bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div>
-                        {{-- Section tabel: menampilkan daftar 5 pasien skrining preeklampsia terbaru.
-                             Data berasal dari collection $pasienTerbaru (hasil query di DashboardController). --}}
-                        <h2 class="text-base sm:text-lg font-semibold text-[#1D1D1D]">Data Pasien Preeklampsia</h2>
-                        <p class="text-xs text-[#7C7C7C]">Daftar pasien skrining preeklampsia terbaru</p>
+            <section class="space-y-4">
+                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-2 sm:p-4">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-start gap-3">
+                            <span class="w-10 h-10 grid place-items-center rounded-full bg-[#F5F5F5]">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-[#1D1D1D]" fill="currentColor"><path d="M6 2a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2H6Zm2 5h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
+                            </span>
+                            <div>
+                                {{-- Section tabel: menampilkan daftar 5 pasien skrining preeklampsia terbaru.
+                                    Data berasal dari collection $pasienTerbaru (hasil query di DashboardController). --}}
+                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Ibu Hamil</h2>
+                                <p class="text-gray-600">Daftar pasien skrining ibu hamil terbaru</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            {{-- Tombol "Lihat Semua" → membuka halaman daftar Skrining Bidan
+                                route('bidan.skrining') biasanya mengarah ke SkriningController@index. --}}
+                            <a href="{{ route('puskesmas.skrining.index') }}" class="px-5 py-2 rounded-full border border-[#D9D9D9] bg-white text-[#1D1D1D] font-semibold flex items-center gap-2">
+                                Lihat Semua
+                                <img src="{{ asset('icons/Iconly/Sharp/Light/Arrow - Right.svg') }}" class="w-4 h-4 opacity-80" alt="Arrow" />
+                            </a>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                        {{-- Tombol "Lihat Semua" → membuka halaman daftar Skrining Bidan
-                             route('bidan.skrining') biasanya mengarah ke SkriningController@index. --}}
-                        <a href="{{ route('bidan.skrining') }}"
-                            class="px-3 py-1 rounded-full border border-[#D9D9D9] bg-white text-[#1D1D1D] font-semibold text-sm flex items-center gap-2">
-                            <span>Lihat Semua</span>
-                        </a>
-                    </div>
-                </div>
+                    </br>
 
-                {{-- Tabel daftar pasien skrining --}}
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
-                            <tr class="text-left">
-                                <th class="px-3 py-2">No</th>
-                                <th class="px-3 py-2">Nama Pasien</th>
-                                <th class="px-3 py-2">NIK</th>
-                                <th class="px-3 py-2">Tanggal Skrining</th>
-                                <th class="px-3 py-2">Alamat</th>
-                                <th class="px-3 py-2">No Telp</th>
-                                <th class="px-3 py-2">Kesimpulan</th>
-                                <th class="px-3 py-2">View Detail</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-[#E9E9E9]">
-                            {{-- Looping semua skrining terbaru (maks 5 data) --}}
-                            @forelse(($pasienTerbaru ?? []) as $skrining)
-                                <tr>
-                                    {{-- Nomor urut baris --}}
-                                    <td class="px-3 py-3 font-medium tabular-nums">{{ $loop->iteration }}</td>
-                                    {{-- Nama pasien → dari relasi pasien->user --}}
-                                    <td class="px-3 py-3">{{ $skrining->pasien->user->name ?? '-' }}</td>
-                                    {{-- NIK pasien --}}
-                                    <td class="px-3 py-3 tabular-nums">{{ $skrining->pasien->nik ?? '-' }}</td>
-                                    {{-- Tanggal skrining (format d/m/Y) --}}
-                                    <td class="px-3 py-3">
-                                        {{ optional($skrining->created_at)->format('d/m/Y') ?? '-' }}</td>
-                                    {{-- Alamat (kecamatan) --}}
-                                    <td class="px-3 py-3">{{ $skrining->pasien->PKecamatan ?? '-' }}</td>
-                                    {{-- Nomor telepon pasien --}}
-                                    <td class="px-3 py-3">{{ $skrining->pasien->user->phone ?? '-' }}</td>
-                                    {{-- Badge kesimpulan skrining (warna beda sesuai resiko) --}}
-                                    <td class="px-3 py-3">
-                                        @php($label = strtolower(trim($skrining->kesimpulan ?? '')))
-                                        @php($isRisk = in_array($label, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']))
-                                        @php($isWarn = in_array($label, ['waspada', 'menengah', 'sedang', 'risiko sedang']))
-                                        @php($display = $isRisk ? 'Beresiko' : ($isWarn ? 'Waspada' : ($label === 'aman' ? 'Aman' : $skrining->kesimpulan ?? '-')))
-                                        <span
-                                            class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $isRisk ? 'bg-[#FF3B30] text-white' : ($isWarn ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">
-                                            {{ $display }}
-                                        </span>
-                                    </td>
-                                    <td class="px-3 py-3">
-                                        {{-- Tombol View → membuka halaman detail skrining pasien tersebut
-                                             route('bidan.skrining.show', $skrining->id)
-                                             biasanya mengarah ke SkriningController@show untuk role Bidan. --}}
-                                        <a href="{{ route('bidan.skrining.show', $skrining->id) }}"
-                                            class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">
-                                            View
-                                        </a>
-                                    </td>
+                    {{-- Tabel daftar pasien skrining --}}
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
+                                <tr class="text-left">
+                                    <th class="px-3 py-2">No</th>
+                                    <th class="px-3 py-2">Nama Pasien</th>
+                                    <th class="px-3 py-2">NIK</th>
+                                    <th class="px-3 py-2">Tanggal Skrining</th>
+                                    <th class="px-3 py-2">Alamat</th>
+                                    <th class="px-3 py-2">No Telp</th>
+                                    <th class="px-3 py-2">Kesimpulan</th>
+                                    <th class="px-3 py-2">View Detail</th>
                                 </tr>
-                            @empty
-                                {{-- Jika belum ada data skrining preeklampsia --}}
-                                <tr>
-                                    <td colspan="8" class="px-3 py-6 text-center text-[#7C7C7C]">
-                                        Belum ada data pasien pre eklampsia.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody class="divide-y divide-[#E9E9E9]">
+                                {{-- Looping semua skrining terbaru (maks 5 data) --}}
+                                @forelse(($pasienTerbaru ?? []) as $skrining)
+                                    <tr>
+                                        {{-- Nomor urut baris --}}
+                                        <td class="px-3 py-3 font-medium tabular-nums">{{ $loop->iteration }}</td>
+                                        {{-- Nama pasien → dari relasi pasien->user --}}
+                                        <td class="px-3 py-3">{{ $skrining->pasien->user->name ?? '-' }}</td>
+                                        {{-- NIK pasien --}}
+                                        <td class="px-3 py-3 tabular-nums">{{ $skrining->pasien->nik ?? '-' }}</td>
+                                        {{-- Tanggal skrining (format d/m/Y) --}}
+                                        <td class="px-3 py-3">
+                                            {{ optional($skrining->created_at)->format('d/m/Y') ?? '-' }}</td>
+                                        {{-- Alamat (kecamatan) --}}
+                                        <td class="px-3 py-3">{{ $skrining->pasien->PKecamatan ?? '-' }}</td>
+                                        {{-- Nomor telepon pasien --}}
+                                        <td class="px-3 py-3">{{ $skrining->pasien->user->phone ?? '-' }}</td>
+                                        {{-- Badge kesimpulan skrining (warna beda sesuai resiko) --}}
+                                        <td class="px-3 py-3">
+                                            @php($label = strtolower(trim($skrining->kesimpulan ?? '')))
+                                            @php($isRisk = in_array($label, ['beresiko', 'berisiko', 'risiko tinggi', 'tinggi']))
+                                            @php($isWarn = in_array($label, ['waspada', 'menengah', 'sedang', 'risiko sedang']))
+                                            @php($display = $isRisk ? 'Beresiko' : ($isWarn ? 'Waspada' : ($label === 'aman' ? 'Aman' : $skrining->kesimpulan ?? '-')))
+                                            <span
+                                                class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $isRisk ? 'bg-[#FF3B30] text-white' : ($isWarn ? 'bg-[#FFC400] text-[#1D1D1D]' : 'bg-[#39E93F] text-white') }}">
+                                                {{ $display }}
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            {{-- Tombol View → membuka halaman detail skrining pasien tersebut
+                                                route('bidan.skrining.show', $skrining->id)
+                                                biasanya mengarah ke SkriningController@show untuk role Bidan. --}}
+                                            <a href="{{ route('bidan.skrining.show', $skrining->id) }}"
+                                                class="px-4 py-1 rounded-full border border-[#D9D9D9] text-[#1D1D1D] text-xs">
+                                                View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    {{-- Jika belum ada data skrining preeklampsia --}}
+                                    <tr>
+                                        <td colspan="8" class="px-3 py-6 text-center text-[#7C7C7C]">
+                                            Belum ada data pasien pre eklampsia.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 

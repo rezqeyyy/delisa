@@ -119,6 +119,7 @@ class DashboardController extends Controller
 
         // Tetap kirim juga yang lama kalau view bidan masih pakai nama ini
         $sudahKf1 = 0;
+        $sudahKf  = 0; 
         $belumKf1 = 0;
 
         $pemantauanSehat     = 0;
@@ -147,8 +148,7 @@ class DashboardController extends Controller
 
             // Total nifas = jumlah episode RS (latest per pasien)
             $totalNifas = count($rsEpisodeIds);
-            // Tambahan: "Sudah KF" (episode selesai KF) versi baru
-            $sudahKf = 0;
+            
 
             if (!empty($rsEpisodeIds)) {
 

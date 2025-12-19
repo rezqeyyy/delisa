@@ -48,9 +48,12 @@
                     {{-- Header section dengan icon dan deskripsi --}}
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
                         <div class="flex items-start gap-3">
+                            <span class="w-10 h-10 grid place-items-center rounded-full bg-[#F5F5F5]">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-[#1D1D1D]" fill="currentColor"><path d="M6 2a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2H6Zm2 5h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
+                            </span>
                             <div>
-                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Preeklampsia</h2>
-                                <p class="text-xs text-[#7C7C7C]">Daftar pasien skrining preeklampsia terbaru</p>
+                                <h2 class="text-xl font-semibold text-[#1D1D1D]">Data Pasien Ibu Hamil</h2>
+                                <p class="text-gray-600">Data pasien yang melakukan pengecekan pada puskesmas ini</p>
                             </div>
                         </div>
                         <div class="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto">

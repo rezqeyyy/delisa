@@ -83,7 +83,7 @@
                                 7 => 'Apakah memiliki riwayat obesitas sebelum hamil (IMT > 30Kg/m2)',
                             ];
                             $high = [
-                                8  => 'Apakah anda memiliki riwayat pre-eklampsia pada kehamilan/persalinan sebelumnya',
+                                8  => 'Apakah anda memiliki riwayat preeklampsia pada kehamilan/persalinan sebelumnya',
                                 9  => 'Apakah kehamilan anda saat ini adalah kehamilan kembar',
                                 10 => 'Apakah anda memiliki diabetes dalam masa kehamilan',
                                 11 => 'Apakah anda memiliki tekanan darah (Tensi) di atas 130/90 mHg',

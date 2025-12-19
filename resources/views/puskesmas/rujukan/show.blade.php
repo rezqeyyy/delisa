@@ -178,9 +178,9 @@
 
             {{-- 5. Catatan RS --}}
             <div class="mt-8 rounded-2xl bg-white p-6 shadow">
-                <h2 class="mb-4 text-xl font-semibold text-gray-800">Catatan Balasan (RS)</h2>
+                <h2 class="mb-4 text-xl font-semibold text-gray-800">Catatan Riwayat Rujukan (RS)</h2>
                 <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 min-h-[80px]">
-                    {{ $rujukan->catatan ?? 'Belum ada balasan dari RS.' }}
+                    {{ $rujukan->catatan ?? 'Belum ada catatan dari RS.' }}
                 </div>                
             </div>
 
