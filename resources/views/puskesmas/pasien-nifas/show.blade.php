@@ -27,19 +27,38 @@
                 $type = $type ?? 'rs';
             @endphp
 
-            <!-- Back Button -->
-            <div class="flex items-center gap-3">
-                <a href="{{ route('puskesmas.pasien-nifas.index') }}" class="text-gray-600 hover:text-gray-900">
-                    <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                </a>
-                <div class="min-w-0">
-                    <h1 class="text-2xl font-semibold text-[#1D1D1D]">Detail Pasien Nifas</h1>
-                    <p class="text-l text-[#7C7C7C]">
-                        Informasi singkat dan riwayat KF pasien
-                    </p>
+            <!-- Back Button + Header + Download Button -->
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('puskesmas.pasien-nifas.index') }}" class="text-gray-600 hover:text-gray-900">
+                        <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </a>
+                    <div class="min-w-0">
+                        <h1 class="text-2xl font-semibold text-[#1D1D1D]">Data Pasien Nifas</h1>
+                        <p class="text-l text-[#7C7C7C]">
+                            Informasi singkat dan riwayat KF pasien
+                        </p>
+                    </div>
                 </div>
+
+                <!-- Tombol Download PDF (akan muncul jika ada KF yang sudah dicatat) -->
+                @if ($pasienNifas->kf1_tanggal || $pasienNifas->kf2_tanggal || $pasienNifas->kf3_tanggal || $pasienNifas->kf4_tanggal)
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('puskesmas.pasien-nifas.all-kf.pdf', ['type' => $type, 'id' => $pasienNifas->id]) }}"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
+                                <path d="M9 15h6" />
+                                <path d="M12 18V12" />
+                            </svg>
+                            Download Semua KF
+                        </a>
+                    </div>
+                @endif
             </div>
 
             <!-- Alert Messages -->
@@ -60,26 +79,6 @@
                     {{ session('warning') }}
                 </div>
             @endif
-
-            <!-- Header dengan Tombol Download PDF -->
-            <div class="flex items-center justify-between mb-6">
-                <!-- Tombol Download PDF (akan muncul jika ada KF yang sudah dicatat) -->
-                @if ($pasienNifas->kf1_tanggal || $pasienNifas->kf2_tanggal || $pasienNifas->kf3_tanggal || $pasienNifas->kf4_tanggal)
-                    <div class="flex items-center gap-2">
-                        <a href="{{ route('puskesmas.pasien-nifas.all-kf.pdf', ['type' => $type, 'id' => $pasienNifas->id]) }}"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
-                                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                                <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
-                                <path d="M9 15h6" />
-                                <path d="M12 18V12" />
-                            </svg>
-                            Download Semua KF
-                        </a>
-                    </div>
-                @endif
-            </div>
 
             @if (!is_null($deathKe ?? null))
                 <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -276,50 +275,6 @@
 
                 <!-- Right Column: Timeline & Info -->
                 <div class="flex flex-col gap-6">
-                    <!-- Timeline KF Card -->
-                    @if ($pasienNifas->kf1_tanggal || $pasienNifas->kf2_tanggal || $pasienNifas->kf3_tanggal || $pasienNifas->kf4_tanggal)
-                        <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
-                            <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Timeline KF</h2>
-                            <div class="space-y-4">
-                                @foreach([1,2,3,4] as $k)
-                                    @php
-                                        $tgl = $pasienNifas->{"kf{$k}_tanggal"};
-                                        $cat = $pasienNifas->{"kf{$k}_catatan"};
-                                    @endphp
-
-                                    @if($tgl)
-                                        <div class="relative pl-8 mb-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-4 before:h-4 before:rounded-full before:bg-blue-500">
-                                            <div class="py-2">
-                                                <div class="flex justify-between items-start">
-                                                    <div>
-                                                        <h4 class="font-semibold text-[#1D1D1D]">KF{{ $k }}</h4>
-                                                        <p class="text-sm text-[#7C7C7C]">
-                                                            {{ \Carbon\Carbon::parse($tgl)->format('d/m/Y H:i') }}
-                                                        </p>
-                                                    </div>
-                                                    <span class="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">
-                                                        Selesai
-                                                    </span>
-                                                </div>
-
-                                                @if($cat)
-                                                    <p class="text-sm text-[#7C7C7C] mt-2">{{ $cat }}</p>
-                                                @endif
-
-                                                <div class="mt-3">
-                                                    <a href="{{ route('puskesmas.pasien-nifas.kf.pdf', ['type' => $type, 'id' => $pasienNifas->id, 'jenisKf' => $k]) }}"
-                                                        class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-[#E9E9E9] rounded-lg hover:bg-[#F5F5F5] transition-colors">
-                                                        Download PDF KF{{ $k }}
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endif
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-
                     <!-- Info Periode KF -->
                     <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6 flex-1">
                         <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Informasi Periode KF</h2>
@@ -344,6 +299,51 @@
                     </div>
                 </div>
             </div>
+
+            
+            <!-- Timeline KF Card -->
+            @if ($pasienNifas->kf1_tanggal || $pasienNifas->kf2_tanggal || $pasienNifas->kf3_tanggal || $pasienNifas->kf4_tanggal)
+                <div class="bg-white rounded-2xl border border-[#E9E9E9] p-6">
+                    <h2 class="text-lg font-semibold text-[#1D1D1D] mb-4">Timeline KF</h2>
+                    <div class="space-y-4">
+                        @foreach([1,2,3,4] as $k)
+                            @php
+                                $tgl = $pasienNifas->{"kf{$k}_tanggal"};
+                                $cat = $pasienNifas->{"kf{$k}_catatan"};
+                            @endphp
+
+                            @if($tgl)
+                                <div class="relative pl-8 mb-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-4 before:h-4 before:rounded-full before:bg-blue-500">
+                                    <div class="py-2">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h4 class="font-semibold text-[#1D1D1D]">KF{{ $k }}</h4>
+                                                <p class="text-sm text-[#7C7C7C]">
+                                                    {{ \Carbon\Carbon::parse($tgl)->format('d/m/Y H:i') }}
+                                                </p>
+                                            </div>
+                                            <span class="inline-block px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">
+                                                Selesai
+                                            </span>
+                                        </div>
+
+                                        @if($cat)
+                                            <p class="text-sm text-[#7C7C7C] mt-2">{{ $cat }}</p>
+                                        @endif
+
+                                        <div class="mt-3">
+                                            <a href="{{ route('puskesmas.pasien-nifas.kf.pdf', ['type' => $type, 'id' => $pasienNifas->id, 'jenisKf' => $k]) }}"
+                                                class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-[#E9E9E9] rounded-lg hover:bg-[#F5F5F5] transition-colors">
+                                                Download PDF KF{{ $k }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+            @endif
             
             <!-- Footer -->
             <footer class="text-center text-xs text-[#7C7C7C] py-6">
