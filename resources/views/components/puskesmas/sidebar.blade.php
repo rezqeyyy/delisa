@@ -16,7 +16,7 @@
     class="fixed top-0 left-0 z-50 h-screen w-[260px] bg-white shadow-lg
            flex flex-col
            transform transition-transform duration-200
-           -translate-x-full">
+           -translate-x-full lg:translate-x-0">
 
     <div class="shrink-0">
         <div class="flex items-center justify-between gap-3 p-6 border-b border-[#CAC7C7]">
