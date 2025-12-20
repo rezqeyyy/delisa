@@ -212,7 +212,7 @@
                             name="puskesmas_id"
                             class="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs sm:text-sm text-[#1D1D1D] shadow-sm focus:border-[#E91E8C] focus:ring-1 focus:ring-[#E91E8C]/30"
                             required>
-                            <option value="">-- Pilih puskesmas/bidan --</option>
+                            <option value="">-- Pilih puskesmas --</option>
                             @foreach($puskesmasList as $puskesmas)
                                 <option 
                                     value="{{ $puskesmas->id }}" 
@@ -234,7 +234,7 @@
                         @enderror
                         
                         <p class="text-[10px] text-[#7C7C7C] mt-1">
-                            Pilih puskesmas/bidan yang akan menangani pasien nifas ini
+                            Pilih puskesmas yang akan menangani pasien nifas ini
                         </p>
                     </div>
 

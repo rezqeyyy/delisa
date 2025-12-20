@@ -298,7 +298,7 @@ class SkriningController extends Controller
                 ]);
             }
 
-            // Resep obat: tetap sama seperti punyamu, hanya pastikan pakai $rujukan->id & $riwayatId yang benar
+            // Resep obat
             ResepObat::where(function ($query) use ($rujukan, $riwayatId) {
                 $query->where('rujukan_rs_id', $rujukan->id);
 

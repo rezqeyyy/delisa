@@ -184,7 +184,7 @@
                                     <th class="px-4 py-3 text-left">Nama Pasien</th>
                                     <th class="px-4 py-3 text-left">NIK Pasien</th>
                                     <th class="px-4 py-3 text-left">No Telp</th>
-                                    <th class="px-4 py-3 text-left">Kedatangan</th>
+                                    <th class="px-4 py-3 text-left">Tanggal</th>
                                     <th class="px-4 py-3 text-left">Alamat</th>
                                     <th class="px-4 py-3 text-left">Resiko</th>
                                     <th class="px-4 py-3 text-left">Aksi</th>

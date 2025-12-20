@@ -108,7 +108,7 @@
                             <div class="p-4 text-sm font-semibold">Tanggal Pemeriksaan Awal</div>
                             <div class="sm:col-span-2 p-4 text-sm">
                                 @if ($skrining->created_at)
-                                    {{ $skrining->created_at->format('d F Y, H:i') }} WIB
+                                    {{ $skrining->created_at->format('d F Y') }} 
                                 @else
                                     -
                                 @endif
