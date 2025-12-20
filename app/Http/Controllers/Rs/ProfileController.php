@@ -23,13 +23,14 @@ class ProfileController extends Controller
         $request->validate([
             'name'         => ['required', 'string', 'max:255'],
             // pakai "file" + mimetypes agar SVG lolos; max dalam KB (512 KB)
-            'photo'        => [
+            'photo' => [
                 'nullable',
                 'file',
-                'mimetypes:image/svg+xml,image/png,image/jpeg,image/webp,image/avif'
+                'mimetypes:image/svg+xml,image/png,image/jpeg,image/webp,image/avif',
+                'max:2048'
             ],
             'old_password' => ['nullable', 'string'],
-            'password'     => ['nullable', 'string', 'min:8'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 
         $oldFilled = filled($request->old_password);

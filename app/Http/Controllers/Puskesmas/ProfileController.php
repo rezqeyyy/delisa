@@ -44,7 +44,12 @@ class ProfileController extends \App\Http\Controllers\Controller
         // - password baru harus minimal 8 karakter, wajib jika old_password diisi, dan harus konfirmasi.
         $request->validate([
             'name' => 'required|string|max:255',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'photo' => [
+                'nullable',
+                'file',
+                'mimetypes:image/svg+xml,image/png,image/jpeg,image/webp,image/avif',
+                'max:2048' // KB (2MB)
+            ],
             'old_password' => 'nullable|required_with:password',
             'password' => 'nullable|min:8|required_with:old_password|confirmed',
         ]);
@@ -70,12 +75,21 @@ class ProfileController extends \App\Http\Controllers\Controller
 
         // Catatan: Memeriksa apakah ada file foto yang diunggah.
         if ($request->hasFile('photo')) {
-            // Catatan: Jika pengguna sebelumnya sudah memiliki foto profil, hapus foto lama dari storage.
-            if ($user->photo) {
-                Storage::delete($user->photo);
+
+            // hapus foto lama (kalau ada)
+            if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                Storage::disk('public')->delete($user->photo);
             }
-            // Catatan: Simpan foto baru ke storage dan simpan path-nya ke kolom 'photo' di database.
-            $user->photo = $request->file('photo')->store('profile-photos', 'public');
+
+            // simpan di folder per-user biar rapi & deterministik
+            $dir = "photos/users/{$user->id}";
+            Storage::disk('public')->makeDirectory($dir);
+
+            $ext = $request->file('photo')->getClientOriginalExtension(); // svg/png/jpg/...
+            $name = 'avatar.' . strtolower($ext ?: 'bin');
+
+            $path = $request->file('photo')->storeAs($dir, $name, 'public');
+            $user->photo = $path;
         }
 
         // Catatan: Simpan semua perubahan ke database.
@@ -99,7 +113,9 @@ class ProfileController extends \App\Http\Controllers\Controller
         // Catatan: Memeriksa apakah pengguna memiliki foto profil.
         if ($user->photo) {
             // Catatan: Hapus foto lama dari storage.
-            Storage::delete($user->photo);
+            if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                Storage::disk('public')->delete($user->photo);
+            }
             // Catatan: Kosongkan kolom 'photo' di database.
             $user->photo = null;
             // Catatan: Simpan perubahan ke database.

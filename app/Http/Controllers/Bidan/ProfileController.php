@@ -106,22 +106,23 @@ class ProfileController extends Controller
         // 1. VALIDASI INPUT FORM
         // ========================================================
         $validated = $request->validate([
-            'name'                => ['required', 'string', 'max:255'],  // Nama wajib, string, max 255
-            'email'               => ['nullable', 'email', 'max:255'],   // Email opsional, format email
-            'phone'               => ['nullable', 'string', 'max:255'],  // No telp opsional
-            'address'             => ['nullable', 'string', 'max:255'],  // Alamat opsional
-            'nomor_izin_praktek'  => ['required', 'string', 'max:255'],  // Nomor izin wajib
-            'password'            => ['nullable', 'string', 'min:8', 'confirmed'], // Password opsional, min 8 karakter, harus sama dengan password_confirmation
-            'photo'               => ['nullable', 'image', 'max:2048'],  // Foto opsional, harus gambar, max 2MB
+            'name'                => ['required', 'string', 'max:255'],
+            'nomor_izin_praktek'  => ['required', 'string', 'max:255'],
+            'password'            => ['nullable', 'string', 'min:8', 'confirmed'],
+            'photo'               => [
+                'nullable',
+                'file',
+                'mimetypes:image/svg+xml,image/png,image/jpeg,image/webp,image/avif',
+                'max:2048'
+            ],
         ]);
+
 
         // ========================================================
         // 2. UPDATE DATA USER
         // ========================================================
-        $user->name    = $validated['name'];        // Update nama
-        $user->email   = $validated['email'] ?? null;   // Update email, null jika tidak diisi
-        $user->phone   = $validated['phone'] ?? null;   // Update phone, null jika tidak diisi
-        $user->address = $validated['address'] ?? null; // Update alamat, null jika tidak diisi
+        $user->name = $validated['name'];
+        // Jangan overwrite email/phone/address karena form bidan tidak mengirim field tersebut
 
         // Update password jika diisi
         if (! empty($validated['password'])) {
