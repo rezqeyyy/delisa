@@ -85,7 +85,7 @@
                         <div>
                             <label class="block text-sm font-medium text-[#1D1D1D]">Tinggi Badan</label>
                             <div class="relative">
-                                <input type="number" min="0" step="0.1" inputmode="numeric" name="tinggi_badan" id="tinggi_badan"
+                                <input type="number" min="80" max="250" step="0.1" inputmode="numeric" name="tinggi_badan" required id="tinggi_badan"
                                     class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
                                     placeholder="0" value="{{ old('tinggi_badan', optional($kk)->tinggi_badan) }}">
                                 <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[#B9257F] font-medium">Cm</span>
@@ -95,7 +95,7 @@
                         <div>
                             <label class="block text-sm font-medium text-[#1D1D1D]">Berat Badan Sebelum Hamil Saat Ini</label>
                             <div class="relative">
-                                <input type="number" min="0" step="0.01" inputmode="decimal" name="berat_badan_saat_hamil" id="berat_badan"
+                                <input type="number" min="20" max="300" step="0.01" inputmode="decimal" name="berat_badan_saat_hamil" required id="berat_badan"
                                     class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
                                     placeholder="0" value="{{ old('berat_badan_saat_hamil', optional($kk)->berat_badan_saat_hamil) }}">
                                 <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[#B9257F] font-medium">Kg</span>
@@ -116,14 +116,14 @@
                             <label class="block text-sm font-medium text-[#1D1D1D]">Tekanan Darah (SDP/DBP)</label>
                             <div class="mt-2 flex items-center gap-4">
                                 <div class="relative flex-1">
-                                    <input type="number" min="0" inputmode="numeric" name="sdp" id="sdp"
+                                    <input type="number" min="0" max="300" inputmode="numeric" name="sdp" required id="sdp"
                                            class="w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
                                            placeholder="Sistolik" value="{{ old('sdp', optional($kk)->sdp) }}">
                                     <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[#B9257F] font-medium">mmHg</span>
                                 </div>
                                 <span class="text-[#1D1D1D]">/</span>
                                 <div class="relative flex-1">
-                                    <input type="number" min="0" inputmode="numeric" name="dbp" id="dbp"
+                                    <input type="number" min="0" max="200" inputmode="numeric" name="dbp" required id="dbp"
                                            class="w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
                                            placeholder="Diastolik" value="{{ old('dbp', optional($kk)->dbp) }}">
                                     <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[#B9257F] font-medium">mmHg</span>
@@ -165,15 +165,15 @@
 
                         <div>
                             <label class="block text-sm font-medium text-[#1D1D1D]">Tanggal Skrining</label>
-                            <input type="date" name="tanggal_skrining" id="tanggal_skrining" value="{{ old('tanggal_skrining', optional($kk)->tanggal_skrining) }}"
+                            <input type="date" name="tanggal_skrining" required id="tanggal_skrining" value="{{ old('tanggal_skrining', optional($kk)->tanggal_skrining) }}"
                                    class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B9257F]" placeholder="dd/mm/yyyy">
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-[#1D1D1D]">Usia Kehamilan (Minggu)</label>
-                            <input type="text" id="usia_kehamilan_result" disabled
+                            <input type="text" id="usia_kehamilan_result" inputmode="numeric"
                                 class="w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                                value="{{ optional($kk)->usia_kehamilan ? optional($kk)->usia_kehamilan . ' minggu' : 'Akan terisi otomatis oleh sistem' }}">
+                                value="{{ old('usia_kehamilan_minggu', optional($kk)->usia_kehamilan) ? old('usia_kehamilan_minggu', optional($kk)->usia_kehamilan) . ' minggu' : 'Akan terisi otomatis oleh sistem' }}">
                             <input type="hidden" name="usia_kehamilan_minggu" id="usia_kehamilan_hidden" value="{{ old('usia_kehamilan_minggu', optional($kk)->usia_kehamilan) }}">
                         </div>
 

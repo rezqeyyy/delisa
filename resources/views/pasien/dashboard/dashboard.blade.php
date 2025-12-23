@@ -134,10 +134,9 @@
                         <thead class="border-b border-[#EFEFEF] p-4 text-l bg-[#FFF7FC] font-semibold">
                             <tr class="align-middle">
                                 <th class="px-3 py-2">No.</th>
-                                <th class="px-3 py-2">NIK</th>
-                                <th class="px-3 py-2">No Telp</th>
-                                <th class="px-3 py-2">Tanggal Lahir</th>
-                                <th class="px-3 py-2">Alamat</th>
+                                <th class="px-3 py-2">Tanggal Skrining</th>
+                                <th class="px-3 py-2">Kehamilan Saat Ini (Ke-)</th>
+                                <th class="px-3 py-2">Usia Kehamilan (Minggu)</th>
                                 <th class="px-3 py-2">Kesimpulan</th>
                                 <th class="px-3 py-2">Status Verifikasi</th>
                                 <th class="px-3 py-2">View Detail</th>
@@ -148,10 +147,8 @@
                         @forelse ($skrinings as $skrining)
                             @php
                                 $tanggal  = \Carbon\Carbon::parse($skrining->created_at)->format('d/m/Y');
-                                $nik      = optional($skrining->pasien)->nik ?? '-';
-                                $alamat   = optional(optional($skrining->pasien)->user)->address ?? '-';
-                                $alamatDisplay = $skrining->pasien->PKecamatan ?? $alamat;
-                                $phone    = optional(optional($skrining->pasien)->user)->phone ?? '-';
+                                $kehamilanKe = optional($skrining->riwayatKehamilanGpa)->total_kehamilan ?? '-';
+                                $usiaMinggu  = optional($skrining->kondisiKesehatan)->usia_kehamilan ?? null;
                                 $resikoSedang = (int)($skrining->jumlah_resiko_sedang ?? 0);
                                 $resikoTinggi = (int)($skrining->jumlah_resiko_tinggi ?? 0);
                                 $kesimpulanRaw = $skrining->conclusion_display ?? ($skrining->kesimpulan ?? '');
@@ -163,10 +160,9 @@
                                 @endphp
                                 <tr class="text-center">
                                     <td class="px-3 py-3">{{ $loop->iteration }}</td>
-                                    <td class="px-3 py-3">{{ $nik }}</td>
-                                    <td class="px-3 py-3 text-[#1D1D1D]">{{ $phone }}</td>
                                     <td class="px-3 py-3 text-[#1D1D1D]">{{ $tanggal }}</td>
-                                    <td class="px-3 py-3 text-[#1D1D1D]">{{ $alamatDisplay }}</td>
+                                    <td class="px-3 py-3 text-[#1D1D1D]">{{ $kehamilanKe !== '-' ? ('Kehamilan ke-' . $kehamilanKe) : '-' }}</td>
+                                    <td class="px-3 py-3 text-[#1D1D1D]">{{ $usiaMinggu ? ($usiaMinggu . ' minggu') : '-' }}</td>
                                     <td class="px-3 py-3">
                                         <span class="inline-flex items-center justify-center rounded-full px-4 h-8 text-sm font-medium leading-none whitespace-nowrap {{ $cls }}">
                                             {{ $conclusion }}
@@ -208,7 +204,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="8" class="px-4 py-8 text-center text-[#7C7C7C]">
+                                    <td colspan="7" class="px-4 py-8 text-center text-[#7C7C7C]">
                                         Belum ada data skrining.
                                     </td>
                                 </tr>                                

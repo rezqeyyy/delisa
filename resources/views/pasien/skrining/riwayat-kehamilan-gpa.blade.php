@@ -53,7 +53,7 @@
             </div>
 
             <p class="mt-2 text-sm text-[#B9257F]">
-                Form ini diisi untuk data riwayat kehamilan & persalinan dan kehamilan sebelumnya
+                Form ini diisi untuk data riwayat kehamilan & persalinan sebelumnya
             </p>
 
             <form action="{{ route('pasien.riwayat-kehamilan-gpa.store') }}" method="POST">
@@ -71,18 +71,18 @@
                         <label class="block text-sm font-medium text-[#1D1D1D]">
                             I. Kehamilan saat ini yang keberapa (keguguran dan lahir mati dihitung)
                         </label>
-                        <input type="number" min="0" inputmode="numeric"
+                        <input type="number" min="0" max="25" inputmode="numeric"
                                class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                               placeholder="Masukkan jumlah kehamilan" name="total_kehamilan" value="{{ old('total_kehamilan', optional($gpa)->total_kehamilan) }}">
+                               placeholder="Masukkan jumlah kehamilan" name="total_kehamilan" required value="{{ old('total_kehamilan', optional($gpa)->total_kehamilan) }}">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-[#1D1D1D]">
                             II. Total Persalinan sudah berapa kali (bayi hidup/lahir mati)
                         </label>
-                        <input type="number" min="0" inputmode="numeric"
+                        <input type="number" min="0" max="25" inputmode="numeric"
                                class="mt-2 w-full rounded-full border border-[#B9257F] px-5 py-3 text-sm placeholder-[#B9257F] focus:outline-none focus:ring-2 focus:ring-[#B9257F]"
-                               placeholder="Masukkan jumlah persalinan" name="total_persalinan" value="{{ old('total_persalinan', optional($gpa)->total_persalinan) }}">
+                               placeholder="Masukkan jumlah persalinan" name="total_persalinan" required value="{{ old('total_persalinan', optional($gpa)->total_persalinan) }}">
                     </div>
 
                     <div>

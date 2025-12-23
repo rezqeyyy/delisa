@@ -33,11 +33,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isValid) {
             usiaResultEl.disabled = false;
             usiaResultEl.placeholder = 'Masukkan usia kehamilan (minggu)';
-            if (usiaResultEl.value === defaultText || /minggu$/.test(usiaResultEl.value)) {
-                usiaResultEl.value = '';
+            const val = usiaResultEl.value || '';
+            const match = val.match(/^\s*(\d+)\s*minggu\s*$/i);
+            if (match) {
+                usiaResultEl.value = match[1];
+            } else if (!val || val === defaultText) {
+                if (usiaHiddenEl.value) {
+                    usiaResultEl.value = String(usiaHiddenEl.value);
+                }
             }
-            const manualWeeks = parseInt(usiaResultEl.value, 10);
-            usiaHiddenEl.value = isNaN(manualWeeks) ? '' : String(manualWeeks);
+            let manualWeeks = parseInt(usiaResultEl.value, 10);
+            if (!isNaN(manualWeeks)) {
+                manualWeeks = Math.max(0, Math.min(45, manualWeeks));
+                usiaResultEl.value = String(manualWeeks);
+                usiaHiddenEl.value = String(manualWeeks);
+            } else {
+                usiaHiddenEl.value = '';
+            }
             return;
         }
 
@@ -60,8 +72,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const scr = parseDate(skriningEl.value);
         const isValid = !!lmp && !!scr && scr >= lmp;
         if (!isValid) {
-            const manualWeeks = parseInt(usiaResultEl.value, 10);
-            usiaHiddenEl.value = isNaN(manualWeeks) ? '' : String(manualWeeks);
+            const m = (usiaResultEl.value || '').match(/\d+/);
+            if (m) {
+                let w = parseInt(m[0], 10);
+                w = Math.max(0, Math.min(45, w));
+                usiaResultEl.value = String(w);
+                usiaHiddenEl.value = String(w);
+            } else {
+                usiaHiddenEl.value = '';
+            }
         }
     });
 

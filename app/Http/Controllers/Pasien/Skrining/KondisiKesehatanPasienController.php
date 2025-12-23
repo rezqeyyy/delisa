@@ -47,14 +47,14 @@ class KondisiKesehatanPasienController extends Controller
     {
         // Validasi payload Kondisi Kesehatan (antropometri, tensi, HPHT, tanggal skrining).
         $data = $request->validate([
-            'tinggi_badan'               => ['required', 'integer', 'min:1'],
-            'berat_badan_saat_hamil'     => ['required', 'numeric', 'min:1'],
-            'sdp'                        => ['nullable', 'integer', 'min:0'],
-            'dbp'                        => ['nullable', 'integer', 'min:0'],
+            'tinggi_badan'               => ['required', 'integer', 'min:80', 'max:250'],
+            'berat_badan_saat_hamil'     => ['required', 'numeric', 'min:20', 'max:300'],
+            'sdp'                        => ['required', 'integer', 'min:40', 'max:300'],
+            'dbp'                        => ['required', 'integer', 'min:30', 'max:200'],
             'pemeriksaan_protein_urine'  => ['required', 'in:Negatif,Positif 1,Positif 2,Positif 3,Belum dilakukan Pemeriksaan'],
             'hpht'                       => ['nullable', 'date'],
             'tanggal_skrining'           => ['required', 'date'],
-            'usia_kehamilan_minggu'      => ['nullable', 'integer', 'min:0'],
+            'usia_kehamilan_minggu'      => ['required', 'integer', 'min:0', 'max:45'],
         ]);
 
         // Ambil skrining_id dari input untuk melanjutkan episode skrining yang sama.

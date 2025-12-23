@@ -66,7 +66,7 @@
                 <input type="hidden" name="skrining_id" value="{{ request('skrining_id') }}">
                 <div class="mt-6">
                     <h2 class="text-xl font-semibold text-[#B9257F]">Apakah Keluarga memiliki riwayat penyakit?</h2>
-                    <p class="mt-2 text-sm text-[#1D1D1D]">Centang penyakit yang pernah diderita</p>
+                    <p class="mt-2 text-sm text-[#1D1D1D]">Pilih penyakit yang pernah diderita</p>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                         

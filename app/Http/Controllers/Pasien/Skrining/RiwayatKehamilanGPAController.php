@@ -46,8 +46,8 @@ class RiwayatKehamilanGPAController extends Controller
     {
         // Validasi input GPA (total kehamilan, persalinan, abortus).
         $data = $request->validate([
-            'total_kehamilan'   => ['nullable', 'integer', 'min:0'],
-            'total_persalinan'  => ['nullable', 'integer', 'min:0'],
+            'total_kehamilan'   => ['required', 'integer', 'min:0', 'max:25'],
+            'total_persalinan'  => ['required', 'integer', 'min:0', 'max:25'],
             'total_abortus'     => ['nullable', 'integer', 'min:0'],
         ]);
 
