@@ -88,6 +88,48 @@
                 </div>
             </div>
 
+            <!-- Ringkasan Total Skrining & Resiko Preeklamsia -->           
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col h-full">
+                    <h2 class="text-xl font-semibold text-[#1D1D1D] mb-3">Total Skrining</h2>
+                    <div class="text-base flex-1 flex flex-col justify-center space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#1D1D1D]">Sudah Selesai</span>
+                            <span class="font-semibold tabular-nums">{{ $totalSelesai ?? 0 }}</span>
+                        </div>
+                        <div class="border-t border-[#E9E9E9]"></div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#1D1D1D]">Belum diisi</span>
+                            <span class="font-semibold tabular-nums">{{ $totalBelum ?? 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-4 shadow-md">
+                    <h2 class="text-xl font-semibold text-[#1D1D1D] mb-3">Risiko Preeklamsia</h2>
+                    <div class="rounded-xl {{ $riskBoxClass ?? 'bg-[#E9E9E9] text-[#1D1D1D]' }} p-4 text-center">
+                        @php
+                            $riskRaw = $riskPreeklampsia ?? '';
+                            $riskNorm = strtolower(trim($riskRaw));
+                            $riskDisplay = $riskNorm === 'tidak berisiko preeklampsia' ? 'Normal' : (in_array($riskNorm, ['berisiko preeklampsia','beresiko preeklampsia','beresiko']) ? 'Berisiko' : ($riskRaw ?: 'Belum ada'));
+                        @endphp
+                        <span class="text-lg font-semibold">
+                            {{ $riskDisplay }}
+                        </span>
+                    </div>
+
+                    @php $riskLower = strtolower($riskPreeklampsia ?? ''); @endphp
+                    @if(in_array($riskLower, ['berisiko preeklampsia','berisiko','beresiko','risiko tinggi','resiko tinggi']))
+                        <p class="text-xs text-red-600 mt-3">*Segera Menuju ke RS di Bawah Untuk Penanganan Lebih Lanjut</p>
+                        <div class="rounded-xl bg-[#E9E9E9] text-[#1D1D1D] p-4 text-center mt-2">
+                            <span class="font-medium">
+                                {{ ($referralAccepted ?? false) && ($referralHospital ?? null) ? $referralHospital : 'Tunggu Hasil Rujukan' }}
+                            </span>
+                        </div>
+                    @endif
+                </div>
+            </section>
+
             <!-- List Skrining -->
             <section class="bg-white rounded-2xl shadow-md p-6">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between md:flex-wrap gap-3 max-w-full">
@@ -230,47 +272,7 @@
                 </div>
             </section>
 
-            <!-- Ringkasan Total Skrining & Resiko Preeklamsia -->           
-            <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col h-full">
-                    <h2 class="text-xl font-semibold text-[#1D1D1D] mb-3">Total Skrining</h2>
-                    <div class="text-base flex-1 flex flex-col justify-center space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#1D1D1D]">Sudah Selesai</span>
-                            <span class="font-semibold tabular-nums">{{ $totalSelesai ?? 0 }}</span>
-                        </div>
-                        <div class="border-t border-[#E9E9E9]"></div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#1D1D1D]">Belum diisi</span>
-                            <span class="font-semibold tabular-nums">{{ $totalBelum ?? 0 }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-4 shadow-md">
-                    <h2 class="text-xl font-semibold text-[#1D1D1D] mb-3">Risiko Preeklamsia</h2>
-                    <div class="rounded-xl {{ $riskBoxClass ?? 'bg-[#E9E9E9] text-[#1D1D1D]' }} p-4 text-center">
-                        @php
-                            $riskRaw = $riskPreeklampsia ?? '';
-                            $riskNorm = strtolower(trim($riskRaw));
-                            $riskDisplay = $riskNorm === 'tidak berisiko preeklampsia' ? 'Normal' : (in_array($riskNorm, ['berisiko preeklampsia','beresiko preeklampsia','beresiko']) ? 'Berisiko' : ($riskRaw ?: 'Belum ada'));
-                        @endphp
-                        <span class="text-lg font-semibold">
-                            {{ $riskDisplay }}
-                        </span>
-                    </div>
-
-                    @php $riskLower = strtolower($riskPreeklampsia ?? ''); @endphp
-                    @if(in_array($riskLower, ['berisiko preeklampsia','berisiko','beresiko','risiko tinggi','resiko tinggi']))
-                        <p class="text-xs text-red-600 mt-3">*Segera Menuju ke RS di Bawah Untuk Penanganan Lebih Lanjut</p>
-                        <div class="rounded-xl bg-[#E9E9E9] text-[#1D1D1D] p-4 text-center mt-2">
-                            <span class="font-medium">
-                                {{ ($referralAccepted ?? false) && ($referralHospital ?? null) ? $referralHospital : 'Tunggu Hasil Rujukan' }}
-                            </span>
-                        </div>
-                    @endif
-                </div>
-            </section>
+            
 
             <footer class="text-center text-xs text-[#7C7C7C] py-6">
                 © 2025 Dinas Kesehatan Kota Depok — DeLISA
