@@ -540,12 +540,12 @@ class DataMasterController extends Controller
     {
         // Validasi input pendaftaran bidan
         $payload = $request->validate([
-            'name'               => 'required|string|max:255',
-            'email'              => 'required|email|unique:users,email',
+            'name'               => 'required|string|max:60',
+            'email'              => 'required|email|unique:users,email|max:64',
             'password'           => 'required|string|min:8',
-            'phone'              => 'nullable|string|max:50',
-            'address'            => 'nullable|string',
-            'nomor_izin_praktek' => 'required|string|max:255',
+            'phone'              => 'nullable|string|max:15',
+            'address'            => 'nullable|string|max:150',
+            'nomor_izin_praktek' => 'required|string|max:50',
             'puskesmas_id'       => 'required|exists:puskesmas,id', // harus ada di tabel puskesmas
         ]);
 
@@ -878,13 +878,13 @@ class DataMasterController extends Controller
 
             // Validasi input edit RS
             $payload = $request->validate([
-                'name'      => 'required|string|max:255',
-                'email'     => 'required|email|unique:users,email,' . $user,
-                'phone'     => 'nullable|string|max:50',
-                'lokasi'    => 'nullable|string',
+                'name'      => 'required|string|max:60',
+                'email'     => 'required|email|unique:users,email,' . $user . '|max:64',
+                'phone'     => 'nullable|string|max:15',
+                'lokasi'    => 'nullable|string|max:150',
                 'kecamatan' => 'required|string|in:' . implode(',', $kecamatanKeys),
                 'kelurahan' => 'required|string|in:' . implode(',', $kelurahanKeys),
-                'nama'      => 'required|string|max:255',
+                'nama'      => 'required|string|max:60',
             ]);
 
             // Transaksi untuk update users + rumah_sakits
@@ -915,10 +915,10 @@ class DataMasterController extends Controller
 
             // Validasi input Puskesmas
             $payload = $request->validate([
-                'name'   => 'required|string|max:255',
-                'email'  => 'required|email|unique:users,email,' . $user,
-                'phone'  => 'nullable|string|max:50',
-                'lokasi' => 'nullable|string',
+                'name'   => 'required|string|max:60',
+                'email'  => 'required|email|unique:users,email,' . $user . '|max:64',
+                'phone'  => 'nullable|string|max:15',
+                'lokasi' => 'nullable|string|max:150',
                 'nama'   => 'required|string|in:' . implode(',', $kecamatanKeys),
             ]);
 
@@ -948,11 +948,11 @@ class DataMasterController extends Controller
         } else { // bidan
             // Validasi input bidan
             $payload = $request->validate([
-                'name'               => 'required|string|max:255',
-                'email'              => 'required|email|unique:users,email,' . $user,
-                'phone'              => 'nullable|string|max:50',
-                'address'            => 'nullable|string',
-                'nomor_izin_praktek' => 'required|string|max:255',
+                'name'               => 'required|string|max:60',
+                'email'              => 'required|email|unique:users,email,' . $user . '|max:64',
+                'phone'              => 'nullable|string|max:15',
+                'address'            => 'nullable|string|max:150',
+                'nomor_izin_praktek' => 'required|string|max:50',
                 'puskesmas_id'       => 'required|exists:puskesmas,id',
             ]);
 

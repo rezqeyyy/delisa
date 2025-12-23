@@ -597,7 +597,7 @@
 
                             {{-- Input text pencarian q --}}
                             <input id="peSearchInput" type="search" name="q"
-                                value="{{ $filters['q'] ?? '' }}" placeholder="Cari…" autocomplete="off"
+                                value="{{ $filters['q'] ?? '' }}" placeholder="Cari nama/NIK…" autocomplete="off"
                                 class="w-full h-8 border border-[#CAC7C7] rounded-full pl-3 sm:pl-8 pr-7 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
                                 data-autosubmit="true" />
 

@@ -286,7 +286,7 @@
                                 - px-4 py-2 → padding horizontal & vertikal.
                                 - mt-1 → jarak atas kecil dari label.
                             --}}
-                            <input name="pic_name" value="{{ old('pic_name') }}" required
+                            <input name="pic_name" value="{{ old('pic_name') }}" maxlength="60" required
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
@@ -299,7 +299,7 @@
                                 - value="{{ old('phone') }}" → restore nilai lama jika ada error.
                                 Tidak ada required → bersifat opsional.
                             --}}
-                            <input name="phone" type="number" value="{{ old('phone') }}"
+                            <input name="phone" type="number" value="{{ old('phone') }}" maxlength="15"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
@@ -310,7 +310,7 @@
                                 type="email" → browser akan cek format email dasar.
                                 - required → wajib diisi.
                             --}}
-                            <input type="email" name="email" value="{{ old('email') }}" required
+                            <input type="email" name="email" maxlength="64" value="{{ old('email') }}" required
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
@@ -321,7 +321,7 @@
                                 Input teks nama RS, wajib diisi.
                                 Akan disimpan di kolom rumah_sakits.nama.
                             --}}
-                            <input name="nama" value="{{ old('nama') }}" required
+                            <input name="nama" value="{{ old('nama') }}" required maxlength="60"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
@@ -447,21 +447,21 @@
                         {{-- Field: Nama Lengkap PIC Puskesmas. --}}
                         <div>
                             <label>Nama Lengkap PIC</label>
-                            <input name="pic_name" value="{{ old('pic_name') }}" required
+                            <input name="pic_name" value="{{ old('pic_name') }}" required maxlength="60"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
                         {{-- Field: Nomor Telepon PIC (opsional). --}}
                         <div>
                             <label>Nomor Telepon PIC</label>
-                            <input name="phone" type="number" value="{{ old('phone') }}"
+                            <input name="phone" type="number" value="{{ old('phone') }}" maxlength="15"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
                         {{-- Field: Email PIC Puskesmas. --}}
                         <div>
                             <label>Email PIC</label>
-                            <input type="email" name="email" value="{{ old('email') }}" required
+                            <input type="email" name="email" value="{{ old('email') }}" required maxlength="64"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
@@ -529,28 +529,28 @@
                         {{-- Field: Nama Bidan. --}}
                         <div>
                             <label>Nama</label>
-                            <input name="name" value="{{ old('name') }}" required
+                            <input name="name" value="{{ old('name') }}" required maxlength="60"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
                         {{-- Field: Nomor Izin Praktek Bidan. --}}
                         <div>
                             <label>Nomor Izin Praktek</label>
-                            <input name="nomor_izin_praktek" type="number" value="{{ old('nomor_izin_praktek') }}"
+                            <input name="nomor_izin_praktek" type="number" value="{{ old('nomor_izin_praktek') }}" maxlength="50"
                                 required class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
                         {{-- Field: Email Bidan. --}}
                         <div>
                             <label>Email</label>
-                            <input type="email" name="email" value="{{ old('email') }}" required
+                            <input type="email" name="email" value="{{ old('email') }}" required maxlength="64"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
                         {{-- Field: No Telepon Bidan (opsional). --}}
                         <div>
                             <label>No Telepon</label>
-                            <input name="phone" type="number" value="{{ old('phone') }}"
+                            <input name="phone" type="number" value="{{ old('phone') }}" maxlength="15"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
@@ -593,7 +593,7 @@
                                 Input teks 1 baris untuk alamat.
                                 Jika ingin multiline, bisa diubah menjadi textarea (secara terencana nanti).
                             --}}
-                            <input name="address" value="{{ old('address') }}"
+                            <input name="address" value="{{ old('address') }}" maxlength="150"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 

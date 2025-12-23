@@ -281,7 +281,6 @@
                                 Input teks pencarian:
                                 - name="q" → akan dibaca di controller untuk filter query.
                                 - value="{{ $q ?? '' }}" → mempertahankan kata kunci terakhir.
-                                - placeholder "Search data..." → petunjuk singkat untuk user.
                                 class:
                                 - pl-9 → padding kiri lebih besar, memberi ruang untuk icon search.
                                 - pr-4 py-2 → padding kanan dan vertikal.
@@ -289,7 +288,7 @@
                                 - focus:ring → efek fokus dengan ring warna magenta transparan.
                             --}}
                             <input name="q" value="{{ $q ?? '' }}" type="text"
-                                placeholder="Search data..."
+                                placeholder="Cari nama/email petugas..."
                                 class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
 
                             {{-- 

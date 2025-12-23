@@ -127,7 +127,7 @@
                 --}}
                 <a href="{{ route('dinkes.data-master', ['tab' => $tab]) }}"
                     class="inline-flex items-center justify-center px-3 sm:px-4 py-2 rounded-full bg-white border border-[#D9D9D9] text-xs sm:text-sm">
-                    ← Kembali ke Data Master
+                    Kembali ke Data Master
                 </a>
             </header>
 
@@ -207,7 +207,7 @@
                               2. $data->name (nilai dari DB).
                             - required → wajib diisi.
                         --}}
-                        <input name="name" value="{{ old('name', $data->name) }}" required
+                        <input name="name" value="{{ old('name', $data->name) }}" required maxlength="60"
                             class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                     </div>
 
@@ -219,7 +219,7 @@
                             - value mengikuti old('email') atau $data->email.
                             - required → wajib diisi.
                         --}}
-                        <input type="email" name="email" value="{{ old('email', $data->email) }}" required
+                        <input type="email" name="email" value="{{ old('email', $data->email) }}" required maxlength="64"
                             class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                     </div>
 
@@ -231,7 +231,7 @@
                             - value mengikuti old('phone') atau $data->phone.
                             Tidak diberikan required → boleh kosong.
                         --}}
-                        <input name="phone" type="number" value="{{ old('phone', $data->phone) }}"
+                        <input name="phone" type="number" value="{{ old('phone', $data->phone) }}" maxlength="15"
                             class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                     </div>
 
@@ -249,7 +249,7 @@
                                 - value → old('nama') atau $data->nama.
                                 - required → wajib diisi.
                             --}}
-                            <input name="nama" value="{{ old('nama', $data->nama) }}" required
+                            <input name="nama" value="{{ old('nama', $data->nama) }}" required maxlength="60"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
@@ -406,7 +406,7 @@
                                 - required → wajib diisi.
                             --}}
                             <input name="nomor_izin_praktek"
-                                value="{{ old('nomor_izin_praktek', $data->nomor_izin_praktek) }}" required
+                                value="{{ old('nomor_izin_praktek', $data->nomor_izin_praktek) }}" required maxlength="50"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
 
@@ -451,7 +451,7 @@
                                 - name="address" → akan diupdate di kolom users.address.
                                 - value → old('address') atau $data->address.
                             --}}
-                            <input name="address" value="{{ old('address', $data->address) }}"
+                            <input name="address" value="{{ old('address', $data->address) }}" maxlength="150"
                                 class="w-full border border-pink-400 rounded-full px-4 py-2 mt-1">
                         </div>
                     @endif

@@ -172,7 +172,6 @@
                                 Input teks pencarian.
                                 - name="q" → nama ini yang dibaca di controller untuk filter.
                                 - value="{{ $q ?? '' }}" → jika sebelumnya sudah mencari, nilai input akan tetap muncul.
-                                - placeholder="Search data..." → teks bantu yang muncul saat kosong.
                                 class:
                                 - w-full → lebar 100% dari parent.
                                 - pl-9 → padding kiri lebih besar untuk memberi ruang icon search.
@@ -184,7 +183,7 @@
                                 - focus:ring-1 focus:ring-[#B9257F]/40 → saat fokus ada ring (border glow) warna pink lembut.
                             --}}
                             <input type="text" name="q" value="{{ $q ?? '' }}"
-                                placeholder="Search data..."
+                                placeholder="Cari nama atau email..."
                                 class="w-full pl-9 pr-4 py-2 rounded-full border border-[#D9D9D9] text-sm focus:outline-none focus:ring-1 focus:ring-[#B9257F]/40">
 
                             {{-- 
